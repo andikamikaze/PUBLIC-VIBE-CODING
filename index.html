@@ -449,6 +449,7 @@
         padding: 16px 0;
         border-top: 1px solid var(--line);
         transition: background 0.2s;
+        cursor: pointer;
       }
 
       .project-row:first-child {
@@ -1542,6 +1543,12 @@
                   <button class="filter active" data-filter="All">
                     All projects
                   </button>
+                  <button class="filter" data-filter="UI Clone">
+                    UI Clone (120)
+                  </button>
+                  <button class="filter" data-filter="Project">
+                    Project (168)
+                  </button>
                   <button class="filter" data-filter="Published">
                     Published
                   </button>
@@ -2196,8 +2203,34 @@
       </div>
     </div>
 
+    <script src="projects-data.js"></script>
     <script>
-      const KEY = "personalPortfolioWebsite.v1";
+      const KEY = "personalPortfolioWebsite.v2";
+
+      const THEMES = ["green", "purple", "gold", "blue"];
+
+      // Entri dibangun dari nama file asli hasil scan folder CLONE\ dan PROJECT\.
+      // encodeURI() mengubah spasi jadi %20 dan mempertahankan "/" sebagai pemisah path.
+      function toProject(file, folder, i) {
+        const clean = file
+          .replace(/\.html$/i, "")
+          .replace(/-/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+        const isClone = folder === "CLONE";
+        return {
+          id: (isClone ? "c" : "a") + (i + 1),
+          name: clean,
+          description: isClone
+            ? `UI clone dari ${clean}, dibuat sebagai showcase HTML statis.`
+            : `${clean} — konsep aplikasi web dan prototipe yang berfungsi.`,
+          category: isClone ? "UI Clone" : "Project",
+          status: "Published",
+          url: encodeURI(folder + "/" + file),
+          theme: THEMES[i % THEMES.length],
+        };
+      }
+
       const initialData = {
         profile: {
           fullName: "Alex Pratama",
@@ -2209,46 +2242,8 @@
           availability: "Open to opportunities",
         },
         projects: [
-          {
-            id: "p1",
-            name: "Studio North — Brand system",
-            description:
-              "A cohesive identity system for a small creative studio, from visual language to digital touchpoints.",
-            category: "Brand identity",
-            status: "Published",
-            url: "",
-            theme: "green",
-          },
-          {
-            id: "p2",
-            name: "Orbit — Product experience",
-            description:
-              "A focused product experience that makes complex information easier to explore and understand.",
-            category: "Product design",
-            status: "Published",
-            url: "",
-            theme: "purple",
-          },
-          {
-            id: "p3",
-            name: "Personal Finance Dashboard",
-            description:
-              "A responsive dashboard concept for tracking spending patterns and setting monthly goals.",
-            category: "Web development",
-            status: "In progress",
-            url: "",
-            theme: "gold",
-          },
-          {
-            id: "p4",
-            name: "Design System Notes",
-            description:
-              "Reusable interface patterns and practical documentation for a consistent product experience.",
-            category: "Research",
-            status: "Draft",
-            url: "",
-            theme: "blue",
-          },
+          ...CLONE_FILES.map((f, i) => toProject(f, "CLONE", i)),
+          ...PROJECT_FILES.map((f, i) => toProject(f, "PROJECT", i)),
         ],
         skills: [
           "UI/UX Design",
@@ -2454,17 +2449,36 @@
             .slice(0, 4)
             .map(
               (p, i) =>
-                `<div class="project-row">
+                `<div class="project-row" data-open-project="${p.id}" role="button" tabindex="0" title="Buka ${esc(p.name)}">
             <div class="project-thumb">${["◈", "◉", "▦", "✳"][i % 4]}</div>
             <div class="project-info"><strong>${esc(p.name)}</strong><span>${esc(p.category)}</span></div>
             <span class="pill ${p.status === "Published" ? "live" : ""}">${esc(p.status)}</span>
+            <span style="color:var(--muted);font-size:14px">↗</span>
           </div>`,
             )
             .join("") || '<div class="empty">No projects yet.</div>';
 
+        document
+          .querySelectorAll("#recentProjects [data-open-project]")
+          .forEach((x) => {
+            x.onclick = () => openProjectFile(x.dataset.openProject);
+            x.onkeydown = (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                openProjectFile(x.dataset.openProject);
+              }
+            };
+          });
+
         document.getElementById("navProjectCount").textContent = projects.length
           .toString()
           .padStart(2, "0");
+      }
+
+      function openProjectFile(id) {
+        const p = data.projects.find((x) => x.id === id);
+        if (!p) return;
+        window.open(p.url, "_blank", "noopener");
       }
 
       function renderProjects() {
@@ -2473,8 +2487,10 @@
         ).toLowerCase();
         const list = data.projects.filter(
           (p) =>
-            (activeFilter === "All" || p.status === activeFilter) &&
-            `${p.name} ${p.description} ${p.category}`
+            (activeFilter === "All" ||
+              p.status === activeFilter ||
+              p.category === activeFilter) &&
+            `${p.name} ${p.description} ${p.category} ${p.url}`
               .toLowerCase()
               .includes(q),
         );
@@ -2494,6 +2510,7 @@
               <div class="project-meta">
                 <span class="pill ${p.status === "Published" ? "live" : ""}">${esc(p.status)}</span>
                 <div class="project-card-actions">
+                  <button class="btn small" data-open-project="${p.id}" aria-label="Buka ${esc(p.name)}">↗ Open</button>
                   <button class="btn small" data-edit-project="${p.id}">Edit</button>
                   <button class="btn small danger" data-delete-project="${p.id}" aria-label="Hapus ${esc(p.name)}">×</button>
                 </div>
@@ -2503,6 +2520,11 @@
           )
           .join("");
 
+        document
+          .querySelectorAll("#projectsGrid [data-open-project]")
+          .forEach(
+            (b) => (b.onclick = () => openProjectFile(b.dataset.openProject)),
+          );
         document
           .querySelectorAll("[data-edit-project]")
           .forEach(
