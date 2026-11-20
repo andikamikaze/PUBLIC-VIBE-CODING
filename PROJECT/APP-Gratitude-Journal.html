@@ -1,0 +1,2095 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aplikasi Jurnal Syukur</title>
+    <meta
+      name="description"
+      content="Aplikasi jurnal syukur harian: catat tiga hal yang disyukuri, unggah foto momen bahagia, telusuri arsip kalender, dan baca ulang kenangan positif."
+    />
+    <style>
+      /* ====== dasar ====== */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      :root {
+        --bg: #faf9f5;
+        --surface: #ffffff;
+        --text: #26231f;
+        --muted: #7b766d;
+        --border: #e8e4db;
+        --border-strong: #d8d3c7;
+        --accent: #c14e20;
+        --accent-hover: #a6411a;
+        --accent-soft: #faf0e9;
+        --ok: #3e6b4f;
+        --danger: #b3261e;
+        --danger-soft: #fbedeb;
+        --radius: 10px;
+        --serif: Georgia, "Times New Roman", serif;
+        --sans:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--sans);
+        font-size: 15px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+      }
+      button {
+        font-family: var(--sans);
+      }
+      svg {
+        display: block;
+      }
+      ::selection {
+        background: var(--accent-soft);
+      }
+      .hidden {
+        display: none !important;
+      }
+
+      /* ====== header & navigasi ====== */
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+      }
+      .header-inner {
+        max-width: 740px;
+        margin: 0 auto;
+        padding: 14px 20px 10px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .logo {
+        color: var(--accent);
+        flex: none;
+      }
+      .app-name {
+        font-family: var(--serif);
+        font-size: 19px;
+        line-height: 1.25;
+      }
+      .app-sub {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      nav {
+        max-width: 740px;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+      }
+      nav button {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        padding: 11px 4px 12px;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: var(--muted);
+        font-size: 13.5px;
+        font-weight: 500;
+        cursor: pointer;
+      }
+      nav button:hover {
+        color: var(--text);
+      }
+      nav button.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+        font-weight: 600;
+      }
+
+      /* ====== tata letak ====== */
+      .wrap {
+        max-width: 740px;
+        margin: 0 auto;
+        padding: 26px 20px 90px;
+      }
+      .view {
+        display: none;
+      }
+      .view.active {
+        display: block;
+      }
+      .view-head {
+        margin-bottom: 20px;
+      }
+      .eyebrow {
+        font-size: 11.5px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      .view-title {
+        font-family: var(--serif);
+        font-size: 21px;
+        font-weight: 600;
+        line-height: 1.3;
+        margin: 3px 0 4px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13.5px;
+      }
+      .head-meta {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-top: 2px;
+      }
+      .link-btn {
+        background: none;
+        border: none;
+        color: var(--accent);
+        cursor: pointer;
+        font-size: 13px;
+        padding: 0;
+        text-decoration: underline;
+        font-family: var(--sans);
+      }
+      .link-btn:hover {
+        color: var(--accent-hover);
+      }
+
+      /* ====== kartu & form ====== */
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 22px;
+      }
+      input[type="text"],
+      input[type="time"] {
+        border: 1px solid var(--border-strong);
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 14.5px;
+        font-family: var(--sans);
+        color: var(--text);
+        background: var(--surface);
+        width: 100%;
+      }
+      input[type="time"] {
+        width: auto;
+      }
+      input[type="text"]:focus,
+      input[type="time"]:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-soft);
+      }
+      .field-label {
+        font-weight: 600;
+        font-size: 14.5px;
+      }
+      .field-hint {
+        font-size: 13px;
+        color: var(--muted);
+        margin: 2px 0 14px;
+      }
+      .section-gap {
+        margin-top: 30px;
+      }
+
+      /* baris hal yang disyukuri */
+      .grow {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .gnum {
+        width: 27px;
+        height: 27px;
+        border: 1px solid var(--border-strong);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--serif);
+        font-size: 13px;
+        color: var(--muted);
+        flex: none;
+      }
+      .grow input {
+        flex: 1;
+      }
+      .rm {
+        width: 28px;
+        height: 28px;
+        border: none;
+        background: none;
+        color: #b8b2a6;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        flex: none;
+      }
+      .rm:hover {
+        color: var(--danger);
+        background: var(--danger-soft);
+      }
+      .add-row {
+        width: 100%;
+        border: 1px dashed var(--border-strong);
+        background: none;
+        border-radius: 8px;
+        padding: 9px;
+        color: var(--muted);
+        cursor: pointer;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        justify-content: center;
+        font-size: 13.5px;
+        margin-top: 2px;
+      }
+      .add-row:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .fill-note {
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-top: 10px;
+      }
+      .fill-note.ok {
+        color: var(--ok);
+      }
+
+      /* foto */
+      .photo-zone {
+        width: 100%;
+        border: 1px dashed var(--border-strong);
+        border-radius: 8px;
+        padding: 20px 12px;
+        background: none;
+        cursor: pointer;
+        flex-direction: column;
+        gap: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+      }
+      .photo-zone:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .pz-title {
+        font-size: 13.5px;
+        font-weight: 600;
+      }
+      .pz-sub {
+        font-size: 12px;
+      }
+      .thumbs {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+      .thumb {
+        position: relative;
+        width: 84px;
+        height: 84px;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+      }
+      .thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .thumb button {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: rgba(28, 27, 26, 0.72);
+        color: #ffffff;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+
+      /* error & simpan */
+      .form-error {
+        display: none;
+        gap: 8px;
+        align-items: flex-start;
+        margin-top: 14px;
+        color: var(--danger);
+        background: var(--danger-soft);
+        border: 1px solid #efd2cd;
+        padding: 10px 12px;
+        border-radius: 8px;
+        font-size: 13.5px;
+      }
+      .form-error.show {
+        display: flex;
+      }
+      .form-error svg {
+        flex: none;
+        margin-top: 2px;
+      }
+      .save-bar {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 20px;
+      }
+
+      /* tombol */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 8px;
+        padding: 10px 18px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1px solid transparent;
+      }
+      .btn:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: #ffffff;
+      }
+      .btn-primary:hover {
+        background: var(--accent-hover);
+      }
+      .btn-ghost {
+        background: var(--surface);
+        border-color: var(--border-strong);
+        color: var(--text);
+      }
+      .btn-ghost:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .btn-sm {
+        padding: 7px 12px;
+        font-size: 13px;
+        border-radius: 7px;
+      }
+      .btn-danger {
+        color: var(--danger);
+        border-color: #e3c7c3;
+      }
+      .btn-danger:hover {
+        color: var(--danger);
+        border-color: var(--danger);
+      }
+      .btn-danger.armed {
+        background: var(--danger);
+        border-color: var(--danger);
+        color: #ffffff;
+      }
+      .btn-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+      }
+      .icon-btn {
+        width: 34px;
+        height: 34px;
+        border: 1px solid var(--border-strong);
+        background: var(--surface);
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--text);
+      }
+      .icon-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      /* ====== kalender ====== */
+      .cal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+      }
+      .cal-title {
+        font-family: var(--serif);
+        font-size: 18px;
+        font-weight: 600;
+      }
+      .cal-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 5px;
+      }
+      .cal-grid.dow {
+        margin-bottom: 6px;
+      }
+      .cal-dow {
+        text-align: center;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        text-transform: uppercase;
+      }
+      .cal-day {
+        position: relative;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13.5px;
+        background: none;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        cursor: pointer;
+        color: var(--text);
+        font-family: var(--sans);
+      }
+      .cal-day:hover:not(:disabled):not(.selected):not(.blank) {
+        background: var(--accent-soft);
+      }
+      .cal-day.blank {
+        cursor: default;
+      }
+      .cal-day.today {
+        border-color: var(--accent);
+        font-weight: 600;
+      }
+      .cal-day.selected {
+        background: var(--accent);
+        color: #ffffff;
+      }
+      .cal-day:disabled {
+        color: #cfcac0;
+        cursor: default;
+      }
+      .cal-dot {
+        position: absolute;
+        bottom: 4px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+      .cal-day.selected .cal-dot {
+        background: #ffffff;
+      }
+      .day-detail {
+        margin-top: 16px;
+      }
+      .detail-date {
+        font-family: var(--serif);
+        font-size: 18px;
+        margin: 2px 0 10px;
+      }
+      .item-list {
+        list-style: none;
+      }
+      .item-list li {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .item-list li:last-child {
+        border-bottom: none;
+      }
+      .li-ic {
+        color: var(--accent);
+        flex: none;
+        margin-top: 4px;
+      }
+      .li-text {
+        font-size: 14.5px;
+      }
+      .photo-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+      }
+      .photo-row img {
+        width: 104px;
+        height: 104px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+      }
+
+      /* ====== kenangan ====== */
+      .mem-intro {
+        text-align: center;
+        margin-bottom: 18px;
+      }
+      .mem-intro .view-title {
+        margin: 10px 0 4px;
+      }
+      .mem-illus {
+        display: flex;
+        justify-content: center;
+        color: var(--accent);
+      }
+      .mem-intro .muted {
+        max-width: 460px;
+        margin: 0 auto;
+      }
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      .mem-card.anim {
+        animation: fadeUp 0.35s ease;
+      }
+      .mem-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 18px;
+        flex-wrap: wrap;
+      }
+      .empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 6px;
+        padding: 44px 24px;
+      }
+      .empty-ic {
+        color: var(--accent);
+        margin-bottom: 8px;
+      }
+      .empty-title {
+        font-family: var(--serif);
+        font-size: 17px;
+        font-weight: 600;
+      }
+      .empty-text {
+        color: var(--muted);
+        font-size: 13.5px;
+        max-width: 380px;
+      }
+      .empty .btn {
+        margin-top: 14px;
+      }
+
+      /* ====== pengaturan ====== */
+      .setting-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 15px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .setting-row:first-child {
+        padding-top: 4px;
+      }
+      .setting-row.last {
+        border-bottom: none;
+        padding-bottom: 4px;
+      }
+      .setting-row > .btn,
+      .setting-row > .switch,
+      .setting-row > input {
+        flex: none;
+      }
+      .setting-title {
+        font-weight: 600;
+        font-size: 14.5px;
+      }
+      .setting-desc {
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 2px;
+        max-width: 440px;
+      }
+      .switch {
+        position: relative;
+        width: 46px;
+        height: 26px;
+        flex: none;
+        display: inline-block;
+      }
+      .switch input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        margin: 0;
+        cursor: pointer;
+        z-index: 2;
+      }
+      .switch .track {
+        position: absolute;
+        inset: 0;
+        background: #d9d3c7;
+        border-radius: 999px;
+        transition: background 0.18s ease;
+      }
+      .switch .knob {
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 20px;
+        height: 20px;
+        background: var(--surface);
+        border-radius: 50%;
+        transition: left 0.18s ease;
+        box-shadow: 0 1px 3px rgba(38, 35, 31, 0.25);
+      }
+      .switch input:checked ~ .track {
+        background: var(--accent);
+      }
+      .switch input:checked ~ .knob {
+        left: 23px;
+      }
+
+      /* ====== toast ====== */
+      #toast {
+        position: fixed;
+        left: 50%;
+        bottom: 22px;
+        transform: translate(-50%, 16px);
+        opacity: 0;
+        visibility: hidden;
+        transition:
+          transform 0.25s ease,
+          opacity 0.25s ease,
+          visibility 0.25s;
+        background: var(--surface);
+        border: 1px solid var(--border-strong);
+        border-radius: 10px;
+        padding: 10px 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 6px 24px rgba(38, 35, 31, 0.1);
+        z-index: 60;
+        max-width: min(92vw, 520px);
+      }
+      #toast.show {
+        transform: translate(-50%, 0);
+        opacity: 1;
+        visibility: visible;
+      }
+      .toast-ic {
+        color: var(--accent);
+        flex: none;
+      }
+      .toast-msg {
+        font-size: 13.5px;
+        line-height: 1.45;
+      }
+      .toast-close {
+        width: 26px;
+        height: 26px;
+        flex: none;
+        border: none;
+        background: none;
+        color: var(--muted);
+        cursor: pointer;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .toast-close:hover {
+        color: var(--text);
+        background: var(--bg);
+      }
+
+      /* ====== responsif ====== */
+      @media (max-width: 600px) {
+        nav button {
+          font-size: 12.5px;
+          gap: 5px;
+        }
+        nav button svg {
+          width: 15px;
+          height: 15px;
+        }
+        .card {
+          padding: 18px 16px;
+        }
+        .thumbs .thumb {
+          width: 72px;
+          height: 72px;
+        }
+        .photo-row img {
+          width: 88px;
+          height: 88px;
+        }
+        .cal-day {
+          height: 38px;
+          font-size: 12.5px;
+        }
+        .save-bar {
+          flex-direction: column-reverse;
+          align-items: stretch;
+        }
+        .save-bar .btn {
+          justify-content: center;
+        }
+        .setting-row {
+          flex-wrap: wrap;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="header-inner">
+        <svg
+          class="logo"
+          width="30"
+          height="30"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 21v-7" />
+          <path d="M12 14C12 10.2 9.2 7.4 5 7.4c0 4.2 2.8 6.6 7 6.6Z" />
+          <path d="M12 12c0-3.1 2.4-5.5 6-5.5 0 3.6-2.4 5.5-6 5.5Z" />
+        </svg>
+        <div>
+          <div class="app-name">Jurnal Syukur</div>
+          <div class="app-sub">Tiga hal baik setiap hari</div>
+        </div>
+      </div>
+      <nav aria-label="Navigasi utama">
+        <button type="button" data-tab="tulis" class="active">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 20h9" />
+            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+          </svg>
+          <span>Tulis</span>
+        </button>
+        <button type="button" data-tab="kalender">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="3" y="4" width="18" height="17" rx="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="9.5" x2="21" y2="9.5" />
+          </svg>
+          <span>Kalender</span>
+        </button>
+        <button type="button" data-tab="kenangan">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path
+              d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21.2l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"
+            />
+          </svg>
+          <span>Kenangan</span>
+        </button>
+        <button type="button" data-tab="pengaturan">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+          </svg>
+          <span>Pengaturan</span>
+        </button>
+      </nav>
+    </header>
+
+    <main class="wrap">
+      <!-- ====== TAB TULIS ====== -->
+      <section class="view active" id="view-tulis">
+        <div class="view-head">
+          <p class="eyebrow" id="edit-eyebrow">Hari ini</p>
+          <h2 class="view-title" id="edit-date-title"></h2>
+          <div class="head-meta">
+            <span class="muted" id="stats-line"></span>
+            <button type="button" class="link-btn hidden" id="back-to-today">
+              Kembali ke hari ini
+            </button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="field-label">Tiga hal yang kamu syukuri</div>
+          <p class="field-hint">
+            Tuliskan minimal tiga hal baik hari ini, sekecil apa pun.
+          </p>
+          <div id="gratitude-rows"></div>
+          <button type="button" class="add-row" id="add-row">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            <span>Tambah hal lain</span>
+          </button>
+          <p class="fill-note" id="fill-note"></p>
+
+          <div class="field-label section-gap">Foto momen bahagia</div>
+          <p class="field-hint">
+            Opsional. Sertakan foto pendukung momen bahagia hari ini — foto ini
+            akan muncul kembali di kenanganmu.
+          </p>
+          <div id="photo-area"></div>
+          <input
+            type="file"
+            id="photo-input"
+            accept="image/*"
+            multiple
+            class="hidden"
+          />
+
+          <div class="form-error" id="form-error">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <span id="form-error-text"></span>
+          </div>
+          <div class="save-bar">
+            <button type="button" class="btn btn-primary" id="save-entry">
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span id="save-label">Simpan Catatan</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== TAB KALENDER ====== -->
+      <section class="view" id="view-kalender">
+        <div class="view-head">
+          <p class="eyebrow">Arsip</p>
+          <h2 class="view-title">Kalender Syukur</h2>
+          <p class="muted">
+            Klik tanggal untuk membaca catatan masa lalu. Titik menandai hari
+            yang memiliki catatan.
+          </p>
+        </div>
+        <div class="card">
+          <div class="cal-head">
+            <button
+              type="button"
+              class="icon-btn"
+              id="cal-prev"
+              aria-label="Bulan sebelumnya"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+            <div class="cal-title" id="cal-title"></div>
+            <button
+              type="button"
+              class="icon-btn"
+              id="cal-next"
+              aria-label="Bulan berikutnya"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          </div>
+          <div class="cal-grid dow">
+            <div class="cal-dow">Sen</div>
+            <div class="cal-dow">Sel</div>
+            <div class="cal-dow">Rab</div>
+            <div class="cal-dow">Kam</div>
+            <div class="cal-dow">Jum</div>
+            <div class="cal-dow">Sab</div>
+            <div class="cal-dow">Min</div>
+          </div>
+          <div class="cal-grid" id="cal-days"></div>
+        </div>
+        <div id="day-detail"></div>
+      </section>
+
+      <!-- ====== TAB KENANGAN ====== -->
+      <section class="view" id="view-kenangan">
+        <div class="mem-intro">
+          <div class="mem-illus">
+            <svg
+              width="56"
+              height="56"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path
+                transform="translate(1.6 3.4) scale(0.86)"
+                d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21.2l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"
+              />
+              <line x1="12" y1="1.6" x2="12" y2="4" />
+              <line x1="5.6" y1="5.4" x2="4" y2="3.8" />
+              <line x1="18.4" y1="5.4" x2="20" y2="3.8" />
+            </svg>
+          </div>
+          <h2 class="view-title">Saat hati sedang turun</h2>
+          <p class="muted">
+            Baca ulang jejak kebaikan yang sudah kamu rayakan. Semua itu pernah
+            benar-benar terjadi — dan bisa terjadi lagi.
+          </p>
+        </div>
+        <div id="memory-box"></div>
+      </section>
+
+      <!-- ====== TAB PENGATURAN ====== -->
+      <section class="view" id="view-pengaturan">
+        <div class="view-head">
+          <p class="eyebrow">Pengaturan</p>
+          <h2 class="view-title">Pengingat &amp; Data</h2>
+        </div>
+        <div class="card">
+          <div class="setting-row">
+            <div>
+              <div class="setting-title">Pengingat harian</div>
+              <div class="setting-desc">
+                Muncul setiap hari pada jam yang kamu tentukan, selama halaman
+                Jurnal Syukur masih terbuka.
+              </div>
+            </div>
+            <label class="switch"
+              ><input type="checkbox" id="remind-on" /><span
+                class="track"
+              ></span
+              ><span class="knob"></span
+            ></label>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-title">Jam pengingat</div>
+              <div class="setting-desc">
+                Menggunakan waktu lokal perangkatmu.
+              </div>
+            </div>
+            <input type="time" id="remind-time" value="20:00" />
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-title">Notifikasi browser</div>
+              <div class="setting-desc" id="perm-status"></div>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" id="perm-btn">
+              Minta izin
+            </button>
+          </div>
+          <div class="setting-row last">
+            <div>
+              <div class="setting-title">Uji coba pengingat</div>
+              <div class="setting-desc">
+                Lihat seperti apa bentuk pengingat sebelum mengandalkannya.
+              </div>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" id="test-remind">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+              </svg>
+              <span>Uji coba</span>
+            </button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="setting-title">Data jurnal</div>
+          <p class="setting-desc" id="storage-info"></p>
+          <div class="btn-row">
+            <button type="button" class="btn btn-ghost btn-sm" id="export-data">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              <span>Unduh cadangan</span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-ghost btn-sm btn-danger"
+              id="reset-data"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="3 6 5 6 21 6" />
+                <path
+                  d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                />
+              </svg>
+              <span id="reset-label">Hapus semua data</span>
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script>
+      "use strict";
+
+      /* ============ Penyimpanan & util ============ */
+      const STORE_KEY = "jurnalSyukur.v1";
+      const MONTHS = [
+        "Januari",
+        "Februari",
+        "Maret",
+        "April",
+        "Mei",
+        "Juni",
+        "Juli",
+        "Agustus",
+        "September",
+        "Oktober",
+        "November",
+        "Desember",
+      ];
+      const DAYS = [
+        "Minggu",
+        "Senin",
+        "Selasa",
+        "Rabu",
+        "Kamis",
+        "Jumat",
+        "Sabtu",
+      ];
+      const MIN_ITEMS = 3;
+      const MAX_PHOTOS = 3;
+      const PLACEHOLDERS = [
+        "Contoh: sarapan hangat pagi ini",
+        "Contoh: tertawa lepas bersama teman",
+        "Contoh: badan yang sehat hari ini",
+        "Hal lain yang kamu syukuri",
+      ];
+
+      function defaultState() {
+        return {
+          entries: {},
+          settings: {
+            reminderOn: false,
+            reminderTime: "20:00",
+            lastFired: null,
+          },
+        };
+      }
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORE_KEY);
+          if (!raw) return defaultState();
+          const s = JSON.parse(raw);
+          const d = defaultState();
+          return {
+            entries:
+              s.entries && typeof s.entries === "object" ? s.entries : {},
+            settings: Object.assign(d.settings, s.settings || {}),
+          };
+        } catch (e) {
+          return defaultState();
+        }
+      }
+      let state = loadState();
+      function persist() {
+        try {
+          localStorage.setItem(STORE_KEY, JSON.stringify(state));
+          return true;
+        } catch (e) {
+          showToast(
+            "Penyimpanan browser penuh. Hapus beberapa foto lama atau unduh cadangan data.",
+            "alert",
+            6000,
+          );
+          return false;
+        }
+      }
+      function $(id) {
+        return document.getElementById(id);
+      }
+      function pad(n) {
+        return (n < 10 ? "0" : "") + n;
+      }
+      function isoDate(d) {
+        return (
+          d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate())
+        );
+      }
+      function todayISO() {
+        return isoDate(new Date());
+      }
+      function parseISO(iso) {
+        const p = iso.split("-");
+        return new Date(+p[0], +p[1] - 1, +p[2]);
+      }
+      function fmtLong(iso) {
+        const d = parseISO(iso);
+        return (
+          DAYS[d.getDay()] +
+          ", " +
+          d.getDate() +
+          " " +
+          MONTHS[d.getMonth()] +
+          " " +
+          d.getFullYear()
+        );
+      }
+      function fmtShort(iso) {
+        const d = parseISO(iso);
+        return d.getDate() + " " + MONTHS[d.getMonth()] + " " + d.getFullYear();
+      }
+
+      /* ============ Ikon SVG ============ */
+      const ICONS = {
+        pen: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+        heart:
+          '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21.2l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"/>',
+        bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>',
+        plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+        x: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+        camera:
+          '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
+        check: '<polyline points="20 6 9 17 4 12"/>',
+        alert:
+          '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
+        download:
+          '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+        trash:
+          '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+        shuffle:
+          '<polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/>',
+        leaf: '<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>',
+        heartRay:
+          '<path transform="translate(1.6 3.4) scale(0.86)" d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21.2l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"/><line x1="12" y1="1.6" x2="12" y2="4"/><line x1="5.6" y1="5.4" x2="4" y2="3.8"/><line x1="18.4" y1="5.4" x2="20" y2="3.8"/>',
+      };
+      function icon(name, size) {
+        return (
+          '<svg width="' +
+          size +
+          '" height="' +
+          size +
+          '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+          ICONS[name] +
+          "</svg>"
+        );
+      }
+
+      /* ============ Navigasi tab ============ */
+      const tabBtns = document.querySelectorAll("nav button");
+      function switchTab(name) {
+        tabBtns.forEach((b) =>
+          b.classList.toggle("active", b.dataset.tab === name),
+        );
+        document
+          .querySelectorAll(".view")
+          .forEach((v) =>
+            v.classList.toggle("active", v.id === "view-" + name),
+          );
+        window.scrollTo(0, 0);
+        if (name === "kalender") {
+          renderCalendar();
+          renderDayDetail();
+        }
+        if (name === "kenangan") initMemory();
+      }
+      tabBtns.forEach((b) =>
+        b.addEventListener("click", function () {
+          switchTab(this.dataset.tab);
+        }),
+      );
+
+      /* ============ Editor catatan ============ */
+      let editDate = todayISO();
+      let editPhotos = [];
+
+      function entryFor(iso) {
+        return state.entries[iso] || null;
+      }
+
+      function renderEditor() {
+        $("edit-date-title").textContent = fmtLong(editDate);
+        const isToday = editDate === todayISO();
+        $("edit-eyebrow").textContent = isToday
+          ? "Hari ini"
+          : "Mengedit catatan lain hari";
+        $("back-to-today").classList.toggle("hidden", isToday);
+        const e = entryFor(editDate);
+        const items = e ? e.items.slice() : [];
+        editPhotos = e ? e.photos.slice() : [];
+        while (items.length < MIN_ITEMS) items.push("");
+        renderRows(items);
+        renderPhotos();
+        updateFillNote();
+        updateSaveLabel(false);
+        updateStatsLine();
+        hideError();
+      }
+      $("back-to-today").addEventListener("click", function () {
+        editDate = todayISO();
+        renderEditor();
+      });
+
+      function renderRows(items) {
+        const box = $("gratitude-rows");
+        box.innerHTML = "";
+        items.forEach((v, i) => box.appendChild(makeRow(i, v)));
+        updateRemoveButtons();
+      }
+      function makeRow(idx, val) {
+        const row = document.createElement("div");
+        row.className = "grow";
+        const num = document.createElement("span");
+        num.className = "gnum";
+        num.textContent = idx + 1;
+        const inp = document.createElement("input");
+        inp.type = "text";
+        inp.className = "ginput";
+        inp.maxLength = 160;
+        inp.value = val;
+        inp.placeholder = PLACEHOLDERS[Math.min(idx, PLACEHOLDERS.length - 1)];
+        const rm = document.createElement("button");
+        rm.type = "button";
+        rm.className = "rm";
+        rm.setAttribute("aria-label", "Hapus baris");
+        rm.innerHTML = icon("x", 13);
+        rm.addEventListener("click", function () {
+          row.remove();
+          renumber();
+          updateRemoveButtons();
+          updateFillNote();
+        });
+        row.append(num, inp, rm);
+        return row;
+      }
+      function renumber() {
+        document
+          .querySelectorAll("#gratitude-rows .grow")
+          .forEach(function (r, i) {
+            r.querySelector(".gnum").textContent = i + 1;
+          });
+      }
+      function updateRemoveButtons() {
+        const rows = document.querySelectorAll("#gratitude-rows .grow");
+        rows.forEach(function (r) {
+          r.querySelector(".rm").style.visibility =
+            rows.length > MIN_ITEMS ? "visible" : "hidden";
+        });
+      }
+      $("add-row").addEventListener("click", function () {
+        const box = $("gratitude-rows");
+        if (box.children.length >= 12) return;
+        const row = makeRow(box.children.length, "");
+        box.appendChild(row);
+        updateRemoveButtons();
+        row.querySelector(".ginput").focus();
+      });
+      $("gratitude-rows").addEventListener("input", updateFillNote);
+      function itemValues() {
+        return Array.prototype.map
+          .call(document.querySelectorAll(".ginput"), function (i) {
+            return i.value.trim();
+          })
+          .filter(Boolean);
+      }
+      function updateFillNote() {
+        const n = itemValues().length;
+        const el = $("fill-note");
+        el.textContent =
+          n >= MIN_ITEMS
+            ? "Terisi " + n + "/" + MIN_ITEMS + " — sudah cukup untuk disimpan"
+            : "Terisi " +
+              n +
+              "/" +
+              MIN_ITEMS +
+              " — isi minimal " +
+              MIN_ITEMS +
+              " hal";
+        el.classList.toggle("ok", n >= MIN_ITEMS);
+      }
+
+      /* ============ Foto ============ */
+      function renderPhotos() {
+        const area = $("photo-area");
+        area.innerHTML = "";
+        if (editPhotos.length < MAX_PHOTOS) {
+          const zone = document.createElement("button");
+          zone.type = "button";
+          zone.className = "photo-zone";
+          zone.innerHTML =
+            icon("camera", 22) +
+            '<span class="pz-title">Unggah foto momen bahagia</span>' +
+            '<span class="pz-sub">JPG atau PNG · maksimal ' +
+            MAX_PHOTOS +
+            " foto</span>";
+          zone.addEventListener("click", function () {
+            $("photo-input").click();
+          });
+          area.appendChild(zone);
+        }
+        if (editPhotos.length) {
+          const row = document.createElement("div");
+          row.className = "thumbs";
+          editPhotos.forEach(function (src, i) {
+            const t = document.createElement("div");
+            t.className = "thumb";
+            const img = document.createElement("img");
+            img.src = src;
+            img.alt = "Foto momen tanggal " + editDate;
+            const rm = document.createElement("button");
+            rm.type = "button";
+            rm.setAttribute("aria-label", "Hapus foto");
+            rm.innerHTML = icon("x", 11);
+            rm.addEventListener("click", function () {
+              editPhotos.splice(i, 1);
+              renderPhotos();
+            });
+            t.append(img, rm);
+            row.appendChild(t);
+          });
+          area.appendChild(row);
+        }
+      }
+      function compressImage(file) {
+        return new Promise(function (resolve, reject) {
+          const reader = new FileReader();
+          reader.onload = function () {
+            const img = new Image();
+            img.onload = function () {
+              const MAX = 900;
+              let w = img.width,
+                h = img.height;
+              if (w > MAX || h > MAX) {
+                const r = Math.min(MAX / w, MAX / h);
+                w = Math.round(w * r);
+                h = Math.round(h * r);
+              }
+              const c = document.createElement("canvas");
+              c.width = w;
+              c.height = h;
+              c.getContext("2d").drawImage(img, 0, 0, w, h);
+              resolve(c.toDataURL("image/jpeg", 0.72));
+            };
+            img.onerror = reject;
+            img.src = reader.result;
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+      $("photo-input").addEventListener("change", function (e) {
+        const files = Array.prototype.filter.call(e.target.files, function (f) {
+          return f.type.indexOf("image/") === 0;
+        });
+        e.target.value = "";
+        if (!files.length) return;
+        let added = 0;
+        const next = function (i) {
+          if (i >= files.length || editPhotos.length >= MAX_PHOTOS) {
+            renderPhotos();
+            if (added && added < files.length) {
+              showToast(
+                "Maksimal " +
+                  MAX_PHOTOS +
+                  " foto per hari — sebagian file tidak ditambahkan.",
+                "alert",
+                4000,
+              );
+            }
+            return;
+          }
+          compressImage(files[i])
+            .then(function (dataUrl) {
+              editPhotos.push(dataUrl);
+              added++;
+              next(i + 1);
+            })
+            .catch(function () {
+              next(i + 1);
+            });
+        };
+        next(0);
+      });
+
+      /* ============ Simpan catatan ============ */
+      $("save-entry").addEventListener("click", function () {
+        const items = itemValues();
+        if (items.length < MIN_ITEMS) {
+          showFormError(
+            "Catatan belum bisa disimpan — isi minimal tiga hal yang kamu syukuri (saat ini baru " +
+              items.length +
+              ").",
+          );
+          return;
+        }
+        state.entries[editDate] = {
+          items: items,
+          photos: editPhotos.slice(),
+          updatedAt: new Date().toISOString(),
+        };
+        if (!persist()) return;
+        hideError();
+        updateSaveLabel(true);
+        updateStatsLine();
+        updateStorageInfo();
+        showToast("Catatan syukur tersimpan.", "check", 3500);
+        if (selDate === editDate) renderDayDetail();
+        renderCalendar();
+      });
+      function showFormError(msg) {
+        $("form-error-text").textContent = msg;
+        $("form-error").classList.add("show");
+      }
+      function hideError() {
+        $("form-error").classList.remove("show");
+      }
+      function updateSaveLabel(flash) {
+        const lb = $("save-label");
+        lb.textContent = entryFor(editDate)
+          ? "Perbarui Catatan"
+          : "Simpan Catatan";
+        if (flash) {
+          lb.textContent = "Tersimpan";
+          setTimeout(function () {
+            lb.textContent = entryFor(editDate)
+              ? "Perbarui Catatan"
+              : "Simpan Catatan";
+          }, 1800);
+        }
+      }
+      function countStreak() {
+        if (!Object.keys(state.entries).length) return 0;
+        let streak = 0;
+        const d = new Date();
+        if (!state.entries[isoDate(d)]) {
+          d.setDate(d.getDate() - 1);
+          if (!state.entries[isoDate(d)]) return 0;
+        }
+        while (state.entries[isoDate(d)]) {
+          streak++;
+          d.setDate(d.getDate() - 1);
+        }
+        return streak;
+      }
+      function updateStatsLine() {
+        const n = Object.keys(state.entries).length;
+        const s = countStreak();
+        $("stats-line").textContent =
+          n === 0
+            ? "Belum ada catatan — mulai dari hari ini."
+            : n + " catatan tersimpan · runtunan " + s + " hari berturut-turut";
+      }
+
+      /* ============ Kalender arsip ============ */
+      let calY = new Date().getFullYear();
+      let calM = new Date().getMonth();
+      let selDate = null;
+
+      function renderCalendar() {
+        $("cal-title").textContent = MONTHS[calM] + " " + calY;
+        const first = new Date(calY, calM, 1);
+        const lead = (first.getDay() + 6) % 7; /* Senin di kolom pertama */
+        const dim = new Date(calY, calM + 1, 0).getDate();
+        const box = $("cal-days");
+        box.innerHTML = "";
+        for (let i = 0; i < lead; i++) {
+          const b = document.createElement("div");
+          b.className = "cal-day blank";
+          box.appendChild(b);
+        }
+        const today = todayISO();
+        for (let d = 1; d <= dim; d++) {
+          const iso = calY + "-" + pad(calM + 1) + "-" + pad(d);
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "cal-day";
+          btn.textContent = d;
+          if (iso === today) btn.classList.add("today");
+          if (iso === selDate) btn.classList.add("selected");
+          if (state.entries[iso]) {
+            const dot = document.createElement("span");
+            dot.className = "cal-dot";
+            btn.appendChild(dot);
+          }
+          if (iso > today) btn.disabled = true;
+          btn.addEventListener("click", function () {
+            selDate = iso;
+            renderCalendar();
+            renderDayDetail();
+          });
+          box.appendChild(btn);
+        }
+      }
+      $("cal-prev").addEventListener("click", function () {
+        calM--;
+        if (calM < 0) {
+          calM = 11;
+          calY--;
+        }
+        selDate = null;
+        renderCalendar();
+        renderDayDetail();
+      });
+      $("cal-next").addEventListener("click", function () {
+        calM++;
+        if (calM > 11) {
+          calM = 0;
+          calY++;
+        }
+        selDate = null;
+        renderCalendar();
+        renderDayDetail();
+      });
+
+      function itemLi(text) {
+        const li = document.createElement("li");
+        const ic = document.createElement("span");
+        ic.className = "li-ic";
+        ic.innerHTML = icon("leaf", 15);
+        const s = document.createElement("span");
+        s.className = "li-text";
+        s.textContent = text;
+        li.append(ic, s);
+        return li;
+      }
+      function renderDayDetail() {
+        const box = $("day-detail");
+        box.innerHTML = "";
+        if (!selDate) return;
+        const card = document.createElement("div");
+        card.className = "card day-detail";
+        const eyebrow = document.createElement("p");
+        eyebrow.className = "eyebrow";
+        eyebrow.textContent = "Catatan " + fmtShort(selDate);
+        const h3 = document.createElement("h3");
+        h3.className = "detail-date";
+        h3.textContent = fmtLong(selDate);
+        card.append(eyebrow, h3);
+        const e = state.entries[selDate];
+        if (e) {
+          const ul = document.createElement("ul");
+          ul.className = "item-list";
+          e.items.forEach(function (t) {
+            ul.appendChild(itemLi(t));
+          });
+          card.appendChild(ul);
+          if (e.photos && e.photos.length) {
+            const pr = document.createElement("div");
+            pr.className = "photo-row";
+            e.photos.forEach(function (src) {
+              const im = document.createElement("img");
+              im.src = src;
+              im.alt = "Foto momen " + fmtShort(selDate);
+              pr.appendChild(im);
+            });
+            card.appendChild(pr);
+          }
+          const acts = document.createElement("div");
+          acts.className = "btn-row";
+          const edit = document.createElement("button");
+          edit.type = "button";
+          edit.className = "btn btn-ghost btn-sm";
+          edit.innerHTML = icon("pen", 14) + "<span>Edit catatan ini</span>";
+          edit.addEventListener("click", function () {
+            editDate = selDate;
+            renderEditor();
+            switchTab("tulis");
+          });
+          acts.appendChild(edit);
+          card.appendChild(acts);
+        } else {
+          const p = document.createElement("p");
+          p.className = "muted";
+          p.textContent = "Belum ada catatan syukur untuk tanggal ini.";
+          card.appendChild(p);
+          if (selDate <= todayISO()) {
+            const acts = document.createElement("div");
+            acts.className = "btn-row";
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "btn btn-primary btn-sm";
+            b.innerHTML = icon("pen", 14) + "<span>Tulis catatan</span>";
+            b.addEventListener("click", function () {
+              editDate = selDate;
+              renderEditor();
+              switchTab("tulis");
+            });
+            acts.appendChild(b);
+            card.appendChild(acts);
+          }
+        }
+        box.appendChild(card);
+      }
+
+      /* ============ Kenangan ============ */
+      let memQueue = [];
+      let memIdx = 0;
+      function shuffleArr(a) {
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          const t = a[i];
+          a[i] = a[j];
+          a[j] = t;
+        }
+      }
+      function initMemory() {
+        memQueue = Object.keys(state.entries);
+        shuffleArr(memQueue);
+        memIdx = -1;
+        showNextMemory();
+      }
+      function showNextMemory() {
+        const box = $("memory-box");
+        box.innerHTML = "";
+        if (!memQueue.length) {
+          const c = document.createElement("div");
+          c.className = "card empty";
+          const ic = document.createElement("div");
+          ic.className = "empty-ic";
+          ic.innerHTML = icon("heartRay", 52);
+          const t = document.createElement("p");
+          t.className = "empty-title";
+          t.textContent = "Belum ada kenangan";
+          const d = document.createElement("p");
+          d.className = "empty-text";
+          d.textContent =
+            "Kenangan indah akan terkumpul di sini setelah kamu menulis catatan syukur pertamamu.";
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "btn btn-primary";
+          b.innerHTML = icon("pen", 15) + "<span>Tulis catatan pertama</span>";
+          b.addEventListener("click", function () {
+            switchTab("tulis");
+          });
+          c.append(ic, t, d, b);
+          box.appendChild(c);
+          return;
+        }
+        memIdx = (memIdx + 1) % memQueue.length;
+        const iso = memQueue[memIdx];
+        const e = state.entries[iso];
+        const c = document.createElement("div");
+        c.className = "card mem-card anim";
+        const eb = document.createElement("p");
+        eb.className = "eyebrow";
+        eb.textContent = "Kenangan";
+        const h3 = document.createElement("h3");
+        h3.className = "detail-date";
+        h3.textContent = fmtLong(iso);
+        const ul = document.createElement("ul");
+        ul.className = "item-list";
+        e.items.forEach(function (t) {
+          ul.appendChild(itemLi(t));
+        });
+        c.append(eb, h3, ul);
+        if (e.photos && e.photos.length) {
+          const pr = document.createElement("div");
+          pr.className = "photo-row";
+          e.photos.forEach(function (src) {
+            const im = document.createElement("img");
+            im.src = src;
+            im.alt = "Foto momen " + fmtShort(iso);
+            pr.appendChild(im);
+          });
+          c.appendChild(pr);
+        }
+        const acts = document.createElement("div");
+        acts.className = "mem-actions";
+        const next = document.createElement("button");
+        next.type = "button";
+        next.className = "btn btn-primary";
+        next.innerHTML = icon("shuffle", 15) + "<span>Kenangan lain</span>";
+        next.addEventListener("click", showNextMemory);
+        const write = document.createElement("button");
+        write.type = "button";
+        write.className = "btn btn-ghost";
+        write.innerHTML = icon("pen", 15) + "<span>Tulis hari ini</span>";
+        write.addEventListener("click", function () {
+          editDate = todayISO();
+          renderEditor();
+          switchTab("tulis");
+        });
+        acts.append(next, write);
+        c.appendChild(acts);
+        box.appendChild(c);
+      }
+
+      /* ============ Pengingat harian ============ */
+      function tickReminder() {
+        if (!state.settings.reminderOn) return;
+        const now = new Date();
+        const hhmm = pad(now.getHours()) + ":" + pad(now.getMinutes());
+        if (
+          hhmm === state.settings.reminderTime &&
+          state.settings.lastFired !== todayISO()
+        ) {
+          state.settings.lastFired = todayISO();
+          persist();
+          fireReminder();
+        }
+      }
+      function fireReminder() {
+        showToast(
+          "Saatnya menulis jurnal — ceritakan tiga hal yang kamu syukuri hari ini.",
+          "bell",
+          0,
+          "Tulis sekarang",
+          function () {
+            switchTab("tulis");
+          },
+        );
+        if ("Notification" in window && Notification.permission === "granted") {
+          try {
+            new Notification("Jurnal Syukur", {
+              body: "Saatnya menulis tiga hal yang kamu syukuri hari ini.",
+              tag: "jurnal-syukur",
+            });
+          } catch (e) {
+            /* abaikan */
+          }
+        }
+      }
+      setInterval(tickReminder, 20000);
+
+      $("remind-on").addEventListener("change", function (e) {
+        state.settings.reminderOn = e.target.checked;
+        persist();
+        if (
+          e.target.checked &&
+          "Notification" in window &&
+          Notification.permission === "default"
+        ) {
+          Notification.requestPermission().then(updatePermStatus);
+        }
+        showToast(
+          e.target.checked
+            ? "Pengingat harian aktif pada pukul " +
+                state.settings.reminderTime +
+                "."
+            : "Pengingat harian dimatikan.",
+          "bell",
+          4000,
+        );
+      });
+      $("remind-time").addEventListener("change", function (e) {
+        if (!e.target.value) return;
+        state.settings.reminderTime = e.target.value;
+        persist();
+        showToast(
+          "Jam pengingat diatur ke " + e.target.value + ".",
+          "bell",
+          3000,
+        );
+      });
+      $("perm-btn").addEventListener("click", function () {
+        if (!("Notification" in window)) return;
+        Notification.requestPermission().then(updatePermStatus);
+      });
+      $("test-remind").addEventListener("click", fireReminder);
+      function updatePermStatus() {
+        const el = $("perm-status");
+        const btn = $("perm-btn");
+        if (!("Notification" in window)) {
+          el.textContent =
+            "Browser ini tidak mendukung notifikasi — pengingat tetap muncul di dalam aplikasi.";
+          btn.classList.add("hidden");
+          return;
+        }
+        if (Notification.permission === "granted") {
+          el.textContent =
+            "Diizinkan — pengingat juga tampil sebagai notifikasi browser.";
+          btn.classList.add("hidden");
+        } else if (Notification.permission === "denied") {
+          el.textContent =
+            "Ditolak — izinkan dari pengaturan situs browser agar notifikasi bisa muncul.";
+          btn.classList.add("hidden");
+        } else {
+          el.textContent =
+            "Belum diizinkan — minta izin agar pengingat bisa muncul sebagai notifikasi browser.";
+          btn.classList.remove("hidden");
+        }
+      }
+
+      /* ============ Data ============ */
+      function updateStorageInfo() {
+        const n = Object.keys(state.entries).length;
+        const photos = Object.keys(state.entries).reduce(function (a, k) {
+          return (
+            a + (state.entries[k].photos ? state.entries[k].photos.length : 0)
+          );
+        }, 0);
+        let kb = 0;
+        try {
+          kb = Math.round(
+            (localStorage.getItem(STORE_KEY) || "").length / 1024,
+          );
+        } catch (e) {}
+        $("storage-info").textContent =
+          n +
+          " catatan · " +
+          photos +
+          " foto · sekitar " +
+          kb +
+          " KB di penyimpanan lokal browser.";
+      }
+      $("export-data").addEventListener("click", function () {
+        const blob = new Blob([JSON.stringify(state, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "jurnal-syukur-" + todayISO() + ".json";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () {
+          URL.revokeObjectURL(url);
+        }, 1000);
+        showToast("Cadangan data diunduh.", "download", 3000);
+      });
+      let resetArmed = false;
+      let resetTimer = null;
+      $("reset-data").addEventListener("click", function () {
+        const btn = $("reset-data");
+        const lb = $("reset-label");
+        if (!resetArmed) {
+          resetArmed = true;
+          lb.textContent = "Klik lagi untuk menghapus";
+          btn.classList.add("armed");
+          resetTimer = setTimeout(function () {
+            resetArmed = false;
+            lb.textContent = "Hapus semua data";
+            btn.classList.remove("armed");
+          }, 4000);
+          return;
+        }
+        clearTimeout(resetTimer);
+        resetArmed = false;
+        lb.textContent = "Hapus semua data";
+        btn.classList.remove("armed");
+        try {
+          localStorage.removeItem(STORE_KEY);
+        } catch (e) {}
+        state = defaultState();
+        selDate = null;
+        editDate = todayISO();
+        $("remind-on").checked = false;
+        $("remind-time").value = "20:00";
+        renderEditor();
+        renderCalendar();
+        renderDayDetail();
+        updateStorageInfo();
+        showToast("Semua data jurnal telah dihapus.", "trash", 3500);
+      });
+
+      /* ============ Toast ============ */
+      let toastTimer = null;
+      function showToast(msg, ic, ms, actionLabel, actionFn) {
+        const t = $("toast");
+        t.innerHTML = "";
+        const i = document.createElement("span");
+        i.className = "toast-ic";
+        i.innerHTML = icon(ic || "bell", 18);
+        const m = document.createElement("span");
+        m.className = "toast-msg";
+        m.textContent = msg;
+        t.append(i, m);
+        if (actionLabel) {
+          const a = document.createElement("button");
+          a.type = "button";
+          a.className = "btn btn-primary btn-sm";
+          a.textContent = actionLabel;
+          a.addEventListener("click", function () {
+            t.classList.remove("show");
+            if (actionFn) actionFn();
+          });
+          t.appendChild(a);
+        }
+        const x = document.createElement("button");
+        x.type = "button";
+        x.className = "toast-close";
+        x.setAttribute("aria-label", "Tutup");
+        x.innerHTML = icon("x", 14);
+        x.addEventListener("click", function () {
+          t.classList.remove("show");
+        });
+        t.appendChild(x);
+        t.classList.add("show");
+        clearTimeout(toastTimer);
+        if (ms)
+          toastTimer = setTimeout(function () {
+            t.classList.remove("show");
+          }, ms);
+      }
+
+      /* ============ Inisialisasi ============ */
+      $("remind-on").checked = state.settings.reminderOn;
+      $("remind-time").value = state.settings.reminderTime;
+      renderEditor();
+      renderCalendar();
+      renderDayDetail();
+      updatePermStatus();
+      updateStorageInfo();
+      tickReminder();
+    </script>
+  </body>
+</html>

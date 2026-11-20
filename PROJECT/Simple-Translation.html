@@ -1,0 +1,953 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#f6f7f4" />
+    <title>Simple Translation</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f6f7f4;
+        --panel: #fff;
+        --ink: #202721;
+        --muted: #6b746d;
+        --line: #e3e8e1;
+        --accent: #245b45;
+        --accent-ink: #fff;
+        --soft: #edf3ee;
+        --danger: #a63f36;
+        --shadow: 0 12px 34px rgba(27, 48, 35, 0.07);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #121713;
+          --panel: #1b221d;
+          --ink: #edf3ed;
+          --muted: #a2afa5;
+          --line: #303b33;
+          --accent: #9bd0ad;
+          --accent-ink: #102017;
+          --soft: #26362b;
+          --danger: #ff9b91;
+          --shadow: 0 12px 34px rgba(0, 0, 0, 0.2);
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          16px/1.5 ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        min-height: 100svh;
+      }
+      button,
+      select,
+      textarea,
+      input {
+        font: inherit;
+      }
+      button,
+      select {
+        min-height: 46px;
+      }
+      button {
+        cursor: pointer;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        padding: 10px 15px;
+        background: var(--panel);
+        color: var(--ink);
+        font-weight: 650;
+        transition:
+          transform 0.12s,
+          border-color 0.12s;
+      }
+      button:active {
+        transform: scale(0.98);
+      }
+      button:focus-visible,
+      select:focus-visible,
+      textarea:focus-visible,
+      input:focus-visible {
+        outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent);
+        outline-offset: 2px;
+      }
+      .primary {
+        background: var(--accent);
+        color: var(--accent-ink);
+        border-color: var(--accent);
+      }
+      .quiet {
+        background: transparent;
+      }
+      .app {
+        max-width: 940px;
+        margin: auto;
+        padding: calc(22px + env(safe-area-inset-top)) 18px
+          calc(32px + env(safe-area-inset-bottom));
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 28px;
+      }
+      .brand {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      .logo {
+        width: 44px;
+        height: 44px;
+        border-radius: 15px;
+        background: var(--soft);
+        display: grid;
+        place-items: center;
+        color: var(--accent);
+        font-size: 22px;
+        font-weight: 800;
+      }
+      .eyebrow {
+        font-size: 12px;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 750;
+      }
+      .top h1 {
+        font-size: clamp(23px, 4vw, 30px);
+        letter-spacing: -0.04em;
+        line-height: 1.15;
+        margin: 2px 0 0;
+      }
+      .pill {
+        font-size: 12px;
+        color: var(--muted);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 7px 10px;
+        white-space: nowrap;
+      }
+      .intro {
+        margin: 0 0 22px;
+      }
+      .intro h2 {
+        font-size: clamp(25px, 5vw, 38px);
+        line-height: 1.12;
+        letter-spacing: -0.045em;
+        margin: 0 0 10px;
+        max-width: 600px;
+      }
+      .intro p {
+        color: var(--muted);
+        margin: 0;
+        max-width: 620px;
+      }
+      .translator {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        padding: 16px;
+      }
+      .language-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 48px minmax(0, 1fr);
+        align-items: center;
+        gap: 9px;
+        margin-bottom: 14px;
+      }
+      .language-row select {
+        width: 100%;
+        min-width: 0;
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 0 10px;
+        color: var(--ink);
+      }
+      .swap {
+        padding: 0;
+        display: grid;
+        place-items: center;
+        font-size: 21px;
+      }
+      .editors {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .pane {
+        min-width: 0;
+        border: 1px solid var(--line);
+        border-radius: 17px;
+        padding: 14px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        min-height: 220px;
+      }
+      .pane-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .pane-head label,
+      .pane-head .label {
+        font-size: 13px;
+        font-weight: 750;
+        color: var(--muted);
+      }
+      .count {
+        font-size: 12px;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+      textarea {
+        resize: vertical;
+        width: 100%;
+        min-height: 140px;
+        flex: 1;
+        border: 0;
+        background: transparent;
+        color: var(--ink);
+        padding: 0;
+        outline: none;
+        line-height: 1.55;
+      }
+      textarea::placeholder {
+        color: var(--muted);
+        opacity: 0.8;
+      }
+      textarea:focus-visible {
+        outline: none;
+      }
+      .result {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        min-height: 140px;
+        flex: 1;
+        line-height: 1.6;
+      }
+      .result.empty {
+        color: var(--muted);
+      }
+      .pane-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .mini {
+        font-size: 13px;
+        min-height: 36px;
+        padding: 6px 10px;
+        border-radius: 10px;
+      }
+      .actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-top: 15px;
+      }
+      .status {
+        font-size: 13px;
+        color: var(--muted);
+        min-height: 20px;
+      }
+      .status.error {
+        color: var(--danger);
+      }
+      .status.success {
+        color: var(--accent);
+      }
+      .translate {
+        min-width: 145px;
+        min-height: 50px;
+      }
+      .translate[disabled] {
+        opacity: 0.6;
+        cursor: wait;
+      }
+      .below {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 16px;
+        margin-top: 18px;
+      }
+      .info-card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 17px;
+      }
+      .card-title {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: center;
+        margin: 0 0 10px;
+        font-size: 15px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .history {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .history-item {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+      }
+      .history-copy {
+        min-width: 0;
+        flex: 1;
+        text-align: left;
+        border: 0;
+        padding: 0;
+        background: transparent;
+        min-height: 0;
+        font-weight: 400;
+      }
+      .history-copy strong,
+      .history-copy span {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .history-copy strong {
+        font-size: 13px;
+      }
+      .history-copy span {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .history-item .mini {
+        flex-shrink: 0;
+      }
+      .empty-history {
+        font-size: 13px;
+        color: var(--muted);
+        padding: 7px 0;
+      }
+      .provider-line {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        margin-bottom: 9px;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #58a879;
+      }
+      .note {
+        font-size: 12px;
+        color: var(--muted);
+        margin: 10px 0 0;
+        line-height: 1.5;
+      }
+      .footer {
+        font-size: 12px;
+        color: var(--muted);
+        text-align: center;
+        margin-top: 22px;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      @media (max-width: 620px) {
+        .app {
+          padding-left: 14px;
+          padding-right: 14px;
+        }
+        .top {
+          margin-bottom: 25px;
+        }
+        .intro {
+          margin-bottom: 18px;
+        }
+        .translator {
+          padding: 12px;
+          border-radius: 20px;
+        }
+        .editors {
+          grid-template-columns: 1fr;
+        }
+        .pane {
+          min-height: 195px;
+        }
+        .pane textarea,
+        .result {
+          min-height: 125px;
+        }
+        .below {
+          grid-template-columns: 1fr;
+        }
+        .pill {
+          display: none;
+        }
+        .actions {
+          align-items: stretch;
+        }
+        .actions .status {
+          align-self: center;
+          flex: 1;
+        }
+        .translate {
+          min-width: 125px;
+        }
+        .language-row {
+          gap: 7px;
+        }
+        .language-row select {
+          font-size: 14px;
+          padding: 0 7px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+          scroll-behavior: auto !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <header class="top">
+        <div class="brand">
+          <div class="logo" aria-hidden="true">文</div>
+          <div>
+            <div class="eyebrow">Simple tools</div>
+            <h1>Simple - Translation</h1>
+          </div>
+        </div>
+        <div class="pill">Private by design · No account</div>
+      </header>
+      <section class="intro">
+        <h2>Find the right words<br />in any language.</h2>
+        <p>
+          A clear, simple space to translate a thought, a message, or a whole
+          paragraph.
+        </p>
+      </section>
+      <section class="translator" aria-label="Text translator">
+        <div class="language-row">
+          <label
+            ><span class="sr-only">Translate from</span
+            ><select id="sourceLang" aria-label="Translate from">
+              <option value="auto">Detect language</option>
+            </select></label
+          >
+          <button
+            class="swap"
+            id="swapBtn"
+            aria-label="Swap languages"
+            title="Swap languages"
+          >
+            ⇄
+          </button>
+          <label
+            ><span class="sr-only">Translate to</span
+            ><select id="targetLang" aria-label="Translate to"></select
+          ></label>
+        </div>
+        <div class="editors">
+          <section class="pane">
+            <div class="pane-head">
+              <label for="sourceText">Your text</label
+              ><span class="count" id="charCount">0 / 5,000</span>
+            </div>
+            <textarea
+              id="sourceText"
+              maxlength="5000"
+              placeholder="Write or paste something to translate…"
+              spellcheck="true"
+            ></textarea>
+            <div class="pane-actions">
+              <button class="mini quiet" id="clearBtn" type="button">
+                Clear text</button
+              ><span class="muted">Up to 5,000 characters</span>
+            </div>
+          </section>
+          <section class="pane">
+            <div class="pane-head">
+              <span class="label">Translation</span
+              ><span class="count" id="resultLang">Indonesian</span>
+            </div>
+            <div
+              class="result empty"
+              id="result"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              Your translation will appear here.
+            </div>
+            <div class="pane-actions">
+              <span class="muted" id="resultMeta">Ready when you are</span
+              ><button class="mini" id="copyBtn" type="button" disabled>
+                Copy result
+              </button>
+            </div>
+          </section>
+        </div>
+        <div class="actions">
+          <div class="status" id="status" role="status" aria-live="polite">
+            Enter text to get started.
+          </div>
+          <button class="primary translate" id="translateBtn" type="button">
+            Translate <span aria-hidden="true">↗</span>
+          </button>
+        </div>
+      </section>
+      <section class="below">
+        <div class="info-card">
+          <h3 class="card-title">
+            Recent translations
+            <button class="mini quiet" id="clearHistoryBtn" type="button">
+              Clear history
+            </button>
+          </h3>
+          <div class="history" id="history">
+            <div class="empty-history">
+              Your recent translations will show up here.
+            </div>
+          </div>
+        </div>
+        <aside class="info-card">
+          <h3 class="card-title">Translation service</h3>
+          <div class="provider-line">
+            <span class="dot" aria-hidden="true"></span
+            ><strong>MyMemory Translation API</strong>
+          </div>
+          <p class="muted">
+            Translations are requested from an external service when you press
+            Translate. Your text is sent to the provider to process your
+            request.
+          </p>
+          <p class="note">
+            If the service is unavailable, a small built-in demo dictionary can
+            help you test the interface. Demo results are clearly labeled and
+            are not full translations.
+          </p>
+        </aside>
+      </section>
+      <footer class="footer">
+        Simple - Translation · Your text stays in this browser history unless
+        you clear it.
+      </footer>
+    </main>
+    <script>
+      (() => {
+        "use strict";
+        const $ = (id) => document.getElementById(id);
+        const LANGS = [
+          ["en", "English"],
+          ["id", "Indonesian"],
+          ["es", "Spanish"],
+          ["fr", "French"],
+          ["de", "German"],
+          ["it", "Italian"],
+          ["pt", "Portuguese"],
+          ["nl", "Dutch"],
+          ["ru", "Russian"],
+          ["ja", "Japanese"],
+          ["ko", "Korean"],
+          ["zh-CN", "Chinese (Simplified)"],
+          ["ar", "Arabic"],
+          ["hi", "Hindi"],
+          ["th", "Thai"],
+          ["vi", "Vietnamese"],
+          ["tr", "Turkish"],
+          ["pl", "Polish"],
+          ["uk", "Ukrainian"],
+          ["sv", "Swedish"],
+          ["ms", "Malay"],
+        ];
+        const MAX = 5000,
+          HISTORY_KEY = "simple-translation-history-v1";
+        let busy = false,
+          requestId = 0,
+          history = loadHistory(),
+          lastTranslation = "";
+        const langName = (code) =>
+          LANGS.find((x) => x[0] === code)?.[1] || code;
+        function fillLanguages() {
+          const src = $("sourceLang"),
+            dst = $("targetLang");
+          LANGS.forEach(([code, name]) => {
+            const a = new Option(name, code);
+            src.add(a);
+            const b = new Option(name, code);
+            dst.add(b);
+          });
+          src.value = "auto";
+          dst.value = "id";
+          $("resultLang").textContent = langName(dst.value);
+        }
+        function loadHistory() {
+          try {
+            const v = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+            return Array.isArray(v)
+              ? v
+                  .filter(
+                    (x) =>
+                      x &&
+                      typeof x.source === "string" &&
+                      typeof x.result === "string" &&
+                      typeof x.from === "string" &&
+                      typeof x.to === "string",
+                  )
+                  .slice(0, 8)
+              : [];
+          } catch {
+            return [];
+          }
+        }
+        function persistHistory() {
+          try {
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+          } catch {}
+        }
+        function setStatus(text, kind = "") {
+          const el = $("status");
+          el.textContent = text;
+          el.className = "status" + (kind ? " " + kind : "");
+        }
+        function setResult(text, empty = false) {
+          const el = $("result");
+          el.textContent = text;
+          el.classList.toggle("empty", empty);
+          $("copyBtn").disabled = empty || !text;
+          lastTranslation = empty ? "" : text;
+        }
+        function setBusy(on) {
+          busy = on;
+          $("translateBtn").disabled = on;
+          $("translateBtn").innerHTML = on
+            ? "Translating…"
+            : 'Translate <span aria-hidden="true">↗</span>';
+        }
+        function updateCount() {
+          $("charCount").textContent =
+            `${$("sourceText").value.length.toLocaleString()} / ${MAX.toLocaleString()}`;
+        }
+        function renderHistory() {
+          const root = $("history");
+          root.replaceChildren();
+          if (!history.length) {
+            const p = document.createElement("div");
+            p.className = "empty-history";
+            p.textContent = "Your recent translations will show up here.";
+            root.append(p);
+            return;
+          }
+          history.forEach((item, index) => {
+            const row = document.createElement("div");
+            row.className = "history-item";
+            const b = document.createElement("button");
+            b.className = "history-copy";
+            b.type = "button";
+            b.setAttribute("aria-label", "Load previous translation");
+            const strong = document.createElement("strong");
+            strong.textContent = item.source;
+            const span = document.createElement("span");
+            span.textContent = `${item.from === "auto" ? "Detected language" : langName(item.from)} → ${langName(item.to)}`;
+            b.append(strong, span);
+            b.addEventListener("click", () => {
+              $("sourceText").value = item.source;
+              $("sourceLang").value = item.from;
+              $("targetLang").value = item.to;
+              $("resultLang").textContent = langName(item.to);
+              updateCount();
+              setResult(item.result);
+              $("resultMeta").textContent = item.demo
+                ? "Demo result"
+                : "Previous result";
+              setStatus("Loaded a recent translation.", "success");
+            });
+            const copy = document.createElement("button");
+            copy.className = "mini";
+            copy.type = "button";
+            copy.textContent = "Copy";
+            copy.addEventListener("click", () => copyText(item.result));
+            row.append(b, copy);
+            root.append(row);
+          });
+        }
+        const DEMO = {
+          "en|id": {
+            hello: "halo",
+            "hello!": "halo!",
+            "good morning": "selamat pagi",
+            "good afternoon": "selamat siang",
+            "good evening": "selamat malam",
+            "thank you": "terima kasih",
+            please: "silakan",
+            "how are you?": "apa kabar?",
+            goodbye: "sampai jumpa",
+            yes: "ya",
+            no: "tidak",
+            "i love you": "aku cinta kamu",
+            "where is the bathroom?": "di mana kamar mandi?",
+          },
+          "id|en": {
+            halo: "hello",
+            "selamat pagi": "good morning",
+            "selamat siang": "good afternoon",
+            "selamat malam": "good evening",
+            "terima kasih": "thank you",
+            silakan: "please",
+            "apa kabar?": "how are you?",
+            "sampai jumpa": "goodbye",
+            ya: "yes",
+            tidak: "no",
+            "aku cinta kamu": "i love you",
+          },
+        };
+        function demoTranslate(text, from, to) {
+          const dict = DEMO[`${from}|${to}`];
+          if (!dict) return null;
+          const normalized = text.trim().toLowerCase();
+          return dict[normalized] || null;
+        }
+        async function translateViaMyMemory(text, from, to, signal) {
+          const pair = `${from === "auto" ? "autodetect" : from}|${to}`;
+          const url = new URL("https://api.mymemory.translated.net/get");
+          url.searchParams.set("q", text);
+          url.searchParams.set("langpair", pair);
+          const response = await fetch(url, {
+            signal,
+            headers: { Accept: "application/json" },
+          });
+          if (!response.ok)
+            throw new Error(
+              response.status === 429
+                ? "The translation service is busy. Please try again shortly."
+                : `Translation service returned HTTP ${response.status}.`,
+            );
+          const data = await response.json();
+          if (data.responseStatus !== 200 || !data.responseData?.translatedText)
+            throw new Error(
+              data.responseDetails ||
+                "No translation was returned. Try another language pair or shorter text.",
+            );
+          const translated = data.responseData.translatedText;
+          const decoded = document.createElement("textarea");
+          decoded.innerHTML = translated;
+          return decoded.value;
+        }
+        async function handleTranslate() {
+          if (busy) return;
+          const text = $("sourceText").value.trim(),
+            from = $("sourceLang").value,
+            to = $("targetLang").value;
+          if (!text) {
+            setResult("Your translation will appear here.", true);
+            setStatus("Enter some text before translating.", "error");
+            $("sourceText").focus();
+            return;
+          }
+          if (text.length > MAX) {
+            setStatus(
+              `Please keep your text under ${MAX} characters.`,
+              "error",
+            );
+            return;
+          }
+          if (from === to) {
+            setResult(text);
+            $("resultMeta").textContent = "Same language";
+            setStatus(
+              "Source and target languages are the same. Text copied as-is.",
+              "success",
+            );
+            return;
+          }
+          const id = ++requestId,
+            controller = new AbortController();
+          setBusy(true);
+          setStatus("Connecting to translation service…");
+          setResult("Translating your text…", true);
+          $("resultMeta").textContent = "Please wait";
+          const abortTimer = setTimeout(() => controller.abort(), 18000);
+          try {
+            const translated = await translateViaMyMemory(
+              text,
+              from,
+              to,
+              controller.signal,
+            );
+            if (id !== requestId) return;
+            if (!translated.trim())
+              throw new Error(
+                "The service returned an empty translation. Please try again.",
+              );
+            setResult(translated);
+            $("resultMeta").textContent = "MyMemory API";
+            setStatus("Translation complete.", "success");
+            history.unshift({
+              source: text,
+              result: translated,
+              from,
+              to,
+              at: Date.now(),
+              demo: false,
+            });
+            history = history.slice(0, 8);
+            persistHistory();
+            renderHistory();
+          } catch (error) {
+            if (id !== requestId) return;
+            const demo = from === "auto" ? null : demoTranslate(text, from, to);
+            if (demo) {
+              setResult(demo);
+              $("resultMeta").textContent = "Built-in demo · limited";
+              setStatus(
+                "Demo translation shown because the online service was unavailable.",
+                "error",
+              );
+              history.unshift({
+                source: text,
+                result: demo,
+                from,
+                to,
+                at: Date.now(),
+                demo: true,
+              });
+              history = history.slice(0, 8);
+              persistHistory();
+              renderHistory();
+            } else {
+              setResult(
+                "Translation could not be completed. Check your connection and try again.",
+                true,
+              );
+              setStatus(
+                error.name === "AbortError"
+                  ? "The request timed out. Please try again."
+                  : error.message || "Something went wrong.",
+                "error",
+              );
+              $("resultMeta").textContent = "No result";
+            }
+          } finally {
+            clearTimeout(abortTimer);
+            if (id === requestId) setBusy(false);
+          }
+        }
+        async function copyText(text) {
+          if (!text) return;
+          try {
+            await navigator.clipboard.writeText(text);
+            setStatus("Translation copied to clipboard.", "success");
+          } catch {
+            const el = document.createElement("textarea");
+            el.value = text;
+            el.style.position = "fixed";
+            el.style.opacity = "0";
+            document.body.append(el);
+            el.select();
+            const ok = document.execCommand("copy");
+            el.remove();
+            setStatus(
+              ok
+                ? "Translation copied to clipboard."
+                : "Copy is not available in this browser.",
+              "" + (ok ? "success" : "error"),
+            );
+          }
+        }
+        $("sourceText").addEventListener("input", updateCount);
+        $("sourceText").addEventListener("keydown", (e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+            e.preventDefault();
+            handleTranslate();
+          }
+        });
+        $("translateBtn").addEventListener("click", handleTranslate);
+        $("copyBtn").addEventListener("click", () => copyText(lastTranslation));
+        $("clearBtn").addEventListener("click", () => {
+          $("sourceText").value = "";
+          updateCount();
+          setResult("Your translation will appear here.", true);
+          $("resultMeta").textContent = "Ready when you are";
+          setStatus("Text cleared.");
+          $("sourceText").focus();
+        });
+        $("swapBtn").addEventListener("click", () => {
+          const from = $("sourceLang").value,
+            to = $("targetLang").value;
+          if (from === "auto") {
+            setStatus("Choose a source language before swapping.", "error");
+            return;
+          }
+          $("sourceLang").value = to;
+          $("targetLang").value = from;
+          const result = $("result").textContent;
+          if (lastTranslation) {
+            $("sourceText").value = result;
+            setResult("Your translation will appear here.", true);
+            $("resultMeta").textContent = "Ready when you are";
+          }
+          updateCount();
+          $("resultLang").textContent = langName($("targetLang").value);
+          setStatus("Languages swapped.", "success");
+        });
+        $("sourceLang").addEventListener("change", () =>
+          setStatus("Source language updated."),
+        );
+        $("targetLang").addEventListener("change", () => {
+          $("resultLang").textContent = langName($("targetLang").value);
+          setStatus("Target language updated.");
+        });
+        $("clearHistoryBtn").addEventListener("click", () => {
+          history = [];
+          persistHistory();
+          renderHistory();
+          setStatus("Recent translations cleared.", "success");
+        });
+        fillLanguages();
+        updateCount();
+        renderHistory();
+      })();
+    </script>
+  </body>
+</html>

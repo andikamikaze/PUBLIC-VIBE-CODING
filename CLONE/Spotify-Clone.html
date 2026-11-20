@@ -1,0 +1,3157 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#000000" />
+    <title>Spotify — Music for everyone</title>
+    <style>
+      :root {
+        --bg: #000;
+        --panel: #121212;
+        --panel-soft: #181818;
+        --panel-hover: #1a1a1a;
+        --panel-highlight: #282828;
+        --text: #fff;
+        --muted: #a7a7a7;
+        --muted-2: #b3b3b3;
+        --green: #1db954;
+        --green-bright: #1ed760;
+        --sidebar-width: 280px;
+        --player-height: 90px;
+        --phone-width: 375px;
+        --phone-height: 780px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: #000;
+        color: var(--text);
+        font-family:
+          Circular,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      body {
+        overflow: hidden;
+        height: 100vh;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      button {
+        color: inherit;
+        border: 0;
+        cursor: pointer;
+        background: transparent;
+      }
+      button:focus-visible,
+      input:focus-visible {
+        outline: 2px solid var(--green);
+        outline-offset: 2px;
+      }
+
+      /* ============ VIEW SWITCHER ============ */
+      .view-switcher {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        display: flex;
+        gap: 8px;
+        background: rgba(24, 24, 24, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        padding: 6px;
+        border-radius: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      }
+      .view-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 24px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--muted);
+        transition: all 0.25s ease;
+      }
+      .view-btn:hover {
+        color: #fff;
+      }
+      .view-btn.active {
+        background: var(--green);
+        color: #000;
+      }
+      .view-btn svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      /* ============ DESKTOP VIEW ============ */
+      .desktop-view {
+        height: 100vh;
+        padding: 8px 8px 0;
+        display: grid;
+        grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr) var(--player-height);
+        gap: 8px;
+        transition: opacity 0.4s ease;
+      }
+      body.mobile-mode .desktop-view {
+        display: none;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        grid-column: 1;
+        grid-row: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .side-top,
+      .library {
+        background: var(--panel);
+        border-radius: 8px;
+      }
+      .side-top {
+        padding: 16px 12px 12px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 12px 20px;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+      }
+      .brand-mark {
+        width: 28px;
+        height: 28px;
+        display: inline-grid;
+        place-items: center;
+      }
+      .brand-mark svg {
+        width: 24px;
+        height: 24px;
+        color: #fff;
+      }
+      .nav-link {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 8px 12px;
+        color: var(--muted);
+        text-align: left;
+        font-size: 15px;
+        font-weight: 700;
+        border-radius: 4px;
+        transition: color 0.16s;
+      }
+      .nav-link + .nav-link {
+        margin-top: 4px;
+      }
+      .nav-link:hover,
+      .nav-link.active {
+        color: #fff;
+      }
+      .nav-link svg {
+        width: 24px;
+        height: 24px;
+        flex: 0 0 auto;
+      }
+
+      .library {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 8px;
+        overflow: hidden;
+      }
+      .library-head {
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .library-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--muted);
+        font-size: 15px;
+        font-weight: 700;
+        padding: 4px;
+      }
+      .library-title:hover {
+        color: #fff;
+      }
+      .library-title svg {
+        width: 24px;
+        height: 24px;
+      }
+      .library-actions {
+        display: flex;
+        gap: 4px;
+      }
+      .icon-button {
+        display: inline-grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        color: var(--muted);
+        border-radius: 50%;
+        transition:
+          background 0.15s,
+          color 0.15s;
+      }
+      .icon-button:hover {
+        color: #fff;
+        background: #2a2a2a;
+      }
+      .icon-button svg {
+        width: 18px;
+        height: 18px;
+      }
+      .filter-row {
+        display: flex;
+        gap: 8px;
+        padding: 8px 8px;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .filter-row::-webkit-scrollbar {
+        display: none;
+      }
+      .filter-chip {
+        padding: 7px 12px;
+        border-radius: 20px;
+        background: #232323;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 500;
+        white-space: nowrap;
+        transition: background 0.15s;
+      }
+      .filter-chip:hover {
+        background: #2a2a2a;
+      }
+      .filter-chip.active {
+        background: #fff;
+        color: #000;
+      }
+      .library-tools {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 4px 12px 12px;
+      }
+      .library-tools button {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .library-tools button:hover {
+        color: white;
+      }
+      .library-tools .sort {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .library-scroll {
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: #555 transparent;
+      }
+      .library-scroll::-webkit-scrollbar {
+        width: 8px;
+      }
+      .library-scroll::-webkit-scrollbar-thumb {
+        background: #555;
+        border-radius: 4px;
+      }
+      .library-scroll::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .library-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .library-item:hover {
+        background: var(--panel-highlight);
+      }
+      .library-item img,
+      .mini-art {
+        width: 48px;
+        height: 48px;
+        border-radius: 4px;
+        object-fit: cover;
+        flex: 0 0 auto;
+      }
+      .mini-art.circle {
+        border-radius: 50%;
+      }
+      .mini-art.liked {
+        background: linear-gradient(135deg, #450af5, #8e8ee8);
+        display: grid;
+        place-items: center;
+      }
+      .mini-art.liked svg {
+        width: 22px;
+        color: #fff;
+      }
+      .library-item strong {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 4px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .library-item small {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .library-item .green-dot {
+        color: var(--green);
+        margin-right: 4px;
+      }
+
+      /* Main */
+      .main {
+        grid-column: 2;
+        grid-row: 1;
+        min-width: 0;
+        min-height: 0;
+        background: var(--panel);
+        border-radius: 8px;
+        position: relative;
+        overflow: hidden;
+        isolation: isolate;
+      }
+      .main-bg {
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background: linear-gradient(
+          180deg,
+          #4b2d5e 0%,
+          #2a1a35 25%,
+          var(--panel) 55%
+        );
+        transition: background 0.6s ease;
+      }
+      .topbar {
+        height: 64px;
+        padding: 0 24px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        background: transparent;
+      }
+      .top-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
+      .history-controls {
+        display: flex;
+        gap: 8px;
+      }
+      .round-nav {
+        background: rgba(0, 0, 0, 0.7);
+        width: 32px;
+        height: 32px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        color: #fff;
+        transition: transform 0.15s;
+      }
+      .round-nav:hover:not(:disabled) {
+        transform: scale(1.06);
+      }
+      .round-nav:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .round-nav svg {
+        width: 18px;
+        height: 18px;
+      }
+      .search-box {
+        margin-left: 8px;
+        width: min(364px, 38vw);
+        height: 48px;
+        display: none;
+        align-items: center;
+        gap: 10px;
+        padding: 0 16px;
+        border: 1px solid transparent;
+        background: #242424;
+        border-radius: 500px;
+        transition: all 0.18s;
+      }
+      .search-box.visible {
+        display: flex;
+      }
+      .search-box:focus-within {
+        border-color: #fff;
+        background: #2a2a2a;
+      }
+      .search-box svg {
+        width: 22px;
+        color: #b3b3b3;
+        flex: 0 0 auto;
+      }
+      .search-box input {
+        width: 100%;
+        min-width: 0;
+        outline: 0;
+        border: 0;
+        color: #fff;
+        background: transparent;
+        font-size: 14px;
+      }
+      .search-box input::placeholder {
+        color: #b3b3b3;
+      }
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .premium-btn {
+        color: #000;
+        background: #fff;
+        padding: 8px 16px;
+        border-radius: 500px;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+        transition:
+          transform 0.15s,
+          background 0.15s;
+      }
+      .premium-btn:hover {
+        transform: scale(1.04);
+        background: #f0f0f0;
+      }
+      .install-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid #727272;
+        border-radius: 500px;
+        padding: 6px 14px;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+        transition: all 0.15s;
+      }
+      .install-btn:hover {
+        border-color: #fff;
+        transform: scale(1.04);
+      }
+      .install-btn svg {
+        width: 16px;
+        height: 16px;
+      }
+      .profile-btn {
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #535353;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+        transition:
+          transform 0.15s,
+          background 0.15s;
+      }
+      .profile-btn:hover {
+        transform: scale(1.06);
+        background: #636363;
+      }
+
+      .content {
+        position: relative;
+        z-index: 1;
+        height: calc(100% - 64px);
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 8px 24px 32px;
+        scrollbar-width: thin;
+        scrollbar-color: #555 transparent;
+      }
+      .content::-webkit-scrollbar {
+        width: 12px;
+      }
+      .content::-webkit-scrollbar-thumb {
+        background: #555;
+        border-radius: 6px;
+        border: 3px solid var(--panel);
+      }
+      .content::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .greeting {
+        font-size: 32px;
+        line-height: 1.2;
+        letter-spacing: -0.8px;
+        margin: 8px 0 20px;
+        font-weight: 800;
+      }
+      .quick-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 32px;
+      }
+      .quick-card {
+        height: 80px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(255, 255, 255, 0.07);
+        overflow: hidden;
+        cursor: pointer;
+        transition: background 0.18s;
+        position: relative;
+      }
+      .quick-card:hover {
+        background: rgba(255, 255, 255, 0.15);
+      }
+      .quick-card img,
+      .quick-art {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        flex: 0 0 auto;
+        box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
+      }
+      .quick-art {
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, #450af5, #8e8ee8);
+      }
+      .quick-art svg {
+        width: 28px;
+        color: #fff;
+        filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
+      }
+      .quick-card span {
+        padding: 0 16px 0 0;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.3;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        line-clamp: 2;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+      }
+      .quick-card .card-play {
+        right: 12px;
+      }
+
+      .section {
+        margin-top: 32px;
+      }
+      .section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .section-head h2 {
+        font-size: 24px;
+        letter-spacing: -0.4px;
+        margin: 0;
+        font-weight: 800;
+      }
+      .section-head a {
+        color: var(--muted);
+        font-size: 12px;
+        text-decoration: none;
+        font-weight: 700;
+        white-space: nowrap;
+        letter-spacing: 0.5px;
+      }
+      .section-head a:hover {
+        text-decoration: underline;
+        color: #fff;
+      }
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 24px;
+      }
+      .music-card {
+        min-width: 0;
+        padding: 16px;
+        border-radius: 8px;
+        background: var(--panel-soft);
+        cursor: pointer;
+        transition: background 0.2s;
+        position: relative;
+      }
+      .music-card:hover {
+        background: var(--panel-highlight);
+      }
+      .cover-wrap {
+        position: relative;
+        aspect-ratio: 1;
+        margin-bottom: 16px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .cover-wrap.circle {
+        border-radius: 50%;
+      }
+      .cover-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .card-play {
+        position: absolute;
+        right: 8px;
+        bottom: 8px;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: var(--green);
+        color: #000;
+        display: grid;
+        place-items: center;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        transform: translateY(8px);
+        transition: all 0.2s ease;
+      }
+      .music-card:hover .card-play,
+      .quick-card:hover .card-play {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .card-play:hover {
+        transform: scale(1.06) translateY(0) !important;
+        background: var(--green-bright);
+      }
+      .card-play svg {
+        width: 22px;
+        height: 22px;
+        margin-left: 2px;
+      }
+      .music-card strong {
+        display: block;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        font-size: 15px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+      .music-card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.4;
+        display: -webkit-box;
+        line-clamp: 2;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        font-weight: 400;
+      }
+      .empty-state {
+        color: var(--muted);
+        padding: 32px 4px;
+        font-size: 14px;
+        display: none;
+      }
+      .bottom-note {
+        margin-top: 48px;
+        border-top: 1px solid #292929;
+        padding: 24px 0;
+        display: flex;
+        justify-content: space-between;
+        color: #777;
+        font-size: 12px;
+        font-weight: 500;
+      }
+      .bottom-note a {
+        color: #b3b3b3;
+        text-decoration: none;
+        margin-right: 16px;
+      }
+      .bottom-note a:hover {
+        text-decoration: underline;
+        color: #fff;
+      }
+
+      /* Player */
+      .player {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        min-width: 0;
+        display: grid;
+        grid-template-columns: 30% 40% 30%;
+        align-items: center;
+        gap: 16px;
+        background: #000;
+        padding: 0 16px;
+      }
+      .now-playing {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-width: 0;
+      }
+      .now-playing img {
+        width: 56px;
+        height: 56px;
+        border-radius: 4px;
+        object-fit: cover;
+        background: #282828;
+      }
+      .track-meta {
+        min-width: 0;
+      }
+      .track-meta strong {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 3px;
+        cursor: pointer;
+      }
+      .track-meta strong:hover {
+        text-decoration: underline;
+      }
+      .track-meta span {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        cursor: pointer;
+      }
+      .track-meta span:hover {
+        text-decoration: underline;
+        color: #fff;
+      }
+      .like-current {
+        margin-left: 8px;
+        color: var(--muted);
+        padding: 4px;
+        transition:
+          color 0.15s,
+          transform 0.15s;
+      }
+      .like-current:hover {
+        color: #fff;
+        transform: scale(1.08);
+      }
+      .like-current svg {
+        width: 18px;
+        height: 18px;
+      }
+      .like-current.liked {
+        color: var(--green);
+      }
+      .player-center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-width: 0;
+        gap: 8px;
+        max-width: 722px;
+        margin: 0 auto;
+        width: 100%;
+      }
+      .player-controls {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .player-control {
+        color: #b3b3b3;
+        display: grid;
+        place-items: center;
+        padding: 4px;
+        position: relative;
+        transition: color 0.15s;
+      }
+      .player-control:hover {
+        color: white;
+      }
+      .player-control.active {
+        color: var(--green);
+      }
+      .player-control.active::after {
+        content: "";
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--green);
+        bottom: -6px;
+      }
+      .player-control svg {
+        width: 16px;
+        height: 16px;
+      }
+      .play-main {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #fff;
+        color: #000;
+        display: grid;
+        place-items: center;
+        transition: transform 0.15s;
+      }
+      .play-main:hover {
+        transform: scale(1.08);
+      }
+      .play-main svg {
+        width: 16px;
+        height: 16px;
+      }
+      .progress-row {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #a7a7a7;
+        font-size: 11px;
+        font-variant-numeric: tabular-nums;
+      }
+      input[type="range"] {
+        appearance: none;
+        -webkit-appearance: none;
+        height: 4px;
+        border-radius: 4px;
+        background: #4d4d4d;
+        cursor: pointer;
+      }
+      input[type="range"]:hover {
+        background: linear-gradient(
+          to right,
+          var(--green) 0%,
+          var(--green) var(--progress, 0%),
+          #4d4d4d var(--progress, 0%),
+          #4d4d4d 100%
+        );
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #fff;
+        opacity: 0;
+        transition: opacity 0.15s;
+      }
+      input[type="range"]:hover::-webkit-slider-thumb {
+        opacity: 1;
+      }
+      input[type="range"]::-moz-range-thumb {
+        width: 12px;
+        height: 12px;
+        border: 0;
+        border-radius: 50%;
+        background: #fff;
+        opacity: 0;
+      }
+      input[type="range"]:hover::-moz-range-thumb {
+        opacity: 1;
+      }
+      .progress {
+        flex: 1;
+        min-width: 0;
+      }
+      .player-extra {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        color: #b3b3b3;
+      }
+      .player-extra button {
+        color: inherit;
+        display: grid;
+        place-items: center;
+        padding: 4px;
+        transition: color 0.15s;
+      }
+      .player-extra button:hover {
+        color: white;
+      }
+      .player-extra svg {
+        width: 16px;
+        height: 16px;
+      }
+      .volume-wrap {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .volume {
+        width: 96px;
+      }
+
+      /* ============ MOBILE VIEW ============ */
+      .mobile-view {
+        display: none;
+        height: 100vh;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: radial-gradient(ellipse at top, #1a0f2e 0%, #000 70%);
+        position: relative;
+      }
+      body.mobile-mode .mobile-view {
+        display: flex;
+      }
+      body.mobile-mode {
+        overflow: auto;
+      }
+
+      /* PIXEL PHONE FRAME */
+      .pixel-phone {
+        width: var(--phone-width);
+        height: var(--phone-height);
+        background: #1a1a1a;
+        border-radius: 50px;
+        padding: 12px;
+        position: relative;
+        box-shadow:
+          0 0 0 2px #2a2a2a,
+          0 0 0 4px #0a0a0a,
+          0 30px 60px rgba(0, 0, 0, 0.8),
+          0 0 100px rgba(100, 50, 200, 0.15);
+      }
+      .pixel-phone::before {
+        /* Power button */
+        content: "";
+        position: absolute;
+        right: -3px;
+        top: 180px;
+        width: 3px;
+        height: 70px;
+        background: linear-gradient(180deg, #2a2a2a, #1a1a1a, #2a2a2a);
+        border-radius: 0 3px 3px 0;
+      }
+      .pixel-phone::after {
+        /* Volume buttons */
+        content: "";
+        position: absolute;
+        left: -3px;
+        top: 140px;
+        width: 3px;
+        height: 110px;
+        background: linear-gradient(
+          180deg,
+          #2a2a2a,
+          #1a1a1a,
+          #2a2a2a,
+          #1a1a1a,
+          #2a2a2a
+        );
+        border-radius: 3px 0 0 3px;
+        box-shadow: 0 60px 0 0 #2a2a2a;
+      }
+      .phone-screen {
+        width: 100%;
+        height: 100%;
+        background: #000;
+        border-radius: 40px;
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+      /* Punch-hole camera (Pixel style) */
+      .phone-notch {
+        position: absolute;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #000;
+        box-shadow:
+          inset 0 0 0 1px #1a1a1a,
+          inset 0 0 2px rgba(100, 100, 150, 0.3);
+        z-index: 100;
+      }
+      .phone-notch::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #334 0%, #000 70%);
+      }
+      /* Status bar */
+      .phone-statusbar {
+        height: 36px;
+        padding: 8px 24px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        flex-shrink: 0;
+        z-index: 50;
+      }
+      .phone-statusbar .status-right {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .phone-statusbar svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      /* Mobile app content */
+      .m-app {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        background: #121212;
+      }
+      .m-topbar {
+        padding: 8px 16px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .m-greeting {
+        font-size: 22px;
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: -0.3px;
+      }
+      .m-top-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      .m-icon-btn {
+        width: 32px;
+        height: 32px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        color: #fff;
+      }
+      .m-icon-btn:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
+      .m-icon-btn svg {
+        width: 22px;
+        height: 22px;
+      }
+      .m-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #535353;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .m-content {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 0 16px 16px;
+        scrollbar-width: none;
+      }
+      .m-content::-webkit-scrollbar {
+        display: none;
+      }
+
+      .m-filters {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .m-filters::-webkit-scrollbar {
+        display: none;
+      }
+      .m-filter-chip {
+        padding: 6px 12px;
+        border-radius: 20px;
+        background: #232323;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+      .m-filter-chip.active {
+        background: #fff;
+        color: #000;
+      }
+
+      .m-quick-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 24px;
+      }
+      .m-quick-card {
+        height: 56px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.07);
+        overflow: hidden;
+        cursor: pointer;
+      }
+      .m-quick-card img,
+      .m-quick-art {
+        width: 56px;
+        height: 56px;
+        object-fit: cover;
+        flex: 0 0 auto;
+      }
+      .m-quick-art {
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, #450af5, #8e8ee8);
+      }
+      .m-quick-art svg {
+        width: 20px;
+        color: #fff;
+      }
+      .m-quick-card span {
+        padding: 0 8px 0 0;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        line-clamp: 2;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+      }
+
+      .m-section {
+        margin-bottom: 24px;
+      }
+      .m-section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 12px;
+      }
+      .m-section-head h3 {
+        font-size: 20px;
+        font-weight: 800;
+        margin: 0;
+        letter-spacing: -0.3px;
+      }
+      .m-section-head a {
+        color: var(--muted);
+        font-size: 11px;
+        text-decoration: none;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+      }
+      .m-card-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px 12px;
+      }
+      .m-card {
+        cursor: pointer;
+      }
+      .m-card-cover {
+        position: relative;
+        aspect-ratio: 1;
+        margin-bottom: 8px;
+        border-radius: 4px;
+        overflow: hidden;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+      }
+      .m-card-cover.circle {
+        border-radius: 50%;
+      }
+      .m-card-cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .m-card strong {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 4px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .m-card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.3;
+        display: -webkit-box;
+        line-clamp: 2;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      /* Mini player (mobile) */
+      .m-mini-player {
+        margin: 0 8px 8px;
+        padding: 8px;
+        background: #2a2a2a;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      .m-mini-player::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 35%;
+        height: 2px;
+        background: #fff;
+        transition: width 0.3s;
+      }
+      .m-mini-player img {
+        width: 40px;
+        height: 40px;
+        border-radius: 4px;
+        object-fit: cover;
+      }
+      .m-mini-meta {
+        flex: 1;
+        min-width: 0;
+      }
+      .m-mini-meta strong {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .m-mini-meta span {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .m-mini-controls {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .m-mini-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: #fff;
+      }
+      .m-mini-btn svg {
+        width: 22px;
+        height: 22px;
+      }
+      .m-mini-like {
+        width: 32px;
+        height: 32px;
+      }
+      .m-mini-like.liked {
+        color: var(--green);
+      }
+
+      /* Bottom nav (mobile) */
+      .m-bottom-nav {
+        display: flex;
+        justify-content: space-around;
+        padding: 8px 0 16px;
+        background: linear-gradient(
+          180deg,
+          rgba(18, 18, 18, 0.8) 0%,
+          #121212 40%
+        );
+        backdrop-filter: blur(10px);
+        flex-shrink: 0;
+      }
+      .m-nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 500;
+        padding: 4px 8px;
+      }
+      .m-nav-item.active {
+        color: #fff;
+      }
+      .m-nav-item svg {
+        width: 24px;
+        height: 24px;
+      }
+
+      /* Toast */
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 120px;
+        transform: translate(-50%, 12px);
+        background: #282828;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.25s;
+        z-index: 9999;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      body.mobile-mode .toast {
+        bottom: 100px;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+
+      /* Small screens for phone wrapper */
+      @media (max-width: 480px) {
+        .mobile-view {
+          padding: 0;
+        }
+        .pixel-phone {
+          width: 100vw;
+          height: 100vh;
+          border-radius: 0;
+          padding: 0;
+          box-shadow: none;
+        }
+        .pixel-phone::before,
+        .pixel-phone::after {
+          display: none;
+        }
+        .phone-screen {
+          border-radius: 0;
+        }
+        .phone-notch {
+          top: 8px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- VIEW SWITCHER -->
+    <div class="view-switcher" role="tablist" aria-label="Pilih tampilan">
+      <button
+        class="view-btn active"
+        id="desktopBtn"
+        role="tab"
+        aria-selected="true"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="2" y="3" width="20" height="14" rx="2" />
+          <line x1="8" y1="21" x2="16" y2="21" />
+          <line x1="12" y1="17" x2="12" y2="21" />
+        </svg>
+        Desktop
+      </button>
+      <button class="view-btn" id="mobileBtn" role="tab" aria-selected="false">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="5" y="2" width="14" height="20" rx="2" />
+          <line x1="12" y1="18" x2="12.01" y2="18" />
+        </svg>
+        Mobile
+      </button>
+    </div>
+
+    <!-- DESKTOP VIEW -->
+    <div class="desktop-view">
+      <aside class="sidebar" aria-label="Navigasi">
+        <div class="side-top">
+          <div class="brand">
+            <span class="brand-mark">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"
+                />
+              </svg>
+            </span>
+            Spotify
+          </div>
+          <button class="nav-link active" data-nav="Beranda">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M12.5 3.247a1 1 0 0 0-1 0L4 7.747V19a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-4h4v4a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V7.747l-7.5-4.5z"
+              />
+            </svg>
+            Beranda
+          </button>
+          <button class="nav-link" data-nav="Cari">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+            Cari
+          </button>
+        </div>
+        <div class="library">
+          <div class="library-head">
+            <button class="library-title">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              >
+                <path d="M3 3h3v18H3zM9 3h3v18H9zM15 3h3v18h-3zM21 3v18" />
+              </svg>
+              Koleksi Kamu
+            </button>
+            <div class="library-actions">
+              <button
+                class="icon-button"
+                id="addPlaylist"
+                aria-label="Buat playlist"
+                title="Buat playlist"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                >
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="filter-row">
+            <button class="filter-chip active">Semua</button>
+            <button class="filter-chip">Playlist</button>
+            <button class="filter-chip">Artis</button>
+            <button class="filter-chip">Album</button>
+          </div>
+          <div class="library-tools">
+            <button class="sort">
+              <svg
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M3 6h18M6 12h12M9 18h6" />
+              </svg>
+              Terbaru
+            </button>
+          </div>
+          <div class="library-scroll">
+            <div class="library-item" data-play="Liked Songs">
+              <div class="mini-art liked">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path
+                    d="M12 21s-8-4.8-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6.2-8 11-8 11z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <strong>Lagu yang Disukai</strong>
+                <small
+                  ><span class="green-dot">●</span>Playlist • 128 lagu</small
+                >
+              </div>
+            </div>
+            <div class="library-item" data-play="Daily Mix 1">
+              <img
+                src="https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=120&h=120&fit=crop"
+                alt=""
+              />
+              <div>
+                <strong>Daily Mix 1</strong>
+                <small>Playlist • Spotify</small>
+              </div>
+            </div>
+            <div class="library-item" data-play="Chill Hits">
+              <img
+                src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=120&h=120&fit=crop"
+                alt=""
+              />
+              <div>
+                <strong>Chill Hits</strong>
+                <small>Playlist • Spotify</small>
+              </div>
+            </div>
+            <div class="library-item" data-play="Kunto Aji">
+              <img
+                class="circle"
+                src="https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=120&h=120&fit=crop"
+                alt=""
+              />
+              <div>
+                <strong>Kunto Aji</strong>
+                <small>Artis</small>
+              </div>
+            </div>
+            <div class="library-item" data-play="Lofi Girl">
+              <img
+                src="https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=120&h=120&fit=crop"
+                alt=""
+              />
+              <div>
+                <strong>Lofi Girl</strong>
+                <small>Playlist • Spotify</small>
+              </div>
+            </div>
+            <div class="library-item" data-play="Indie Indonesia">
+              <img
+                src="https://images.unsplash.com/photo-1506157786151-b8491531f063?w=120&h=120&fit=crop"
+                alt=""
+              />
+              <div>
+                <strong>Indie Indonesia</strong>
+                <small>Playlist • Spotify</small>
+              </div>
+            </div>
+            <div class="library-item" data-play="Arctic Monkeys">
+              <img
+                class="circle"
+                src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=120&h=120&fit=crop"
+                alt=""
+              />
+              <div>
+                <strong>Arctic Monkeys</strong>
+                <small>Artis</small>
+              </div>
+            </div>
+            <div class="library-item" data-play="Tulus">
+              <img
+                class="circle"
+                src="https://images.unsplash.com/photo-1484876065-a111-4ff5-8eb0-1a4f5d0b0b4f?w=120&h=120&fit=crop"
+                alt=""
+              />
+              <div>
+                <strong>Tulus</strong>
+                <small>Artis</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="main-bg" id="mainBg"></div>
+        <header class="topbar">
+          <div class="top-left">
+            <div class="history-controls">
+              <button class="round-nav" aria-label="Kembali">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="m15 18-6-6 6-6" />
+                </svg>
+              </button>
+              <button class="round-nav" aria-label="Maju" disabled>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </button>
+            </div>
+            <label class="search-box" id="desktopSearch">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+              <input
+                id="searchInput"
+                type="search"
+                placeholder="Apa yang ingin kamu putar?"
+                autocomplete="off"
+              />
+            </label>
+          </div>
+          <div class="top-actions">
+            <button class="premium-btn">Jelajahi Premium</button>
+            <button class="install-btn">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Pasang Aplikasi
+            </button>
+            <button class="profile-btn" aria-label="Profil">A</button>
+          </div>
+        </header>
+        <div class="content" id="contentArea">
+          <h1 class="greeting" id="greeting">Selamat sore</h1>
+          <div class="quick-grid" id="quickGrid">
+            <div class="quick-card" data-play="Liked Songs">
+              <div class="quick-art">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path
+                    d="M12 21s-8-4.8-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6.2-8 11-8 11z"
+                  />
+                </svg>
+              </div>
+              <span>Lagu yang Disukai</span>
+            </div>
+            <div class="quick-card" data-play="Daily Mix 1">
+              <img
+                src="https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=220&h=220&fit=crop"
+                alt=""
+              /><span>Daily Mix 1</span>
+            </div>
+            <div class="quick-card" data-play="Chill Hits">
+              <img
+                src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=220&h=220&fit=crop"
+                alt=""
+              /><span>Chill Hits</span>
+            </div>
+            <div class="quick-card" data-play="Indie Indonesia">
+              <img
+                src="https://images.unsplash.com/photo-1506157786151-b8491531f063?w=220&h=220&fit=crop"
+                alt=""
+              /><span>Indie Indonesia</span>
+            </div>
+            <div class="quick-card" data-play="Lofi Girl">
+              <img
+                src="https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=220&h=220&fit=crop"
+                alt=""
+              /><span>Lofi Girl</span>
+            </div>
+            <div class="quick-card" data-play="Arctic Monkeys">
+              <img
+                src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=220&h=220&fit=crop"
+                alt=""
+              /><span>Arctic Monkeys</span>
+            </div>
+          </div>
+
+          <section class="section" data-section="made">
+            <div class="section-head">
+              <h2>Dibuat untuk kamu</h2>
+              <a href="#made">LIHAT SEMUA</a>
+            </div>
+            <div class="card-grid">
+              <article
+                class="music-card"
+                data-title="Daily Mix 1"
+                data-artist="Lana Del Rey, The Weeknd, Arctic Monkeys"
+                data-image="https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=500&h=500&fit=crop"
+                data-color="#4b2d5e"
+              >
+                <div class="cover-wrap">
+                  <img
+                    src="https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=500&h=500&fit=crop"
+                    alt="Daily Mix 1"
+                  />
+                  <button class="card-play" aria-label="Putar">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M7 4.8c0-.8.9-1.3 1.6-.9l11 7.1a1.2 1.2 0 0 1 0 2L8.6 20c-.7.5-1.6 0-1.6-.9z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <strong>Daily Mix 1</strong>
+                <p>Lana Del Rey, The Weeknd, Arctic Monkeys, dan lainnya</p>
+              </article>
+              <article
+                class="music-card"
+                data-title="Release Radar"
+                data-artist="Rilisan terbaru pilihan untukmu"
+                data-image="https://images.unsplash.com/photo-1506157786151-b8491531f063?w=500&h=500&fit=crop"
+                data-color="#2a4a3e"
+              >
+                <div class="cover-wrap">
+                  <img
+                    src="https://images.unsplash.com/photo-1506157786151-b8491531f063?w=500&h=500&fit=crop"
+                    alt="Release Radar"
+                  />
+                  <button class="card-play" aria-label="Putar">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M7 4.8c0-.8.9-1.3 1.6-.9l11 7.1a1.2 1.2 0 0 1 0 2L8.6 20c-.7.5-1.6 0-1.6-.9z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <strong>Release Radar</strong>
+                <p>Rilisan terbaru pilihan untukmu. Diperbarui setiap Jumat.</p>
+              </article>
+              <article
+                class="music-card"
+                data-title="Discover Weekly"
+                data-artist="Pilihan baru berdasarkan seleramu"
+                data-image="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&h=500&fit=crop"
+                data-color="#1e3a5f"
+              >
+                <div class="cover-wrap">
+                  <img
+                    src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&h=500&fit=crop"
+                    alt="Discover Weekly"
+                  />
+                  <button class="card-play" aria-label="Putar">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M7 4.8c0-.8.9-1.3 1.6-.9l11 7.1a1.2 1.2 0 0 1 0 2L8.6 20c-.7.5-1.6 0-1.6-.9z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <strong>Discover Weekly</strong>
+                <p>
+                  Playlist berisi rekomendasi baru yang dikurasi khusus untukmu.
+                </p>
+              </article>
+              <article
+                class="music-card"
+                data-title="Daily Mix 2"
+                data-artist="Tulus, Kunto Aji, Hindia"
+                data-image="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500&h=500&fit=crop"
+                data-color="#5a2a2a"
+              >
+                <div class="cover-wrap">
+                  <img
+                    src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500&h=500&fit=crop"
+                    alt="Daily Mix 2"
+                  />
+                  <button class="card-play" aria-label="Putar">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M7 4.8c0-.8.9-1.3 1.6-.9l11 7.1a1.2 1.2 0 0 1 0 2L8.6 20c-.7.5-1.6 0-1.6-.9z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <strong>Daily Mix 2</strong>
+                <p>Tulus, Kunto Aji, Hindia, dan lainnya</p>
+              </article>
+              <article
+                class="music-card"
+                data-title="On Repeat"
+                data-artist="Lagu yang paling sering kamu putar"
+                data-image="https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=500&h=500&fit=crop"
+                data-color="#4a3a1e"
+              >
+                <div class="cover-wrap">
+                  <img
+                    src="https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=500&h=500&fit=crop"
+                    alt="On Repeat"
+                  />
+                  <button class="card-play" aria-label="Putar">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M7 4.8c0-.8.9-1.3 1.6-.9l11 7.1a1.2 1.2 0 0 1 0 2L8.6 20c-.7.5-1.6 0-1.6-.9z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <strong>On Repeat</strong>
+                <p>Lagu-lagu yang terus kamu putar akhir-akhir ini.</p>
+              </article>
+              <article
+                class="music-card"
+                data-title="Daily Mix 3"
+                data-artist="Coldplay, Radiohead, The 1975"
+                data-image="https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500&h=500&fit=crop"
+                data-color="#1e4a5e"
+              >
+                <div class="cover-wrap">
+                  <img
+                    src="https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500&h=500&fit=crop"
+                    alt="Daily Mix 3"
+                  />
+                  <button class="card-play" aria-label="Putar">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M7 4.8c0-.8.9-1.3 1.6-.9l11 7.1a1.2 1.2 0 0 1 0 2L8.6 20c-.7.5-1.6 0-1.6-.9z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <strong>Daily Mix 3</strong>
+                <p>Coldplay, Radiohead, The 1975, dan lainnya</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="section" data-section="recent">
+            <div class="section-head">
+              <h2>Baru-baru ini diputar</h2>
+              <a href="#recent">LIHAT SEMUA</a>
+            </div>
+            <div class="card-grid">
+              <article
+                class="music-card"
+                data-title="Chill Hits"
+                data-artist="Temani harimu dengan lagu-lagu santai"
+                data-image="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&h=500&fit=crop"
+                data-color="#3a4a5e"
+              >
+                <div class="cover-wrap">
+                  <img
+                    src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&h=500&fit=crop"
+                    alt="Chill Hits"
+                  />
+                  <button class="card-play" aria-label="Putar">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M7 4.8c0-.8.9-1.3 1.6-.9l11 7.1a1.2 1.2 0 0 1 0 2L8.6 20c-.7.5-1.6 0-1.6-.9z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <strong>Chill Hits</strong>
+                <p>Kick back to the best new and recent chill hits.</p>
+              </article>
+              <article
+                class="music-card"
+                data-title="Lofi Girl"
+                data-artist="Beats to relax, study, and focus"
+                data-image="https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=500&h=500&fit=crop"
+                data-color="#4a3a5e"
+              >
+                <div class="cover-wrap">
+                  <img
+                    src="https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=500&h=500&fit=crop"
+                    alt="Lofi Girl"
+                  />
+                  <button class="card-play" aria-label="Putar">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M7 4.8c0-.8.9-1.3 1.6-.9l11 7.1a1.2 1.2 0 0 1 0 2L8.6 20c-.7.5-1.6 0-1.6-.9z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <strong>Lofi Girl</strong>
+                <p>Beats to relax, study, and focus.</p>
+              </article>
+              <article
+                class="music-card"
+                data-title="Indie Indonesia"
+                data-artist="Musik indie terbaik dari Indonesia"
+                data-image="https://images.unsplash.com/photo-1506157786151-b8491531f063?w=500&h=500&fit=crop"
+                data-color="#5e3a2a"
+              >
+                <div class="cover-wrap">
+                  <img
+                    src="https://images.unsplash.com/photo-1506157786151-b8491531f063?w=500&h=500&fit=crop"
+                    alt="Indie Indonesia"
+                  />
+                  <button class="card-play" aria-label="Putar">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M7 4.8c0-.8.9-1.3 1.6-.9l11 7.1a1.2 1.2 0 0 1 0 2L8.6 20c-.7.5-1.6 0-1.6-.9z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <strong>Indie Indonesia</strong>
+                <p>Musik indie terbaik dari Indonesia.</p>
+              </article>
+              <article
+                class="music-card"
+                data-title="Arctic Monkeys"
+                data-artist="Artis"
+                data-image="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500&h=500&fit=crop"
+                data-color="#2a2a2a"
+              >
+                <div class="cover-wrap circle">
+                  <img
+                    src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500&h=500&fit=crop"
+                    alt="Arctic Monkeys"
+                  />
+                  <button class="card-play" aria-label="Putar">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M7 4.8c0-.8.9-1.3 1.6-.9l11 7.1a1.2 1.2 0 0 1 0 2L8.6 20c-.7.5-1.6 0-1.6-.9z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <strong>Arctic Monkeys</strong>
+                <p>Artis</p>
+              </article>
+              <article
+                class="music-card"
+                data-title="Tulus Radio"
+                data-artist="Tulus, Yura Yunita, HIVI!"
+                data-image="https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500&h=500&fit=crop"
+                data-color="#3a2a1e"
+              >
+                <div class="cover-wrap circle">
+                  <img
+                    src="https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500&h=500&fit=crop"
+                    alt="Tulus Radio"
+                  />
+                  <button class="card-play" aria-label="Putar">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M7 4.8c0-.8.9-1.3 1.6-.9l11 7.1a1.2 1.2 0 0 1 0 2L8.6 20c-.7.5-1.6 0-1.6-.9z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <strong>Tulus Radio</strong>
+                <p>Tulus, Yura Yunita, HIVI!, dan lainnya.</p>
+              </article>
+              <article
+                class="music-card"
+                data-title="Peaceful Piano"
+                data-artist="Relax and indulge with beautiful piano pieces"
+                data-image="https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=500&h=500&fit=crop"
+                data-color="#1e2a3a"
+              >
+                <div class="cover-wrap">
+                  <img
+                    src="https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=500&h=500&fit=crop"
+                    alt="Peaceful Piano"
+                  />
+                  <button class="card-play" aria-label="Putar">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M7 4.8c0-.8.9-1.3 1.6-.9l11 7.1a1.2 1.2 0 0 1 0 2L8.6 20c-.7.5-1.6 0-1.6-.9z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <strong>Peaceful Piano</strong>
+                <p>Relax and indulge with beautiful piano pieces.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="section" data-section="moods">
+            <div class="section-head">
+              <h2>Suasana hati dan genre</h2>
+              <a href="#moods">JELAJAHI SEMUA</a>
+            </div>
+            <div class="card-grid">
+              <article
+                class="music-card"
+                data-title="Mood Booster"
+                data-artist="Feel-good songs to make you smile"
+                data-image="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&h=500&fit=crop"
+                data-color="#5e4a1e"
+              >
+                <div class="cover-wrap">
+                  <img
+                    src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&h=500&fit=crop"
+                    alt="Mood Booster"
+                  />
+                  <button class="card-play" aria-label="Putar">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M7 4.8c0-.8.9-1.3 1.6-.9l11 7.1a1.2 1.2 0 0 1 0 2L8.6 20c-.7.5-1.6 0-1.6-.9z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <strong>Mood Booster</strong>
+                <p>Get happy with these feel-good songs!</p>
+              </article>
+              <article
+                class="music-card"
+                data-title="Jazz in the Background"
+                data-artist="The perfect soundtrack for your day"
+                data-image="https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=500&h=500&fit=crop"
+                data-color="#3a2a3a"
+              >
+                <div class="cover-wrap">
+                  <img
+                    src="https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=500&h=500&fit=crop"
+                    alt="Jazz"
+                  />
+                  <button class="card-play" aria-label="Putar">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M7 4.8c0-.8.9-1.3 1.6-.9l11 7.1a1.2 1.2 0 0 1 0 2L8.6 20c-.7.5-1.6 0-1.6-.9z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <strong>Jazz in the Background</strong>
+                <p>The perfect soundtrack for your day.</p>
+              </article>
+              <article
+                class="music-card"
+                data-title="Rock Classics"
+                data-artist="The greatest rock songs of all time"
+                data-image="https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?w=500&h=500&fit=crop"
+                data-color="#4a1e1e"
+              >
+                <div class="cover-wrap">
+                  <img
+                    src="https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?w=500&h=500&fit=crop"
+                    alt="Rock Classics"
+                  />
+                  <button class="card-play" aria-label="Putar">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M7 4.8c0-.8.9-1.3 1.6-.9l11 7.1a1.2 1.2 0 0 1 0 2L8.6 20c-.7.5-1.6 0-1.6-.9z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <strong>Rock Classics</strong>
+                <p>Rock legends &amp; epic songs that continue to inspire.</p>
+              </article>
+              <article
+                class="music-card"
+                data-title="R&B Jams"
+                data-artist="Smooth R&B for every moment"
+                data-image="https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=500&h=500&fit=crop"
+                data-color="#2a1e3a"
+              >
+                <div class="cover-wrap">
+                  <img
+                    src="https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=500&h=500&fit=crop"
+                    alt="R&B"
+                  />
+                  <button class="card-play" aria-label="Putar">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M7 4.8c0-.8.9-1.3 1.6-.9l11 7.1a1.2 1.2 0 0 1 0 2L8.6 20c-.7.5-1.6 0-1.6-.9z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <strong>R&B Jams</strong>
+                <p>Smooth R&B for every moment.</p>
+              </article>
+              <article
+                class="music-card"
+                data-title="Focus Flow"
+                data-artist="Uplifting instrumental music"
+                data-image="https://images.unsplash.com/photo-1519681393784-d120267933ba?w=500&h=500&fit=crop"
+                data-color="#1e3a3a"
+              >
+                <div class="cover-wrap">
+                  <img
+                    src="https://images.unsplash.com/photo-1519681393784-d120267933ba?w=500&h=500&fit=crop"
+                    alt="Focus Flow"
+                  />
+                  <button class="card-play" aria-label="Putar">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M7 4.8c0-.8.9-1.3 1.6-.9l11 7.1a1.2 1.2 0 0 1 0 2L8.6 20c-.7.5-1.6 0-1.6-.9z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <strong>Focus Flow</strong>
+                <p>Uplifting instrumental music to keep you focused.</p>
+              </article>
+              <article
+                class="music-card"
+                data-title="Acoustic Hits"
+                data-artist="The best acoustic tracks"
+                data-image="https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=500&h=500&fit=crop"
+                data-color="#5e4a3a"
+              >
+                <div class="cover-wrap">
+                  <img
+                    src="https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=500&h=500&fit=crop"
+                    alt="Acoustic"
+                  />
+                  <button class="card-play" aria-label="Putar">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M7 4.8c0-.8.9-1.3 1.6-.9l11 7.1a1.2 1.2 0 0 1 0 2L8.6 20c-.7.5-1.6 0-1.6-.9z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <strong>Acoustic Hits</strong>
+                <p>The best acoustic tracks, all in one place.</p>
+              </article>
+            </div>
+          </section>
+          <div class="empty-state" id="emptyState">
+            Tidak ada hasil yang cocok. Coba kata kunci lain.
+          </div>
+          <footer class="bottom-note">
+            <span>
+              <a href="#">Legal</a>
+              <a href="#">Privacy Center</a>
+              <a href="#">Privacy Policy</a>
+              <a href="#">Cookies</a>
+              <a href="#">About Ads</a>
+            </span>
+            <span>© 2026 Spotify Clone</span>
+          </footer>
+        </div>
+      </main>
+
+      <footer class="player" aria-label="Pemutar musik">
+        <div class="now-playing">
+          <img
+            id="nowImage"
+            src="https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=160&h=160&fit=crop"
+            alt=""
+          />
+          <div class="track-meta">
+            <strong id="nowTitle">About You</strong>
+            <span id="nowArtist">The 1975</span>
+          </div>
+          <button class="like-current" id="likeCurrent" aria-label="Sukai lagu">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M20.8 8.8c0 5.3-8.8 10.2-8.8 10.2S3.2 14.1 3.2 8.8a4.7 4.7 0 0 1 8.8-2.2 4.7 4.7 0 0 1 8.8 2.2Z"
+              />
+            </svg>
+          </button>
+        </div>
+        <div class="player-center">
+          <div class="player-controls">
+            <button class="player-control" id="shuffleBtn" aria-label="Acak">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="m18 14 3 3-3 3M3 7h2.5c4.5 0 7 10 11 10H21M18 4l3 3-3 3M3 17h2.5c1.3 0 2.4-1.2 3.5-2.7M14 9c.8-1.1 1.6-2 2.5-2H21"
+                />
+              </svg>
+            </button>
+            <button class="player-control" id="prevBtn" aria-label="Sebelumnya">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  d="M6 5h2v14H6zM19 5.8v12.4a1 1 0 0 1-1.5.9L8 13V11l9.5-6.1a1 1 0 0 1 1.5.9Z"
+                />
+              </svg>
+            </button>
+            <button class="play-main" id="playBtn" aria-label="Putar">
+              <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  d="M7 4.8c0-.8.9-1.3 1.6-.9l11 7.1a1.2 1.2 0 0 1 0 2L8.6 20c-.7.5-1.6 0-1.6-.9z"
+                />
+              </svg>
+            </button>
+            <button class="player-control" id="nextBtn" aria-label="Berikutnya">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  d="M16 5h2v14h-2zM5 5.8a1 1 0 0 1 1.5-.9L16 11v2l-9.5 6.1a1 1 0 0 1-1.5-.9Z"
+                />
+              </svg>
+            </button>
+            <button class="player-control" id="repeatBtn" aria-label="Ulangi">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="m17 2 3 3-3 3M3 11V9a4 4 0 0 1 4-4h13M7 22l-3-3 3-3m14-1v2a4 4 0 0 1-4 4H4"
+                />
+              </svg>
+            </button>
+          </div>
+          <div class="progress-row">
+            <span id="elapsed">0:00</span>
+            <input
+              class="progress"
+              id="progress"
+              type="range"
+              min="0"
+              max="218"
+              value="0"
+              aria-label="Posisi lagu"
+            />
+            <span id="duration">3:38</span>
+          </div>
+        </div>
+        <div class="player-extra">
+          <button aria-label="Lirik">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+            >
+              <path d="M4 5h16v11H8l-4 3zM8 9h8M8 12h5" />
+            </svg>
+          </button>
+          <button aria-label="Antrean">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+            >
+              <path d="M4 6h16M4 12h16M4 18h10" />
+            </svg>
+          </button>
+          <button aria-label="Hubungkan ke perangkat">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+            >
+              <rect x="3" y="4" width="13" height="12" rx="1.5" />
+              <path d="M7 20h5M9.5 16v4m10-8 2 2-2 2m-3-2h5" />
+            </svg>
+          </button>
+          <div class="volume-wrap">
+            <button aria-label="Volume">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M4 9v6h4l5 4V5L8 9zM17 9a5 5 0 0 1 0 6M19 6a9 9 0 0 1 0 12"
+                />
+              </svg>
+            </button>
+            <input
+              class="volume"
+              id="volume"
+              type="range"
+              min="0"
+              max="100"
+              value="65"
+              aria-label="Volume"
+            />
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <!-- MOBILE VIEW -->
+    <div class="mobile-view">
+      <div class="pixel-phone">
+        <div class="phone-screen">
+          <div class="phone-notch"></div>
+          <div class="phone-statusbar">
+            <span id="statusTime">9:41</span>
+            <div class="status-right">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M2 22h20V2z" />
+              </svg>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"
+                />
+              </svg>
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <rect x="2" y="6" width="18" height="12" rx="2" />
+                <rect x="20" y="9" width="2" height="6" fill="currentColor" />
+              </svg>
+            </div>
+          </div>
+          <div class="m-app">
+            <header class="m-topbar">
+              <h1 class="m-greeting" id="mGreeting">Selamat sore</h1>
+              <div class="m-top-actions">
+                <button class="m-icon-btn" aria-label="Notifikasi">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                  </svg>
+                </button>
+                <button class="m-icon-btn" aria-label="Riwayat">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                </button>
+                <button class="m-icon-btn" aria-label="Pengaturan">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="3" />
+                    <path
+                      d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+                    />
+                  </svg>
+                </button>
+                <div class="m-avatar">A</div>
+              </div>
+            </header>
+            <div class="m-content" id="mContentArea">
+              <div class="m-filters">
+                <button class="m-filter-chip active">Semua</button>
+                <button class="m-filter-chip">Musik</button>
+                <button class="m-filter-chip">Podcast</button>
+              </div>
+              <div class="m-quick-grid">
+                <div class="m-quick-card" data-play="Liked Songs">
+                  <div class="m-quick-art">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M12 21s-8-4.8-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6.2-8 11-8 11z"
+                      />
+                    </svg>
+                  </div>
+                  <span>Lagu yang Disukai</span>
+                </div>
+                <div class="m-quick-card" data-play="Daily Mix 1">
+                  <img
+                    src="https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=120&h=120&fit=crop"
+                    alt=""
+                  /><span>Daily Mix 1</span>
+                </div>
+                <div class="m-quick-card" data-play="Chill Hits">
+                  <img
+                    src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=120&h=120&fit=crop"
+                    alt=""
+                  /><span>Chill Hits</span>
+                </div>
+                <div class="m-quick-card" data-play="Indie Indonesia">
+                  <img
+                    src="https://images.unsplash.com/photo-1506157786151-b8491531f063?w=120&h=120&fit=crop"
+                    alt=""
+                  /><span>Indie Indonesia</span>
+                </div>
+                <div class="m-quick-card" data-play="Lofi Girl">
+                  <img
+                    src="https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=120&h=120&fit=crop"
+                    alt=""
+                  /><span>Lofi Girl</span>
+                </div>
+                <div class="m-quick-card" data-play="Arctic Monkeys">
+                  <img
+                    src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=120&h=120&fit=crop"
+                    alt=""
+                  /><span>Arctic Monkeys</span>
+                </div>
+              </div>
+
+              <section class="m-section">
+                <div class="m-section-head">
+                  <h3>Dibuat untuk kamu</h3>
+                  <a href="#">LIHAT SEMUA</a>
+                </div>
+                <div class="m-card-grid">
+                  <article
+                    class="m-card"
+                    data-title="Daily Mix 1"
+                    data-artist="Lana Del Rey, The Weeknd, Arctic Monkeys"
+                    data-image="https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=500&h=500&fit=crop"
+                    data-color="#4b2d5e"
+                  >
+                    <div class="m-card-cover">
+                      <img
+                        src="https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=500&h=500&fit=crop"
+                        alt=""
+                      />
+                    </div>
+                    <strong>Daily Mix 1</strong>
+                    <p>Lana Del Rey, The Weeknd, Arctic Monkeys, dan lainnya</p>
+                  </article>
+                  <article
+                    class="m-card"
+                    data-title="Release Radar"
+                    data-artist="Rilisan terbaru pilihan untukmu"
+                    data-image="https://images.unsplash.com/photo-1506157786151-b8491531f063?w=500&h=500&fit=crop"
+                    data-color="#2a4a3e"
+                  >
+                    <div class="m-card-cover">
+                      <img
+                        src="https://images.unsplash.com/photo-1506157786151-b8491531f063?w=500&h=500&fit=crop"
+                        alt=""
+                      />
+                    </div>
+                    <strong>Release Radar</strong>
+                    <p>Rilisan terbaru pilihan untukmu.</p>
+                  </article>
+                  <article
+                    class="m-card"
+                    data-title="Discover Weekly"
+                    data-artist="Pilihan baru berdasarkan seleramu"
+                    data-image="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&h=500&fit=crop"
+                    data-color="#1e3a5f"
+                  >
+                    <div class="m-card-cover">
+                      <img
+                        src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&h=500&fit=crop"
+                        alt=""
+                      />
+                    </div>
+                    <strong>Discover Weekly</strong>
+                    <p>Playlist berisi rekomendasi baru.</p>
+                  </article>
+                  <article
+                    class="m-card"
+                    data-title="Daily Mix 2"
+                    data-artist="Tulus, Kunto Aji, Hindia"
+                    data-image="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500&h=500&fit=crop"
+                    data-color="#5a2a2a"
+                  >
+                    <div class="m-card-cover">
+                      <img
+                        src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500&h=500&fit=crop"
+                        alt=""
+                      />
+                    </div>
+                    <strong>Daily Mix 2</strong>
+                    <p>Tulus, Kunto Aji, Hindia, dan lainnya</p>
+                  </article>
+                </div>
+              </section>
+
+              <section class="m-section">
+                <div class="m-section-head">
+                  <h3>Baru-baru ini diputar</h3>
+                  <a href="#">LIHAT SEMUA</a>
+                </div>
+                <div class="m-card-grid">
+                  <article
+                    class="m-card"
+                    data-title="Chill Hits"
+                    data-artist="Temani harimu dengan lagu santai"
+                    data-image="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&h=500&fit=crop"
+                    data-color="#3a4a5e"
+                  >
+                    <div class="m-card-cover">
+                      <img
+                        src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&h=500&fit=crop"
+                        alt=""
+                      />
+                    </div>
+                    <strong>Chill Hits</strong>
+                    <p>Kick back to the best new and recent chill hits.</p>
+                  </article>
+                  <article
+                    class="m-card"
+                    data-title="Arctic Monkeys"
+                    data-artist="Artis"
+                    data-image="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500&h=500&fit=crop"
+                    data-color="#2a2a2a"
+                  >
+                    <div class="m-card-cover circle">
+                      <img
+                        src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500&h=500&fit=crop"
+                        alt=""
+                      />
+                    </div>
+                    <strong>Arctic Monkeys</strong>
+                    <p>Artis</p>
+                  </article>
+                  <article
+                    class="m-card"
+                    data-title="Lofi Girl"
+                    data-artist="Beats to relax, study, and focus"
+                    data-image="https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=500&h=500&fit=crop"
+                    data-color="#4a3a5e"
+                  >
+                    <div class="m-card-cover">
+                      <img
+                        src="https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=500&h=500&fit=crop"
+                        alt=""
+                      />
+                    </div>
+                    <strong>Lofi Girl</strong>
+                    <p>Beats to relax, study, and focus.</p>
+                  </article>
+                  <article
+                    class="m-card"
+                    data-title="Peaceful Piano"
+                    data-artist="Beautiful piano pieces"
+                    data-image="https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=500&h=500&fit=crop"
+                    data-color="#1e2a3a"
+                  >
+                    <div class="m-card-cover">
+                      <img
+                        src="https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=500&h=500&fit=crop"
+                        alt=""
+                      />
+                    </div>
+                    <strong>Peaceful Piano</strong>
+                    <p>Relax and indulge with beautiful piano pieces.</p>
+                  </article>
+                </div>
+              </section>
+
+              <section class="m-section">
+                <div class="m-section-head">
+                  <h3>Suasana hati</h3>
+                  <a href="#">JELAJAHI</a>
+                </div>
+                <div class="m-card-grid">
+                  <article
+                    class="m-card"
+                    data-title="Mood Booster"
+                    data-artist="Feel-good songs to make you smile"
+                    data-image="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&h=500&fit=crop"
+                    data-color="#5e4a1e"
+                  >
+                    <div class="m-card-cover">
+                      <img
+                        src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&h=500&fit=crop"
+                        alt=""
+                      />
+                    </div>
+                    <strong>Mood Booster</strong>
+                    <p>Get happy with these feel-good songs!</p>
+                  </article>
+                  <article
+                    class="m-card"
+                    data-title="Rock Classics"
+                    data-artist="The greatest rock songs"
+                    data-image="https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?w=500&h=500&fit=crop"
+                    data-color="#4a1e1e"
+                  >
+                    <div class="m-card-cover">
+                      <img
+                        src="https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?w=500&h=500&fit=crop"
+                        alt=""
+                      />
+                    </div>
+                    <strong>Rock Classics</strong>
+                    <p>Rock legends &amp; epic songs.</p>
+                  </article>
+                </div>
+              </section>
+              <div style="height: 20px"></div>
+            </div>
+
+            <div class="m-mini-player" id="mMiniPlayer">
+              <img
+                id="mNowImage"
+                src="https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=160&h=160&fit=crop"
+                alt=""
+              />
+              <div class="m-mini-meta">
+                <strong id="mNowTitle">About You</strong>
+                <span id="mNowArtist">The 1975</span>
+              </div>
+              <div class="m-mini-controls">
+                <button
+                  class="m-mini-btn m-mini-like"
+                  id="mLikeCurrent"
+                  aria-label="Sukai"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M20.8 8.8c0 5.3-8.8 10.2-8.8 10.2S3.2 14.1 3.2 8.8a4.7 4.7 0 0 1 8.8-2.2 4.7 4.7 0 0 1 8.8 2.2Z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  class="m-mini-btn"
+                  id="mPlayBtn"
+                  aria-label="Putar/Jeda"
+                >
+                  <svg id="mPlayIcon" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                      d="M7 4.8c0-.8.9-1.3 1.6-.9l11 7.1a1.2 1.2 0 0 1 0 2L8.6 20c-.7.5-1.6 0-1.6-.9z"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <nav class="m-bottom-nav">
+              <button class="m-nav-item active" data-mnav="home">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path
+                    d="M12.5 3.247a1 1 0 0 0-1 0L4 7.747V19a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-4h4v4a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V7.747l-7.5-4.5z"
+                  />
+                </svg>
+                Beranda
+              </button>
+              <button class="m-nav-item" data-mnav="search">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.3-4.3" />
+                </svg>
+                Cari
+              </button>
+              <button class="m-nav-item" data-mnav="library">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                >
+                  <path d="M3 3h3v18H3zM9 3h3v18H9zM15 3h3v18h-3zM21 3v18" />
+                </svg>
+                Koleksi
+              </button>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      const $ = (sel, root = document) => root.querySelector(sel);
+      const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+      const toast = $("#toast");
+      let toastTimer;
+      function notify(message) {
+        toast.textContent = message;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 2100);
+      }
+
+      // Update status bar time
+      function updateStatusTime() {
+        const d = new Date();
+        const h = d.getHours();
+        const m = String(d.getMinutes()).padStart(2, "0");
+        const el = $("#statusTime");
+        if (el) el.textContent = `${h}:${m}`;
+      }
+      updateStatusTime();
+      setInterval(updateStatusTime, 30000);
+
+      // Greeting based on time
+      function setGreeting() {
+        const h = new Date().getHours();
+        let greet = "Selamat malam";
+        if (h >= 4 && h < 12) greet = "Selamat pagi";
+        else if (h >= 12 && h < 15) greet = "Selamat siang";
+        else if (h >= 15 && h < 18) greet = "Selamat sore";
+        $("#greeting").textContent = greet;
+        $("#mGreeting").textContent = greet;
+      }
+      setGreeting();
+
+      // ===== View switcher =====
+      const desktopBtn = $("#desktopBtn");
+      const mobileBtn = $("#mobileBtn");
+      desktopBtn.addEventListener("click", () => {
+        document.body.classList.remove("mobile-mode");
+        desktopBtn.classList.add("active");
+        desktopBtn.setAttribute("aria-selected", "true");
+        mobileBtn.classList.remove("active");
+        mobileBtn.setAttribute("aria-selected", "false");
+        notify("Mode Desktop");
+      });
+      mobileBtn.addEventListener("click", () => {
+        document.body.classList.add("mobile-mode");
+        mobileBtn.classList.add("active");
+        mobileBtn.setAttribute("aria-selected", "true");
+        desktopBtn.classList.remove("active");
+        desktopBtn.setAttribute("aria-selected", "false");
+        notify("Mode Mobile — Pixel Phone");
+      });
+
+      // ===== Playback state =====
+      let isPlaying = false;
+      let currentIndex = 0;
+      let seconds = 0;
+      let duration = 218;
+      let shuffle = false;
+      let repeat = false;
+      let liked = false;
+
+      const tracks = [
+        {
+          title: "About You",
+          artist: "The 1975",
+          image:
+            "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=500&h=500&fit=crop",
+          duration: 218,
+          color: "#4b2d5e",
+        },
+        {
+          title: "Evaluasi",
+          artist: "Hindia",
+          image:
+            "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500&h=500&fit=crop",
+          duration: 246,
+          color: "#5a2a2a",
+        },
+        {
+          title: "Rehat",
+          artist: "Kunto Aji",
+          image:
+            "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500&h=500&fit=crop",
+          duration: 232,
+          color: "#1e3a5f",
+        },
+        {
+          title: "505",
+          artist: "Arctic Monkeys",
+          image:
+            "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&h=500&fit=crop",
+          duration: 253,
+          color: "#2a2a2a",
+        },
+        {
+          title: "Satu Bulan",
+          artist: "Bernadya",
+          image:
+            "https://images.unsplash.com/photo-1506157786151-b8491531f063?w=500&h=500&fit=crop",
+          duration: 213,
+          color: "#5e3a2a",
+        },
+      ];
+
+      function formatTime(value) {
+        const mins = Math.floor(value / 60);
+        const secs = Math.floor(value % 60)
+          .toString()
+          .padStart(2, "0");
+        return `${mins}:${secs}`;
+      }
+
+      function updateMainBg(color) {
+        const bg = $("#mainBg");
+        if (bg && color) {
+          bg.style.background = `linear-gradient(180deg, ${color} 0%, ${color}40 30%, var(--panel) 55%)`;
+        }
+      }
+
+      function setPlaying(value) {
+        isPlaying = value;
+        const playPath = isPlaying
+          ? '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>'
+          : '<path d="M7 4.8c0-.8.9-1.3 1.6-.9l11 7.1a1.2 1.2 0 0 1 0 2L8.6 20c-.7.5-1.6 0-1.6-.9z"/>';
+        $("#playIcon").innerHTML = playPath;
+        $("#mPlayIcon").innerHTML = playPath;
+        $("#playBtn").setAttribute("aria-label", isPlaying ? "Jeda" : "Putar");
+      }
+
+      function renderTrack() {
+        const track = tracks[currentIndex];
+        $("#nowTitle").textContent = track.title;
+        $("#nowArtist").textContent = track.artist;
+        $("#nowImage").src = track.image;
+        $("#mNowTitle").textContent = track.title;
+        $("#mNowArtist").textContent = track.artist;
+        $("#mNowImage").src = track.image;
+        duration = track.duration;
+        seconds = 0;
+        $("#duration").textContent = formatTime(duration);
+        $("#elapsed").textContent = "0:00";
+        $("#progress").max = duration;
+        $("#progress").value = 0;
+        setProgressFill();
+        liked = false;
+        $("#likeCurrent").classList.remove("liked");
+        $("#likeCurrent").innerHTML =
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 8.8c0 5.3-8.8 10.2-8.8 10.2S3.2 14.1 3.2 8.8a4.7 4.7 0 0 1 8.8-2.2 4.7 4.7 0 0 1 8.8 2.2Z"/></svg>';
+        $("#mLikeCurrent").classList.remove("liked");
+        $("#mLikeCurrent").innerHTML =
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 8.8c0 5.3-8.8 10.2-8.8 10.2S3.2 14.1 3.2 8.8a4.7 4.7 0 0 1 8.8-2.2 4.7 4.7 0 0 1 8.8 2.2Z"/></svg>';
+        if (track.color) updateMainBg(track.color);
+      }
+
+      function setProgressFill() {
+        const percent = duration ? (seconds / duration) * 100 : 0;
+        $("#progress").style.setProperty("--progress", `${percent}%`);
+        $("#progress").style.background =
+          `linear-gradient(to right, #fff 0%, #fff ${percent}%, #4d4d4d ${percent}%, #4d4d4d 100%)`;
+        // Mobile mini player progress
+        const mp = $("#mMiniPlayer");
+        if (mp) mp.style.setProperty("--mprog", `${percent}%`);
+      }
+
+      function playCard(card) {
+        const title = card.dataset.title || "Playlist pilihan";
+        const artist = card.dataset.artist || "Spotify";
+        const image =
+          card.dataset.image || $("img", card)?.src || tracks[0].image;
+        const color = card.dataset.color || "#4b2d5e";
+        tracks.unshift({ title, artist, image, duration: 210, color });
+        currentIndex = 0;
+        renderTrack();
+        setPlaying(true);
+        notify(`Memutar ${title}`);
+      }
+
+      // Desktop controls
+      $("#playBtn").addEventListener("click", () => setPlaying(!isPlaying));
+      $("#prevBtn").addEventListener("click", () => {
+        currentIndex =
+          currentIndex === 0 ? tracks.length - 1 : currentIndex - 1;
+        renderTrack();
+        setPlaying(true);
+      });
+      $("#nextBtn").addEventListener("click", () => {
+        currentIndex = shuffle
+          ? Math.floor(Math.random() * tracks.length)
+          : (currentIndex + 1) % tracks.length;
+        renderTrack();
+        setPlaying(true);
+      });
+      $("#shuffleBtn").addEventListener("click", () => {
+        shuffle = !shuffle;
+        $("#shuffleBtn").classList.toggle("active", shuffle);
+        notify(shuffle ? "Acak aktif" : "Acak nonaktif");
+      });
+      $("#repeatBtn").addEventListener("click", () => {
+        repeat = !repeat;
+        $("#repeatBtn").classList.toggle("active", repeat);
+        notify(repeat ? "Ulangi aktif" : "Ulangi nonaktif");
+      });
+
+      function toggleLike(target, svgContainer) {
+        liked = !liked;
+        target.classList.toggle("liked", liked);
+        target.innerHTML = liked
+          ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.8 8.8c0 5.3-8.8 10.2-8.8 10.2S3.2 14.1 3.2 8.8a4.7 4.7 0 0 1 8.8-2.2 4.7 4.7 0 0 1 8.8 2.2Z"/></svg>'
+          : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 8.8c0 5.3-8.8 10.2-8.8 10.2S3.2 14.1 3.2 8.8a4.7 4.7 0 0 1 8.8-2.2 4.7 4.7 0 0 1 8.8 2.2Z"/></svg>';
+        notify(
+          liked
+            ? "Ditambahkan ke Lagu yang Disukai"
+            : "Dihapus dari Lagu yang Disukai",
+        );
+      }
+      $("#likeCurrent").addEventListener("click", () =>
+        toggleLike($("#likeCurrent")),
+      );
+      $("#mLikeCurrent").addEventListener("click", () =>
+        toggleLike($("#mLikeCurrent")),
+      );
+
+      $("#progress").addEventListener("input", (e) => {
+        seconds = Number(e.target.value);
+        $("#elapsed").textContent = formatTime(seconds);
+        setProgressFill();
+      });
+      $("#volume").addEventListener("input", (e) => {
+        const v = Number(e.target.value);
+        e.target.style.setProperty("--volume", `${v}%`);
+        e.target.style.background = `linear-gradient(to right, #1db954 0%, #1db954 ${v}%, #4d4d4d ${v}%, #4d4d4d 100%)`;
+      });
+      $("#volume").dispatchEvent(new Event("input"));
+
+      // Mobile controls
+      $("#mPlayBtn").addEventListener("click", () => setPlaying(!isPlaying));
+
+      setInterval(() => {
+        if (!isPlaying) return;
+        if (seconds < duration) {
+          seconds += 1;
+          $("#progress").value = seconds;
+          $("#elapsed").textContent = formatTime(seconds);
+          setProgressFill();
+        } else if (repeat) {
+          seconds = 0;
+        } else {
+          currentIndex = (currentIndex + 1) % tracks.length;
+          renderTrack();
+        }
+      }, 1000);
+
+      // Desktop cards
+      $$(".music-card").forEach((card) => {
+        card.addEventListener("click", (e) => {
+          if (e.target.closest("button")) e.stopPropagation();
+          playCard(card);
+        });
+      });
+      $$(".quick-card, .library-item").forEach((item) =>
+        item.addEventListener("click", () => {
+          const title = item.dataset.play;
+          const match = [...$$(".music-card")].find(
+            (card) => card.dataset.title === title,
+          );
+          if (match) playCard(match);
+          else {
+            $("#nowTitle").textContent = title;
+            $("#nowArtist").textContent = "Playlist • Spotify";
+            $("#mNowTitle").textContent = title;
+            $("#mNowArtist").textContent = "Playlist • Spotify";
+            setPlaying(true);
+            notify(`Memutar ${title}`);
+          }
+        }),
+      );
+
+      // Mobile cards
+      $$(".m-card, .m-quick-card").forEach((card) => {
+        card.addEventListener("click", () => {
+          const title = card.dataset.title || card.dataset.play;
+          const artist = card.dataset.artist || "Playlist • Spotify";
+          const image =
+            card.dataset.image || $("img", card)?.src || tracks[0].image;
+          const color = card.dataset.color || "#4b2d5e";
+          tracks.unshift({ title, artist, image, duration: 210, color });
+          currentIndex = 0;
+          renderTrack();
+          setPlaying(true);
+          notify(`Memutar ${title}`);
+        });
+      });
+
+      // Mobile bottom nav
+      $$(".m-nav-item").forEach((item) => {
+        item.addEventListener("click", () => {
+          $$(".m-nav-item").forEach((el) => el.classList.remove("active"));
+          item.classList.add("active");
+          const nav = item.dataset.mnav;
+          notify(
+            nav === "home"
+              ? "Beranda"
+              : nav === "search"
+                ? "Cari"
+                : "Koleksi Kamu",
+          );
+        });
+      });
+
+      // Desktop nav
+      $$(".nav-link").forEach((link) =>
+        link.addEventListener("click", () => {
+          $$(".nav-link").forEach((el) => el.classList.remove("active"));
+          link.classList.add("active");
+          const search = $("#desktopSearch");
+          if (link.dataset.nav === "Cari") {
+            search.classList.add("visible");
+            $("#searchInput").focus();
+            notify("Cari lagu, artis, atau playlist");
+          } else {
+            search.classList.remove("visible");
+            $("#searchInput").value = "";
+            filterCards("");
+            notify("Beranda");
+          }
+        }),
+      );
+
+      // Filter chips (library)
+      $$(".filter-chip").forEach((chip) =>
+        chip.addEventListener("click", () => {
+          $$(".filter-chip").forEach((el) => el.classList.remove("active"));
+          chip.classList.add("active");
+          notify(`Filter: ${chip.textContent}`);
+        }),
+      );
+      $$(".m-filter-chip").forEach((chip) =>
+        chip.addEventListener("click", () => {
+          $$(".m-filter-chip").forEach((el) => el.classList.remove("active"));
+          chip.classList.add("active");
+          notify(`Filter: ${chip.textContent}`);
+        }),
+      );
+
+      function filterCards(query) {
+        const normalized = query.trim().toLowerCase();
+        let visible = 0;
+        $$(".music-card").forEach((card) => {
+          const text =
+            `${card.dataset.title} ${card.dataset.artist}`.toLowerCase();
+          const match = !normalized || text.includes(normalized);
+          card.style.display = match ? "" : "none";
+          if (match) visible++;
+        });
+        $$(".section").forEach((section) => {
+          const cards = $$(".music-card", section);
+          section.style.display = cards.some(
+            (card) => card.style.display !== "none",
+          )
+            ? ""
+            : "none";
+        });
+        $("#emptyState").style.display = visible ? "none" : "block";
+        $("#quickGrid").style.display = normalized ? "none" : "";
+      }
+
+      $("#searchInput").addEventListener("input", (e) =>
+        filterCards(e.target.value),
+      );
+      $("#addPlaylist").addEventListener("click", () =>
+        notify("Playlist baru siap dibuat"),
+      );
+      $$(".section-head a").forEach((link) =>
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          notify("Lihat semua rekomendasi");
+        }),
+      );
+
+      renderTrack();
+    </script>
+  </body>
+</html>

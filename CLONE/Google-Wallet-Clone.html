@@ -1,0 +1,3530 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f6f8fc" />
+    <title>Google Wallet — Clone Desktop & Pixel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link href="https://fonts.cdnfonts.com/css/google-sans" rel="stylesheet" />
+    <style>
+      /* ============ TOKENS ============ */
+      :root {
+        --bg: #f6f8fc;
+        --surface: #fff;
+        --surface-2: #f1f3f4;
+        --ink: #1f1f1f;
+        --muted: #444746;
+        --muted-2: #5f6368;
+        --line: #e1e5ea;
+        --blue: #0b57d0;
+        --blue-ink: #0842a0;
+        --blue-soft: #e8f0fe;
+        --green: #188038;
+        --green-soft: #e6f4ea;
+        --red: #c5221f;
+        --shadow-1:
+          0 1px 2px rgba(23, 32, 45, 0.08), 0 2px 8px rgba(23, 32, 45, 0.06);
+        --shadow-2:
+          0 2px 6px rgba(23, 32, 45, 0.1), 0 12px 30px rgba(23, 32, 45, 0.13);
+        --shadow-card: 0 12px 32px rgba(21, 43, 83, 0.28);
+        --disp: "Google Sans", "Roboto", system-ui, sans-serif;
+        --body: "Roboto", system-ui, sans-serif;
+        --mono: "Roboto Mono", ui-monospace, monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--body);
+        -webkit-font-smoothing: antialiased;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+        border: 0;
+        background: none;
+        color: inherit;
+        padding: 0;
+      }
+      :focus-visible {
+        outline: 3px solid rgba(11, 87, 208, 0.35);
+        outline-offset: 2px;
+        border-radius: 8px;
+      }
+      svg {
+        display: block;
+      }
+      .mono {
+        font-family: var(--mono);
+      }
+
+      /* ripple */
+      .ripple {
+        position: relative;
+        overflow: hidden;
+      }
+      .ink {
+        position: absolute;
+        border-radius: 50%;
+        background: currentColor;
+        opacity: 0.14;
+        transform: scale(0);
+        animation: ink 0.55s ease-out forwards;
+        pointer-events: none;
+      }
+      @keyframes ink {
+        to {
+          transform: scale(2.6);
+          opacity: 0;
+        }
+      }
+
+      /* ============ VIEW SWITCHER ============ */
+      .view-switch {
+        position: fixed;
+        left: 50%;
+        bottom: 18px;
+        transform: translateX(-50%);
+        z-index: 900;
+        display: flex;
+        gap: 4px;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(14px);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 5px;
+        box-shadow: 0 6px 24px rgba(23, 32, 45, 0.18);
+      }
+      .view-switch button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 18px;
+        border-radius: 999px;
+        font: 500 13px var(--disp);
+        color: var(--muted);
+        letter-spacing: 0.1px;
+        transition:
+          background 0.2s,
+          color 0.2s;
+      }
+      .view-switch button:hover {
+        background: #eef2f8;
+      }
+      .view-switch button[aria-pressed="true"] {
+        background: var(--blue-soft);
+        color: var(--blue-ink);
+      }
+      .view-switch svg {
+        width: 17px;
+        height: 17px;
+      }
+
+      .view {
+        display: none;
+      }
+      .view.active {
+        display: block;
+        animation: viewIn 0.38s cubic-bezier(0.2, 0.7, 0.2, 1);
+      }
+      @keyframes viewIn {
+        from {
+          opacity: 0;
+          transform: translateY(16px) scale(0.995);
+        }
+      }
+
+      /* ============ BRAND MARK ============ */
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        min-width: 0;
+      }
+      .wallet-mark {
+        width: 27px;
+        height: 27px;
+        flex: 0 0 auto;
+      }
+      .brand-name {
+        font: 500 21px var(--disp);
+        letter-spacing: -0.4px;
+        color: #3c4043;
+        white-space: nowrap;
+      }
+
+      /* ============ DESKTOP TOPBAR ============ */
+      .gw-topbar {
+        position: sticky;
+        top: 0;
+        z-index: 60;
+        height: 66px;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        padding: 0 clamp(16px, 4vw, 40px);
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(14px);
+        border-bottom: 1px solid var(--line);
+      }
+      .gtabs {
+        display: flex;
+        gap: 4px;
+      }
+      .gtab {
+        font: 500 14px var(--disp);
+        color: var(--muted);
+        padding: 9px 16px;
+        border-radius: 999px;
+        transition:
+          background 0.2s,
+          color 0.2s;
+      }
+      .gtab:hover {
+        background: #eef2f8;
+        color: var(--ink);
+      }
+      .gtab.active {
+        background: var(--blue-soft);
+        color: var(--blue-ink);
+        font-weight: 600;
+      }
+      .top-right {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .icon-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: var(--muted-2);
+        transition:
+          background 0.18s,
+          color 0.18s;
+      }
+      .icon-btn:hover {
+        background: #eef1f5;
+        color: var(--ink);
+      }
+      .icon-btn svg {
+        width: 20px;
+        height: 20px;
+      }
+      .avatar {
+        width: 33px;
+        height: 33px;
+        border-radius: 50%;
+        margin-left: 8px;
+        display: grid;
+        place-items: center;
+        background: #d2e3fc;
+        color: var(--blue-ink);
+        font: 700 13px var(--disp);
+        border: 2px solid #fff;
+        box-shadow: var(--shadow-1);
+      }
+
+      /* ============ DESKTOP LAYOUT ============ */
+      .desk-main {
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 36px clamp(16px, 4vw, 40px) 120px;
+      }
+      .desk-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.04fr) minmax(360px, 0.96fr);
+        gap: 28px;
+        align-items: start;
+      }
+      .desk-pane {
+        display: none;
+      }
+      .desk-pane.active {
+        display: block;
+        animation: paneIn 0.3s ease-out;
+      }
+      @keyframes paneIn {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+      }
+
+      /* ---- deck ---- */
+      .deck-wrap {
+        position: relative;
+        padding-top: 84px;
+      }
+      .deck {
+        position: relative;
+        width: min(432px, 100%);
+        height: 336px;
+        margin: 0 auto;
+      }
+      .deck-card {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+        will-change: transform;
+      }
+      .deck-card .card-art {
+        cursor: pointer;
+        box-shadow: var(--shadow-card);
+        transition: box-shadow 0.3s;
+      }
+      .deck-card[data-depth="0"] .card-art:hover {
+        box-shadow: 0 20px 44px rgba(21, 43, 83, 0.36);
+      }
+      .deck-card:not([data-depth="0"]) {
+        cursor: pointer;
+      }
+      .deck-card:not([data-depth="0"]) .card-art {
+        filter: brightness(0.985);
+      }
+      .deck-card.dealing .card-art {
+        animation: deal 0.55s cubic-bezier(0.2, 0.8, 0.25, 1) both;
+      }
+      @keyframes deal {
+        from {
+          opacity: 0;
+          transform: translateY(46px) scale(0.94);
+        }
+      }
+
+      .deck-arrow {
+        position: absolute;
+        top: 150px;
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        color: var(--muted-2);
+        display: grid;
+        place-items: center;
+        box-shadow: var(--shadow-1);
+        transition:
+          background 0.18s,
+          transform 0.18s;
+        z-index: 5;
+      }
+      .deck-arrow:hover {
+        background: #f4f7fc;
+        transform: scale(1.06);
+      }
+      .deck-arrow svg {
+        width: 18px;
+        height: 18px;
+      }
+      .deck-arrow.prev {
+        left: -6px;
+      }
+      .deck-arrow.next {
+        right: -6px;
+      }
+      .deck-count {
+        text-align: center;
+        color: var(--muted-2);
+        font: 500 12px var(--body);
+        margin-top: 14px;
+        letter-spacing: 0.2px;
+      }
+      .deck-actions {
+        display: flex;
+        justify-content: center;
+        margin-top: 18px;
+      }
+
+      /* ---- buttons ---- */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        font: 500 14px var(--disp);
+        border-radius: 999px;
+        padding: 12px 22px;
+        transition:
+          background 0.18s,
+          box-shadow 0.18s,
+          transform 0.18s,
+          border-color 0.18s;
+      }
+      .btn svg {
+        width: 17px;
+        height: 17px;
+      }
+      .btn-fill {
+        background: var(--blue);
+        color: #fff;
+        box-shadow: 0 1px 3px rgba(11, 87, 208, 0.35);
+      }
+      .btn-fill:hover {
+        background: #0f5bd7;
+        box-shadow: 0 3px 10px rgba(11, 87, 208, 0.4);
+        transform: translateY(-1px);
+      }
+      .btn-line {
+        border: 1px solid #c4c7c5;
+        color: var(--blue-ink);
+        background: transparent;
+      }
+      .btn-line:hover {
+        background: var(--blue-soft);
+      }
+      .btn-sm {
+        padding: 8px 15px;
+        font-size: 12.5px;
+      }
+
+      /* ---- detail panel ---- */
+      .detail-panel {
+        background: var(--surface);
+        border: 1px solid #e8ebf0;
+        border-radius: 24px;
+        box-shadow: var(--shadow-1);
+        min-height: 480px;
+        position: sticky;
+        top: 90px;
+        overflow: hidden;
+      }
+      .detail-panel.ping {
+        animation: ping 0.45s ease-out;
+      }
+      @keyframes ping {
+        0% {
+          transform: scale(0.992);
+        }
+        60% {
+          transform: scale(1.004);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+      .dp-inner {
+        padding: 24px 26px 26px;
+        animation: dpIn 0.32s ease-out;
+      }
+      @keyframes dpIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+      }
+      .dp-kicker {
+        font: 700 10.5px var(--body);
+        letter-spacing: 1.4px;
+        text-transform: uppercase;
+        color: #70757a;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .dp-kicker::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--line);
+      }
+      .dp-title {
+        font: 500 22px var(--disp);
+        letter-spacing: -0.4px;
+        margin: 0 0 4px;
+      }
+      .dp-sub {
+        color: var(--muted-2);
+        font-size: 13px;
+        margin: 0 0 14px;
+      }
+      .dp-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--blue-soft);
+        color: var(--blue-ink);
+        font: 600 11px var(--body);
+        padding: 5px 11px;
+        border-radius: 999px;
+      }
+      .dp-chip.ok {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+      .dp-chip svg {
+        width: 12px;
+        height: 12px;
+      }
+      .dp-num {
+        font: 600 17px/1 var(--mono);
+        letter-spacing: 2.5px;
+        margin: 18px 0 6px;
+        color: #111;
+      }
+      .dp-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 16px 0 4px;
+      }
+      .dp-cell {
+        background: #f7f9fc;
+        border: 1px solid #eef1f5;
+        border-radius: 14px;
+        padding: 11px 13px;
+      }
+      .dp-cell span {
+        display: block;
+        font-size: 10.5px;
+        color: #70757a;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+      }
+      .dp-cell strong {
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .dp-bal {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #f7f9fc;
+        border: 1px solid #eef1f5;
+        border-radius: 14px;
+        padding: 12px 14px;
+        margin-top: 10px;
+      }
+      .dp-bal span {
+        font-size: 11px;
+        color: #70757a;
+        display: block;
+        margin-bottom: 3px;
+      }
+      .dp-bal strong {
+        font: 500 18px var(--disp);
+        letter-spacing: -0.3px;
+      }
+      .dp-bal .hidden-amt {
+        letter-spacing: 2px;
+      }
+      .eye-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #e9eef7;
+        color: var(--blue-ink);
+        display: grid;
+        place-items: center;
+      }
+      .eye-btn:hover {
+        background: var(--blue-soft);
+      }
+      .eye-btn svg {
+        width: 17px;
+        height: 17px;
+      }
+      .dp-code {
+        margin: 20px 0 6px;
+        text-align: center;
+      }
+      .barcode {
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+      }
+      .barcode i {
+        background: #151515;
+        display: block;
+        border-radius: 0.5px;
+      }
+      .dp-codenum {
+        font: 500 12px var(--mono);
+        letter-spacing: 2px;
+        color: #333;
+        margin-top: 9px;
+      }
+      .qr-wrap {
+        display: flex;
+        justify-content: center;
+        margin: 18px 0 8px;
+      }
+      .qr-wrap canvas {
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        padding: 8px;
+        background: #fff;
+      }
+      .dp-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+      }
+      .dp-note {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+        color: #80868b;
+        font-size: 11px;
+        line-height: 1.5;
+        margin-top: 18px;
+      }
+      .dp-note svg {
+        width: 14px;
+        height: 14px;
+        flex: 0 0 auto;
+        margin-top: 1px;
+      }
+
+      /* ---- activity (desktop) ---- */
+      .act-wrap {
+        max-width: 780px;
+        margin: 0 auto;
+      }
+      .act-head h2 {
+        font: 500 28px var(--disp);
+        letter-spacing: -0.8px;
+        margin: 0 0 6px;
+      }
+      .act-head p {
+        color: var(--muted-2);
+        font-size: 13.5px;
+        margin: 0 0 22px;
+      }
+      .summary-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 20px;
+      }
+      .summary-card {
+        background: var(--surface);
+        border: 1px solid #e8ebf0;
+        border-radius: 20px;
+        padding: 18px 20px;
+        box-shadow: var(--shadow-1);
+      }
+      .summary-card.big {
+        background: linear-gradient(135deg, #e9f1fe, #f6f8fc 70%);
+        border-color: #dbe6f8;
+      }
+      .summary-card span {
+        font-size: 11.5px;
+        color: #70757a;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        font-weight: 700;
+      }
+      .summary-card strong {
+        display: block;
+        font: 500 26px var(--disp);
+        letter-spacing: -0.6px;
+        margin-top: 8px;
+      }
+      .summary-card em {
+        font-style: normal;
+        color: var(--muted-2);
+        font-size: 12px;
+        display: block;
+        margin-top: 5px;
+      }
+      .chips {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+      .chip-f {
+        border: 1px solid #c9cdd2;
+        border-radius: 10px;
+        padding: 7px 14px;
+        font: 500 12.5px var(--body);
+        color: var(--muted);
+        background: transparent;
+        transition: all 0.18s;
+      }
+      .chip-f:hover {
+        background: #eef2f8;
+      }
+      .chip-f.active {
+        background: var(--blue-soft);
+        border-color: var(--blue-soft);
+        color: var(--blue-ink);
+        font-weight: 600;
+      }
+      .list-panel {
+        background: var(--surface);
+        border: 1px solid #e8ebf0;
+        border-radius: 20px;
+        box-shadow: var(--shadow-1);
+        padding: 8px;
+        overflow: hidden;
+      }
+      .tx {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 13px 14px;
+        border-radius: 14px;
+        transition: background 0.15s;
+        cursor: pointer;
+      }
+      .tx:hover {
+        background: #f6f8fb;
+      }
+      .tx.hidden {
+        display: none;
+      }
+      .tx-ico {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: var(--surface-2);
+        color: var(--muted-2);
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+      }
+      .tx-ico svg {
+        width: 19px;
+        height: 19px;
+      }
+      .tx-main {
+        flex: 1;
+        min-width: 0;
+      }
+      .tx-name {
+        font: 600 13.5px var(--body);
+        margin: 0 0 4px;
+      }
+      .tx-meta {
+        font-size: 11.5px;
+        color: #777c82;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .tx-cat {
+        background: #eef1f5;
+        border-radius: 5px;
+        padding: 2px 7px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        color: #5f6368;
+      }
+      .tx-amt {
+        font: 600 13.5px var(--body);
+        white-space: nowrap;
+      }
+      .tx-amt.pos {
+        color: var(--green);
+      }
+      .list-foot {
+        padding: 12px 16px;
+        color: #80868b;
+        font-size: 11px;
+        display: flex;
+        gap: 7px;
+        align-items: center;
+        border-top: 1px solid #f0f2f4;
+        margin-top: 6px;
+      }
+      .list-foot svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      /* ============ CARD ART (em-based, scalable) ============ */
+      .card-art {
+        --w: 432px;
+        width: var(--w);
+        max-width: 100%;
+        aspect-ratio: 42/26;
+        font-size: calc(var(--w) / 42);
+        border-radius: 1.9em;
+        position: relative;
+        overflow: hidden;
+        color: #fff;
+        padding: 2.2em 2.5em;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        user-select: none;
+        transform-style: preserve-3d;
+        transition: box-shadow 0.3s;
+      }
+      .ca-top,
+      .ca-bot {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 2em;
+      }
+      .ca-bank {
+        font: 600 1.12em var(--disp);
+        letter-spacing: 0.14em;
+      }
+      .ca-type {
+        font: 400 0.95em var(--body);
+        opacity: 0.78;
+        margin-top: 0.35em;
+      }
+      .ca-wave {
+        width: 2.2em;
+        height: 2.2em;
+        opacity: 0.9;
+      }
+      .ca-wave svg {
+        width: 100%;
+        height: 100%;
+      }
+      .ca-chip {
+        width: 4.15em;
+        height: 3em;
+        border-radius: 0.55em;
+        background: linear-gradient(135deg, #f0dfa8, #c9b26f 60%, #e8d59a);
+        position: relative;
+        overflow: hidden;
+        box-shadow: inset 0 0 0 1px rgba(120, 100, 50, 0.35);
+        margin-bottom: 1.1em;
+      }
+      .ca-chip::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(
+            90deg,
+            transparent 30%,
+            rgba(105, 85, 40, 0.4) 31%,
+            transparent 33%,
+            transparent 64%,
+            rgba(105, 85, 40, 0.35) 65%,
+            transparent 67%
+          ),
+          linear-gradient(
+            0deg,
+            transparent 45%,
+            rgba(105, 85, 40, 0.35) 46%,
+            transparent 50%
+          );
+      }
+      .ca-num {
+        font: 500 1.42em var(--mono);
+        letter-spacing: 0.22em;
+      }
+      .ca-holder span {
+        display: block;
+        font-size: 0.72em;
+        letter-spacing: 0.18em;
+        opacity: 0.65;
+        text-transform: uppercase;
+      }
+      .ca-holder b {
+        display: block;
+        font: 500 1em var(--disp);
+        letter-spacing: 0.06em;
+        margin-top: 0.35em;
+      }
+      .ca-mc {
+        display: flex;
+        align-items: center;
+      }
+      .ca-mc i {
+        width: 2.65em;
+        height: 2.65em;
+        border-radius: 50%;
+        background: #eb001b;
+      }
+      .ca-mc i + i {
+        background: #f79e1b;
+        margin-left: -1.05em;
+        opacity: 0.96;
+      }
+      .ca-visa {
+        font: italic 800 1.9em var(--disp);
+        letter-spacing: -0.04em;
+      }
+
+      /* BCA / Mandiri / Jago */
+      .art-bca {
+        background: linear-gradient(
+          118deg,
+          #0d2c5c 0%,
+          #164a9c 55%,
+          #2e6fd0 100%
+        );
+      }
+      .art-bca::after {
+        content: "";
+        position: absolute;
+        width: 34em;
+        height: 34em;
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        border-radius: 50%;
+        right: -11em;
+        top: -19em;
+        box-shadow:
+          0 0 0 2.4em rgba(255, 255, 255, 0.04),
+          0 0 0 5em rgba(255, 255, 255, 0.03);
+      }
+      .art-mandiri {
+        background: linear-gradient(
+          118deg,
+          #043d33 0%,
+          #0a6b54 58%,
+          #2a9877 100%
+        );
+      }
+      .art-mandiri::after {
+        content: "";
+        position: absolute;
+        width: 26em;
+        height: 26em;
+        border-radius: 50%;
+        left: -9em;
+        bottom: -17em;
+        background: radial-gradient(
+          circle,
+          rgba(255, 214, 102, 0.22),
+          transparent 65%
+        );
+      }
+      .art-bca .ca-bank,
+      .art-mandiri .ca-bank {
+        letter-spacing: 0.22em;
+      }
+
+      /* TransJakarta */
+      .art-tj {
+        background: linear-gradient(115deg, #ffffff 0%, #f5f7fa 100%);
+        color: #1c2433;
+      }
+      .art-tj::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 1em;
+        background: linear-gradient(#f37021, #e0301e);
+      }
+      .art-tj::after {
+        content: "";
+        position: absolute;
+        width: 20em;
+        height: 20em;
+        border-radius: 50%;
+        border: 0.14em solid rgba(243, 112, 33, 0.16);
+        right: -7em;
+        bottom: -12em;
+      }
+      .tj-logo {
+        display: flex;
+        align-items: center;
+        gap: 0.7em;
+        font: 700 1.35em var(--disp);
+        letter-spacing: -0.02em;
+      }
+      .tj-mark {
+        width: 2em;
+        height: 2em;
+        border-radius: 0.55em;
+        background: linear-gradient(135deg, #f37021, #e0301e);
+        position: relative;
+        overflow: hidden;
+        flex: 0 0 auto;
+      }
+      .tj-mark::after {
+        content: "";
+        position: absolute;
+        left: 0.35em;
+        right: 0.35em;
+        top: 52%;
+        height: 0.32em;
+        background: #fff;
+        border-radius: 2em;
+      }
+      .tj-bal {
+        margin-top: 1.1em;
+        font-size: 0.95em;
+        color: #5f6368;
+      }
+      .tj-bal b {
+        display: block;
+        font: 500 1.7em var(--disp);
+        color: #0b57d0;
+        margin-top: 0.2em;
+        letter-spacing: -0.02em;
+      }
+      .art-tj .ca-num {
+        color: #202124;
+        letter-spacing: 0.3em;
+      }
+      .tj-flag {
+        font: 700 0.72em var(--body);
+        letter-spacing: 0.16em;
+        color: #e0301e;
+        border: 0.12em solid #e0301e;
+        border-radius: 2em;
+        padding: 0.45em 0.9em;
+      }
+
+      /* Kopi Kenangan */
+      .art-kk {
+        background: linear-gradient(
+          120deg,
+          #2c1a10 0%,
+          #4a2c1a 55%,
+          #6b3f23 100%
+        );
+      }
+      .art-kk::after {
+        content: "";
+        position: absolute;
+        width: 22em;
+        height: 22em;
+        border-radius: 50%;
+        border: 1px solid rgba(240, 220, 190, 0.18);
+        right: -8em;
+        top: -13em;
+      }
+      .kk-logo {
+        display: flex;
+        align-items: center;
+        gap: 0.8em;
+        font: 700 1.12em var(--disp);
+        letter-spacing: 0.1em;
+      }
+      .kk-logo svg {
+        width: 2em;
+        height: 2em;
+      }
+      .kk-tag {
+        font: 600 0.78em var(--body);
+        letter-spacing: 0.3em;
+        color: #e8cfae;
+        opacity: 0.9;
+      }
+      .kk-num {
+        font: 500 1.35em var(--mono);
+        letter-spacing: 0.3em;
+      }
+      .kk-pts {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6em;
+        background: rgba(255, 236, 205, 0.14);
+        border: 1px solid rgba(255, 236, 205, 0.3);
+        border-radius: 2em;
+        padding: 0.6em 1.2em;
+        font: 600 0.95em var(--disp);
+        color: #ffe9c9;
+      }
+
+      /* Garuda boarding pass */
+      .art-ga {
+        background: #fff;
+        color: #12233f;
+        padding: 0;
+      }
+      .ga-strip {
+        height: 0.5em;
+        background: linear-gradient(
+          90deg,
+          #0f2f6d 0 40%,
+          #0e8a72 40% 70%,
+          #d8a33c 70%
+        );
+      }
+      .ga-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 1.6em 2.4em 1.8em;
+      }
+      .ga-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .ga-brand {
+        font: 700 1.15em var(--disp);
+        color: #0f2f6d;
+        letter-spacing: 0.02em;
+      }
+      .ga-bp {
+        font: 700 0.7em var(--body);
+        letter-spacing: 0.28em;
+        color: #0e8a72;
+      }
+      .ga-route {
+        display: flex;
+        align-items: center;
+        gap: 1em;
+        margin: 0.4em 0;
+      }
+      .ga-code {
+        font: 500 2.5em var(--disp);
+        letter-spacing: -0.02em;
+        color: #0f2f6d;
+      }
+      .ga-plane {
+        width: 2em;
+        height: 2em;
+        color: #0e8a72;
+      }
+      .ga-meta {
+        display: flex;
+        gap: 2.4em;
+        margin-top: 0.3em;
+      }
+      .ga-meta div span {
+        display: block;
+        font-size: 0.68em;
+        letter-spacing: 0.14em;
+        color: #7a869a;
+        text-transform: uppercase;
+        font-weight: 700;
+      }
+      .ga-meta div b {
+        display: block;
+        font: 600 1.05em var(--body);
+        margin-top: 0.3em;
+      }
+      .ga-bottom {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 1em;
+      }
+      .ga-barcode {
+        display: flex;
+        align-items: stretch;
+        height: 3.2em;
+      }
+      .ga-barcode i {
+        background: #12233f;
+        display: block;
+      }
+      .ga-qr {
+        width: 5.2em;
+        height: 5.2em;
+        border-radius: 0.4em;
+      }
+
+      /* Soundrenaline ticket */
+      .art-sr {
+        background: linear-gradient(
+          130deg,
+          #100d1d 0%,
+          #241a3f 55%,
+          #3b1f5e 100%
+        );
+      }
+      .art-sr::before,
+      .art-sr::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: 2.6em;
+        height: 2.6em;
+        border-radius: 50%;
+        background: var(--stage-bg, #f6f8fc);
+        transform: translateY(-50%);
+      }
+      .art-sr::before {
+        left: -1.3em;
+      }
+      .art-sr::after {
+        right: -1.3em;
+      }
+      .sr-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .sr-name {
+        font: 700 0.82em var(--body);
+        letter-spacing: 0.42em;
+        color: #c9b8ff;
+      }
+      .sr-live {
+        font: 700 0.68em var(--body);
+        letter-spacing: 0.2em;
+        color: #ff6d9d;
+        border: 1px solid rgba(255, 109, 157, 0.6);
+        border-radius: 2em;
+        padding: 0.5em 1em;
+      }
+      .sr-big {
+        font: 700 4.6em/0.95 var(--disp);
+        letter-spacing: -0.04em;
+        background: linear-gradient(100deg, #fff 20%, #b79bff 60%, #ff6d9d);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .sr-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        font-size: 0.92em;
+        color: #cfc4f2;
+      }
+      .sr-info b {
+        display: block;
+        font: 600 1.05em var(--disp);
+        color: #fff;
+        margin-top: 0.25em;
+      }
+      .sr-perf {
+        position: absolute;
+        left: 1.3em;
+        right: 1.3em;
+        top: calc(50% - 1px);
+        border-top: 2px dashed rgba(255, 255, 255, 0.22);
+      }
+
+      /* ============ MOBILE STAGE ============ */
+      .mob-stage {
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: 100px 20px 130px;
+        position: relative;
+        overflow: hidden;
+        background:
+          radial-gradient(
+            1100px 620px at 50% -8%,
+            #e4edfb 0%,
+            rgba(228, 237, 251, 0) 60%
+          ),
+          radial-gradient(700px 500px at 88% 88%, #eceffa, transparent 65%),
+          var(--bg);
+      }
+      .mob-stage::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(
+          rgba(60, 90, 140, 0.12) 1px,
+          transparent 1px
+        );
+        background-size: 24px 24px;
+        mask-image: radial-gradient(
+          closest-side at 50% 45%,
+          #000 20%,
+          transparent 100%
+        );
+        pointer-events: none;
+      }
+      .stage-copy {
+        position: absolute;
+        left: clamp(20px, 7vw, 110px);
+        top: 50%;
+        transform: translateY(-50%);
+        max-width: 300px;
+        display: none;
+      }
+      @media (min-width: 1120px) {
+        .stage-copy {
+          display: block;
+        }
+      }
+      .stage-copy .eyebrow {
+        font: 700 10.5px var(--body);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--blue);
+        margin: 0 0 10px;
+      }
+      .stage-copy h2 {
+        font: 500 30px/1.2 var(--disp);
+        letter-spacing: -1px;
+        margin: 0 0 12px;
+      }
+      .stage-copy p {
+        color: var(--muted-2);
+        font-size: 13.5px;
+        line-height: 1.65;
+        margin: 0;
+      }
+      .stage-copy .spec-row {
+        display: flex;
+        gap: 8px;
+        margin-top: 18px;
+        flex-wrap: wrap;
+      }
+      .stage-copy .spec {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 6px 13px;
+        font: 500 11.5px var(--body);
+        color: var(--muted);
+        box-shadow: var(--shadow-1);
+      }
+      .phone-caption {
+        position: absolute;
+        bottom: 86px;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        color: #80868b;
+        font-size: 11.5px;
+        letter-spacing: 0.3px;
+      }
+      .phone-caption b {
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      .phone-float {
+        animation: bob 7s ease-in-out infinite;
+      }
+      @keyframes bob {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-9px);
+        }
+      }
+      .phone {
+        position: relative;
+        height: min(830px, calc(100dvh - 210px));
+        min-height: 540px;
+        aspect-ratio: 0.478;
+        border-radius: 56px;
+        background: linear-gradient(
+          160deg,
+          #3c4046,
+          #191c20 30%,
+          #23262b 70%,
+          #43474d
+        );
+        box-shadow:
+          0 30px 70px rgba(20, 26, 38, 0.4),
+          0 4px 14px rgba(20, 26, 38, 0.3),
+          inset 0 0 0 2px rgba(255, 255, 255, 0.09),
+          inset 0 0 8px rgba(0, 0, 0, 0.65);
+        padding: 11px;
+      }
+      .phone-btn {
+        position: absolute;
+        right: -3px;
+        width: 4px;
+        border-radius: 3px;
+        background: linear-gradient(90deg, #2b2e33, #0f1113);
+      }
+      .phone-btn.vol {
+        top: 21%;
+        height: 11.5%;
+      }
+      .phone-btn.pwr {
+        top: 35.5%;
+        height: 7%;
+      }
+      .phone-screen {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border-radius: 46px;
+        overflow: hidden;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        isolation: isolate;
+      }
+      .punch {
+        position: absolute;
+        top: 13px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background: #050505;
+        z-index: 80;
+        box-shadow: inset 0 0 3px 1px rgba(70, 90, 120, 0.5);
+      }
+      .glass {
+        position: absolute;
+        inset: 0;
+        z-index: 70;
+        pointer-events: none;
+        background: linear-gradient(
+          115deg,
+          rgba(255, 255, 255, 0.09) 0%,
+          rgba(255, 255, 255, 0) 24%
+        );
+      }
+
+      /* status + app bar */
+      .status-bar {
+        flex: 0 0 auto;
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 22px 0;
+        font: 600 13px var(--body);
+        color: #1f1f1f;
+      }
+      .sb-right {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .sb-right svg {
+        height: 13px;
+        width: auto;
+      }
+      .m-appbar {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px 10px;
+      }
+      .m-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #d2e3fc;
+        color: var(--blue-ink);
+        display: grid;
+        place-items: center;
+        font: 700 12.5px var(--disp);
+        margin-right: 2px;
+      }
+      .m-wordmark {
+        font: 500 19px var(--disp);
+        letter-spacing: -0.3px;
+        color: #1f1f1f;
+      }
+      .m-wordmark span {
+        color: #5f6368;
+      }
+      .m-appbar .icon-btn {
+        margin-left: auto;
+      }
+      .m-appbar .icon-btn + .icon-btn {
+        margin-left: 0;
+      }
+
+      /* screens */
+      .screens {
+        flex: 1;
+        display: flex;
+        width: 200%;
+        transition: transform 0.42s cubic-bezier(0.2, 0.8, 0.2, 1);
+        min-height: 0;
+      }
+      .screen {
+        width: 50%;
+        overflow-y: auto;
+        scrollbar-width: none;
+        min-height: 0;
+      }
+      .screen::-webkit-scrollbar {
+        display: none;
+      }
+      .screen-w {
+        padding: 2px 0 14px;
+      }
+
+      /* carousel */
+      .m-carousel {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        padding: 10px 16px 18px;
+        scrollbar-width: none;
+        --w: 260px;
+      }
+      .m-carousel::-webkit-scrollbar {
+        display: none;
+      }
+      .m-slide {
+        flex: 0 0 auto;
+        scroll-snap-align: center;
+        border-radius: 18px;
+      }
+      .m-slide .card-art {
+        border-radius: 16px;
+        padding: 1.6em 1.8em;
+        font-size: calc(var(--w) / 50);
+        box-shadow: 0 10px 24px rgba(21, 43, 83, 0.26);
+        transition:
+          transform 0.3s,
+          box-shadow 0.3s;
+        --w: 260px;
+      }
+      .m-slide .card-art .ca-bank {
+        font-size: 0.95em;
+        letter-spacing: 0.1em;
+      }
+      .m-slide .card-art .ca-type {
+        font-size: 0.8em;
+      }
+      .m-slide .card-art .ca-num {
+        font-size: 1.2em;
+        letter-spacing: 0.18em;
+      }
+
+      .m-slide .card-art .ca-holder span {
+        font-size: 0.65em;
+      }
+
+      .m-slide .card-art .ca-holder b {
+        font-size: 0.85em;
+      }
+
+      .m-slide .card-art .ca-chip {
+        width: 3.5em;
+        height: 2.4em;
+      }
+
+      .m-slide .card-art .ca-wave {
+        width: 1.8em;
+        height: 1.8em;
+      }
+      .m-slide .art-tj .ca-num {
+        font-size: 1.1em;
+        letter-spacing: 0.25em;
+      }
+
+      .m-slide .art-tj .tj-bal b {
+        font-size: 1.4em;
+      }
+
+      .m-slide .art-kk .kk-num {
+        font-size: 1.15em;
+      }
+
+      .m-slide .art-kk .kk-pts {
+        font-size: 0.8em;
+        padding: 0.5em 1em;
+      }
+      .m-slide:not(.active) .card-art {
+        transform: scale(0.965);
+        box-shadow: 0 6px 16px rgba(21, 43, 83, 0.18);
+      }
+      .m-payinfo {
+        padding: 2px 20px 4px;
+      }
+      .m-payrow {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .m-payname {
+        font: 600 14.5px var(--disp);
+        letter-spacing: -0.2px;
+      }
+      .m-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: #9aa0a6;
+        flex: 0 0 auto;
+      }
+      .m-chip {
+        font: 600 10px var(--body);
+        letter-spacing: 0.4px;
+        background: var(--blue-soft);
+        color: var(--blue-ink);
+        padding: 4px 9px;
+        border-radius: 99px;
+      }
+      .m-paysub {
+        color: var(--muted-2);
+        font-size: 12px;
+        margin-top: 5px;
+      }
+      .m-quick {
+        display: flex;
+        gap: 9px;
+        padding: 12px 20px 4px;
+      }
+      .m-quick .btn {
+        flex: 1;
+        justify-content: center;
+        padding: 10px 8px;
+        font-size: 13px;
+      }
+      .m-dots {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 14px;
+      }
+      .m-dots i {
+        width: 6px;
+        height: 6px;
+        border-radius: 99px;
+        background: #c6cbd1;
+        transition: all 0.25s;
+      }
+      .m-dots i.on {
+        width: 18px;
+        background: var(--blue);
+      }
+
+      /* passes tiles */
+      .m-sec {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        padding: 20px 20px 4px;
+      }
+      .m-sec h3 {
+        font: 500 16.5px var(--disp);
+        letter-spacing: -0.3px;
+        margin: 0;
+      }
+      .m-sec button {
+        font: 600 12px var(--body);
+        color: var(--blue);
+      }
+      .m-tiles {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        padding: 12px 20px 6px;
+        scroll-snap-type: x proximity;
+        scrollbar-width: none;
+        --stage-bg: #fff;
+      }
+      .m-tiles::-webkit-scrollbar {
+        display: none;
+      }
+      .m-tile {
+        flex: 0 0 auto;
+        width: 158px;
+        background: #fff;
+        border: 1px solid #e8ebf0;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: var(--shadow-1);
+        scroll-snap-align: start;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+      }
+      .m-tile:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-2);
+      }
+      .m-tile .card-art {
+        --w: 140px;
+        padding: 1.2em 1.4em;
+        font-size: calc(140px / 50);
+        border-radius: 0;
+        box-shadow: none;
+      }
+      .m-tile figcaption {
+        padding: 8px 11px;
+        font: 500 11.5px var(--body);
+        color: #3c4043;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .m-add {
+        margin: 16px 20px 6px;
+      }
+      .m-add .btn {
+        width: 100%;
+        justify-content: center;
+      }
+      .m-note {
+        padding: 8px 20px;
+        color: #9aa0a6;
+        font-size: 10.5px;
+        text-align: center;
+      }
+
+      /* bottom nav */
+      .m-nav {
+        flex: 0 0 auto;
+        background: #fff;
+        border-top: 1px solid var(--line);
+        display: flex;
+        padding: 6px 10px calc(8px);
+      }
+      .m-nav button {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        font: 600 10.5px var(--body);
+        color: #5f6368;
+        padding: 4px 0 2px;
+        border-radius: 14px;
+      }
+      .m-nav .n-ico {
+        width: 56px;
+        height: 28px;
+        border-radius: 99pxpx;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        transition: background 0.2s;
+      }
+      .m-nav button.active {
+        color: var(--blue-ink);
+      }
+      .m-nav button.active .n-ico {
+        background: var(--blue-soft);
+      }
+      .m-nav svg {
+        width: 20px;
+        height: 20px;
+      }
+      .gesture {
+        flex: 0 0 auto;
+        height: 20px;
+        display: grid;
+        place-items: center;
+        background: var(--bg);
+      }
+      .gesture i {
+        width: 108px;
+        height: 4.5px;
+        border-radius: 99px;
+        background: #1f1f1f;
+        opacity: 0.85;
+      }
+
+      /* mobile activity */
+      .m-act {
+        padding: 6px 16px 14px;
+      }
+      .m-act h2 {
+        font: 500 22px var(--disp);
+        letter-spacing: -0.6px;
+        margin: 8px 4px 4px;
+      }
+      .m-act .m-sum {
+        background: linear-gradient(135deg, #e9f1fe, #f6f8fc 75%);
+        border: 1px solid #dbe6f8;
+        border-radius: 18px;
+        padding: 15px 17px;
+        margin: 10px 0 12px;
+      }
+      .m-act .m-sum span {
+        font: 700 10px var(--body);
+        letter-spacing: 1.2px;
+        color: #70757a;
+        text-transform: uppercase;
+      }
+      .m-act .m-sum strong {
+        display: block;
+        font: 500 22px var(--disp);
+        letter-spacing: -0.5px;
+        margin-top: 6px;
+      }
+      .m-act .m-sum em {
+        display: block;
+        font-style: normal;
+        font-size: 11px;
+        color: var(--muted-2);
+        margin-top: 4px;
+      }
+      .m-act .chips {
+        padding: 0 2px;
+        margin-bottom: 10px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .m-act .chips::-webkit-scrollbar {
+        display: none;
+      }
+      .m-act .chip-f {
+        flex: 0 0 auto;
+      }
+      .m-act .list-panel {
+        border-radius: 16px;
+      }
+      .m-act .tx {
+        padding: 11px 10px;
+      }
+
+      /* sheets (inside phone) */
+      .phone-scrim {
+        position: absolute;
+        inset: 0;
+        background: rgba(23, 32, 45, 0.42);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+        z-index: 40;
+      }
+      .phone-scrim.on {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .phone-sheet {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 50;
+        background: #fff;
+        border-radius: 26px 26px 0 0;
+        transform: translateY(105%);
+        transition: transform 0.38s cubic-bezier(0.2, 0.8, 0.2, 1);
+        max-height: 82%;
+        overflow-y: auto;
+        padding: 8px 20px 22px;
+        --stage-bg: #fff;
+        scrollbar-width: none;
+      }
+      .phone-sheet::-webkit-scrollbar {
+        display: none;
+      }
+      .phone-sheet.on {
+        transform: none;
+      }
+      .sheet-grip {
+        width: 36px;
+        height: 4px;
+        border-radius: 99px;
+        background: #dadce0;
+        margin: 8px auto 14px;
+      }
+      .sheet-title {
+        font: 500 19px var(--disp);
+        letter-spacing: -0.4px;
+        margin: 0 0 2px;
+      }
+      .sheet-sub {
+        color: var(--muted-2);
+        font-size: 12px;
+        margin: 0 0 14px;
+      }
+      .sheet-art {
+        display: flex;
+        justify-content: center;
+        margin: 6px 0 14px;
+        --w: 280px;
+      }
+      .sheet-art .card-art {
+        --w: 280px;
+        max-width: 90vw;
+        box-shadow: var(--shadow-card);
+      }
+      .sheet-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+        margin-top: 12px;
+      }
+      .sheet-cell {
+        background: #f7f9fc;
+        border-radius: 12px;
+        padding: 10px 12px;
+      }
+      .sheet-cell span {
+        display: block;
+        font-size: 9.5px;
+        letter-spacing: 0.8px;
+        color: #70757a;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+      .sheet-cell strong {
+        font-size: 12.5px;
+        font-weight: 600;
+      }
+      .sheet-actions {
+        display: flex;
+        gap: 9px;
+        margin-top: 16px;
+      }
+      .sheet-actions .btn {
+        flex: 1;
+        justify-content: center;
+        padding: 11px 8px;
+        font-size: 13px;
+      }
+      .sheet-nfc {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #f1f6ff;
+        border: 1px solid #d9e6fb;
+        border-radius: 14px;
+        padding: 11px 13px;
+        margin-top: 14px;
+        color: #174ea6;
+        font-size: 11.5px;
+        line-height: 1.45;
+      }
+      .sheet-nfc svg {
+        width: 20px;
+        height: 20px;
+        flex: 0 0 auto;
+      }
+
+      /* ============ DIALOG (desktop add) ============ */
+      .dlg-scrim {
+        position: fixed;
+        inset: 0;
+        background: rgba(23, 32, 45, 0.42);
+        z-index: 800;
+        display: none;
+        place-items: center;
+        padding: 20px;
+      }
+      .dlg-scrim.on {
+        display: grid;
+      }
+      .dlg {
+        width: min(100%, 460px);
+        background: #fff;
+        border-radius: 26px;
+        padding: 24px;
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+        animation: dlgIn 0.24s cubic-bezier(0.2, 0.8, 0.3, 1);
+      }
+      @keyframes dlgIn {
+        from {
+          transform: translateY(18px) scale(0.97);
+          opacity: 0.5;
+        }
+      }
+      .dlg-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+      .dlg-head h3 {
+        font: 500 21px var(--disp);
+        letter-spacing: -0.5px;
+        margin: 0;
+      }
+      .dlg-close {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--surface-2);
+        color: var(--muted-2);
+        display: grid;
+        place-items: center;
+      }
+      .dlg-close:hover {
+        background: #e4e6e7;
+      }
+      .dlg-close svg {
+        width: 17px;
+        height: 17px;
+      }
+      .add-opt {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        width: 100%;
+        text-align: left;
+        padding: 12px;
+        border: 1px solid #eceff2;
+        border-radius: 16px;
+        transition:
+          background 0.15s,
+          border-color 0.15s;
+        margin-bottom: 8px;
+      }
+      .add-opt:hover {
+        background: #f7faff;
+        border-color: #d7e5fb;
+      }
+      .add-opt .o-ico {
+        width: 42px;
+        height: 42px;
+        border-radius: 13px;
+        background: var(--blue-soft);
+        color: var(--blue-ink);
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+      }
+      .add-opt .o-ico svg {
+        width: 21px;
+        height: 21px;
+      }
+      .add-opt strong {
+        display: block;
+        font: 600 13.5px var(--body);
+        margin-bottom: 3px;
+      }
+      .add-opt span {
+        font-size: 11.5px;
+        color: #71767c;
+      }
+      .dlg-note {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 11px 13px;
+        color: #6f7479;
+        font-size: 11px;
+        line-height: 1.55;
+        margin-top: 8px;
+      }
+
+      /* toast */
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 82px;
+        transform: translate(-50%, 16px);
+        opacity: 0;
+        pointer-events: none;
+        z-index: 950;
+        background: #303134;
+        color: #fff;
+        padding: 12px 18px;
+        border-radius: 99px;
+        font-size: 12.5px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+        transition: all 0.28s;
+        white-space: nowrap;
+        max-width: 92vw;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+
+      /* ============ RESPONSIVE ============ */
+      @media (max-width: 1024px) {
+        .desk-grid {
+          grid-template-columns: 1fr;
+          max-width: 640px;
+          margin: 0 auto;
+        }
+        .detail-panel {
+          position: static;
+          min-height: 0;
+        }
+      }
+      @media (max-width: 720px) {
+        .gw-topbar {
+          gap: 10px;
+          padding: 0 12px;
+        }
+        .brand-name {
+          font-size: 18px;
+        }
+        .gtab {
+          padding: 8px 12px;
+          font-size: 13px;
+        }
+        .desk-main {
+          padding: 22px 14px 120px;
+        }
+        .summary-row {
+          grid-template-columns: 1fr;
+        }
+        .mob-stage {
+          padding: 88px 12px 120px;
+        }
+        .phone {
+          height: min(78dvh, 760px);
+          min-height: 480px;
+        }
+        .phone-caption {
+          bottom: 78px;
+          font-size: 10.5px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+          scroll-behavior: auto !important;
+        }
+      }
+      .phone {
+        --ph: min(820px, calc(100vh - 215px), calc((100vw - 44px) / 0.478));
+        --ph: min(820px, calc(100dvh - 215px), calc((100vw - 44px) / 0.478));
+        height: var(--ph);
+        width: calc(var(--ph) * 0.478);
+        min-height: 0;
+        aspect-ratio: auto;
+        flex: 0 0 auto;
+      }
+
+      .m-carousel {
+        --w: min(294px, calc(100vw - 96px));
+      }
+      .sheet-art {
+        --w: min(280px, calc(100vw - 120px));
+      }
+      .m-tiles {
+        --w: 158px;
+      }
+      @media (max-width: 480px) {
+        .m-carousel {
+          --w: 240px;
+          padding: 8px 12px 16px;
+        }
+
+        .m-slide .card-art {
+          --w: 240px;
+          padding: 1.4em 1.6em;
+          border-radius: 14px;
+        }
+
+        .m-slide .card-art .ca-num {
+          font-size: 1.1em;
+        }
+      }
+      @media (max-width: 720px) {
+        .phone {
+          --ph: min(720px, calc(100dvh - 195px), calc((100vw - 24px) / 0.478));
+          height: var(--ph);
+          width: calc(var(--ph) * 0.478);
+          min-height: 0;
+          border-radius: 44px;
+          padding: 9px;
+        }
+        .phone-screen {
+          border-radius: 36px;
+        }
+        .phone-caption {
+          bottom: 78px;
+          font-size: 10.5px;
+        }
+      }
+    </style>
+  </head>
+  <body data-view="desktop">
+    <!-- ============ SWITCHER ============ -->
+    <div class="view-switch" role="group" aria-label="Pilih tampilan">
+      <button id="btnDesk" class="ripple" aria-pressed="true">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        >
+          <rect x="3" y="4.5" width="18" height="12" rx="2" />
+          <path d="M9 20.5h6m-3-3.5v3.5" />
+        </svg>
+        Desktop
+      </button>
+      <button id="btnMob" class="ripple" aria-pressed="false">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        >
+          <rect x="7" y="2.5" width="10" height="19" rx="2.5" />
+          <path d="M10.8 18.7h2.4" />
+        </svg>
+        Pixel 9
+      </button>
+    </div>
+
+    <!-- ==================================================== -->
+    <!-- ================  DESKTOP VIEW  ==================== -->
+    <!-- ==================================================== -->
+    <div id="desktopView" class="view active">
+      <header class="gw-topbar">
+        <div class="brand">
+          <svg class="wallet-mark" viewBox="0 0 40 40" aria-hidden="true">
+            <path
+              d="M7.5 12.2A4.7 4.7 0 0 1 12.2 7.5h18.1a3.7 3.7 0 0 1 3.7 3.7v2.1H11.1a3.6 3.6 0 0 0-3.6 3.6V12.2Z"
+              fill="#4285F4"
+            />
+            <path
+              d="M7.5 16.9a3.6 3.6 0 0 1 3.6-3.6H33a3.5 3.5 0 0 1 3.5 3.5v12.1a4.1 4.1 0 0 1-4.1 4.1H11.6a4.1 4.1 0 0 1-4.1-4.1V16.9Z"
+              fill="#34A853"
+            />
+            <path
+              d="M7.5 19.8a3.6 3.6 0 0 1 3.6-3.6H33a3.5 3.5 0 0 1 3.5 3.5v9.2a4.1 4.1 0 0 1-4.1 4.1H11.6a4.1 4.1 0 0 1-4.1-4.1V19.8Z"
+              fill="#FBBC04"
+            />
+            <path
+              d="M7.5 22.6A3.6 3.6 0 0 1 11.1 19H33a3.5 3.5 0 0 1 3.5 3.5v6.3a4.1 4.1 0 0 1-4.1 4.1H11.6a4.1 4.1 0 0 1-4.1-4.1v-6.2Z"
+              fill="#EA4335"
+            />
+            <path d="M25.2 22.1h11.3v7H25.2a3.5 3.5 0 0 1 0-7Z" fill="#fff" />
+            <circle cx="27.6" cy="25.6" r="1.25" fill="#4285F4" />
+          </svg>
+          <div class="brand-name">Google Wallet</div>
+        </div>
+        <nav class="gtabs" role="tablist" aria-label="Navigasi utama">
+          <button
+            class="gtab ripple active"
+            data-pane="wallet"
+            role="tab"
+            aria-selected="true"
+          >
+            Wallet
+          </button>
+          <button
+            class="gtab ripple"
+            data-pane="activity"
+            role="tab"
+            aria-selected="false"
+          >
+            Aktivitas
+          </button>
+        </nav>
+        <div class="top-right">
+          <button
+            class="icon-btn ripple"
+            data-toast="Pusat bantuan — fitur demo"
+            aria-label="Bantuan"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path
+                d="M9.7 9a2.4 2.4 0 1 1 4.1 1.7c-1.1 1-1.8 1.2-1.8 2.8M12 17.1h.01"
+              />
+            </svg>
+          </button>
+          <button
+            class="icon-btn ripple"
+            data-toast="Aplikasi Google — demo"
+            aria-label="Aplikasi Google"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="5" cy="5" r="1.7" />
+              <circle cx="12" cy="5" r="1.7" />
+              <circle cx="19" cy="5" r="1.7" />
+              <circle cx="5" cy="12" r="1.7" />
+              <circle cx="12" cy="12" r="1.7" />
+              <circle cx="19" cy="12" r="1.7" />
+              <circle cx="5" cy="19" r="1.7" />
+              <circle cx="12" cy="19" r="1.7" />
+              <circle cx="19" cy="19" r="1.7" />
+            </svg>
+          </button>
+          <div class="avatar" title="Alexandra Putri">A</div>
+        </div>
+      </header>
+
+      <main class="desk-main">
+        <!-- pane: wallet -->
+        <section class="desk-pane active" id="paneWallet">
+          <div class="desk-grid">
+            <div>
+              <div class="deck-wrap">
+                <button
+                  class="deck-arrow prev ripple"
+                  id="deckPrev"
+                  aria-label="Kartu sebelumnya"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="m15 18-6-6 6-6" />
+                  </svg>
+                </button>
+                <div
+                  class="deck"
+                  id="deck"
+                  aria-label="Tumpukan kartu Wallet"
+                ></div>
+                <button
+                  class="deck-arrow next ripple"
+                  id="deckNext"
+                  aria-label="Kartu berikutnya"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="m9 18 6-6-6-6" />
+                  </svg>
+                </button>
+              </div>
+              <p class="deck-count" id="deckCount"></p>
+              <div class="deck-actions">
+                <button class="btn btn-fill ripple" id="deskAdd">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                  >
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                  Tambahkan ke Wallet
+                </button>
+              </div>
+            </div>
+            <aside
+              class="detail-panel"
+              id="detailPanel"
+              aria-live="polite"
+            ></aside>
+          </div>
+        </section>
+
+        <!-- pane: activity -->
+        <section class="desk-pane" id="paneActivity">
+          <div class="act-wrap">
+            <div class="act-head">
+              <h2>Aktivitas Anda</h2>
+              <p>Transaksi dari kartu yang tertaut di Wallet — data demo.</p>
+            </div>
+            <div class="summary-row">
+              <div class="summary-card big">
+                <span>Pengeluaran November</span><strong>Rp 188.500</strong
+                ><em>4 transaksi · naik 12% dari Oktober</em>
+              </div>
+              <div class="summary-card">
+                <span>Pengembalian</span
+                ><strong style="color: var(--green)">Rp 125.000</strong
+                ><em>1 refund diproses</em>
+              </div>
+            </div>
+            <div class="chips" id="chipsDesk"></div>
+            <div class="list-panel">
+              <div id="listDesk"></div>
+              <div class="list-foot">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 11v5m0-8h.01" />
+                </svg>
+                Aktivitas ditampilkan untuk keperluan demo.
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- ==================================================== -->
+    <!-- =================  MOBILE VIEW  ==================== -->
+    <!-- ==================================================== -->
+    <div id="mobileView" class="view">
+      <div class="mob-stage">
+        <div class="stage-copy">
+          <p class="eyebrow">Pratinjau aplikasi</p>
+          <h2>Google Wallet di Pixel&nbsp;9</h2>
+          <p>
+            Kartu pembayaran, boarding pass, tiket, dan loyalitas — geser
+            carousel, ketuk tiket untuk membuka barcode.
+          </p>
+          <div class="spec-row">
+            <span class="spec">Android 16</span><span class="spec">NFC</span
+            ><span class="spec">Offline pass</span>
+          </div>
+        </div>
+
+        <div class="phone-float">
+          <div class="phone">
+            <span class="phone-btn vol"></span
+            ><span class="phone-btn pwr"></span>
+            <div class="phone-screen">
+              <div class="punch"></div>
+              <div class="glass"></div>
+
+              <div class="status-bar">
+                <span id="sbTime">10.42</span>
+                <div class="sb-right">
+                  <svg viewBox="0 0 16 12" fill="#1f1f1f">
+                    <path
+                      d="M1 8.6h2.2V11H1zM4.9 6.3h2.2V11H4.9zM8.8 4h2.2v7H8.8zM12.7 1.6h2.2v9.4h-2.2z"
+                    />
+                  </svg>
+                  <svg
+                    viewBox="0 0 16 12"
+                    fill="none"
+                    stroke="#1f1f1f"
+                    stroke-width="1.4"
+                    stroke-linecap="round"
+                  >
+                    <path
+                      d="M1.5 4.4a9.5 9.5 0 0 1 13 0M3.8 6.9a6.3 6.3 0 0 1 8.4 0"
+                    />
+                    <circle
+                      cx="8"
+                      cy="9.8"
+                      r="1.2"
+                      fill="#1f1f1f"
+                      stroke="none"
+                    />
+                  </svg>
+                  <svg viewBox="0 0 25 12" fill="none">
+                    <rect
+                      x="1"
+                      y="1.5"
+                      width="19"
+                      height="9"
+                      rx="2.4"
+                      stroke="#1f1f1f"
+                      stroke-width="1.3"
+                    />
+                    <rect
+                      x="3"
+                      y="3.5"
+                      width="12"
+                      height="5"
+                      rx="1"
+                      fill="#1f1f1f"
+                    />
+                    <path
+                      d="M22.5 4.6v2.8"
+                      stroke="#1f1f1f"
+                      stroke-width="1.6"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </div>
+              </div>
+
+              <div class="m-appbar">
+                <div class="m-avatar">A</div>
+                <div class="m-wordmark"><span>Google</span> Wallet</div>
+                <button
+                  class="icon-btn ripple"
+                  data-toast="Pencarian — demo"
+                  aria-label="Cari"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                  >
+                    <circle cx="10.8" cy="10.8" r="6.6" />
+                    <path d="m16 16 4.1 4.1" />
+                  </svg>
+                </button>
+                <button
+                  class="icon-btn ripple"
+                  data-toast="Pusat bantuan — demo"
+                  aria-label="Bantuan"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                    <path
+                      d="M9.7 9a2.4 2.4 0 1 1 4.1 1.7c-1.1 1-1.8 1.2-1.8 2.8M12 17.1h.01"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div class="screens" id="screens">
+                <!-- screen: wallet -->
+                <div class="screen screen-w">
+                  <div class="m-carousel" id="mCarousel"></div>
+                  <div class="m-dots" id="mDots"></div>
+                  <div class="m-payinfo" id="mPayInfo"></div>
+                  <div class="m-quick">
+                    <button class="btn btn-fill btn-sm ripple" id="mPayBtn">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.9"
+                        stroke-linecap="round"
+                      >
+                        <path
+                          d="M8.5 8.2a5.4 5.4 0 0 1 0 7.6M11.6 5.6a9.4 9.4 0 0 1 0 12.8M14.7 3a13.6 13.6 0 0 1 0 18"
+                        />
+                      </svg>
+                      Bayar
+                    </button>
+                    <button class="btn btn-line btn-sm ripple" id="mDetailBtn">
+                      Detail kartu
+                    </button>
+                  </div>
+                  <div class="m-sec">
+                    <h3>Tiket &amp; kartu</h3>
+                    <button data-toast="Semua tiket sudah tampil di sini">
+                      Lihat semua
+                    </button>
+                  </div>
+                  <div class="m-tiles" id="mTiles"></div>
+                  <div class="m-add">
+                    <button class="btn btn-line ripple" id="mAddBtn">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.2"
+                        stroke-linecap="round"
+                      >
+                        <path d="M12 5v14M5 12h14" />
+                      </svg>
+                      Tambahkan ke Wallet
+                    </button>
+                  </div>
+                  <p class="m-note">
+                    Demo UI · tidak terhubung ke layanan pembayaran apa pun
+                  </p>
+                </div>
+
+                <!-- screen: activity -->
+                <div class="screen m-act">
+                  <h2>Aktivitas Anda</h2>
+                  <div class="m-sum">
+                    <span>Pengeluaran November</span><strong>Rp 188.500</strong
+                    ><em>4 transaksi · 1 pengembalian dana</em>
+                  </div>
+                  <div class="chips" id="chipsMob"></div>
+                  <div class="list-panel">
+                    <div id="listMob"></div>
+                    <div class="list-foot">Data demo untuk pratinjau.</div>
+                  </div>
+                </div>
+              </div>
+
+              <nav class="m-nav" id="mNav">
+                <button class="active ripple" data-screen="0">
+                  <span class="n-ico"
+                    ><svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <rect x="3" y="5" width="18" height="15" rx="3" />
+                      <path d="M16 12h5m-5 0a2 2 0 1 0 0 4h5v-4h-5Z" /></svg
+                  ></span>
+                  Wallet
+                </button>
+                <button class="ripple" data-screen="1">
+                  <span class="n-ico"
+                    ><svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M4 18V6m0 12h16M8 15l3-4 3 2 5-7" /></svg
+                  ></span>
+                  Aktivitas
+                </button>
+              </nav>
+              <div class="gesture"><i></i></div>
+
+              <div class="phone-scrim" id="phoneScrim"></div>
+              <div
+                class="phone-sheet"
+                id="phoneSheet"
+                role="dialog"
+                aria-modal="true"
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <p class="phone-caption">
+          <b>Pixel 9</b> · Android 16 · pratinjau demo<br />Gunakan switch di
+          bawah untuk berpindah tampilan
+        </p>
+      </div>
+    </div>
+
+    <!-- ============ DIALOG: add (desktop) ============ -->
+    <div
+      class="dlg-scrim"
+      id="addDlg"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="addDlgTitle"
+    >
+      <div class="dlg">
+        <div class="dlg-head">
+          <h3 id="addDlgTitle">Tambahkan ke Wallet</h3>
+          <button class="dlg-close ripple" data-close aria-label="Tutup">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <path d="m6 6 12 12M18 6 6 18" />
+            </svg>
+          </button>
+        </div>
+        <button class="add-opt ripple" data-add="Kartu pembayaran">
+          <span class="o-ico"
+            ><svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+            >
+              <rect x="3" y="5" width="18" height="14" rx="2.5" />
+              <path d="M3 10h18M7 15h3" /></svg></span
+          ><span
+            ><strong>Kartu pembayaran</strong
+            ><span>Tambahkan kartu kredit atau debit</span></span
+          >
+        </button>
+        <button class="add-opt ripple" data-add="Kartu transportasi">
+          <span class="o-ico"
+            ><svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="5" y="3" width="14" height="18" rx="3" />
+              <path d="M8 7h8M8 11h8M9 17h.01m6-.01h.01" /></svg></span
+          ><span
+            ><strong>Kartu transportasi</strong
+            ><span>Simpan kartu transit dan perjalanan</span></span
+          >
+        </button>
+        <button class="add-opt ripple" data-add="Kartu loyalitas">
+          <span class="o-ico"
+            ><svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M12 3 15 9l6 .9-4.4 4.3 1 6.1-5.6-3-5.6 3 1-6.1L3 9.9 9 9l3-6Z"
+              /></svg></span
+          ><span
+            ><strong>Kartu loyalitas</strong
+            ><span>Kumpulkan poin membership</span></span
+          >
+        </button>
+        <button class="add-opt ripple" data-add="Tiket atau boarding pass">
+          <span class="o-ico"
+            ><svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M4 7a2 2 0 0 0 0 4v2a2 2 0 0 0 0 4h16v-4a2 2 0 0 1 0-2V7H4Z"
+              />
+              <path d="M9 7v10m4-7h3m-3 4h3" /></svg></span
+          ><span
+            ><strong>Tiket atau boarding pass</strong
+            ><span>Tiket acara, film, dan penerbangan</span></span
+          >
+        </button>
+        <div class="dlg-note">
+          Demo antarmuka: pilihan di atas hanya simulasi. Tidak ada data kartu
+          atau pembayaran yang disimpan.
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      /* ================================================================
+   DATA
+================================================================ */
+      const WAVE =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8.5 8.2a5.4 5.4 0 0 1 0 7.6"/><path d="M11.6 5.6a9.4 9.4 0 0 1 0 12.8"/><path d="M14.7 3a13.6 13.6 0 0 1 0 18"/></svg>';
+      const CHEV =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="m9 18 6-6-6-6"/></svg>';
+      const PLANE =
+        '<svg class="ga-plane" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="m21 3-7.2 18-3.2-7.6L3 10.2 21 3Z"/></svg>';
+      const CUP =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 9h11v6a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V9Z"/><path d="M17 10h1.4a2.3 2.3 0 0 1 0 4.6H17M9 3.5c0 1-.8 1.2-.8 2.2M12.5 3.5c0 1-.8 1.2-.8 2.2"/></svg>';
+
+      const ITEMS = [
+        {
+          id: "bca",
+          kind: "pay",
+          title: "BCA Debit Mastercard",
+          sub: "Bank Central Asia",
+          art: "art-bca",
+          pay: {
+            bank: "BANK CENTRAL ASIA",
+            type: "Debit Mastercard",
+            num: "•••• •••• •••• 4821",
+            holder: "ALEXANDRA PUTRI",
+            expiry: "08/29",
+            network: "mc",
+            balance: "Rp 8.450.000",
+            def: true,
+          },
+        },
+        {
+          id: "mandiri",
+          kind: "pay",
+          title: "Mandiri Visa Platinum",
+          sub: "Bank Mandiri",
+          art: "art-mandiri",
+          pay: {
+            bank: "BANK MANDIRI",
+            type: "Visa Platinum",
+            num: "•••• •••• •••• 7306",
+            holder: "ALEXANDRA PUTRI",
+            expiry: "11/28",
+            network: "visa",
+            balance: "Rp 12.780.500",
+          },
+        },
+        {
+          id: "tj",
+          kind: "pass",
+          title: "TransJakarta",
+          sub: "Kartu Multi Trip",
+          art: "art-tj",
+          pass: {
+            label: "Kartu transportasi",
+            num: "KMT 0009 12",
+            barcode: true,
+            cells: [
+              ["Pemilik", "Alexandra Putri"],
+              ["Saldo", "Rp 150.000"],
+              ["Status", "Aktif"],
+              ["Diisi ulang", "5 Nov 2026"],
+            ],
+          },
+        },
+        {
+          id: "kk",
+          kind: "pass",
+          title: "Kopi Kenangan Rewards",
+          sub: "Membership · 1.240 poin",
+          art: "art-kk",
+          pass: {
+            label: "Kartu loyalitas",
+            num: "8842 1099 17",
+            barcode: true,
+            cells: [
+              ["Level", "Gold"],
+              ["Poin", "1.240"],
+              ["Member sejak", "Mar 2025"],
+              ["Berlaku", "Selamanya"],
+            ],
+          },
+        },
+        {
+          id: "ga",
+          kind: "pass",
+          title: "Garuda Indonesia",
+          sub: "Boarding pass · CGK → DPS",
+          art: "art-ga",
+          pass: {
+            label: "Boarding pass",
+            qr: true,
+            cells: [
+              ["Penerbangan", "GA-402"],
+              ["Tanggal", "10 Nov 2026"],
+              ["Boarding", "08.40 WIB"],
+              ["Gate", "12"],
+              ["Kursi", "21A"],
+              ["Kelas", "Ekonomi"],
+            ],
+          },
+        },
+        {
+          id: "sr",
+          kind: "pass",
+          title: "Soundrenaline 2026",
+          sub: "Tiket acara · 14 Nov",
+          art: "art-sr",
+          pass: {
+            label: "Tiket acara",
+            num: "SR26-08412",
+            barcode: true,
+            cells: [
+              ["Venue", "Ancol, Jakarta"],
+              ["Tanggal", "14 Nov 2026"],
+              ["Gerbang buka", "19.00 WIB"],
+              ["Kelas", "Festival"],
+            ],
+          },
+        },
+      ];
+      const TX = [
+        {
+          n: "Kopi Kenangan",
+          m: "Hari ini · 10.42",
+          amt: "−Rp 38.000",
+          cat: "makanan",
+          icon: "coffee",
+        },
+        {
+          n: "Alfamart",
+          m: "Kemarin · 19.16",
+          amt: "−Rp 76.500",
+          cat: "belanja",
+          icon: "bag",
+        },
+        {
+          n: "Pengembalian dana",
+          m: "28 Okt · 15.08",
+          amt: "+Rp 125.000",
+          pos: true,
+          cat: "refund",
+          icon: "refund",
+        },
+        {
+          n: "Grab",
+          m: "27 Okt · 08.24",
+          amt: "−Rp 24.000",
+          cat: "transportasi",
+          icon: "car",
+        },
+        {
+          n: "TransJakarta — Top up KMT",
+          m: "25 Okt · 07.02",
+          amt: "−Rp 50.000",
+          cat: "transportasi",
+          icon: "bus",
+        },
+      ];
+      const CATS = [
+        ["semua", "Semua"],
+        ["makanan", "Makanan"],
+        ["belanja", "Belanja"],
+        ["transportasi", "Transportasi"],
+        ["refund", "Pengembalian"],
+      ];
+      const TX_ICO = {
+        coffee:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 9h11v6a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4V9Z"/><path d="M17 10h1.4a2.3 2.3 0 0 1 0 4.6H17M9 3.5c0 1-.8 1.2-.8 2.2M12.5 3.5c0 1-.8 1.2-.8 2.2"/></svg>',
+        bag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16l-1.5 12h-13L4 8Z"/><path d="M8 8a4 4 0 0 1 8 0"/></svg>',
+        refund:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.3-5.6L4 8.5"/><path d="M4 4v4.5h4.5M12 8v4l2.5 1.5"/></svg>',
+        car: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16.5 6.5 8h11l1.5 8.5M4 16.5h16v3H4zM7 11h10M7.5 16.5h.01m9-.01h.01"/></svg>',
+        bus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="17" rx="3"/><path d="M8 7h8M8 11h8M9 20l-2 2m8-2 2 2M9 16h.01M15 16h.01"/></svg>',
+      };
+
+      /* ================================================================
+   HELPERS
+================================================================ */
+      const $ = (id) => document.getElementById(id);
+      const reduceMotion = matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      function seedOf(s) {
+        let h = 7;
+        for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+        return h;
+      }
+      function rng(seed) {
+        let t = seed >>> 0;
+        return () => {
+          t += 0x6d2b79f5;
+          let r = Math.imul(t ^ (t >>> 15), 1 | t);
+          r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+          return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+
+      function drawBarcode(el, seed, h = 62) {
+        const r = rng(seed),
+          W = [1, 1, 1, 2, 2, 3, 4];
+        let html = "";
+        for (let i = 0; i < 56; i++) {
+          html += `<i style="width:${W[Math.floor(r() * W.length)]}px;margin-right:${1 + Math.floor(r() * 2.4)}px"></i>`;
+        }
+        el.className = "barcode";
+        el.style.height = h + "px";
+        el.innerHTML = html;
+      }
+      function drawQR(cv, seed, cell = 6) {
+        const n = 25;
+        cv.width = cv.height = n * cell;
+        const x = cv.getContext("2d");
+        x.fillStyle = "#fff";
+        x.fillRect(0, 0, n * cell, n * cell);
+        x.fillStyle = "#151515";
+        const px = (a, b) => x.fillRect(a * cell, b * cell, cell, cell);
+        const finder = (fx, fy) => {
+          for (let i = 0; i < 7; i++)
+            for (let j = 0; j < 7; j++) {
+              const edge = i === 0 || i === 6 || j === 0 || j === 6,
+                core = i >= 2 && i <= 4 && j >= 2 && j <= 4;
+              if (edge || core) px(fx + i, fy + j);
+            }
+        };
+        finder(0, 0);
+        finder(n - 7, 0);
+        finder(0, n - 7);
+        for (let i = 8; i < n - 8; i++) {
+          if (i % 2 === 0) {
+            px(i, 6);
+            px(6, i);
+          }
+        }
+        for (let i = 0; i < 5; i++)
+          for (let j = 0; j < 5; j++) {
+            const edge = i === 0 || i === 4 || j === 0 || j === 4,
+              c = i === 2 && j === 2;
+            if (edge || c) px(16 + i, 16 + j);
+          }
+        const r = rng(seed),
+          inFinder = (a, b) =>
+            (a < 9 && b < 9) || (a >= n - 9 && b < 9) || (a < 9 && b >= n - 9);
+        for (let a = 0; a < n; a++)
+          for (let b = 0; b < n; b++) {
+            if (
+              inFinder(a, b) ||
+              a === 6 ||
+              b === 6 ||
+              (a >= 16 && a <= 20 && b >= 16 && b <= 20)
+            )
+              continue;
+            if (r() < 0.44) px(a, b);
+          }
+      }
+
+      /* ================================================================
+   CARD ART TEMPLATES
+================================================================ */
+      function netLogo(n) {
+        return n === "mc"
+          ? '<span class="ca-mc"><i></i><i></i></span>'
+          : '<span class="ca-visa">VISA</span>';
+      }
+      function artHTML(it) {
+        if (it.kind === "pay") {
+          const p = it.pay;
+          return `<div class="card-art ${it.art}">
+      <div class="ca-top"><div><div class="ca-bank">${p.bank}</div><div class="ca-type">${p.type}</div></div>
+      <span class="ca-wave">${WAVE}</span></div>
+      <div><div class="ca-chip"></div><div class="ca-num">${p.num}</div></div>
+      <div class="ca-bot"><div class="ca-holder"><span>Card holder</span><b>${p.holder}</b></div>${netLogo(p.network)}</div>
+    </div>`;
+        }
+        if (it.id === "tj")
+          return `<div class="card-art art-tj">
+    <div class="ca-top"><div class="tj-logo"><span class="tj-mark"></span>TransJakarta</div><span class="tj-flag">KMT</span></div>
+    <div><div class="ca-num">KMT 0009 12</div><div class="tj-bal">Saldo kartu<b>Rp 150.000</b></div></div>
+    <div class="ca-bot"><div class="ca-holder" style="color:#1c2433"><span>Card holder</span><b>ALEXANDRA PUTRI</b></div></div>
+  </div>`;
+        if (it.id === "kk")
+          return `<div class="card-art art-kk">
+    <div class="ca-top"><div class="kk-logo">${CUP}KOPI KENANGAN</div><span class="kk-tag">REWARDS</span></div>
+    <div><div class="ca-type" style="opacity:.7;letter-spacing:.2em">MEMBER NO.</div><div class="kk-num" style="margin-top:.5em">8842 1099 17</div></div>
+    <div class="ca-bot"><span class="kk-pts">★&nbsp; 1.240 POIN</span><div class="ca-holder"><span>Member</span><b>ALEXANDRA P.</b></div></div>
+  </div>`;
+        if (it.id === "ga")
+          return `<div class="card-art art-ga">
+    <div class="ga-strip"></div>
+    <div class="ga-body">
+      <div class="ga-top"><span class="ga-brand">Garuda Indonesia</span><span class="ga-bp">BOARDING PASS</span></div>
+      <div>
+        <div class="ga-route"><span class="ga-code">CGK</span>${PLANE}<span class="ga-code">DPS</span></div>
+        <div class="ga-meta"><div><span>Flight</span><b>GA-402</b></div><div><span>Tanggal</span><b>10 Nov 2026</b></div><div><span>Gate</span><b>12</b></div><div><span>Seat</span><b>21A</b></div></div>
+      </div>
+      <div class="ga-bottom"><div class="ga-barcode" data-bar="ga"></div><canvas class="ga-qr" data-qr="ga"></canvas></div>
+    </div></div>`;
+        if (it.id === "sr")
+          return `<div class="card-art art-sr">
+    <span class="sr-perf"></span>
+    <div class="sr-top"><span class="sr-name">SOUNDRENALINE</span><span class="sr-live">LIVE PASS</span></div>
+    <div class="sr-big">SR'26</div>
+    <div class="sr-info"><span>Festival<b>14 Nov 2026</b></span><span style="text-align:right">Ancol · Jakarta<b>Gate 19.00 WIB</b></span></div>
+  </div>`;
+        return "";
+      }
+
+      /* ================================================================
+   STATE
+================================================================ */
+      const state = {
+        active: 0,
+        balanceVisible: true,
+        defaultPay: "bca",
+        mActive: 0,
+        filter: "semua",
+      };
+      const PAYS = ITEMS.filter((i) => i.kind === "pay");
+      const PASSES = ITEMS.filter((i) => i.kind === "pass");
+
+      let toastTimer;
+      function toast(msg) {
+        const t = $("toast");
+        t.textContent = msg;
+        t.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+      }
+
+      /* ================================================================
+   DESKTOP: DECK
+================================================================ */
+      const deckEl = $("deck");
+      function buildDeck() {
+        deckEl.innerHTML = ITEMS.map(
+          (it, i) =>
+            `<div class="deck-card dealing" data-i="${i}" style="animation-delay:${i * 70}ms">${artHTML(it)}</div>`,
+        ).join("");
+        deckEl
+          .querySelectorAll("[data-bar]")
+          .forEach((el) => drawBarcode(el, seedOf(el.dataset.bar), 46));
+        deckEl
+          .querySelectorAll("[data-qr]")
+          .forEach((cv) =>
+            drawQR(cv, seedOf(cv.dataset.qr), Math.round(83 / 25)),
+          );
+        layoutDeck();
+        deckEl.addEventListener("click", (e) => {
+          const c = e.target.closest(".deck-card");
+          if (!c) return;
+          const i = +c.dataset.i;
+          if (i === state.active) {
+            const p = $("detailPanel");
+            p.classList.remove("ping");
+            void p.offsetWidth;
+            p.classList.add("ping");
+          } else setActive(i);
+        });
+        if (!reduceMotion && matchMedia("(pointer:fine)").matches) enableTilt();
+      }
+      function layoutDeck() {
+        const n = ITEMS.length;
+        deckEl.querySelectorAll(".deck-card").forEach((c) => {
+          const i = +c.dataset.i,
+            d = (i - state.active + n) % n;
+          c.dataset.depth = d;
+          c.style.zIndex = 100 - d;
+          c.style.transform =
+            d === 0
+              ? "translate3d(0,0,0)"
+              : `translate3d(0,${-d * 14}px,0) scale(${1 - d * 0.013})`;
+        });
+        $("deckCount").textContent =
+          `${state.active + 1} / ${n} · ${ITEMS[state.active].title}`;
+      }
+      function setActive(i) {
+        state.active = (i + ITEMS.length) % ITEMS.length;
+        layoutDeck();
+        renderDetail();
+        const it = ITEMS[state.active];
+        if (it.kind === "pay") {
+          const p = PAYS.indexOf(it);
+          if (p > -1) setMActive(p, false);
+        }
+      }
+      function enableTilt() {
+        const front = () => deckEl.querySelector('[data-depth="0"] .card-art');
+        deckEl.addEventListener("pointermove", (e) => {
+          const a = front();
+          if (!a) return;
+          const r = a.getBoundingClientRect(),
+            x = (e.clientX - r.left) / r.width - 0.5,
+            y = (e.clientY - r.top) / r.height - 0.5;
+          a.style.transform = `perspective(900px) rotateY(${x * 7}deg) rotateX(${-y * 7}deg)`;
+        });
+        deckEl.addEventListener("pointerleave", () => {
+          const a = front();
+          if (a) a.style.transform = "";
+        });
+      }
+      $("deckPrev").onclick = () => setActive(state.active - 1);
+      $("deckNext").onclick = () => setActive(state.active + 1);
+
+      /* ================================================================
+   DESKTOP: DETAIL PANEL
+================================================================ */
+      function detailHTML(it) {
+        if (it.kind === "pay") {
+          const p = it.pay,
+            isDef = state.defaultPay === it.id;
+          const bal = state.balanceVisible ? p.balance : "••••••••";
+          return `<div class="dp-inner">
+      <div class="dp-kicker">Metode pembayaran</div>
+      <h3 class="dp-title">${it.title}</h3>
+      <p class="dp-sub">${it.sub} · ditambahkan 12 Mei 2026</p>
+      <span class="dp-chip ${isDef ? "" : "ok"}">${isDef ? "✓ Kartu default" : "Tersedia"}</span>
+      <div class="dp-num">${p.num}</div>
+      <div class="dp-grid">
+        <div class="dp-cell"><span>Pemegang</span><strong>Alexandra Putri</strong></div>
+        <div class="dp-cell"><span>Berlaku s/d</span><strong>${p.expiry}</strong></div>
+        <div class="dp-cell"><span>Jenis</span><strong>${p.type}</strong></div>
+        <div class="dp-cell"><span>Status</span><strong style="color:var(--green)">Aktif</strong></div>
+      </div>
+      <div class="dp-bal">
+        <div><span>Saldo rekening tertaut</span><strong id="dpBal" class="${state.balanceVisible ? "" : "hidden-amt mono"}">${bal}</strong></div>
+        <button class="eye-btn ripple" id="eyeBtn" aria-label="Tampilkan / sembunyikan saldo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            ${
+              state.balanceVisible
+                ? '<path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.6"/>'
+                : '<path d="M4 4l16 16M9.9 5.2A9.7 9.7 0 0 1 12 5c6.1 0 9.5 7 9.5 7a17 17 0 0 1-2.7 3.4M6.6 6.6A16.5 16.5 0 0 0 2.5 12s3.4 7 9.5 7a9.3 9.3 0 0 0 3.9-.9"/><path d="M9.9 9.9a2.6 2.6 0 0 0 3.7 3.7"/>'
+            }
+          </svg>
+        </button>
+      </div>
+      <div class="dp-actions">
+        ${isDef ? "" : `<button class="btn btn-line btn-sm ripple" id="btnDef">Jadikan default</button>`}
+        <button class="btn btn-line btn-sm ripple" data-toast="Detail kartu — fitur demo">Kelola kartu</button>
+        <button class="btn btn-line btn-sm ripple" data-toast="Kartu dihapus dari Wallet (simulasi)" style="color:var(--red)">Hapus</button>
+      </div>
+      <p class="dp-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg>Informasi kartu sepenuhnya fiktif untuk demonstrasi tampilan.</p>
+    </div>`;
+        }
+        const p = it.pass;
+        let code = "";
+        if (p.qr)
+          code = `<div class="qr-wrap"><canvas data-qr="${it.id}"></canvas></div>
+      <div class="dp-codenum">Scan di gerbang keberangkatan</div>`;
+        if (p.barcode)
+          code = `<div class="dp-code"><div class="barcode" data-bc="${it.id}"></div><div class="dp-codenum">${p.num}</div></div>`;
+        return `<div class="dp-inner">
+    <div class="dp-kicker">${p.label}</div>
+    <h3 class="dp-title">${it.title}</h3>
+    <p class="dp-sub">${it.sub}</p>
+    ${code}
+    <div class="dp-grid">${p.cells.map((c) => `<div class="dp-cell"><span>${c[0]}</span><strong>${c[1]}</strong></div>`).join("")}</div>
+    <div class="dp-actions">
+      <button class="btn btn-fill btn-sm ripple" data-toast="${it.kind === "pass" ? "Siap ditunjukkan ke petugas (simulasi)" : ""}">${p.qr ? "Tampilkan di gerbang" : "Tampilkan ke kasir"}</button>
+      <button class="btn btn-line btn-sm ripple" data-toast="Ditambahkan ke layar utama (simulasi)">Sematkan</button>
+    </div>
+  </div>`;
+      }
+      function renderDetail() {
+        const it = ITEMS[state.active],
+          panel = $("detailPanel");
+        panel.innerHTML = detailHTML(it);
+        panel
+          .querySelectorAll("[data-bc]")
+          .forEach((el) => drawBarcode(el, seedOf(el.dataset.bc), 62));
+        panel
+          .querySelectorAll("[data-qr]")
+          .forEach((cv) => drawQR(cv, seedOf(cv.dataset.qr), 6));
+        const eye = $("eyeBtn");
+        if (eye)
+          eye.onclick = () => {
+            state.balanceVisible = !state.balanceVisible;
+            renderDetail();
+          };
+        const bd = $("btnDef");
+        if (bd)
+          bd.onclick = () => {
+            state.defaultPay = it.id;
+            toast(it.title + " dijadikan kartu default");
+            renderDetail();
+            renderMPayInfo();
+          };
+      }
+
+      /* ================================================================
+   ACTIVITY LISTS + FILTERS
+================================================================ */
+      function txHTML(t) {
+        return `<div class="tx" data-cat="${t.cat}" data-toast="Detail transaksi ${t.n} — demo">
+    <div class="tx-ico" ${t.pos ? 'style="background:var(--green-soft);color:var(--green)"' : ""}>${TX_ICO[t.icon]}</div>
+    <div class="tx-main"><p class="tx-name">${t.n}</p><div class="tx-meta"><span class="tx-cat">${t.cat}</span>${t.m}</div></div>
+    <div class="tx-amt ${t.pos ? "pos" : ""}">${t.amt}</div></div>`;
+      }
+      function buildActivity() {
+        const rows = TX.map(txHTML).join("");
+        $("listDesk").innerHTML = rows;
+        $("listMob").innerHTML = rows;
+        const chips = CATS.map(
+          (c) =>
+            `<button class="chip-f ripple ${c[0] === "semua" ? "active" : ""}" data-f="${c[0]}">${c[1]}</button>`,
+        ).join("");
+        $("chipsDesk").innerHTML = chips;
+        $("chipsMob").innerHTML = chips;
+        document.querySelectorAll(".chip-f").forEach(
+          (ch) =>
+            (ch.onclick = () => {
+              state.filter = ch.dataset.f;
+              document
+                .querySelectorAll(".chip-f")
+                .forEach((c) =>
+                  c.classList.toggle("active", c.dataset.f === state.filter),
+                );
+              document
+                .querySelectorAll(".tx")
+                .forEach((r) =>
+                  r.classList.toggle(
+                    "hidden",
+                    state.filter !== "semua" && r.dataset.cat !== state.filter,
+                  ),
+                );
+            }),
+        );
+      }
+
+      /* ================================================================
+   MOBILE: CAROUSEL / TILES / SHEETS
+================================================================ */
+      const mCar = $("mCarousel");
+      function buildMobile() {
+        mCar.innerHTML = PAYS.map(
+          (it, i) =>
+            `<div class="m-slide ${i === 0 ? "active" : ""}" data-idx="${i}">${artHTML(it)}</div>`,
+        ).join("");
+        $("mDots").innerHTML = PAYS.map(
+          (_, i) => `<i class="${i === 0 ? "on" : ""}"></i>`,
+        ).join("");
+        $("mTiles").innerHTML = PASSES.map(
+          (it) =>
+            `<figure class="m-tile ripple" data-id="${it.id}">${artHTML(it)}<figcaption>${it.title}</figcaption></figure>`,
+        ).join("");
+        [...mCar.querySelectorAll("[data-bar]")].forEach((el) =>
+          drawBarcode(el, seedOf(el.dataset.bar), 40),
+        );
+        [...mCar.querySelectorAll("[data-qr]")].forEach((cv) =>
+          drawQR(cv, seedOf(cv.dataset.qr), Math.round(66 / 25)),
+        );
+        [...$("mTiles").querySelectorAll("[data-bar]")].forEach((el) =>
+          drawBarcode(el, seedOf(el.dataset.bar), 18),
+        );
+        [...$("mTiles").querySelectorAll("[data-qr]")].forEach((cv) =>
+          drawQR(
+            cv,
+            seedOf(cv.dataset.qr),
+            Math.round((21 / 25) * 25) / 25 || 1,
+          ),
+        );
+        renderMPayInfo();
+
+        mCar.addEventListener(
+          "scroll",
+          () => {
+            const step = mCar.querySelector(".m-slide").offsetWidth + 12;
+            const i = Math.max(
+              0,
+              Math.min(PAYS.length - 1, Math.round(mCar.scrollLeft / step)),
+            );
+            if (i !== state.mActive) setMActive(i, true);
+          },
+          { passive: true },
+        );
+        mCar.addEventListener("click", (e) => {
+          const s = e.target.closest(".m-slide");
+          if (!s) return;
+          const i = +s.dataset.idx;
+          if (i === state.mActive) openSheet(sheetPayHTML(PAYS[i]));
+          else setMActive(i, true);
+        });
+        $("mTiles").addEventListener("click", (e) => {
+          const t = e.target.closest(".m-tile");
+          if (!t) return;
+          openSheet(sheetPassHTML(ITEMS.find((x) => x.id === t.dataset.id)));
+        });
+        $("mPayBtn").onclick = () =>
+          toast("Mendekatkan ponsel ke reader NFC… (simulasi)");
+        $("mDetailBtn").onclick = () =>
+          openSheet(sheetPayHTML(PAYS[state.mActive]));
+        $("mAddBtn").onclick = () => openSheet(sheetAddHTML());
+      }
+      function setMActive(i, scroll) {
+        state.mActive = i;
+        mCar
+          .querySelectorAll(".m-slide")
+          .forEach((s, k) => s.classList.toggle("active", k === i));
+        $("mDots")
+          .querySelectorAll("i")
+          .forEach((d, k) => d.classList.toggle("on", k === i));
+        if (scroll) {
+          const step = mCar.querySelector(".m-slide").offsetWidth + 12;
+          mCar.scrollTo({
+            left: i * step,
+            behavior: reduceMotion ? "auto" : "smooth",
+          });
+        }
+        renderMPayInfo();
+        const gi = ITEMS.indexOf(PAYS[i]);
+        if (
+          gi > -1 &&
+          state.active !== gi &&
+          ITEMS[state.active].kind === "pay"
+        ) {
+          state.active = gi;
+          layoutDeck();
+          renderDetail();
+        }
+      }
+      function renderMPayInfo() {
+        const p = PAYS[state.mActive].pay,
+          isDef = state.defaultPay === PAYS[state.mActive].id;
+        $("mPayInfo").innerHTML = `<div class="m-payrow">
+      <span class="m-payname">${PAYS[state.mActive].title}</span><span class="m-dot"></span>
+      ${isDef ? '<span class="m-chip">Default</span>' : '<span class="m-chip" style="background:#eef1f5;color:#5f6368">Cadangan</span>'}
+    </div>
+    <p class="m-paysub">Saldo ${state.balanceVisible ? p.balance : "••••••••"} · ${p.num.slice(-4)}</p>`;
+      }
+
+      /* ---- sheets ---- */
+      function openSheet(html) {
+        $("phoneSheet").innerHTML = html;
+        requestAnimationFrame(() => {
+          $("phoneScrim").classList.add("on");
+          $("phoneSheet").classList.add("on");
+        });
+        paintSheet();
+      }
+      function closeSheet() {
+        $("phoneScrim").classList.remove("on");
+        $("phoneSheet").classList.remove("on");
+      }
+      $("phoneScrim").onclick = closeSheet;
+      function paintSheet() {
+        $("phoneSheet")
+          .querySelectorAll("[data-bc]")
+          .forEach((el) => drawBarcode(el, seedOf(el.dataset.bc), 56));
+        $("phoneSheet")
+          .querySelectorAll("[data-qr]")
+          .forEach((cv) => drawQR(cv, seedOf(cv.dataset.qr), 5));
+        $("phoneSheet")
+          .querySelectorAll("[data-bar]")
+          .forEach((el) => drawBarcode(el, seedOf(el.dataset.bar), 36));
+      }
+      function sheetPayHTML(it) {
+        const p = it.pay,
+          isDef = state.defaultPay === it.id;
+        return `<div class="sheet-grip"></div>
+    <h3 class="sheet-title">${it.title}</h3><p class="sheet-sub">${it.sub} · ${p.num}</p>
+    <div class="sheet-art">${artHTML(it)}</div>
+    <div class="sheet-nfc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M8.5 8.2a5.4 5.4 0 0 1 0 7.6M11.6 5.6a9.4 9.4 0 0 1 0 12.8M14.7 3a13.6 13.6 0 0 1 0 18"/></svg>
+      Untuk membayar, cukup dekatkan bagian belakang ponsel ke reader contactless.</div>
+    <div class="sheet-grid">
+      <div class="sheet-cell"><span>Pemegang</span><strong>Alexandra Putri</strong></div>
+      <div class="sheet-cell"><span>Berlaku</span><strong>${p.expiry}</strong></div>
+      <div class="sheet-cell"><span>Saldo</span><strong>${state.balanceVisible ? p.balance : "••••••••"}</strong></div>
+      <div class="sheet-cell"><span>Status</span><strong style="color:var(--green)">${isDef ? "Kartu default" : "Aktif"}</strong></div>
+    </div>
+    <div class="sheet-actions">
+      ${isDef ? "" : `<button class="btn btn-line btn-sm ripple" id="shDef">Jadikan default</button>`}
+      <button class="btn btn-fill btn-sm ripple" data-toast="Pembayaran NFC — simulasi">Bayar</button>
+    </div>`;
+      }
+      function sheetPassHTML(it) {
+        const p = it.pass;
+        const code = p.qr
+          ? `<div class="qr-wrap"><canvas data-qr="${it.id}"></canvas></div><div class="dp-codenum">Tunjukkan saat boarding</div>`
+          : `<div class="dp-code"><div class="barcode" data-bc="${it.id}"></div><div class="dp-codenum">${p.num}</div></div>`;
+        return `<div class="sheet-grip"></div>
+    <h3 class="sheet-title">${it.title}</h3><p class="sheet-sub">${p.label} · ${it.sub}</p>
+    ${code}
+    <div class="sheet-grid">${p.cells.map((c) => `<div class="sheet-cell"><span>${c[0]}</span><strong>${c[1]}</strong></div>`).join("")}</div>
+    <div class="sheet-actions">
+      <button class="btn btn-fill btn-sm ripple" data-toast="Siap ditunjukkan (simulasi)">Tampilkan</button>
+      <button class="btn btn-line btn-sm ripple" data-toast="Dibagikan (simulasi)">Bagikan</button>
+    </div>`;
+      }
+      function sheetAddHTML() {
+        const opts = [
+          ["Kartu pembayaran", "Tambahkan kartu kredit atau debit", "card"],
+          ["Kartu transportasi", "Simpan kartu transit dan perjalanan", "bus"],
+          ["Kartu loyalitas", "Kumpulkan poin membership", "star"],
+          [
+            "Tiket / boarding pass",
+            "Tiket acara, film, dan penerbangan",
+            "ticket",
+          ],
+        ];
+        const ico = {
+          card: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 10h18M7 15h3"/></svg>',
+          bus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M8 7h8M8 11h8M9 17h.01m6-.01h.01"/></svg>',
+          star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3 15 9l6 .9-4.4 4.3 1 6.1-5.6-3-5.6 3 1-6.1L3 9.9 9 9l3-6Z"/></svg>',
+          ticket:
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 7a2 2 0 0 0 0 4v2a2 2 0 0 0 0 4h16v-4a2 2 0 0 1 0-2V7H4Z"/><path d="M9 7v10m4-7h3m-3 4h3"/></svg>',
+        };
+        return `<div class="sheet-grip"></div><h3 class="sheet-title">Tambahkan ke Wallet</h3><p class="sheet-sub">Pilih jenis item yang ingin ditambahkan</p>
+    ${opts.map((o) => `<button class="add-opt ripple" data-add="${o[0]}"><span class="o-ico">${ico[o[2]]}</span><span><strong>${o[0]}</strong><span>${o[1]}</span></span></button>`).join("")}`;
+      }
+
+      /* ================================================================
+   GLOBAL WIRING
+================================================================ */
+      document.addEventListener("click", (e) => {
+        const tt = e.target.closest("[data-toast]");
+        if (tt) {
+          if (!tt.dataset.add) toast(tt.dataset.toast);
+        }
+        const add = e.target.closest("[data-add]");
+        if (add) {
+          closeDlg();
+          closeSheet();
+          toast(add.dataset.add + " — simulasi berhasil dibuka");
+        }
+        const cl = e.target.closest("[data-close]");
+        if (cl) closeDlg();
+      });
+      $("addDlg").addEventListener("click", (e) => {
+        if (e.target === $("addDlg")) closeDlg();
+      });
+      function openDlg() {
+        $("addDlg").classList.add("on");
+        document.body.style.overflow = "hidden";
+      }
+      function closeDlg() {
+        $("addDlg").classList.remove("on");
+        document.body.style.overflow = "";
+      }
+      $("deskAdd").onclick = openDlg;
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          closeDlg();
+          closeSheet();
+        }
+      });
+
+      /* ripple */
+      document.addEventListener("pointerdown", (e) => {
+        const el = e.target.closest(".ripple");
+        if (!el || reduceMotion) return;
+        const r = el.getBoundingClientRect(),
+          s = Math.max(r.width, r.height) * 1.3;
+        const ink = document.createElement("span");
+        ink.className = "ink";
+        ink.style.cssText = `width:${s}px;height:${s}px;left:${e.clientX - r.left - s / 2}px;top:${e.clientY - r.top - s / 2}px`;
+        el.appendChild(ink);
+        setTimeout(() => ink.remove(), 600);
+      });
+
+      /* desktop tabs */
+      document.querySelectorAll(".gtab").forEach(
+        (t) =>
+          (t.onclick = () => {
+            document.querySelectorAll(".gtab").forEach((x) => {
+              x.classList.remove("active");
+              x.setAttribute("aria-selected", "false");
+            });
+            t.classList.add("active");
+            t.setAttribute("aria-selected", "true");
+            document
+              .querySelectorAll(".desk-pane")
+              .forEach((p) => p.classList.remove("active"));
+            $(
+              "pane" + (t.dataset.pane === "wallet" ? "Wallet" : "Activity"),
+            ).classList.add("active");
+          }),
+      );
+
+      /* mobile nav */
+      document.querySelectorAll("#mNav button").forEach(
+        (b) =>
+          (b.onclick = () => {
+            document
+              .querySelectorAll("#mNav button")
+              .forEach((x) => x.classList.remove("active"));
+            b.classList.add("active");
+            $("screens").style.transform =
+              `translateX(-${b.dataset.screen * 50}%)`;
+          }),
+      );
+
+      /* ================================================================
+   VIEW SWITCHER
+================================================================ */
+      function setView(v) {
+        document.body.dataset.view = v;
+        $("desktopView").classList.toggle("active", v === "desktop");
+        $("mobileView").classList.toggle("active", v === "mobile");
+        $("btnDesk").setAttribute("aria-pressed", v === "desktop");
+        $("btnMob").setAttribute("aria-pressed", v === "mobile");
+        window.scrollTo({ top: 0 });
+        try {
+          localStorage.setItem("gw-view", v);
+        } catch (e) {}
+      }
+      $("btnDesk").onclick = () => setView("desktop");
+      $("btnMob").onclick = () => setView("mobile");
+
+      /* clock */
+      function tick() {
+        const d = new Date(),
+          p = (n) => String(n).padStart(2, "0");
+        $("sbTime").textContent = `${p(d.getHours())}.${p(d.getMinutes())}`;
+      }
+      tick();
+      setInterval(tick, 15000);
+
+      /* init */
+      buildDeck();
+      renderDetail();
+      buildActivity();
+      buildMobile();
+      let saved = null;
+      try {
+        saved = localStorage.getItem("gw-view");
+      } catch (e) {}
+      setView(
+        saved ||
+          (matchMedia("(max-width:760px)").matches ? "mobile" : "desktop"),
+      );
+    </script>
+  </body>
+</html>

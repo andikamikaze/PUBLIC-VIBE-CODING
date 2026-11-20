@@ -1,0 +1,1458 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta
+      name="theme-color"
+      content="#fafaf7"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#121310"
+      media="(prefers-color-scheme: dark)"
+    />
+    <title>Simple Calendar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #fafaf7;
+        --panel: #ffffff;
+        --text: #1a1c18;
+        --text-soft: #3d403a;
+        --muted: #8a8d86;
+        --line: #eceee8;
+        --line-soft: #f3f4ef;
+        --soft: #f4f5f0;
+        --accent: #3f5f4a;
+        --accent-hover: #344f3d;
+        --accent-soft: #e9efe9;
+        --danger: #a83a34;
+        --danger-soft: #fbefee;
+        --radius-lg: 18px;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --shadow-sm: 0 1px 2px rgba(26, 28, 24, 0.04);
+        --shadow: 0 4px 24px rgba(26, 28, 24, 0.06);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --bg: #121310;
+          --panel: #1a1c18;
+          --text: #e8eae6;
+          --text-soft: #c5c8c0;
+          --muted: #8a8d86;
+          --line: #2a2d28;
+          --line-soft: #232521;
+          --soft: #232521;
+          --accent: #6b9e7c;
+          --accent-hover: #5a8a6b;
+          --accent-soft: #2a352e;
+          --danger: #d65a53;
+          --danger-soft: #3a2221;
+        }
+        .day.outside {
+          color: #4a4d46;
+        }
+        .field input {
+          background: #121310;
+        }
+        .field input:hover {
+          border-color: #3a3d36;
+        }
+        dialog::backdrop {
+          background: rgba(0, 0, 0, 0.6);
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        font-family:
+          "Inter",
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        font-feature-settings: "cv11", "ss01", "ss03";
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-size: 14px;
+        line-height: 1.5;
+        letter-spacing: -0.01em;
+      }
+
+      button,
+      input {
+        font: inherit;
+        color: inherit;
+      }
+
+      button {
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        background: none;
+        border: none;
+        touch-action: manipulation;
+      }
+
+      button:focus-visible,
+      input:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+        border-radius: 6px;
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .app {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 28px 48px 48px;
+      }
+
+      /* ===== Topbar ===== */
+      .topbar {
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .brand-mark {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        background: var(--text);
+        color: var(--bg);
+        display: grid;
+        place-items: center;
+      }
+
+      .brand-mark svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .brand-name {
+        font-family: "Instrument Serif", Georgia, serif;
+        font-size: 22px;
+        font-weight: 400;
+        letter-spacing: -0.01em;
+        font-style: italic;
+      }
+
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .storage-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .storage-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-soft);
+      }
+
+      /* ===== Buttons ===== */
+      .btn {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        border-radius: var(--radius-sm);
+        padding: 9px 14px;
+        font-weight: 500;
+        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        color: var(--text-soft);
+        transition: all 0.15s ease;
+        white-space: nowrap;
+        min-height: 44px;
+        touch-action: manipulation;
+      }
+
+      .btn:hover:not(:disabled) {
+        background: var(--soft);
+        border-color: #dfe1da;
+        color: var(--text);
+      }
+
+      .btn-primary {
+        background: var(--text);
+        border-color: var(--text);
+        color: var(--bg);
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        background: #000;
+        border-color: #000;
+        color: #fff;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .btn-primary:hover:not(:disabled) {
+          background: var(--accent-hover);
+          border-color: var(--accent-hover);
+        }
+      }
+
+      .btn svg {
+        width: 15px;
+        height: 15px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .icon-btn {
+        width: 44px;
+        height: 44px;
+        display: grid;
+        place-items: center;
+        border-radius: var(--radius-sm);
+        color: var(--text-soft);
+        transition: all 0.15s ease;
+        touch-action: manipulation;
+      }
+
+      .icon-btn:hover:not(:disabled) {
+        background: var(--soft);
+        color: var(--text);
+      }
+
+      .icon-btn svg {
+        width: 18px;
+        height: 18px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      /* ===== Page Header ===== */
+      .page-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 40px 0 36px;
+      }
+
+      .page-title {
+        font-family: "Instrument Serif", Georgia, serif;
+        font-size: clamp(36px, 4.5vw, 52px);
+        font-weight: 400;
+        letter-spacing: -0.02em;
+        line-height: 1;
+        margin: 0;
+      }
+
+      .page-subtitle {
+        margin: 14px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 400;
+      }
+
+      .today-card {
+        text-align: right;
+        padding: 14px 20px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-sm);
+        min-width: 200px;
+      }
+
+      .today-card-label {
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+
+      .today-card-date {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        line-height: 1.3;
+      }
+
+      /* ===== Workspace ===== */
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 340px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        min-height: 620px;
+        box-shadow: var(--shadow-sm);
+      }
+
+      /* ===== Calendar Pane ===== */
+      .calendar-pane {
+        padding: 32px 36px 28px;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 32px;
+      }
+
+      .month-heading {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+      }
+
+      .month-heading h2 {
+        font-family: "Instrument Serif", Georgia, serif;
+        font-size: 28px;
+        font-weight: 400;
+        letter-spacing: -0.015em;
+        margin: 0;
+        line-height: 1;
+      }
+
+      .month-heading span {
+        font-size: 14px;
+        color: var(--muted);
+        font-weight: 400;
+      }
+
+      .calendar-controls {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .weekdays,
+      .days {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+      }
+
+      .weekdays {
+        margin-bottom: 10px;
+        padding: 0 4px;
+      }
+
+      .weekdays span {
+        text-align: center;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        padding-bottom: 12px;
+      }
+
+      .day {
+        position: relative;
+        min-height: 78px;
+        background: transparent;
+        border-radius: var(--radius-sm);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 4px 8px;
+        margin: 2px;
+        transition: background 0.15s ease;
+      }
+
+      .day:hover:not(:disabled) {
+        background: var(--soft);
+      }
+
+      .day.outside {
+        color: #c5c8c0;
+      }
+
+      .day.selected {
+        background: var(--accent-soft);
+      }
+
+      .day-number {
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.15s ease;
+      }
+
+      .day.is-today:not(.selected) .day-number {
+        background: var(--text);
+        color: var(--bg);
+        font-weight: 600;
+      }
+
+      .day.selected .day-number {
+        background: var(--accent);
+        color: white;
+        font-weight: 600;
+      }
+
+      .event-dots {
+        height: 5px;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+      }
+
+      .event-dot {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+
+      .day.selected .event-dot {
+        background: var(--accent);
+        opacity: 0.7;
+      }
+
+      .calendar-foot {
+        border-top: 1px solid var(--line-soft);
+        margin-top: 20px;
+        padding-top: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .legend {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .legend .event-dot {
+        display: inline-block;
+      }
+
+      /* ===== Agenda Pane ===== */
+      .agenda {
+        border-left: 1px solid var(--line);
+        padding: 32px 28px;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        background: var(--bg);
+      }
+
+      .agenda-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .eyebrow {
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: var(--muted);
+      }
+
+      .agenda-date {
+        font-family: "Instrument Serif", Georgia, serif;
+        font-size: 32px;
+        letter-spacing: -0.015em;
+        line-height: 1.15;
+        margin: 14px 0 4px;
+        font-weight: 400;
+      }
+
+      .agenda-weekday {
+        font-size: 13px;
+        color: var(--muted);
+        font-weight: 400;
+      }
+
+      .agenda-list {
+        margin-top: 28px;
+        flex: 1;
+        min-height: 180px;
+      }
+
+      .empty-state {
+        border: 1px dashed var(--line);
+        border-radius: var(--radius);
+        padding: 28px 20px;
+        text-align: left;
+      }
+
+      .empty-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        display: grid;
+        place-items: center;
+        color: var(--accent);
+        margin-bottom: 16px;
+      }
+
+      .empty-icon svg {
+        width: 18px;
+        height: 18px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .empty-state h3 {
+        font-size: 14px;
+        margin: 0 0 6px;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .empty-state p {
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--muted);
+        margin: 0;
+      }
+
+      .event-item {
+        display: grid;
+        grid-template-columns: 3px minmax(0, 1fr) auto;
+        gap: 14px;
+        padding: 16px 0;
+        border-top: 1px solid var(--line);
+        align-items: start;
+      }
+
+      .event-item:first-child {
+        border-top: none;
+        padding-top: 0;
+      }
+
+      .event-bar {
+        background: var(--accent);
+        border-radius: 2px;
+        min-height: 40px;
+        align-self: stretch;
+      }
+
+      .event-title {
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+        margin: 0 0 6px;
+        color: var(--text);
+      }
+
+      .event-time {
+        font-size: 12px;
+        color: var(--muted);
+        margin: 0;
+        font-weight: 400;
+      }
+
+      .event-actions {
+        display: flex;
+        gap: 4px;
+      }
+
+      .delete-btn:hover:not(:disabled) {
+        color: var(--danger);
+        background: var(--danger-soft);
+      }
+
+      .edit-btn:hover:not(:disabled) {
+        color: var(--accent);
+        background: var(--accent-soft);
+      }
+
+      .agenda-actions {
+        padding-top: 20px;
+        margin-top: auto;
+      }
+
+      .agenda-actions .btn {
+        width: 100%;
+        justify-content: space-between;
+        padding: 13px 16px;
+      }
+
+      .agenda-hint {
+        font-size: 11px;
+        color: var(--muted);
+        line-height: 1.6;
+        margin: 14px 0 0;
+        text-align: center;
+      }
+
+      /* ===== Footer ===== */
+      .footer-line {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 24px 4px 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .footer-line strong {
+        font-weight: 600;
+        color: var(--text-soft);
+      }
+
+      /* ===== Dialog ===== */
+      dialog {
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        padding: 32px;
+        width: min(460px, calc(100% - 32px));
+        background: var(--panel);
+        color: var(--text);
+        box-shadow: 0 30px 80px rgba(26, 28, 24, 0.18);
+      }
+
+      dialog::backdrop {
+        background: rgba(26, 28, 24, 0.35);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+      }
+
+      .dialog-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .dialog-head h2 {
+        font-family: "Instrument Serif", Georgia, serif;
+        font-size: 26px;
+        font-weight: 400;
+        letter-spacing: -0.015em;
+        margin: 0;
+        line-height: 1.1;
+      }
+
+      .field {
+        margin: 20px 0 0;
+      }
+
+      .field label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--text-soft);
+        letter-spacing: 0.01em;
+      }
+
+      .field input {
+        display: block;
+        width: 100%;
+        border: 1px solid var(--line);
+        background: var(--bg);
+        border-radius: var(--radius-sm);
+        padding: 12px 14px;
+        color: var(--text);
+        min-height: 44px;
+        transition:
+          border-color 0.15s ease,
+          background 0.15s ease;
+      }
+
+      .field input:focus {
+        outline: none;
+        border-color: var(--accent);
+        background: var(--panel);
+        box-shadow: 0 0 0 3px var(--accent-soft);
+      }
+
+      .field input::placeholder {
+        color: #b0b3ac;
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      .form-error {
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--danger);
+        min-height: 0;
+        margin: 14px 0 0;
+      }
+
+      .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 28px;
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      /* ===== Responsive ===== */
+      @media (max-width: 1024px) {
+        .app {
+          padding: 24px 32px 36px;
+        }
+        .workspace {
+          grid-template-columns: minmax(0, 1fr) 300px;
+        }
+        .calendar-pane {
+          padding: 28px 28px 24px;
+        }
+        .agenda {
+          padding: 28px 22px;
+        }
+      }
+
+      @media (max-width: 820px) {
+        .app {
+          padding: 20px 20px 32px;
+        }
+        .page-head {
+          padding: 28px 0 24px;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 16px;
+        }
+        .today-card {
+          text-align: left;
+          width: 100%;
+        }
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+        .agenda {
+          border-left: 0;
+          border-top: 1px solid var(--line);
+        }
+        .storage-indicator {
+          display: none;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .app {
+          padding: 16px 16px 28px;
+        }
+        .topbar {
+          height: 56px;
+        }
+        .brand-name {
+          font-size: 19px;
+        }
+        .brand-mark {
+          width: 30px;
+          height: 30px;
+        }
+        .page-title {
+          font-size: 36px;
+        }
+        .calendar-pane {
+          padding: 22px 14px 20px;
+        }
+        .toolbar {
+          margin-bottom: 24px;
+          flex-wrap: wrap;
+        }
+        .month-heading h2 {
+          font-size: 24px;
+        }
+        .day {
+          min-height: 58px;
+          padding: 6px 2px;
+          margin: 1px;
+          gap: 5px;
+        }
+        .day-number {
+          width: 26px;
+          height: 26px;
+          font-size: 12px;
+        }
+        .weekdays span {
+          font-size: 10px;
+        }
+        .agenda {
+          padding: 22px 18px 20px;
+        }
+        .agenda-date {
+          font-size: 26px;
+        }
+        .footer-line {
+          flex-direction: column;
+          gap: 6px;
+          padding-top: 20px;
+        }
+        dialog {
+          padding: 24px;
+        }
+        .form-row {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          transition: none !important;
+          animation: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand" aria-label="Simple Calendar">
+          <span class="brand-mark" aria-hidden="true">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="3.5" y="5" width="17" height="16" rx="3" />
+              <path d="M7.5 3v4M16.5 3v4M3.5 10h17" />
+            </svg>
+          </span>
+          <span class="brand-name">Simple Calendar</span>
+        </div>
+        <div class="top-actions">
+          <span class="storage-indicator">
+            <span class="storage-dot"></span>
+            <span id="storage-status">Tersimpan lokal</span>
+          </span>
+          <button class="btn btn-primary" id="quick-add" type="button">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+            Agenda baru
+          </button>
+        </div>
+      </header>
+
+      <main>
+        <section class="page-head">
+          <div>
+            <h1 class="page-title">Kalender</h1>
+            <p class="page-subtitle">
+              Rencanakan harimu dengan sederhana dan tenang.
+            </p>
+          </div>
+          <div class="today-card">
+            <div class="today-card-label">Hari ini</div>
+            <div class="today-card-date" id="today-full"></div>
+          </div>
+        </section>
+
+        <section class="workspace" aria-label="Kalender dan agenda">
+          <div class="calendar-pane">
+            <div class="toolbar">
+              <div class="month-heading">
+                <h2 id="month"></h2>
+                <span id="year"></span>
+              </div>
+              <div class="calendar-controls">
+                <button class="btn" id="today" type="button">Hari ini</button>
+                <button
+                  class="icon-btn"
+                  id="prev"
+                  type="button"
+                  aria-label="Bulan sebelumnya"
+                >
+                  <svg viewBox="0 0 24 24"><path d="m15 6-6 6 6 6" /></svg>
+                </button>
+                <button
+                  class="icon-btn"
+                  id="next"
+                  type="button"
+                  aria-label="Bulan berikutnya"
+                >
+                  <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" /></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="weekdays" aria-hidden="true">
+              <span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span
+              ><span>Jum</span><span>Sab</span><span>Min</span>
+            </div>
+            <div class="days" id="days" aria-label="Pilih tanggal"></div>
+
+            <div class="calendar-foot">
+              <span id="month-summary">0 agenda bulan ini</span>
+              <span class="legend"><i class="event-dot"></i> Ada agenda</span>
+            </div>
+          </div>
+
+          <aside class="agenda" aria-label="Agenda tanggal terpilih">
+            <div class="agenda-top">
+              <span class="eyebrow">Agenda harian</span>
+              <span class="eyebrow" id="event-count">0 agenda</span>
+            </div>
+            <h2 class="agenda-date" id="selected-date"></h2>
+            <div class="agenda-weekday" id="day-name"></div>
+
+            <div class="agenda-list" id="agenda" aria-live="polite"></div>
+
+            <div class="agenda-actions">
+              <button class="btn btn-primary" id="add" type="button">
+                <span>Tambah agenda</span>
+                <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+              </button>
+              <p class="agenda-hint">
+                Data tersimpan di browser ini, aman dan privat.
+              </p>
+            </div>
+          </aside>
+        </section>
+
+        <div class="footer-line">
+          <span
+            ><strong>Simple Calendar</strong> · Kalender pribadi yang
+            sederhana.</span
+          >
+          <span>© 2026</span>
+        </div>
+      </main>
+    </div>
+
+    <dialog id="plan-dialog" aria-labelledby="dialog-title">
+      <div class="dialog-head">
+        <h2 id="dialog-title">Agenda baru</h2>
+        <button
+          class="icon-btn"
+          id="close"
+          type="button"
+          aria-label="Tutup dialog"
+        >
+          <svg viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6" /></svg>
+        </button>
+      </div>
+      <form id="plan-form">
+        <div class="field">
+          <label for="title">Nama agenda</label>
+          <input
+            id="title"
+            name="title"
+            placeholder="Contoh: Rapat tim"
+            maxlength="120"
+            required
+            autocomplete="off"
+            inputmode="text"
+            autocapitalize="sentences"
+          />
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label for="date">Tanggal</label>
+            <input id="date" name="date" type="date" required />
+          </div>
+          <div class="field">
+            <label for="time">Waktu (opsional)</label>
+            <input id="time" name="time" type="time" />
+          </div>
+        </div>
+        <p class="form-error" id="error" role="alert"></p>
+        <div class="form-actions">
+          <button class="btn" id="cancel" type="button">Batal</button>
+          <button class="btn btn-primary" type="submit">Simpan agenda</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="sr-only" id="announcement" aria-live="polite"></div>
+
+    <script>
+      (() => {
+        const $ = (id) => document.getElementById(id);
+        const now = new Date();
+        const dateOnly = (d) =>
+          new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        let selected = dateOnly(now);
+        let view = new Date(selected.getFullYear(), selected.getMonth(), 1);
+        let editingId = null;
+        let isSubmitting = false;
+
+        // ===== Business Logic Separation: EventStore =====
+        const EventStore = {
+          storageKey: "simple-calendar-events-v1",
+          events: [],
+          isAvailable: true,
+
+          init() {
+            try {
+              const saved = JSON.parse(
+                localStorage.getItem(this.storageKey) || "[]",
+              );
+              if (Array.isArray(saved)) {
+                // Filter malformed data safely
+                this.events = saved.filter(
+                  (e) =>
+                    e &&
+                    typeof e.id === "string" &&
+                    typeof e.title === "string" &&
+                    typeof e.date === "string" &&
+                    /^\d{4}-\d{2}-\d{2}$/.test(e.date),
+                );
+              }
+            } catch (_) {
+              this.isAvailable = false;
+            }
+          },
+
+          getByDate(dateKey) {
+            return this.events
+              .filter((e) => e.date === dateKey)
+              .sort((a, b) => (a.time || "").localeCompare(b.time || ""));
+          },
+
+          add(event) {
+            this.events.push(event);
+            return this.persist();
+          },
+
+          update(id, updatedData) {
+            const index = this.events.findIndex((e) => e.id === id);
+            if (index !== -1) {
+              this.events[index] = { ...this.events[index], ...updatedData };
+              return this.persist();
+            }
+            return false;
+          },
+
+          remove(id) {
+            const initialLength = this.events.length;
+            this.events = this.events.filter((e) => e.id !== id);
+            if (this.events.length < initialLength) {
+              return this.persist();
+            }
+            return false;
+          },
+
+          persist() {
+            try {
+              localStorage.setItem(
+                this.storageKey,
+                JSON.stringify(this.events),
+              );
+              this.isAvailable = true;
+              return true;
+            } catch (_) {
+              this.isAvailable = false;
+              return false;
+            }
+          },
+        };
+
+        EventStore.init();
+
+        // ===== Helpers =====
+        const key = (d) =>
+          `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        const parseKey = (value) => {
+          const [y, m, d] = value.split("-").map(Number);
+          return new Date(y, m - 1, d);
+        };
+        const sameDay = (a, b) => key(a) === key(b);
+        const monthName = (d) =>
+          d.toLocaleDateString("id-ID", { month: "long" });
+        const fullDate = (d) =>
+          d.toLocaleDateString("id-ID", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          });
+
+        const safeText = (tag, className, value) => {
+          const el = document.createElement(tag);
+          if (className) el.className = className;
+          el.textContent = value;
+          return el;
+        };
+
+        function updateStorageStatus() {
+          $("storage-status").textContent = EventStore.isAvailable
+            ? "Tersimpan lokal"
+            : "Penyimpanan tidak tersedia";
+        }
+
+        function announce(message) {
+          $("announcement").textContent = message;
+        }
+
+        // ===== Presentation Logic =====
+        function render() {
+          updateStorageStatus();
+          $("month").textContent = monthName(view);
+          $("year").textContent = view.getFullYear();
+          $("today-full").textContent = fullDate(now);
+
+          const firstOffset =
+            (new Date(view.getFullYear(), view.getMonth(), 1).getDay() + 6) % 7;
+          const daysInMonth = new Date(
+            view.getFullYear(),
+            view.getMonth() + 1,
+            0,
+          ).getDate();
+          const total = Math.ceil((firstOffset + daysInMonth) / 7) * 7;
+          const start = new Date(
+            view.getFullYear(),
+            view.getMonth(),
+            1 - firstOffset,
+          );
+
+          const days = $("days");
+          days.replaceChildren();
+
+          for (let i = 0; i < total; i++) {
+            const date = new Date(
+              start.getFullYear(),
+              start.getMonth(),
+              start.getDate() + i,
+            );
+            const k = key(date);
+            const hasEvents = EventStore.events.some((e) => e.date === k);
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className =
+              "day" +
+              (date.getMonth() !== view.getMonth() ? " outside" : "") +
+              (sameDay(date, selected) ? " selected" : "") +
+              (sameDay(date, now) ? " is-today" : "");
+            btn.setAttribute(
+              "aria-label",
+              fullDate(date) + (hasEvents ? ", ada agenda" : ""),
+            );
+            btn.setAttribute("aria-pressed", String(sameDay(date, selected)));
+            if (sameDay(date, now)) btn.setAttribute("aria-current", "date");
+
+            btn.append(safeText("span", "day-number", String(date.getDate())));
+
+            const dots = document.createElement("span");
+            dots.className = "event-dots";
+            if (hasEvents) {
+              const count = Math.min(
+                EventStore.events.filter((e) => e.date === k).length,
+                3,
+              );
+              for (let j = 0; j < count; j++) {
+                const dot = document.createElement("i");
+                dot.className = "event-dot";
+                dots.append(dot);
+              }
+            }
+            btn.append(dots);
+
+            btn.addEventListener("click", () => {
+              selected = dateOnly(date);
+              view = new Date(date.getFullYear(), date.getMonth(), 1);
+              render();
+            });
+            days.append(btn);
+          }
+
+          const monthKey = `${view.getFullYear()}-${String(view.getMonth() + 1).padStart(2, "0")}`;
+          $("month-summary").textContent =
+            `${EventStore.events.filter((e) => e.date.startsWith(monthKey)).length} agenda bulan ini`;
+
+          $("selected-date").textContent = selected.toLocaleDateString(
+            "id-ID",
+            { day: "numeric", month: "long" },
+          );
+          $("day-name").textContent =
+            fullDate(selected) + (sameDay(selected, now) ? " · Hari ini" : "");
+
+          const items = EventStore.getByDate(key(selected));
+          $("event-count").textContent = `${items.length} agenda`;
+
+          const agenda = $("agenda");
+          agenda.replaceChildren();
+
+          if (!items.length) {
+            const empty = document.createElement("div");
+            empty.className = "empty-state";
+            const icon = document.createElement("div");
+            icon.className = "empty-icon";
+            icon.innerHTML =
+              '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="16" rx="3"/><path d="M7.5 3v4M16.5 3v4M3.5 10h17M8 14h3"/></svg>';
+            empty.append(
+              icon,
+              safeText("h3", "", "Belum ada agenda"),
+              safeText(
+                "p",
+                "",
+                "Hari ini masih kosong. Tambahkan agenda jika ada sesuatu yang ingin kamu ingat.",
+              ),
+            );
+            agenda.append(empty);
+          } else {
+            items.forEach((e) => {
+              const row = document.createElement("article");
+              row.className = "event-item";
+              const bar = document.createElement("span");
+              bar.className = "event-bar";
+              bar.setAttribute("aria-hidden", "true");
+              const info = document.createElement("div");
+              info.append(
+                safeText("h3", "event-title", e.title),
+                safeText("p", "event-time", e.time || "Sepanjang hari"),
+              );
+
+              const actions = document.createElement("div");
+              actions.className = "event-actions";
+
+              const editBtn = document.createElement("button");
+              editBtn.type = "button";
+              editBtn.className = "icon-btn edit-btn";
+              editBtn.setAttribute("aria-label", "Edit agenda " + e.title);
+              editBtn.innerHTML =
+                '<svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+              editBtn.addEventListener("click", () => openDialog(e));
+
+              const delBtn = document.createElement("button");
+              delBtn.type = "button";
+              delBtn.className = "icon-btn delete-btn";
+              delBtn.setAttribute("aria-label", "Hapus agenda " + e.title);
+              delBtn.innerHTML =
+                '<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5m4-5v5"/></svg>';
+              delBtn.addEventListener("click", () => {
+                if (!confirm(`Hapus agenda "${e.title}"?`)) return;
+                const success = EventStore.remove(e.id);
+                if (!success) {
+                  announce(
+                    "Agenda tidak dapat dihapus karena penyimpanan browser tidak tersedia.",
+                  );
+                  return;
+                }
+                render();
+                announce("Agenda dihapus.");
+              });
+
+              actions.append(editBtn, delBtn);
+              row.append(bar, info, actions);
+              agenda.append(row);
+            });
+          }
+        }
+
+        function openDialog(eventToEdit = null) {
+          editingId = eventToEdit ? eventToEdit.id : null;
+          $("dialog-title").textContent = editingId
+            ? "Edit agenda"
+            : "Agenda baru";
+          $("plan-form").reset();
+          $("error").textContent = "";
+
+          if (editingId) {
+            $("title").value = eventToEdit.title;
+            $("date").value = eventToEdit.date;
+            $("time").value = eventToEdit.time || "";
+          } else {
+            $("date").value = key(selected);
+          }
+
+          $("plan-dialog").showModal();
+          setTimeout(() => $("title").focus(), 50);
+        }
+
+        // ===== Event Listeners =====
+        $("prev").addEventListener("click", () => {
+          view = new Date(view.getFullYear(), view.getMonth() - 1, 1);
+          render();
+        });
+        $("next").addEventListener("click", () => {
+          view = new Date(view.getFullYear(), view.getMonth() + 1, 1);
+          render();
+        });
+        $("today").addEventListener("click", () => {
+          selected = dateOnly(now);
+          view = new Date(now.getFullYear(), now.getMonth(), 1);
+          render();
+        });
+        $("add").addEventListener("click", () => openDialog());
+        $("quick-add").addEventListener("click", () => openDialog());
+        $("close").addEventListener("click", () => $("plan-dialog").close());
+        $("cancel").addEventListener("click", () => $("plan-dialog").close());
+        $("plan-dialog").addEventListener("click", (e) => {
+          if (e.target === $("plan-dialog")) $("plan-dialog").close();
+        });
+
+        $("plan-form").addEventListener("submit", (e) => {
+          e.preventDefault();
+          if (isSubmitting) return; // Prevent double submission / repeated taps
+
+          const title = $("title").value.trim();
+          const date = $("date").value;
+          const time = $("time").value;
+
+          if (!title) {
+            $("error").textContent = "Masukkan nama agenda terlebih dahulu.";
+            $("title").focus();
+            return;
+          }
+          if (!date) {
+            $("error").textContent = "Pilih tanggal agenda.";
+            $("date").focus();
+            return;
+          }
+
+          isSubmitting = true;
+          const submitBtn = $("plan-form").querySelector(
+            'button[type="submit"]',
+          );
+          const originalBtnText = submitBtn.textContent;
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Menyimpan...";
+
+          // Slight delay for UX loading state feedback
+          setTimeout(() => {
+            const entry = {
+              id:
+                editingId ||
+                Date.now().toString(36) + Math.random().toString(36).slice(2),
+              title,
+              date,
+              time,
+            };
+
+            let success = false;
+            if (editingId) {
+              success = EventStore.update(editingId, { title, date, time });
+            } else {
+              success = EventStore.add(entry);
+            }
+
+            if (!success) {
+              $("error").textContent =
+                "Browser tidak dapat menyimpan agenda. Periksa pengaturan penyimpanan browser lalu coba lagi.";
+              isSubmitting = false;
+              submitBtn.disabled = false;
+              submitBtn.textContent = originalBtnText;
+              return;
+            }
+
+            selected = dateOnly(parseKey(date));
+            view = new Date(selected.getFullYear(), selected.getMonth(), 1);
+            render();
+            $("plan-dialog").close();
+            announce(
+              editingId
+                ? "Agenda berhasil diperbarui."
+                : "Agenda berhasil disimpan.",
+            );
+
+            isSubmitting = false;
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalBtnText;
+          }, 150);
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener("keydown", (e) => {
+          if (e.target.tagName === "INPUT") return;
+          if ($("plan-dialog").open) return;
+          if (e.key === "ArrowLeft") {
+            $("prev").click();
+          } else if (e.key === "ArrowRight") {
+            $("next").click();
+          } else if (e.key === "t" || e.key === "T") {
+            $("today").click();
+          } else if (e.key === "n" || e.key === "N") {
+            openDialog();
+          }
+        });
+
+        render();
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,3584 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Google Sheets Clone — Spreadsheet</title>
+    <style>
+      :root {
+        --green: #0f9d58;
+        --green-dark: #188038;
+        --green-soft: #e6f4ea;
+        --text: #202124;
+        --muted: #5f6368;
+        --line: #dadce0;
+        --surface: #fff;
+        --canvas: #f8fafd;
+        --blue: #1a73e8;
+        --blue-soft: #e8f0fe;
+        --shadow:
+          0 1px 2px rgba(60, 64, 67, 0.16), 0 1px 3px 1px rgba(60, 64, 67, 0.08);
+        --row-h: 24px;
+        --col-w: 120px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        font-family: Arial, Roboto, "Helvetica Neue", sans-serif;
+        color: var(--text);
+        background: #e8eef7;
+        font-size: 13px;
+        overflow: hidden;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+      button {
+        border: 0;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 1px;
+      }
+
+      /* ============== VIEW SWITCHER ============== */
+      .view-switcher {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        z-index: 1000;
+        display: flex;
+        gap: 4px;
+        background: #fff;
+        border-radius: 24px;
+        padding: 4px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        border: 1px solid #e0e0e0;
+      }
+      .view-switcher button {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: #5f6368;
+        transition: all 0.2s;
+      }
+      .view-switcher button:hover {
+        background: #f1f3f4;
+      }
+      .view-switcher button.active {
+        background: var(--blue);
+        color: #fff;
+      }
+      .view-switcher svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      /* ============== DESKTOP APP ============== */
+      .desktop-view {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        overflow: hidden;
+      }
+      .desktop-view.hidden {
+        display: none;
+      }
+
+      .app {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .topbar {
+        height: 60px;
+        flex: 0 0 60px;
+        display: flex;
+        align-items: center;
+        padding: 0 18px 0 16px;
+        gap: 14px;
+      }
+      .sheets-mark {
+        width: 38px;
+        height: 42px;
+        flex: 0 0 auto;
+      }
+      .file-meta {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        flex: 1;
+      }
+      .title-line {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        min-width: 0;
+      }
+      .doc-title {
+        font-size: 18px;
+        font-weight: 400;
+        border: 1px solid transparent;
+        border-radius: 3px;
+        padding: 2px 5px;
+        margin-left: -5px;
+        min-width: 120px;
+        max-width: 360px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .doc-title:focus {
+        outline: 1px solid #a8c7fa;
+        background: #fff;
+      }
+      .tiny-action {
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        display: grid;
+        place-items: center;
+        color: #5f6368;
+      }
+      .tiny-action:hover {
+        background: #f1f3f4;
+      }
+      .tiny-action.active {
+        color: #fbbc04;
+      }
+      .tiny-action.active svg path {
+        fill: #fbbc04;
+        stroke: #fbbc04;
+      }
+      .save-state {
+        font-size: 11px;
+        color: #5f6368;
+        white-space: nowrap;
+      }
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #7e57c2;
+        color: white;
+        font-weight: 600;
+        margin-left: 7px;
+      }
+      .share-btn {
+        height: 36px;
+        border-radius: 20px;
+        padding: 0 18px;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        background: #c2e7ff;
+        color: #001d35;
+        font-weight: 600;
+      }
+      .share-btn:hover {
+        background: #b3dcf7;
+      }
+
+      .menu-row {
+        height: 32px;
+        flex: 0 0 32px;
+        display: flex;
+        align-items: center;
+        padding: 0 0 0 16px;
+        gap: 3px;
+      }
+      .menu-item {
+        height: 29px;
+        padding: 0 9px;
+        border-radius: 4px;
+        font-size: 13px;
+        color: #3c4043;
+      }
+      .menu-item:hover,
+      .menu-item.active {
+        background: #f1f3f4;
+      }
+
+      .toolbar-wrap {
+        padding: 7px 16px 6px;
+        background: #fff;
+      }
+      .toolbar {
+        height: 40px;
+        border-radius: 8px;
+        background: #edf2fa;
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        gap: 3px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: thin;
+      }
+      .toolbar::-webkit-scrollbar {
+        height: 4px;
+      }
+      .toolbar::-webkit-scrollbar-thumb {
+        background: #c6cbd3;
+        border-radius: 2px;
+      }
+
+      .tool-btn {
+        height: 30px;
+        min-width: 29px;
+        padding: 0 6px;
+        border-radius: 4px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        color: #444746;
+        white-space: nowrap;
+      }
+      .tool-btn:hover {
+        background: #dfe5ef;
+      }
+      .tool-btn.active {
+        background: #d3e3fd;
+        color: #174ea6;
+      }
+      .tool-btn svg {
+        width: 17px;
+        height: 17px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .tool-sep {
+        height: 22px;
+        width: 1px;
+        background: #c6cbd3;
+        margin: 0 5px;
+        flex: 0 0 1px;
+      }
+      .font-select,
+      .size-select,
+      .zoom-select {
+        height: 29px;
+        border: 0;
+        border-radius: 4px;
+        background: transparent;
+        padding: 0 7px;
+        color: #444746;
+      }
+      .font-select {
+        width: 112px;
+      }
+      .size-select {
+        width: 55px;
+      }
+      .font-select:hover,
+      .size-select:hover,
+      .zoom-select:hover {
+        background: #dfe5ef;
+      }
+      .color-tool {
+        position: relative;
+      }
+      .color-underline {
+        width: 15px;
+        height: 3px;
+        background: #202124;
+        position: absolute;
+        bottom: 2px;
+        left: 7px;
+      }
+      .color-underline.yellow {
+        background: #fbbc04;
+      }
+
+      .formula-row {
+        height: 36px;
+        flex: 0 0 36px;
+        display: flex;
+        align-items: center;
+        padding: 0 16px 5px;
+        gap: 10px;
+        border-bottom: 1px solid #e8eaed;
+      }
+      .name-box {
+        width: 80px;
+        height: 26px;
+        border: 1px solid #dadce0;
+        border-radius: 3px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 7px;
+        color: #3c4043;
+        background: #fff;
+        cursor: text;
+      }
+      .name-box:focus-within {
+        border-color: var(--blue);
+      }
+      .name-box input {
+        border: 0;
+        outline: 0;
+        background: transparent;
+        width: 100%;
+        padding: 0;
+        font-size: 13px;
+      }
+      .fx-mark {
+        font-family: Georgia, serif;
+        font-size: 16px;
+        font-style: italic;
+        color: #5f6368;
+        padding: 0 3px;
+      }
+      .formula-input {
+        height: 26px;
+        border: 0;
+        outline: 0;
+        flex: 1;
+        min-width: 0;
+        padding: 0 3px;
+        color: #3c4043;
+      }
+      .formula-input::placeholder {
+        color: #9aa0a6;
+      }
+
+      .grid-shell {
+        flex: 1;
+        min-height: 0;
+        position: relative;
+        background: #fff;
+        overflow: hidden;
+      }
+      .sheet-scroll {
+        height: 100%;
+        width: 100%;
+        overflow: auto;
+        position: relative;
+        outline: none;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 46px repeat(26, var(--col-w));
+        grid-auto-rows: var(--row-h);
+        width: max-content;
+        min-width: 100%;
+        position: relative;
+      }
+      .corner {
+        grid-column: 1;
+        grid-row: 1;
+        background: #f8f9fa;
+        border-right: 1px solid #c8ccd1;
+        border-bottom: 1px solid #c8ccd1;
+        position: sticky;
+        left: 0;
+        top: 0;
+        z-index: 8;
+      }
+      .col-head {
+        height: var(--row-h);
+        background: #f8f9fa;
+        border-right: 1px solid #dadce0;
+        border-bottom: 1px solid #c8ccd1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #5f6368;
+        position: sticky;
+        top: 0;
+        z-index: 6;
+        font-size: 11px;
+        user-select: none;
+        cursor: default;
+      }
+      .row-head {
+        background: #f8f9fa;
+        border-right: 1px solid #c8ccd1;
+        border-bottom: 1px solid #dadce0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #5f6368;
+        font-size: 11px;
+        position: sticky;
+        left: 0;
+        z-index: 4;
+        user-select: none;
+        cursor: default;
+      }
+      .cell {
+        height: var(--row-h);
+        min-width: var(--col-w);
+        width: var(--col-w);
+        border-right: 1px solid #e2e5e9;
+        border-bottom: 1px solid #e2e5e9;
+        padding: 2px 5px 1px 6px;
+        outline: none;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: clip;
+        background: #fff;
+        color: #202124;
+        position: relative;
+        z-index: 1;
+        line-height: 19px;
+      }
+      .cell.selected {
+        outline: 2px solid var(--green);
+        outline-offset: -2px;
+        z-index: 3;
+        overflow: visible;
+      }
+      .cell.range {
+        background: #e8f0fe;
+      }
+      .cell.header-cell {
+        background: #f1f3f4;
+        font-weight: 600;
+      }
+      .cell:focus {
+        outline: 2px solid var(--green);
+        outline-offset: -2px;
+        z-index: 5;
+      }
+      .col-head.selected-head,
+      .row-head.selected-head {
+        background: #d3e3fd;
+        color: #174ea6;
+        font-weight: 600;
+      }
+      .row-head.selected-head {
+        border-right: 2px solid var(--green);
+      }
+      .cell.bold {
+        font-weight: 700;
+      }
+      .cell.italic {
+        font-style: italic;
+      }
+      .cell.underline {
+        text-decoration: underline;
+      }
+      .cell.align-center {
+        text-align: center;
+      }
+      .cell.align-right {
+        text-align: right;
+      }
+      .cell.money {
+        font-variant-numeric: tabular-nums;
+      }
+      .cell.has-comment::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-top: 8px solid #fbbc04;
+        border-left: 8px solid transparent;
+      }
+
+      /* Auto-fill handle */
+      .autofill-handle {
+        position: absolute;
+        width: 7px;
+        height: 7px;
+        background: var(--green);
+        border: 1px solid #fff;
+        cursor: crosshair;
+        z-index: 10;
+        pointer-events: auto;
+      }
+
+      .bottom-bar {
+        height: 42px;
+        flex: 0 0 42px;
+        background: #f8f9fa;
+        border-top: 1px solid #dadce0;
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        gap: 10px;
+      }
+      .sheet-nav {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        color: #5f6368;
+      }
+      .sheet-nav button {
+        height: 28px;
+        width: 25px;
+        border-radius: 4px;
+        display: grid;
+        place-items: center;
+      }
+      .sheet-nav button:hover {
+        background: #e8eaed;
+      }
+      .add-sheet {
+        width: 31px;
+        height: 28px;
+        border-radius: 4px;
+        display: grid;
+        place-items: center;
+        color: #5f6368;
+        font-size: 20px;
+      }
+      .add-sheet:hover {
+        background: #e8eaed;
+      }
+      .all-sheets {
+        height: 28px;
+        width: 28px;
+        border-radius: 4px;
+        display: grid;
+        place-items: center;
+        color: #5f6368;
+      }
+      .sheet-tabs {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        min-width: 0;
+        overflow: hidden;
+        height: 100%;
+      }
+      .sheet-tab {
+        height: 31px;
+        padding: 0 17px;
+        border-radius: 5px 5px 0 0;
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        color: #5f6368;
+        white-space: nowrap;
+        margin-top: 11px;
+      }
+      .sheet-tab:hover {
+        background: #eef0f2;
+      }
+      .sheet-tab.active {
+        background: #e6f4ea;
+        color: #137333;
+        font-weight: 600;
+        border-bottom: 3px solid var(--green);
+      }
+      .tab-menu {
+        font-size: 12px;
+        opacity: 0.65;
+      }
+      .status-right {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 17px;
+        color: #5f6368;
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      .status-right .zoom {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .zoom-range {
+        width: 82px;
+        accent-color: #5f6368;
+      }
+
+      /* Popups */
+      .popup {
+        position: fixed;
+        z-index: 50;
+        min-width: 190px;
+        background: #fff;
+        border: 1px solid #dadce0;
+        border-radius: 6px;
+        box-shadow: 0 4px 16px rgba(60, 64, 67, 0.22);
+        padding: 5px 0;
+        display: none;
+      }
+      .popup.show {
+        display: block;
+      }
+      .popup-item {
+        height: 32px;
+        padding: 0 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        color: #3c4043;
+        white-space: nowrap;
+      }
+      .popup-item:hover {
+        background: #f1f3f4;
+      }
+      .popup-item .shortcut {
+        font-size: 11px;
+        color: #80868b;
+      }
+      .popup-sep {
+        height: 1px;
+        background: #e8eaed;
+        margin: 5px 0;
+      }
+
+      .context-menu {
+        position: fixed;
+        z-index: 60;
+        min-width: 220px;
+        background: #fff;
+        border: 1px solid #dadce0;
+        border-radius: 6px;
+        box-shadow: 0 4px 16px rgba(60, 64, 67, 0.22);
+        padding: 5px 0;
+        display: none;
+      }
+      .context-menu.show {
+        display: block;
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 58px;
+        left: 50%;
+        transform: translateX(-50%) translateY(12px);
+        background: #323232;
+        color: #fff;
+        border-radius: 4px;
+        padding: 10px 16px;
+        box-shadow: var(--shadow);
+        opacity: 0;
+        pointer-events: none;
+        transition: 0.2s;
+        z-index: 100;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      .dialog-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(32, 33, 36, 0.32);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 80;
+      }
+      .dialog-backdrop.show {
+        display: flex;
+      }
+      .dialog {
+        width: min(430px, calc(100vw - 32px));
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+        padding: 22px;
+      }
+      .dialog h2 {
+        font-size: 18px;
+        font-weight: 500;
+        margin: 0 0 18px;
+      }
+      .dialog p {
+        color: #5f6368;
+        line-height: 1.5;
+      }
+      .dialog input {
+        height: 38px;
+        width: 100%;
+        border: 1px solid #dadce0;
+        border-radius: 4px;
+        padding: 0 10px;
+        margin: 8px 0 18px;
+      }
+      .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+      .dialog-actions button {
+        height: 34px;
+        padding: 0 15px;
+        border-radius: 4px;
+        color: var(--blue);
+        font-weight: 600;
+      }
+      .dialog-actions .primary {
+        background: var(--blue);
+        color: #fff;
+      }
+
+      /* ============== MOBILE VIEW - PIXEL PHONE ============== */
+      .mobile-view {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(
+          135deg,
+          #1a1a2e 0%,
+          #16213e 50%,
+          #0f3460 100%
+        );
+        padding: 20px;
+        overflow: hidden;
+      }
+      .mobile-view.active {
+        display: flex;
+      }
+
+      .pixel-phone {
+        width: 375px;
+        height: 812px;
+        max-height: calc(100vh - 40px);
+        max-width: calc(100vw - 40px);
+        aspect-ratio: 375 / 812;
+        background: #000;
+        border-radius: 48px;
+        padding: 10px;
+        position: relative;
+        box-shadow:
+          0 0 0 2px #1a1a1a,
+          0 0 0 4px #2a2a2a,
+          0 30px 60px rgba(0, 0, 0, 0.5),
+          0 0 0 12px #111;
+      }
+
+      /* Side buttons (volume/power) */
+      .pixel-phone::before {
+        content: "";
+        position: absolute;
+        left: -4px;
+        top: 140px;
+        width: 4px;
+        height: 60px;
+        background: #1a1a1a;
+        border-radius: 2px;
+      }
+      .pixel-phone::after {
+        content: "";
+        position: absolute;
+        right: -4px;
+        top: 180px;
+        width: 4px;
+        height: 80px;
+        background: #1a1a1a;
+        border-radius: 2px;
+      }
+
+      .phone-screen {
+        width: 100%;
+        height: 100%;
+        background: #fff;
+        border-radius: 38px;
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Notch/pill camera */
+      .phone-notch {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 28px;
+        background: #000;
+        border-radius: 20px;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+      .phone-notch::before {
+        content: "";
+        width: 10px;
+        height: 10px;
+        background: #0a0a0a;
+        border-radius: 50%;
+        border: 1px solid #1a1a1a;
+      }
+      .phone-notch::after {
+        content: "";
+        width: 4px;
+        height: 4px;
+        background: #1a3a5a;
+        border-radius: 50%;
+        box-shadow: inset 0 0 2px rgba(255, 255, 255, 0.3);
+      }
+
+      /* Status bar */
+      .phone-status-bar {
+        height: 44px;
+        padding: 14px 24px 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 12px;
+        font-weight: 600;
+        color: #000;
+        z-index: 5;
+        background: #fff;
+      }
+      .status-left {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .status-right-phone {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .signal-bars {
+        display: flex;
+        gap: 1px;
+        align-items: flex-end;
+      }
+      .signal-bars span {
+        display: block;
+        width: 2px;
+        background: #000;
+        border-radius: 1px;
+      }
+      .signal-bars span:nth-child(1) {
+        height: 3px;
+      }
+      .signal-bars span:nth-child(2) {
+        height: 5px;
+      }
+      .signal-bars span:nth-child(3) {
+        height: 7px;
+      }
+      .signal-bars span:nth-child(4) {
+        height: 9px;
+      }
+      .battery-icon {
+        width: 22px;
+        height: 11px;
+        border: 1px solid #000;
+        border-radius: 2px;
+        position: relative;
+      }
+      .battery-icon::after {
+        content: "";
+        position: absolute;
+        right: -3px;
+        top: 3px;
+        width: 2px;
+        height: 5px;
+        background: #000;
+        border-radius: 0 1px 1px 0;
+      }
+      .battery-icon::before {
+        content: "";
+        position: absolute;
+        left: 1px;
+        top: 1px;
+        width: 14px;
+        height: 7px;
+        background: #000;
+        border-radius: 1px;
+      }
+
+      /* Mobile Sheets app UI */
+      .mobile-app {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: #fff;
+      }
+
+      .mobile-topbar {
+        height: 56px;
+        padding: 0 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 1px solid #e8eaed;
+        background: #fff;
+      }
+      .mobile-topbar .hamburger {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+      }
+      .mobile-topbar .hamburger:hover {
+        background: #f1f3f4;
+      }
+      .mobile-topbar .hamburger svg {
+        width: 20px;
+        height: 20px;
+        stroke: #5f6368;
+        fill: none;
+        stroke-width: 2;
+      }
+      .mobile-title-area {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .mobile-doc-title {
+        font-size: 16px;
+        font-weight: 500;
+        color: #202124;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .mobile-save-state {
+        font-size: 11px;
+        color: #5f6368;
+      }
+      .mobile-top-actions {
+        display: flex;
+        gap: 2px;
+      }
+      .mobile-top-actions button {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: #5f6368;
+      }
+      .mobile-top-actions button:hover {
+        background: #f1f3f4;
+      }
+      .mobile-top-actions svg {
+        width: 20px;
+        height: 20px;
+      }
+      .mobile-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #7e57c2;
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-weight: 600;
+        font-size: 13px;
+        margin-left: 4px;
+      }
+
+      .mobile-formula-bar {
+        height: 44px;
+        padding: 6px 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px solid #e8eaed;
+        background: #fff;
+      }
+      .mobile-name-box {
+        width: 52px;
+        height: 32px;
+        border: 1px solid #dadce0;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        color: #3c4043;
+        background: #f8f9fa;
+        font-weight: 500;
+      }
+      .mobile-fx {
+        font-family: Georgia, serif;
+        font-style: italic;
+        font-size: 15px;
+        color: #5f6368;
+      }
+      .mobile-formula-input {
+        flex: 1;
+        height: 32px;
+        border: 0;
+        outline: 0;
+        font-size: 13px;
+        color: #202124;
+      }
+
+      .mobile-grid-shell {
+        flex: 1;
+        overflow: auto;
+        background: #fff;
+        position: relative;
+      }
+      .mobile-grid {
+        display: grid;
+        grid-template-columns: 36px repeat(10, 80px);
+        grid-auto-rows: 28px;
+        width: max-content;
+        font-size: 12px;
+      }
+      .mobile-corner {
+        background: #f8f9fa;
+        border-right: 1px solid #c8ccd1;
+        border-bottom: 1px solid #c8ccd1;
+        position: sticky;
+        left: 0;
+        top: 0;
+        z-index: 5;
+      }
+      .mobile-col-head {
+        background: #f8f9fa;
+        border-right: 1px solid #dadce0;
+        border-bottom: 1px solid #c8ccd1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #5f6368;
+        font-size: 10px;
+        position: sticky;
+        top: 0;
+        z-index: 4;
+      }
+      .mobile-row-head {
+        background: #f8f9fa;
+        border-right: 1px solid #c8ccd1;
+        border-bottom: 1px solid #dadce0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #5f6368;
+        font-size: 10px;
+        position: sticky;
+        left: 0;
+        z-index: 3;
+      }
+      .mobile-cell {
+        height: 28px;
+        width: 80px;
+        border-right: 1px solid #e2e5e9;
+        border-bottom: 1px solid #e2e5e9;
+        padding: 4px 6px;
+        background: #fff;
+        color: #202124;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: flex;
+        align-items: center;
+        position: relative;
+        font-size: 12px;
+      }
+      .mobile-cell.selected {
+        outline: 2px solid var(--green);
+        outline-offset: -2px;
+        z-index: 2;
+        background: #fff;
+      }
+      .mobile-cell.bold {
+        font-weight: 700;
+      }
+      .mobile-cell.header-cell {
+        background: #f1f3f4;
+        font-weight: 600;
+      }
+
+      /* Mobile bottom toolbar */
+      .mobile-bottom-bar {
+        border-top: 1px solid #e8eaed;
+        background: #fff;
+      }
+      .mobile-format-toolbar {
+        height: 48px;
+        padding: 0 8px;
+        display: none;
+        align-items: center;
+        gap: 2px;
+        overflow-x: auto;
+        border-bottom: 1px solid #e8eaed;
+      }
+      .mobile-format-toolbar.show {
+        display: flex;
+      }
+      .mobile-format-toolbar button {
+        min-width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: #5f6368;
+      }
+      .mobile-format-toolbar button:hover {
+        background: #f1f3f4;
+      }
+      .mobile-format-toolbar button.active {
+        background: #d3e3fd;
+        color: #174ea6;
+      }
+      .mobile-format-toolbar svg {
+        width: 18px;
+        height: 18px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+      }
+      .mobile-format-sep {
+        width: 1px;
+        height: 24px;
+        background: #e8eaed;
+        margin: 0 4px;
+        flex: 0 0 1px;
+      }
+
+      .mobile-sheet-tabs {
+        height: 48px;
+        padding: 0 8px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        background: #f8f9fa;
+      }
+      .mobile-sheet-tabs .add-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: #5f6368;
+        font-size: 18px;
+      }
+      .mobile-sheet-tabs .add-btn:hover {
+        background: #e8eaed;
+      }
+      .mobile-tab {
+        height: 32px;
+        padding: 0 12px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        color: #5f6368;
+        font-size: 12px;
+        white-space: nowrap;
+        background: #fff;
+        border: 1px solid #dadce0;
+      }
+      .mobile-tab.active {
+        background: var(--green-soft);
+        color: var(--green-dark);
+        border-color: var(--green);
+        font-weight: 600;
+      }
+
+      .mobile-nav-bar {
+        height: 48px;
+        padding: 0 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        background: #fff;
+        border-top: 1px solid #e8eaed;
+      }
+      .mobile-nav-bar button {
+        flex: 1;
+        height: 48px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        color: #5f6368;
+        font-size: 10px;
+      }
+      .mobile-nav-bar button.active {
+        color: var(--green-dark);
+      }
+      .mobile-nav-bar svg {
+        width: 20px;
+        height: 20px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+      }
+
+      /* Mobile FAB */
+      .mobile-fab {
+        position: absolute;
+        right: 20px;
+        bottom: 160px;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--green);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        box-shadow: 0 4px 12px rgba(15, 157, 88, 0.4);
+        z-index: 15;
+      }
+      .mobile-fab:hover {
+        background: var(--green-dark);
+      }
+      .mobile-fab svg {
+        width: 24px;
+        height: 24px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2;
+      }
+
+      /* Home indicator */
+      .phone-home-indicator {
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .phone-home-indicator::after {
+        content: "";
+        width: 120px;
+        height: 4px;
+        background: #000;
+        border-radius: 2px;
+        opacity: 0.8;
+      }
+
+      @media (max-height: 700px) {
+        .pixel-phone {
+          height: calc(100vh - 40px);
+          width: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- VIEW SWITCHER -->
+    <div class="view-switcher">
+      <button id="desktopViewBtn" class="active" title="Tampilan Desktop">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <rect x="2" y="3" width="20" height="14" rx="2" />
+          <line x1="8" y1="21" x2="16" y2="21" />
+          <line x1="12" y1="17" x2="12" y2="21" />
+        </svg>
+      </button>
+      <button id="mobileViewBtn" title="Tampilan Mobile (Pixel)">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <rect x="7" y="2" width="10" height="20" rx="2" />
+          <line x1="11" y1="18" x2="13" y2="18" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- DESKTOP VIEW -->
+    <div class="desktop-view" id="desktopView">
+      <div class="app">
+        <header class="topbar">
+          <svg class="sheets-mark" viewBox="0 0 48 54" aria-label="Sheets">
+            <path
+              d="M8 2h21l12 12v34a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V6a4 4 0 0 1 4-4Z"
+              fill="#0F9D58"
+            />
+            <path d="M29 2v9a3 3 0 0 0 3 3h9Z" fill="#87CEAC" />
+            <path
+              d="M13 22h20M13 29h20M13 36h20M13 43h20M20 20v25M27 20v25"
+              stroke="#fff"
+              stroke-width="2"
+              opacity=".95"
+            />
+          </svg>
+          <div class="file-meta">
+            <div class="title-line">
+              <div
+                class="doc-title"
+                id="docTitle"
+                contenteditable="true"
+                spellcheck="false"
+              >
+                Laporan Penjualan Q1 2026
+              </div>
+              <button class="tiny-action" title="Beri bintang" id="starBtn">
+                <svg width="17" height="17" viewBox="0 0 24 24">
+                  <path
+                    d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                  />
+                </svg>
+              </button>
+              <button class="tiny-action" title="Pindahkan">
+                <svg
+                  width="17"
+                  height="17"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path d="M3 7h7l2 2h9v10H3z" />
+                  <path d="M3 7V5h7l2 2" />
+                </svg>
+              </button>
+              <button class="tiny-action" title="Status penyimpanan">
+                <svg
+                  width="17"
+                  height="17"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path d="M5 4h12l3 3v13H4V4z" />
+                  <path d="M8 4v6h8V4M8 20v-7h8v7" />
+                </svg>
+              </button>
+            </div>
+            <div class="save-state" id="saveState">Disimpan ke Drive</div>
+          </div>
+          <div class="top-actions">
+            <button class="tiny-action" title="Riwayat versi" id="historyBtn">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+              >
+                <path d="M3 12a9 9 0 1 0 2.6-6.4L3 8" />
+                <path d="M3 3v5h5M12 7v5l3 2" />
+              </svg>
+            </button>
+            <button class="tiny-action" title="Komentar" id="commentBtn">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+              >
+                <path
+                  d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-9.5A7.5 7.5 0 0 1 10.5 4h2A7.5 7.5 0 0 1 20 11.5Z"
+                />
+              </svg>
+            </button>
+            <button class="tiny-action" title="Meet">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+              >
+                <rect x="3" y="6" width="13" height="12" rx="2" />
+                <path d="m16 10 5-3v10l-5-3z" />
+              </svg>
+            </button>
+            <button class="share-btn" id="shareBtn">
+              <svg
+                width="17"
+                height="17"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <path d="M12 16V3m-5 5 5-5 5 5" />
+                <path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />
+              </svg>
+              Bagikan
+            </button>
+            <button class="avatar" title="Akun Google">A</button>
+          </div>
+        </header>
+
+        <nav class="menu-row">
+          <button class="menu-item" data-menu="File">File</button>
+          <button class="menu-item" data-menu="Edit">Edit</button>
+          <button class="menu-item" data-menu="View">Tampilan</button>
+          <button class="menu-item" data-menu="Insert">Sisipkan</button>
+          <button class="menu-item" data-menu="Format">Format</button>
+          <button class="menu-item" data-menu="Data">Data</button>
+          <button class="menu-item" data-menu="Tools">Alat</button>
+          <button class="menu-item" data-menu="Extensions">Ekstensi</button>
+          <button class="menu-item" data-menu="Help">Bantuan</button>
+        </nav>
+
+        <section class="toolbar-wrap">
+          <div class="toolbar" role="toolbar">
+            <button class="tool-btn" id="undoBtn" title="Urungkan (Ctrl+Z)">
+              <svg viewBox="0 0 24 24">
+                <path d="M9 14 4 9l5-5" />
+                <path d="M4 9h9a7 7 0 0 1 0 14h-1" />
+              </svg>
+            </button>
+            <button class="tool-btn" id="redoBtn" title="Ulangi (Ctrl+Y)">
+              <svg viewBox="0 0 24 24">
+                <path d="m15 14 5-5-5-5" />
+                <path d="M20 9h-9a7 7 0 0 0 0 14h1" />
+              </svg>
+            </button>
+            <button class="tool-btn" id="printBtn" title="Cetak">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
+                />
+                <path d="M7 14h10v7H7z" />
+              </svg>
+            </button>
+            <button class="tool-btn" id="paintBtn" title="Salin format">
+              <svg viewBox="0 0 24 24">
+                <path d="M4 4h10v7H4zM7 11v9h10v-6" />
+                <path d="M14 4h6v6h-6z" />
+              </svg>
+            </button>
+            <span class="tool-sep"></span>
+            <select class="zoom-select" id="zoomSelect" title="Zoom">
+              <option>100%</option>
+              <option>125%</option>
+              <option>90%</option>
+              <option>75%</option>
+              <option>50%</option>
+            </select>
+            <span class="tool-sep"></span>
+            <select class="font-select" title="Font" id="fontSelect">
+              <option>Arial</option>
+              <option>Calibri</option>
+              <option>Georgia</option>
+              <option>Times New Roman</option>
+              <option>Courier New</option>
+              <option>Verdana</option>
+            </select>
+            <select class="size-select" title="Ukuran font" id="sizeSelect">
+              <option>10</option>
+              <option>11</option>
+              <option selected>10</option>
+              <option>12</option>
+              <option>14</option>
+              <option>16</option>
+              <option>18</option>
+              <option>24</option>
+              <option>36</option>
+            </select>
+            <span class="tool-sep"></span>
+            <button class="tool-btn" id="boldBtn" title="Tebal (Ctrl+B)">
+              <svg viewBox="0 0 24 24">
+                <path d="M6 4h7a4 4 0 0 1 0 8H6zM6 12h8a4 4 0 0 1 0 8H6z" />
+              </svg>
+            </button>
+            <button class="tool-btn" id="italicBtn" title="Miring (Ctrl+I)">
+              <svg viewBox="0 0 24 24">
+                <path d="M14 4H8M16 20h-6M14 4 10 20" />
+              </svg>
+            </button>
+            <button
+              class="tool-btn"
+              id="underlineBtn"
+              title="Garis bawah (Ctrl+U)"
+            >
+              <svg viewBox="0 0 24 24">
+                <path d="M6 4v7a6 6 0 0 0 12 0V4M4 21h16" />
+              </svg>
+            </button>
+            <button class="tool-btn" id="strikeBtn" title="Coret">
+              <svg viewBox="0 0 24 24">
+                <path d="M5 12h14" />
+                <path d="M17 6H9a3 3 0 0 0 0 6M7 18h8a3 3 0 0 0 0-6" />
+              </svg>
+            </button>
+            <button
+              class="tool-btn color-tool"
+              id="textColorBtn"
+              title="Warna teks"
+            >
+              <svg viewBox="0 0 24 24"><path d="m5 18 7-14 7 14M8 13h8" /></svg>
+              <span class="color-underline"></span>
+            </button>
+            <button
+              class="tool-btn color-tool"
+              id="fillColorBtn"
+              title="Warna isi"
+            >
+              <svg viewBox="0 0 24 24">
+                <path d="m4 15 8-11 8 7-8 10H5zM3 21h18" />
+              </svg>
+              <span class="color-underline yellow"></span>
+            </button>
+            <span class="tool-sep"></span>
+            <button class="tool-btn" id="bordersBtn" title="Batas">
+              <svg viewBox="0 0 24 24">
+                <rect x="4" y="4" width="16" height="16" />
+                <path d="M4 12h16M12 4v16" />
+              </svg>
+            </button>
+            <button class="tool-btn" id="mergeBtn" title="Gabungkan sel">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6zM10 7h4M12 5v4M10 17h4M12 15v4"
+                />
+              </svg>
+            </button>
+            <button class="tool-btn" id="alignBtn" title="Perataan horizontal">
+              <svg viewBox="0 0 24 24">
+                <path d="M4 5h16M4 9h10M4 13h16M4 17h10M4 21h16" />
+              </svg>
+            </button>
+            <button class="tool-btn" id="valignBtn" title="Perataan vertikal">
+              <svg viewBox="0 0 24 24">
+                <path d="M4 4h16M7 8v8M4 16h16M12 8v8M17 8v8" />
+              </svg>
+            </button>
+            <button class="tool-btn" id="wrapBtn" title="Pembungkusan teks">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M4 5h16M4 9h12a3 3 0 1 1 0 6H9m0 0 3-3m-3 3 3 3M4 20h16"
+                />
+              </svg>
+            </button>
+            <span class="tool-sep"></span>
+            <button
+              class="tool-btn"
+              id="currencyBtn"
+              title="Format sebagai mata uang"
+            >
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"
+                />
+              </svg>
+            </button>
+            <button
+              class="tool-btn"
+              id="percentBtn"
+              title="Format sebagai persen"
+            >
+              <svg viewBox="0 0 24 24">
+                <circle cx="7" cy="7" r="3" />
+                <circle cx="17" cy="17" r="3" />
+                <path d="M20 4 4 20" />
+              </svg>
+            </button>
+            <button class="tool-btn" id="decDecBtn" title="Kurangi desimal">
+              <svg viewBox="0 0 24 24">
+                <path d="M5 12h7M15 8l4 4-4 4M19 12h-4M3 18h5" />
+              </svg>
+            </button>
+            <button class="tool-btn" id="incDecBtn" title="Tambah desimal">
+              <svg viewBox="0 0 24 24">
+                <path d="M5 12h7M15 8l4 4-4 4M19 12h-4M3 18h5M10 18v4M8 20h4" />
+              </svg>
+            </button>
+            <span class="tool-sep"></span>
+            <button class="tool-btn" id="linkBtn" title="Sisipkan link">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M10 13a5 5 0 0 0 7.1 0l2-2A5 5 0 0 0 12 4l-1.1 1.1M14 11a5 5 0 0 0-7.1 0l-2 2A5 5 0 0 0 12 20l1.1-1.1"
+                />
+              </svg>
+            </button>
+            <button class="tool-btn" id="commentCellBtn" title="Komentar">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-9.5A7.5 7.5 0 0 1 10.5 4h2A7.5 7.5 0 0 1 20 11.5Z"
+                />
+              </svg>
+            </button>
+            <button class="tool-btn" id="chartBtn" title="Sisipkan diagram">
+              <svg viewBox="0 0 24 24">
+                <path d="M4 20V4M4 20h17" />
+                <path d="M8 17v-5h3v5M14 17V7h3v10" />
+              </svg>
+            </button>
+            <button class="tool-btn" id="filterBtn" title="Buat filter">
+              <svg viewBox="0 0 24 24">
+                <path d="M3 5h18l-7 8v6l-4 2v-8z" />
+              </svg>
+            </button>
+            <button class="tool-btn" id="functionsBtn" title="Fungsi">
+              <span
+                style="
+                  font-family: Georgia, serif;
+                  font-size: 17px;
+                  font-style: italic;
+                "
+                >Σ</span
+              >
+            </button>
+          </div>
+        </section>
+
+        <section class="formula-row">
+          <div class="name-box">
+            <input type="text" id="nameBox" value="A1" />
+          </div>
+          <span class="fx-mark">fx</span>
+          <input
+            class="formula-input"
+            id="formulaInput"
+            aria-label="Formula bar"
+            placeholder="Masukkan nilai atau formula (mis. =SUM(A1:A10))"
+          />
+        </section>
+
+        <main class="grid-shell">
+          <div class="sheet-scroll" id="sheetScroll">
+            <div
+              class="grid"
+              id="grid"
+              role="grid"
+              aria-label="Spreadsheet"
+            ></div>
+          </div>
+        </main>
+
+        <footer class="bottom-bar">
+          <div class="sheet-nav">
+            <button title="Semua sheet" class="all-sheets">☷</button>
+            <button title="Sheet sebelumnya">‹</button>
+            <button title="Sheet berikutnya">›</button>
+          </div>
+          <button class="add-sheet" id="addSheet" title="Tambahkan sheet">
+            +
+          </button>
+          <div class="sheet-tabs" id="sheetTabs">
+            <button class="sheet-tab active" data-sheet="Sheet1">
+              Sheet1 <span class="tab-menu">▾</span>
+            </button>
+          </div>
+          <div class="status-right">
+            <span class="selection-status" id="selectionStatus">Count: 1</span>
+            <span class="zoom"
+              >−
+              <input
+                class="zoom-range"
+                id="zoomRange"
+                type="range"
+                min="50"
+                max="150"
+                value="100"
+              />
+              + <span id="zoomLabel">100%</span></span
+            >
+            <span>▣</span>
+          </div>
+        </footer>
+      </div>
+    </div>
+
+    <!-- MOBILE VIEW -->
+    <div class="mobile-view" id="mobileView">
+      <div class="pixel-phone">
+        <div class="phone-screen">
+          <div class="phone-notch"></div>
+
+          <div class="phone-status-bar">
+            <div class="status-left">
+              <span>9:41</span>
+            </div>
+            <div class="status-right-phone">
+              <div class="signal-bars">
+                <span></span><span></span><span></span><span></span>
+              </div>
+              <span style="font-size: 11px; font-weight: 700">5G</span>
+              <div class="battery-icon"></div>
+            </div>
+          </div>
+
+          <div class="mobile-app">
+            <div class="mobile-topbar">
+              <button class="hamburger" title="Menu">
+                <svg viewBox="0 0 24 24">
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <line x1="3" y1="12" x2="21" y2="12" />
+                  <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
+              </button>
+              <div class="mobile-title-area">
+                <div class="mobile-doc-title" id="mobileDocTitle">
+                  Laporan Penjualan Q1 2026
+                </div>
+                <div class="mobile-save-state">Disimpan ke Drive</div>
+              </div>
+              <div class="mobile-top-actions">
+                <button title="Cari">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#5f6368"
+                    stroke-width="2"
+                  >
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                </button>
+                <button title="Bagikan" id="mobileShareBtn">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#5f6368"
+                    stroke-width="2"
+                  >
+                    <path d="M12 16V3m-5 5 5-5 5 5" />
+                    <path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />
+                  </svg>
+                </button>
+              </div>
+              <div class="mobile-avatar">A</div>
+            </div>
+
+            <div class="mobile-formula-bar">
+              <div class="mobile-name-box" id="mobileNameBox">A1</div>
+              <span class="mobile-fx">fx</span>
+              <input
+                class="mobile-formula-input"
+                id="mobileFormulaInput"
+                placeholder="Masukkan nilai atau formula"
+              />
+            </div>
+
+            <div class="mobile-grid-shell" id="mobileGridShell">
+              <div class="mobile-grid" id="mobileGrid"></div>
+            </div>
+
+            <button class="mobile-fab" id="mobileFab" title="Tambahkan">
+              <svg viewBox="0 0 24 24">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+
+            <div class="mobile-bottom-bar">
+              <div class="mobile-format-toolbar" id="mobileFormatToolbar">
+                <button id="mBoldBtn" title="Tebal">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M6 4h7a4 4 0 0 1 0 8H6zM6 12h8a4 4 0 0 1 0 8H6z" />
+                  </svg>
+                </button>
+                <button id="mItalicBtn" title="Miring">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M14 4H8M16 20h-6M14 4 10 20" />
+                  </svg>
+                </button>
+                <button id="mUnderlineBtn" title="Garis bawah">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M6 4v7a6 6 0 0 0 12 0V4M4 21h16" />
+                  </svg>
+                </button>
+                <div class="mobile-format-sep"></div>
+                <button id="mAlignBtn" title="Rata">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M4 5h16M4 9h10M4 13h16M4 17h10" />
+                  </svg>
+                </button>
+                <button
+                  id="mTextColorBtn"
+                  title="Warna teks"
+                  style="position: relative"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <path d="m5 18 7-14 7 14M8 13h8" />
+                  </svg>
+                  <span
+                    style="
+                      position: absolute;
+                      bottom: 6px;
+                      left: 12px;
+                      width: 14px;
+                      height: 2px;
+                      background: #202124;
+                    "
+                  ></span>
+                </button>
+                <button
+                  id="mFillColorBtn"
+                  title="Warna isi"
+                  style="position: relative"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <path d="m4 15 8-11 8 7-8 10H5zM3 21h18" />
+                  </svg>
+                  <span
+                    style="
+                      position: absolute;
+                      bottom: 6px;
+                      left: 12px;
+                      width: 14px;
+                      height: 2px;
+                      background: #fbbc04;
+                    "
+                  ></span>
+                </button>
+                <div class="mobile-format-sep"></div>
+                <button id="mCurrencyBtn" title="Mata uang">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"
+                    />
+                  </svg>
+                </button>
+                <button id="mCommentBtn" title="Komentar">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-9.5A7.5 7.5 0 0 1 10.5 4h2A7.5 7.5 0 0 1 20 11.5Z"
+                    />
+                  </svg>
+                </button>
+                <button id="mMoreBtn" title="Lainnya">
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="5" cy="12" r="1.5" fill="currentColor" />
+                    <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                    <circle cx="19" cy="12" r="1.5" fill="currentColor" />
+                  </svg>
+                </button>
+              </div>
+
+              <div class="mobile-sheet-tabs">
+                <button
+                  class="add-btn"
+                  id="mobileAddSheet"
+                  title="Tambah sheet"
+                >
+                  +
+                </button>
+                <div class="mobile-tab active" data-sheet="Sheet1">Sheet1</div>
+              </div>
+
+              <div class="mobile-nav-bar">
+                <button class="active" data-nav="home">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                  </svg>
+                  <span>Beranda</span>
+                </button>
+                <button data-nav="recent">
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  <span>Terbaru</span>
+                </button>
+                <button data-nav="shared">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path
+                      d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"
+                    />
+                  </svg>
+                  <span>Dibagikan</span>
+                </button>
+                <button data-nav="starred">
+                  <svg viewBox="0 0 24 24">
+                    <polygon
+                      points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+                    />
+                  </svg>
+                  <span>Bintang</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="phone-home-indicator"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Popups & Dialogs -->
+    <div class="popup" id="menuPopup"></div>
+    <div class="popup" id="colorPopup">
+      <div style="padding: 8px 12px; color: #5f6368; font-size: 11px">
+        Warna tema
+      </div>
+      <div
+        id="palette"
+        style="
+          display: grid;
+          grid-template-columns: repeat(6, 25px);
+          gap: 6px;
+          padding: 4px 12px 12px;
+        "
+      ></div>
+    </div>
+    <div class="context-menu" id="contextMenu"></div>
+    <div class="toast" id="toast"></div>
+    <div class="dialog-backdrop" id="dialogBackdrop">
+      <div class="dialog" role="dialog" aria-modal="true">
+        <h2 id="dialogTitle">Bagikan</h2>
+        <p id="dialogText">
+          Siapa saja yang memiliki link dapat melihat spreadsheet ini.
+        </p>
+        <input id="dialogInput" placeholder="Masukkan nama atau alamat email" />
+        <div class="dialog-actions">
+          <button id="dialogCancel">Batal</button>
+          <button class="primary" id="dialogOk">Selesai</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // =============== VIEW SWITCHER ===============
+      const desktopView = document.getElementById("desktopView");
+      const mobileView = document.getElementById("mobileView");
+      const desktopViewBtn = document.getElementById("desktopViewBtn");
+      const mobileViewBtn = document.getElementById("mobileViewBtn");
+
+      function switchView(view) {
+        if (view === "desktop") {
+          desktopView.classList.remove("hidden");
+          mobileView.classList.remove("active");
+          desktopViewBtn.classList.add("active");
+          mobileViewBtn.classList.remove("active");
+          document.body.style.background = "#fff";
+        } else {
+          desktopView.classList.add("hidden");
+          mobileView.classList.add("active");
+          desktopViewBtn.classList.remove("active");
+          mobileViewBtn.classList.add("active");
+          document.body.style.background =
+            "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)";
+          buildMobileGrid();
+        }
+      }
+      desktopViewBtn.addEventListener("click", () => switchView("desktop"));
+      mobileViewBtn.addEventListener("click", () => switchView("mobile"));
+
+      // =============== DESKTOP APP LOGIC ===============
+      (() => {
+        const COLS = 26,
+          ROWS = 100;
+        const grid = document.getElementById("grid");
+        const sheetScroll = document.getElementById("sheetScroll");
+        const nameBox = document.getElementById("nameBox");
+        const formulaInput = document.getElementById("formulaInput");
+        const selectionStatus = document.getElementById("selectionStatus");
+        const toastEl = document.getElementById("toast");
+        let selected = { r: 1, c: 1 },
+          activeCell = null,
+          isMouseSelecting = false,
+          isShiftSelecting = false;
+        let rangeStart = null;
+        let currentSheet = "Sheet1";
+        let sheets = { Sheet1: {} };
+        let undoStack = [],
+          redoStack = [];
+        let toastTimer;
+        let autofillHandle = null;
+        let clipboard = null;
+
+        const sample = {
+          "1,1": "Laporan Penjualan Q1 2026",
+          "3,1": "No.",
+          "3,2": "Nama Produk",
+          "3,3": "Kategori",
+          "3,4": "Unit Terjual",
+          "3,5": "Harga Satuan",
+          "3,6": "Total Penjualan",
+          "4,1": "1",
+          "4,2": "Laptop Pro 14",
+          "4,3": "Elektronik",
+          "4,4": "18",
+          "4,5": "14500000",
+          "4,6": "=D4*E4",
+          "5,1": "2",
+          "5,2": "Monitor UltraWide",
+          "5,3": "Elektronik",
+          "5,4": "12",
+          "5,5": "4200000",
+          "5,6": "=D5*E5",
+          "6,1": "3",
+          "6,2": "Keyboard Mechanical",
+          "6,3": "Aksesori",
+          "6,4": "35",
+          "6,5": "850000",
+          "6,6": "=D6*E6",
+          "7,1": "4",
+          "7,2": "Mouse Wireless",
+          "7,3": "Aksesori",
+          "7,4": "42",
+          "7,5": "375000",
+          "7,6": "=D7*E7",
+          "8,1": "5",
+          "8,2": "Headphone Studio",
+          "8,3": "Audio",
+          "8,4": "16",
+          "8,5": "1250000",
+          "8,6": "=D8*E8",
+          "9,1": "6",
+          "9,2": "Webcam HD",
+          "9,3": "Elektronik",
+          "9,4": "23",
+          "9,5": "675000",
+          "9,6": "=D9*E9",
+          "10,1": "7",
+          "10,2": "USB-C Hub",
+          "10,3": "Aksesori",
+          "10,4": "28",
+          "10,5": "525000",
+          "10,6": "=D10*E10",
+          "11,1": "8",
+          "11,2": "SSD Portable 1TB",
+          "11,3": "Penyimpanan",
+          "11,4": "14",
+          "11,5": "1650000",
+          "11,6": "=D11*E11",
+          "13,2": "TOTAL",
+          "13,4": "=SUM(D4:D11)",
+          "13,6": "=SUM(F4:F11)",
+        };
+        sheets[currentSheet] = sample;
+
+        const comments = {
+          "4,2": "Produk terlaris bulan ini!",
+          "13,6": "Perhitungan otomatis",
+        };
+        const cellStyles = {};
+
+        function colName(n) {
+          let s = "";
+          while (n > 0) {
+            let r = (n - 1) % 26;
+            s = String.fromCharCode(65 + r) + s;
+            n = Math.floor((n - 1) / 26);
+          }
+          return s;
+        }
+        function cellAddress(r, c) {
+          return colName(c) + r;
+        }
+        function parseAddress(v) {
+          const m = String(v)
+            .toUpperCase()
+            .match(/^([A-Z]+)(\d+)$/);
+          if (!m) return null;
+          let c = 0;
+          for (const ch of m[1]) c = c * 26 + ch.charCodeAt(0) - 64;
+          return { r: +m[2], c };
+        }
+        function key(r, c) {
+          return `${r},${c}`;
+        }
+        function getRaw(r, c) {
+          return sheets[currentSheet][key(r, c)] ?? "";
+        }
+        function getCellEl(r, c) {
+          return document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+        }
+
+        function snapshot() {
+          undoStack.push(JSON.stringify({ sheets, cellStyles, comments }));
+          if (undoStack.length > 50) undoStack.shift();
+          redoStack = [];
+        }
+        function formulaValue(raw) {
+          if (typeof raw !== "string" || !raw.startsWith("=")) return raw;
+          try {
+            let expression = raw
+              .slice(1)
+              .replace(/([A-Z]+)(\d+)/g, (_, col, row) => {
+                const p = parseAddress(col + row);
+                const v = getRaw(p.r, p.c);
+                if (typeof v === "string" && v.startsWith("="))
+                  return Number(formulaValue(v)) || 0;
+                return Number(String(v).replace(/,/g, "")) || 0;
+              });
+            expression = expression.replace(
+              /SUM\(([^()]*)\)/gi,
+              (_, inside) => {
+                const m = inside.match(/^([A-Z]+\d+):([A-Z]+\d+)$/i);
+                if (!m) return 0;
+                const a = parseAddress(m[1]),
+                  b = parseAddress(m[2]);
+                let total = 0;
+                for (let r = a.r; r <= b.r; r++)
+                  for (let c = a.c; c <= b.c; c++)
+                    total +=
+                      Number(
+                        String(formulaValue(getRaw(r, c))).replace(/,/g, ""),
+                      ) || 0;
+                return total;
+              },
+            );
+            expression = expression.replace(
+              /AVERAGE\(([^()]*)\)/gi,
+              (_, inside) => {
+                const m = inside.match(/^([A-Z]+\d+):([A-Z]+\d+)$/i);
+                if (!m) return 0;
+                const a = parseAddress(m[1]),
+                  b = parseAddress(m[2]);
+                let total = 0,
+                  count = 0;
+                for (let r = a.r; r <= b.r; r++)
+                  for (let c = a.c; c <= b.c; c++) {
+                    const v = Number(
+                      String(formulaValue(getRaw(r, c))).replace(/,/g, ""),
+                    );
+                    if (!isNaN(v)) {
+                      total += v;
+                      count++;
+                    }
+                  }
+                return count ? total / count : 0;
+              },
+            );
+            if (!/^[\d+\-*/().\s]+$/.test(expression)) return "#ERROR!";
+            return Function('"use strict";return (' + expression + ")")();
+          } catch (e) {
+            return "#ERROR!";
+          }
+        }
+        function displayValue(raw) {
+          const val = formulaValue(raw);
+          if (
+            typeof raw === "string" &&
+            raw.startsWith("=") &&
+            typeof val === "number"
+          )
+            return val.toLocaleString("id-ID", { maximumFractionDigits: 2 });
+          if (
+            typeof val === "number" &&
+            String(raw).trim() !== "" &&
+            !String(raw).startsWith("=")
+          )
+            return val.toLocaleString("id-ID");
+          return val;
+        }
+        function getCellDisplay(r, c) {
+          const addr = cellAddress(r, c);
+          const raw = getRaw(r, c);
+          const style = cellStyles[addr] || {};
+          let display = displayValue(raw);
+          if (
+            (style.currency && typeof display === "number") ||
+            (typeof display === "string" &&
+              !isNaN(parseFloat(display.replace(/,/g, ""))))
+          ) {
+            const num =
+              typeof display === "number"
+                ? display
+                : parseFloat(display.toString().replace(/,/g, ""));
+            display =
+              "Rp " + num.toLocaleString("id-ID", { maximumFractionDigits: 0 });
+          }
+          return display;
+        }
+
+        function buildGrid() {
+          grid.innerHTML = "";
+          removeAutofillHandle();
+          const corner = document.createElement("div");
+          corner.className = "corner";
+          grid.appendChild(corner);
+          for (let c = 1; c <= COLS; c++) {
+            const h = document.createElement("div");
+            h.className = "col-head";
+            h.textContent = colName(c);
+            h.dataset.c = c;
+            h.style.gridColumn = c + 1;
+            h.style.gridRow = 1;
+            h.addEventListener("click", (e) => {
+              if (e.shiftKey && rangeStart)
+                selectRange(rangeStart.r, rangeStart.c, 1, c);
+              else {
+                selectColumn(c);
+                rangeStart = { r: 1, c };
+              }
+            });
+            grid.appendChild(h);
+          }
+          for (let r = 1; r <= ROWS; r++) {
+            const rh = document.createElement("div");
+            rh.className = "row-head";
+            rh.textContent = r;
+            rh.dataset.r = r;
+            rh.style.gridColumn = 1;
+            rh.style.gridRow = r + 1;
+            rh.addEventListener("click", (e) => {
+              if (e.shiftKey && rangeStart)
+                selectRange(rangeStart.r, rangeStart.c, r, 1);
+              else {
+                selectRow(r);
+                rangeStart = { r, c: 1 };
+              }
+            });
+            grid.appendChild(rh);
+            for (let c = 1; c <= COLS; c++) {
+              const cell = document.createElement("div");
+              cell.className = "cell";
+              cell.dataset.r = r;
+              cell.dataset.c = c;
+              cell.style.gridColumn = c + 1;
+              cell.style.gridRow = r + 1;
+              cell.setAttribute("role", "gridcell");
+              cell.tabIndex = -1;
+
+              const addr = cellAddress(r, c);
+              const style = cellStyles[addr] || {};
+              const raw = getRaw(r, c);
+
+              cell.textContent = getCellDisplay(r, c);
+
+              if (r === 1 && c === 1) {
+                cell.style.gridColumn = `${c + 1} / span 6`;
+                cell.style.fontSize = "16px";
+                cell.style.fontWeight = "700";
+                cell.style.color = "#202124";
+                cell.style.borderBottom = "2px solid #0f9d58";
+              }
+
+              if (r === 3 && c >= 1 && c <= 6) {
+                cell.style.background = "#e6f4ea";
+                cell.style.color = "#137333";
+                cell.style.fontWeight = "600";
+                cell.style.borderBottom = "2px solid #0f9d58";
+              }
+
+              if (r === 13 && (c === 2 || c === 4 || c === 6)) {
+                cell.style.background = "#f1f3f4";
+                cell.style.fontWeight = "700";
+                cell.style.borderTop = "2px solid #5f6368";
+              }
+
+              if (style.bold) cell.style.fontWeight = "700";
+              if (style.italic) cell.style.fontStyle = "italic";
+              if (style.underline) cell.style.textDecoration = "underline";
+              if (style.strikethrough)
+                cell.style.textDecoration =
+                  (cell.style.textDecoration
+                    ? cell.style.textDecoration + " "
+                    : "") + "line-through";
+              if (style.color) cell.style.color = style.color;
+              if (style.fill) cell.style.background = style.fill;
+              if (style.align) cell.style.textAlign = style.align;
+              if (style.fontFamily) cell.style.fontFamily = style.fontFamily;
+              if (style.fontSize) cell.style.fontSize = style.fontSize + "px";
+
+              if (comments[key(r, c)]) cell.classList.add("has-comment");
+
+              cell.addEventListener("click", (e) => {
+                if (e.shiftKey && rangeStart) {
+                  selectRange(rangeStart.r, rangeStart.c, r, c);
+                } else {
+                  selectCell(r, c, true);
+                  rangeStart = { r, c };
+                }
+              });
+              cell.addEventListener("dblclick", () => {
+                cell.contentEditable = "true";
+                cell.textContent = getRaw(r, c);
+                cell.focus();
+                const range = document.createRange();
+                range.selectNodeContents(cell);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+              });
+              cell.addEventListener("mousedown", (e) => {
+                if (cell.contentEditable === "true") return;
+                isMouseSelecting = true;
+                selectCell(r, c, true);
+                rangeStart = { r, c };
+              });
+              cell.addEventListener("mouseenter", () => {
+                if (isMouseSelecting && rangeStart)
+                  selectRange(rangeStart.r, rangeStart.c, r, c);
+              });
+              cell.addEventListener("input", () => {
+                snapshot();
+                sheets[currentSheet][key(r, c)] = cell.innerText;
+                updateFormulaForCell(r, c);
+                markSaved();
+              });
+              cell.addEventListener("blur", () => {
+                cell.contentEditable = "false";
+                cell.textContent = getCellDisplay(r, c);
+                if (r === selected.r && c === selected.c)
+                  showAutofillHandle(cell);
+              });
+              cell.addEventListener("keydown", onCellKeydown);
+              cell.addEventListener("contextmenu", (e) => {
+                e.preventDefault();
+                showContextMenu(e.clientX, e.clientY, r, c);
+              });
+              grid.appendChild(cell);
+            }
+          }
+          selectCell(1, 1, false);
+        }
+
+        function selectCell(r, c, focus = true) {
+          selected = { r, c };
+          document
+            .querySelectorAll(
+              ".cell.selected,.cell.range,.col-head.selected-head,.row-head.selected-head",
+            )
+            .forEach((el) =>
+              el.classList.remove("selected", "range", "selected-head"),
+            );
+          const el = getCellEl(r, c);
+          if (el) {
+            el.classList.add("selected");
+            if (focus) el.focus({ preventScroll: true });
+          }
+          document
+            .querySelector(`.col-head[data-c="${c}"]`)
+            ?.classList.add("selected-head");
+          document
+            .querySelector(`.row-head[data-r="${r}"]`)
+            ?.classList.add("selected-head");
+          nameBox.value = cellAddress(r, c);
+          formulaInput.value = getRaw(r, c);
+          updateCount();
+          activeCell = el;
+          if (el && el.contentEditable !== "true") showAutofillHandle(el);
+          else removeAutofillHandle();
+          updateMobileSelection();
+        }
+
+        function selectRange(r1, c1, r2, c2) {
+          document
+            .querySelectorAll(".cell.range")
+            .forEach((el) => el.classList.remove("range"));
+          const minR = Math.min(r1, r2),
+            maxR = Math.max(r1, r2),
+            minC = Math.min(c1, c2),
+            maxC = Math.max(c1, c2);
+          for (let rr = minR; rr <= maxR; rr++)
+            for (let cc = minC; cc <= maxC; cc++) {
+              if (rr === selected.r && cc === selected.c) continue;
+              const el = getCellEl(rr, cc);
+              if (el) el.classList.add("range");
+            }
+          selectionStatus.textContent = `${(maxR - minR + 1) * (maxC - minC + 1)} sel (${cellAddress(minR, minC)}:${cellAddress(maxR, maxC)})`;
+        }
+
+        function selectRow(r) {
+          selectCell(r, 1, false);
+          selectRange(r, 1, r, COLS);
+          selectionStatus.textContent = `Baris ${r}`;
+        }
+        function selectColumn(c) {
+          selectCell(1, c, false);
+          selectRange(1, c, ROWS, c);
+          selectionStatus.textContent = `Kolom ${colName(c)}`;
+        }
+        function updateCount() {
+          selectionStatus.textContent = "1 sel";
+        }
+        function updateFormulaForCell(r, c) {
+          if (selected.r === r && selected.c === c)
+            formulaInput.value = getRaw(r, c);
+        }
+        function markSaved() {
+          document.getElementById("saveState").textContent =
+            "Semua perubahan disimpan di Drive";
+        }
+
+        function showAutofillHandle(cellEl) {
+          removeAutofillHandle();
+          const handle = document.createElement("div");
+          handle.className = "autofill-handle";
+          const rect = cellEl.getBoundingClientRect();
+          const gridRect = grid.getBoundingClientRect();
+          handle.style.left = cellEl.offsetLeft + cellEl.offsetWidth - 4 + "px";
+          handle.style.top = cellEl.offsetTop + cellEl.offsetHeight - 4 + "px";
+          handle.addEventListener("mousedown", startAutofill);
+          grid.appendChild(handle);
+          autofillHandle = handle;
+        }
+        function removeAutofillHandle() {
+          if (autofillHandle) {
+            autofillHandle.remove();
+            autofillHandle = null;
+          }
+        }
+        function startAutofill(e) {
+          e.preventDefault();
+          const startR = selected.r,
+            startC = selected.c;
+          const raw = getRaw(startR, startC);
+          const moveHandler = (ev) => {
+            const target = document.elementFromPoint(ev.clientX, ev.clientY);
+            if (target && target.classList.contains("cell")) {
+              const tR = +target.dataset.r,
+                tC = +target.dataset.c;
+              if (tC === startC) {
+                const minR = Math.min(startR, tR),
+                  maxR = Math.max(startR, tR);
+                for (let r = minR; r <= maxR; r++) {
+                  if (r === startR) continue;
+                  const cell = getCellEl(r, startC);
+                  if (cell) {
+                    snapshot();
+                    let newVal = raw;
+                    if (
+                      /^=\w+\d+[-+*\/]\w+\d+$/.test(raw) ||
+                      /^=[A-Z]+\d+[+\-*\/][A-Z]+\d+$/.test(raw)
+                    ) {
+                      const diff = r - startR;
+                      newVal = raw.replace(/([A-Z]+)(\d+)/g, (_, col, row) => {
+                        return col + (parseInt(row) + diff);
+                      });
+                    }
+                    sheets[currentSheet][key(r, startC)] = newVal;
+                    cell.textContent = getCellDisplay(r, startC);
+                  }
+                }
+              }
+            }
+          };
+          const upHandler = () => {
+            document.removeEventListener("mousemove", moveHandler);
+            document.removeEventListener("mouseup", upHandler);
+          };
+          document.addEventListener("mousemove", moveHandler);
+          document.addEventListener("mouseup", upHandler);
+        }
+
+        function onCellKeydown(e) {
+          const r = +e.currentTarget.dataset.r,
+            c = +e.currentTarget.dataset.c;
+          if (e.key === "Enter") {
+            if (e.currentTarget.contentEditable === "true") {
+              e.preventDefault();
+              snapshot();
+              sheets[currentSheet][key(r, c)] = e.currentTarget.innerText;
+              e.currentTarget.contentEditable = "false";
+              e.currentTarget.textContent = getCellDisplay(r, c);
+              selectCell(Math.min(ROWS, r + 1), c, true);
+              markSaved();
+            } else {
+              e.currentTarget.contentEditable = "true";
+              e.currentTarget.textContent = getRaw(r, c);
+            }
+          } else if (e.key === "Tab") {
+            e.preventDefault();
+            selectCell(r, Math.min(COLS, c + 1), true);
+          } else if (
+            e.key === "ArrowUp" &&
+            e.currentTarget.contentEditable !== "true"
+          ) {
+            e.preventDefault();
+            selectCell(Math.max(1, r - 1), c, true);
+          } else if (
+            e.key === "ArrowDown" &&
+            e.currentTarget.contentEditable !== "true"
+          ) {
+            e.preventDefault();
+            selectCell(Math.min(ROWS, r + 1), c, true);
+          } else if (
+            e.key === "ArrowLeft" &&
+            e.currentTarget.contentEditable !== "true"
+          ) {
+            e.preventDefault();
+            selectCell(r, Math.max(1, c - 1), true);
+          } else if (
+            e.key === "ArrowRight" &&
+            e.currentTarget.contentEditable !== "true"
+          ) {
+            e.preventDefault();
+            selectCell(r, Math.min(COLS, c + 1), true);
+          } else if (e.key === "Escape") {
+            e.currentTarget.contentEditable = "false";
+            e.currentTarget.textContent = getCellDisplay(r, c);
+            e.currentTarget.blur();
+          } else if (e.key === "F2") {
+            e.currentTarget.contentEditable = "true";
+            e.currentTarget.textContent = getRaw(r, c);
+            e.currentTarget.focus();
+          } else if (e.key === "Delete" || e.key === "Backspace") {
+            if (e.currentTarget.contentEditable !== "true") {
+              e.preventDefault();
+              snapshot();
+              eachSelectedCell((el) => {
+                const rr = +el.dataset.r,
+                  cc = +el.dataset.c;
+                sheets[currentSheet][key(rr, cc)] = "";
+                el.textContent = "";
+              });
+              formulaInput.value = "";
+              markSaved();
+            }
+          } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
+            e.preventDefault();
+            toggleStyle("bold");
+          } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "i") {
+            e.preventDefault();
+            toggleStyle("italic");
+          } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "u") {
+            e.preventDefault();
+            toggleStyle("underline");
+          } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c") {
+            e.preventDefault();
+            copySelection();
+          } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "x") {
+            e.preventDefault();
+            cutSelection();
+          } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v") {
+            e.preventDefault();
+            pasteSelection();
+          } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+            e.preventDefault();
+            undo();
+          } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
+            e.preventDefault();
+            redo();
+          } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f") {
+            e.preventDefault();
+            showFindDialog();
+          } else if (
+            e.key.length === 1 &&
+            !e.ctrlKey &&
+            !e.metaKey &&
+            !e.altKey &&
+            e.currentTarget.contentEditable !== "true"
+          ) {
+            e.currentTarget.contentEditable = "true";
+            e.currentTarget.textContent = "";
+            e.currentTarget.focus();
+          }
+        }
+
+        function copySelection() {
+          const cells = getSelectedCells();
+          clipboard = {
+            data: cells.map((cell) => ({
+              r: +cell.dataset.r,
+              c: +cell.dataset.c,
+              value: getRaw(+cell.dataset.r, +cell.dataset.c),
+              style:
+                cellStyles[cellAddress(+cell.dataset.r, +cell.dataset.c)] || {},
+            })),
+            baseR: selected.r,
+            baseC: selected.c,
+          };
+          showToast("Disalin ke clipboard");
+        }
+        function cutSelection() {
+          copySelection();
+          snapshot();
+          clipboard.data.forEach((item) => {
+            sheets[currentSheet][key(item.r, item.c)] = "";
+            const el = getCellEl(item.r, item.c);
+            if (el) el.textContent = "";
+          });
+          markSaved();
+          showToast("Dipotong ke clipboard");
+        }
+        function pasteSelection() {
+          if (!clipboard) {
+            showToast("Tidak ada data di clipboard");
+            return;
+          }
+          snapshot();
+          const baseR = selected.r,
+            baseC = selected.c;
+          clipboard.data.forEach((item) => {
+            const dr = item.r - clipboard.baseR;
+            const dc = item.c - clipboard.baseC;
+            const newR = baseR + dr,
+              newC = baseC + dc;
+            if (newR <= ROWS && newC <= COLS) {
+              sheets[currentSheet][key(newR, newC)] = item.value;
+              const el = getCellEl(newR, newC);
+              if (el) {
+                el.textContent = getCellDisplay(newR, newC);
+                if (Object.keys(item.style).length) {
+                  cellStyles[cellAddress(newR, newC)] = { ...item.style };
+                  applyStyleToCell(newR, newC);
+                }
+              }
+            }
+          });
+          markSaved();
+          showToast("Ditempel dari clipboard");
+        }
+        function getSelectedCells() {
+          const cells = [getCellEl(selected.r, selected.c)];
+          document
+            .querySelectorAll(".cell.range")
+            .forEach((el) => cells.push(el));
+          return cells.filter(Boolean);
+        }
+
+        document.addEventListener("mouseup", () => (isMouseSelecting = false));
+
+        formulaInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            snapshot();
+            sheets[currentSheet][key(selected.r, selected.c)] =
+              formulaInput.value;
+            const el = getCellEl(selected.r, selected.c);
+            if (el) el.textContent = getCellDisplay(selected.r, selected.c);
+            markSaved();
+            el?.focus();
+          } else if (e.key === "Escape") {
+            formulaInput.value = getRaw(selected.r, selected.c);
+            const el = getCellEl(selected.r, selected.c);
+            if (el) el.focus();
+          }
+        });
+
+        nameBox.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            const p = parseAddress(nameBox.value);
+            if (p && p.r <= ROWS && p.c <= COLS) {
+              selectCell(p.r, p.c, true);
+              e.target.blur();
+            } else showToast("Referensi sel tidak valid");
+          }
+        });
+        nameBox.addEventListener("blur", () => {
+          const p = parseAddress(nameBox.value);
+          if (p && p.r <= ROWS && p.c <= COLS) selectCell(p.r, p.c, true);
+          else nameBox.value = cellAddress(selected.r, selected.c);
+        });
+
+        function eachSelectedCell(fn) {
+          const cells = getSelectedCells();
+          if (cells.length === 0) {
+            const el = getCellEl(selected.r, selected.c);
+            if (el) fn(el);
+            return;
+          }
+          cells.forEach(fn);
+        }
+        function applyStyleToCell(r, c) {
+          const el = getCellEl(r, c);
+          if (!el) return;
+          const style = cellStyles[cellAddress(r, c)] || {};
+          el.style.fontWeight = style.bold ? "700" : "";
+          el.style.fontStyle = style.italic ? "italic" : "";
+          el.style.textDecoration = [
+            style.underline ? "underline" : "",
+            style.strikethrough ? "line-through" : "",
+          ]
+            .filter(Boolean)
+            .join(" ");
+          if (style.color) el.style.color = style.color;
+          if (style.fill) el.style.background = style.fill;
+          if (style.align) el.style.textAlign = style.align;
+          if (style.fontFamily) el.style.fontFamily = style.fontFamily;
+          if (style.fontSize) el.style.fontSize = style.fontSize + "px";
+        }
+        function toggleStyle(type) {
+          snapshot();
+          eachSelectedCell((el) => {
+            const addr = cellAddress(+el.dataset.r, +el.dataset.c);
+            cellStyles[addr] = cellStyles[addr] || {};
+            cellStyles[addr][type] = !cellStyles[addr][type];
+            applyStyleToCell(+el.dataset.r, +el.dataset.c);
+          });
+          const firstCell = getCellEl(selected.r, selected.c);
+          if (firstCell) {
+            const s = cellStyles[cellAddress(selected.r, selected.c)] || {};
+            document
+              .getElementById(type + "Btn")
+              ?.classList.toggle("active", s[type]);
+          }
+        }
+        function applyStyle(type, value) {
+          snapshot();
+          eachSelectedCell((el) => {
+            const addr = cellAddress(+el.dataset.r, +el.dataset.c);
+            cellStyles[addr] = cellStyles[addr] || {};
+            cellStyles[addr][type] = value;
+            applyStyleToCell(+el.dataset.r, +el.dataset.c);
+            el.textContent = getCellDisplay(+el.dataset.r, +el.dataset.c);
+          });
+        }
+
+        document.getElementById("boldBtn").onclick = () => toggleStyle("bold");
+        document.getElementById("italicBtn").onclick = () =>
+          toggleStyle("italic");
+        document.getElementById("underlineBtn").onclick = () =>
+          toggleStyle("underline");
+        document.getElementById("strikeBtn").onclick = () =>
+          toggleStyle("strikethrough");
+        document.getElementById("alignBtn").onclick = () => {
+          snapshot();
+          eachSelectedCell((el) => {
+            const addr = cellAddress(+el.dataset.r, +el.dataset.c);
+            cellStyles[addr] = cellStyles[addr] || {};
+            const current = cellStyles[addr].align || "left";
+            cellStyles[addr].align =
+              current === "left"
+                ? "center"
+                : current === "center"
+                  ? "right"
+                  : "left";
+            applyStyleToCell(+el.dataset.r, +el.dataset.c);
+          });
+          showToast("Perataan diubah");
+        };
+        document.getElementById("valignBtn").onclick = () =>
+          showToast("Perataan vertikal diterapkan");
+        document.getElementById("wrapBtn").onclick = () => {
+          snapshot();
+          eachSelectedCell((el) => {
+            el.style.whiteSpace =
+              el.style.whiteSpace === "normal" ? "nowrap" : "normal";
+          });
+          showToast("Pembungkusan teks diubah");
+        };
+        document.getElementById("mergeBtn").onclick = () =>
+          showToast("Pilih rentang sel untuk menggabungkan");
+        document.getElementById("bordersBtn").onclick = () => {
+          snapshot();
+          eachSelectedCell((el) => {
+            el.style.border = "1px solid #5f6368";
+          });
+          showToast("Batas sel diterapkan");
+        };
+        document.getElementById("filterBtn").onclick = () =>
+          showToast("Filter diaktifkan pada rentang data");
+        document.getElementById("chartBtn").onclick = () =>
+          showToast("Diagram siap ditambahkan dari rentang yang dipilih");
+        document.getElementById("functionsBtn").onclick = () => {
+          formulaInput.value = "=SUM(";
+          formulaInput.focus();
+          showToast("Pilih rentang untuk fungsi SUM");
+        };
+        document.getElementById("commentCellBtn").onclick = () => {
+          const k = key(selected.r, selected.c);
+          openDialog(
+            "Komentar untuk " + cellAddress(selected.r, selected.c),
+            "Tulis komentar untuk sel ini. Komentar akan ditandai dengan segitiga kuning di pojok sel.",
+            "Tulis komentar...",
+          );
+          const handler = () => {
+            const input = document.getElementById("dialogInput");
+            if (input.value.trim()) {
+              comments[k] = input.value.trim();
+              const el = getCellEl(selected.r, selected.c);
+              if (el) el.classList.add("has-comment");
+              showToast("Komentar ditambahkan");
+            } else {
+              delete comments[k];
+              const el = getCellEl(selected.r, selected.c);
+              if (el) el.classList.remove("has-comment");
+            }
+          };
+          document.getElementById("dialogOk").onclick = () => {
+            handler();
+            document.getElementById("dialogBackdrop").classList.remove("show");
+          };
+        };
+        document.getElementById("linkBtn").onclick = () =>
+          openDialog(
+            "Sisipkan link",
+            "Masukkan URL untuk sel " + cellAddress(selected.r, selected.c),
+            "https://",
+          );
+        document.getElementById("paintBtn").onclick = () =>
+          showToast("Format siap disalin");
+        document.getElementById("printBtn").onclick = () => window.print();
+        document.getElementById("undoBtn").onclick = undo;
+        document.getElementById("redoBtn").onclick = redo;
+        document.getElementById("currencyBtn").onclick = () =>
+          applyStyle("currency", true);
+        document.getElementById("percentBtn").onclick = () =>
+          showToast("Format persen diterapkan");
+        document.getElementById("decDecBtn").onclick = () =>
+          showToast("Desimal dikurangi");
+        document.getElementById("incDecBtn").onclick = () =>
+          showToast("Desimal ditambah");
+
+        document
+          .getElementById("fontSelect")
+          .addEventListener("change", (e) => {
+            applyStyle("fontFamily", e.target.value);
+          });
+        document
+          .getElementById("sizeSelect")
+          .addEventListener("change", (e) => {
+            applyStyle("fontSize", parseInt(e.target.value));
+          });
+        document
+          .getElementById("zoomSelect")
+          .addEventListener("change", (e) => {
+            const n = parseInt(e.target.value);
+            document.documentElement.style.setProperty(
+              "--col-w",
+              (120 * n) / 100 + "px",
+            );
+            document.documentElement.style.setProperty(
+              "--row-h",
+              (24 * n) / 100 + "px",
+            );
+            document.getElementById("zoomRange").value = n;
+            document.getElementById("zoomLabel").textContent = n + "%";
+          });
+        document.getElementById("zoomRange").addEventListener("input", (e) => {
+          const n = +e.target.value;
+          document.getElementById("zoomLabel").textContent = n + "%";
+          document.documentElement.style.setProperty(
+            "--col-w",
+            (120 * n) / 100 + "px",
+          );
+          document.documentElement.style.setProperty(
+            "--row-h",
+            (24 * n) / 100 + "px",
+          );
+        });
+
+        const colorPopup = document.getElementById("colorPopup");
+        const palette = [
+          "#202124",
+          "#5f6368",
+          "#80868b",
+          "#ffffff",
+          "#fce8e6",
+          "#fef7e0",
+          "#e6f4ea",
+          "#e8f0fe",
+          "#f3e8fd",
+          "#f9dedc",
+          "#fbbc04",
+          "#34a853",
+          "#4285f4",
+          "#a142f4",
+          "#ea4335",
+          "#ff6d01",
+          "#12b5cb",
+          "#7baaf7",
+        ];
+        const paletteEl = document.getElementById("palette");
+        palette.forEach((color) => {
+          const b = document.createElement("button");
+          b.style.cssText = `width:23px;height:23px;border-radius:50%;background:${color};border:1px solid #c7cacf`;
+          b.title = color;
+          b.onclick = () => {
+            const target = colorPopup.dataset.target;
+            snapshot();
+            eachSelectedCell((el) => {
+              const addr = cellAddress(+el.dataset.r, +el.dataset.c);
+              cellStyles[addr] = cellStyles[addr] || {};
+              if (target === "text") cellStyles[addr].color = color;
+              else cellStyles[addr].fill = color;
+              applyStyleToCell(+el.dataset.r, +el.dataset.c);
+            });
+            colorPopup.classList.remove("show");
+          };
+          paletteEl.appendChild(b);
+        });
+        function showColor(target, button) {
+          const r = button.getBoundingClientRect();
+          colorPopup.dataset.target = target;
+          colorPopup.style.left = Math.min(r.left, innerWidth - 210) + "px";
+          colorPopup.style.top = r.bottom + 5 + "px";
+          colorPopup.classList.add("show");
+        }
+        document.getElementById("textColorBtn").onclick = (e) =>
+          showColor("text", e.currentTarget);
+        document.getElementById("fillColorBtn").onclick = (e) =>
+          showColor("fill", e.currentTarget);
+
+        // Context menu
+        const contextMenu = document.getElementById("contextMenu");
+        function showContextMenu(x, y, r, c) {
+          if (selected.r !== r || selected.c !== c) selectCell(r, c, true);
+          contextMenu.innerHTML = "";
+          const items = [
+            { label: "Potong", shortcut: "Ctrl+X", action: cutSelection },
+            { label: "Salin", shortcut: "Ctrl+C", action: copySelection },
+            { label: "Tempel", shortcut: "Ctrl+V", action: pasteSelection },
+            { sep: true },
+            {
+              label: "Sisipkan 1 baris di atas",
+              action: () => showToast("Baris ditambahkan"),
+            },
+            {
+              label: "Sisipkan 1 kolom di kiri",
+              action: () => showToast("Kolom ditambahkan"),
+            },
+            { sep: true },
+            { label: "Hapus baris", action: () => showToast("Baris dihapus") },
+            { label: "Hapus kolom", action: () => showToast("Kolom dihapus") },
+            { sep: true },
+            {
+              label: "Bekukan hingga baris ini",
+              action: () => showToast("Baris dibekukan"),
+            },
+            {
+              label: "Tambahkan komentar",
+              action: () => document.getElementById("commentCellBtn").click(),
+            },
+            { sep: true },
+            {
+              label: "Tampilkan riwayat edit",
+              action: () => showToast("Riwayat belum tersedia"),
+            },
+          ];
+          items.forEach((item) => {
+            if (item.sep) {
+              const s = document.createElement("div");
+              s.className = "popup-sep";
+              contextMenu.appendChild(s);
+              return;
+            }
+            const el = document.createElement("button");
+            el.className = "popup-item";
+            el.innerHTML = `<span>${item.label}</span>${item.shortcut ? `<span class="shortcut">${item.shortcut}</span>` : ""}`;
+            el.onclick = () => {
+              contextMenu.classList.remove("show");
+              item.action();
+            };
+            contextMenu.appendChild(el);
+          });
+          contextMenu.style.left = Math.min(x, innerWidth - 230) + "px";
+          contextMenu.style.top = Math.min(y, innerHeight - 400) + "px";
+          contextMenu.classList.add("show");
+        }
+
+        const menuItems = {
+          File: [
+            ["Baru", "Buat spreadsheet baru"],
+            ["Buka", "Buka file"],
+            ["Buat salinan", "Salin spreadsheet ini"],
+            ["Unduh sebagai CSV", "Unduh CSV"],
+            ["Cetak", "Cetak spreadsheet"],
+          ],
+          Edit: [
+            ["Urungkan", "Ctrl+Z"],
+            ["Ulangi", "Ctrl+Y"],
+            ["Potong", "Ctrl+X"],
+            ["Salin", "Ctrl+C"],
+            ["Tempel", "Ctrl+V"],
+            ["Temukan & ganti", "Ctrl+F"],
+          ],
+          View: [
+            ["Bekukan", "Bekukan baris dan kolom"],
+            ["Layar penuh", "Masuk layar penuh"],
+            ["Tampilkan rumus", "Lihat semua rumus"],
+          ],
+          Insert: [
+            ["Baris di atas", "Tambahkan baris"],
+            ["Kolom di kiri", "Tambahkan kolom"],
+            ["Sheet baru", "Tambahkan sheet"],
+            ["Diagram", "Sisipkan diagram"],
+          ],
+          Format: [
+            ["Teks", "Pemformatan teks"],
+            ["Angka", "Format angka"],
+            ["Warna bergantian", "Warna baris bergantian"],
+            ["Format bersyarat", "Aturan pemformatan"],
+          ],
+          Data: [
+            ["Buat filter", "Aktifkan filter"],
+            ["Urutkan rentang", "Urutkan data"],
+            ["Validasi data", "Atur validasi data"],
+          ],
+          Tools: [
+            ["Ejaan", "Periksa ejaan"],
+            ["Aktivitas", "Lihat aktivitas"],
+            ["Apps Script", "Buka editor skrip"],
+          ],
+          Extensions: [["Add-on", "Jelajahi add-on"]],
+          Help: [
+            ["Pusat bantuan", "Buka pusat bantuan"],
+            ["Pelatihan Sheets", "Pelajari spreadsheet"],
+            ["Pintasan keyboard", "Lihat pintasan"],
+          ],
+        };
+        const menuPopup = document.getElementById("menuPopup");
+        document.querySelectorAll(".menu-item").forEach((btn) =>
+          btn.addEventListener("click", (e) => {
+            const name = btn.dataset.menu,
+              rect = btn.getBoundingClientRect();
+            if (
+              menuPopup.classList.contains("show") &&
+              menuPopup.dataset.menu === name
+            ) {
+              menuPopup.classList.remove("show");
+              return;
+            }
+            menuPopup.dataset.menu = name;
+            menuPopup.innerHTML = "";
+            (menuItems[name] || []).forEach((item, i) => {
+              const el = document.createElement("button");
+              el.className = "popup-item";
+              el.innerHTML = `<span>${item[0]}</span>${item[1] ? '<span class="shortcut">' + item[1] + "</span>" : ""}`;
+              el.onclick = () => {
+                menuPopup.classList.remove("show");
+                handleMenu(item[0]);
+              };
+              menuPopup.appendChild(el);
+              if (i === 1 || i === 4) {
+                const s = document.createElement("div");
+                s.className = "popup-sep";
+                menuPopup.appendChild(s);
+              }
+            });
+            menuPopup.style.left = rect.left + "px";
+            menuPopup.style.top = rect.bottom + 3 + "px";
+            menuPopup.classList.add("show");
+          }),
+        );
+        function handleMenu(label) {
+          if (label.includes("Unduh")) downloadCSV();
+          else if (label === "Cetak") window.print();
+          else if (label === "Sheet baru") addSheet();
+          else if (label.includes("baris") || label.includes("kolom"))
+            showToast(label + " diterapkan");
+          else if (label.includes("filter") || label === "Buat filter")
+            showToast("Filter diaktifkan");
+          else if (label === "Urungkan") undo();
+          else if (label === "Ulangi") redo();
+          else if (label === "Layar penuh") {
+            document.fullscreenElement
+              ? document.exitFullscreen()
+              : document.documentElement.requestFullscreen?.();
+          } else if (label === "Temukan & ganti") showFindDialog();
+          else if (label === "Pintasan keyboard")
+            showToast(
+              "Ctrl+B: Tebal, Ctrl+I: Miring, Ctrl+U: Garis bawah, Ctrl+Z/Y: Undo/Redo, Ctrl+C/X/V: Copy/Cut/Paste",
+            );
+          else showToast(label + " — tampilan demo");
+        }
+
+        function showFindDialog() {
+          openDialog(
+            "Temukan dan ganti",
+            "Cari teks dalam spreadsheet ini.",
+            "Teks yang dicari",
+          );
+        }
+
+        document.addEventListener("click", (e) => {
+          if (
+            !e.target.closest(".popup") &&
+            !e.target.closest(".menu-item") &&
+            !e.target.closest("#textColorBtn") &&
+            !e.target.closest("#fillColorBtn")
+          ) {
+            menuPopup.classList.remove("show");
+            colorPopup.classList.remove("show");
+          }
+          if (
+            !e.target.closest(".context-menu") &&
+            !e.target.closest(".cell") &&
+            !e.target.closest(".col-head") &&
+            !e.target.closest(".row-head")
+          ) {
+            contextMenu.classList.remove("show");
+          }
+        });
+
+        function showToast(msg) {
+          toastEl.textContent = msg;
+          toastEl.classList.add("show");
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2300);
+        }
+        function openDialog(title, text, placeholder) {
+          document.getElementById("dialogTitle").textContent = title;
+          document.getElementById("dialogText").textContent = text;
+          document.getElementById("dialogInput").placeholder =
+            placeholder || "";
+          document.getElementById("dialogInput").value = "";
+          document.getElementById("dialogBackdrop").classList.add("show");
+          document.getElementById("dialogOk").onclick = () => {
+            document.getElementById("dialogBackdrop").classList.remove("show");
+            showToast("Tindakan berhasil (mode demo)");
+          };
+        }
+        document.getElementById("dialogCancel").onclick = () =>
+          document.getElementById("dialogBackdrop").classList.remove("show");
+        document.getElementById("shareBtn").onclick = () =>
+          openDialog(
+            'Bagikan "' + document.getElementById("docTitle").textContent + '"',
+            "Tambahkan orang, grup, dan kalender. Akses link disimulasikan.",
+            "Tambahkan orang atau grup",
+          );
+        document.getElementById("commentBtn").onclick = () =>
+          openDialog(
+            "Komentar",
+            "Tambahkan komentar ke spreadsheet ini.",
+            "Tulis komentar...",
+          );
+        document.getElementById("historyBtn").onclick = () =>
+          showToast("Riwayat versi: 3 perubahan dalam 24 jam terakhir");
+        document.getElementById("starBtn").onclick = (e) => {
+          e.currentTarget.classList.toggle("active");
+          showToast(
+            e.currentTarget.classList.contains("active")
+              ? "Ditambahkan ke bintang"
+              : "Dihapus dari bintang",
+          );
+        };
+
+        function addSheet() {
+          let n = Object.keys(sheets).length + 1,
+            name = "Sheet" + n;
+          while (sheets[name]) {
+            n++;
+            name = "Sheet" + n;
+          }
+          sheets[name] = {};
+          const tab = document.createElement("button");
+          tab.className = "sheet-tab";
+          tab.dataset.sheet = name;
+          tab.innerHTML = name + ' <span class="tab-menu">▾</span>';
+          document.getElementById("sheetTabs").appendChild(tab);
+          activateSheet(name);
+          tab.addEventListener("click", () => activateSheet(name));
+          showToast(name + " ditambahkan");
+        }
+        function activateSheet(name) {
+          currentSheet = name;
+          document
+            .querySelectorAll(".sheet-tab")
+            .forEach((t) =>
+              t.classList.toggle("active", t.dataset.sheet === name),
+            );
+          buildGrid();
+        }
+        document.getElementById("addSheet").onclick = addSheet;
+        document
+          .querySelectorAll(".sheet-tab")
+          .forEach((t) =>
+            t.addEventListener("click", () => activateSheet(t.dataset.sheet)),
+          );
+
+        function downloadCSV() {
+          let lines = [];
+          for (let r = 1; r <= ROWS; r++) {
+            let values = [];
+            for (let c = 1; c <= COLS; c++) {
+              let v = getRaw(r, c);
+              if (typeof v === "string" && v.startsWith("="))
+                v = formulaValue(v);
+              values.push('"' + String(v ?? "").replace(/"/g, '""') + '"');
+            }
+            lines.push(values.join(","));
+          }
+          const blob = new Blob([lines.join("\n")], {
+            type: "text/csv;charset=utf-8;",
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download =
+            (document.getElementById("docTitle").textContent || "spreadsheet") +
+            ".csv";
+          a.click();
+          URL.revokeObjectURL(url);
+          showToast("File CSV diunduh");
+        }
+
+        function undo() {
+          if (!undoStack.length) {
+            showToast("Tidak ada perubahan untuk diurungkan");
+            return;
+          }
+          redoStack.push(JSON.stringify({ sheets, cellStyles, comments }));
+          const state = JSON.parse(undoStack.pop());
+          sheets = state.sheets;
+          Object.assign(cellStyles, state.cellStyles || {});
+          Object.assign(comments, state.comments || {});
+          buildGrid();
+          showToast("Perubahan diurungkan");
+        }
+        function redo() {
+          if (!redoStack.length) {
+            showToast("Tidak ada perubahan untuk diulangi");
+            return;
+          }
+          undoStack.push(JSON.stringify({ sheets, cellStyles, comments }));
+          const state = JSON.parse(redoStack.pop());
+          sheets = state.sheets;
+          Object.assign(cellStyles, state.cellStyles || {});
+          Object.assign(comments, state.comments || {});
+          buildGrid();
+          showToast("Perubahan diulangi");
+        }
+
+        document.addEventListener("keydown", (e) => {
+          if (e.target.closest(".dialog-backdrop")) return;
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+            e.preventDefault();
+            markSaved();
+            showToast("Spreadsheet disimpan");
+          }
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+            e.preventDefault();
+            undo();
+          }
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
+            e.preventDefault();
+            redo();
+          }
+        });
+
+        buildGrid();
+
+        // Sync doc title with mobile
+        document.getElementById("docTitle").addEventListener("input", (e) => {
+          document.getElementById("mobileDocTitle").textContent =
+            e.target.textContent;
+        });
+
+        showToast("Spreadsheet siap digunakan. Coba klik kanan pada sel!");
+      })();
+
+      // =============== MOBILE APP LOGIC ===============
+      function buildMobileGrid() {
+        const grid = document.getElementById("mobileGrid");
+        grid.innerHTML = "";
+        const corner = document.createElement("div");
+        corner.className = "mobile-corner";
+        grid.appendChild(corner);
+        for (let c = 1; c <= 10; c++) {
+          const h = document.createElement("div");
+          h.className = "mobile-col-head";
+          h.textContent = String.fromCharCode(64 + c);
+          h.dataset.c = c;
+          h.style.gridColumn = c + 1;
+          h.style.gridRow = 1;
+          grid.appendChild(h);
+        }
+        for (let r = 1; r <= 30; r++) {
+          const rh = document.createElement("div");
+          rh.className = "mobile-row-head";
+          rh.textContent = r;
+          rh.dataset.r = r;
+          rh.style.gridColumn = 1;
+          rh.style.gridRow = r + 1;
+          grid.appendChild(rh);
+          for (let c = 1; c <= 10; c++) {
+            const cell = document.createElement("div");
+            cell.className = "mobile-cell";
+            cell.dataset.r = r;
+            cell.dataset.c = c;
+            cell.style.gridColumn = c + 1;
+            cell.style.gridRow = r + 1;
+
+            // Reuse same data from desktop
+            const sample = {
+              "1,1": "Laporan Penjualan Q1 2026",
+              "3,1": "No.",
+              "3,2": "Nama Produk",
+              "3,3": "Kategori",
+              "3,4": "Unit",
+              "3,5": "Harga",
+              "3,6": "Total",
+              "4,1": "1",
+              "4,2": "Laptop Pro 14",
+              "4,3": "Elektronik",
+              "4,4": "18",
+              "4,5": "14,5jt",
+              "4,6": "261jt",
+              "5,1": "2",
+              "5,2": "Monitor UltraWide",
+              "5,3": "Elektronik",
+              "5,4": "12",
+              "5,5": "4,2jt",
+              "5,6": "50,4jt",
+              "6,1": "3",
+              "6,2": "Keyboard Mechanical",
+              "6,3": "Aksesori",
+              "6,4": "35",
+              "6,5": "850rb",
+              "6,6": "29,75jt",
+              "7,1": "4",
+              "7,2": "Mouse Wireless",
+              "7,3": "Aksesori",
+              "7,4": "42",
+              "7,5": "375rb",
+              "7,6": "15,75jt",
+              "8,1": "5",
+              "8,2": "Headphone Studio",
+              "8,3": "Audio",
+              "8,4": "16",
+              "8,5": "1,25jt",
+              "8,6": "20jt",
+              "9,1": "6",
+              "9,2": "Webcam HD",
+              "9,3": "Elektronik",
+              "9,4": "23",
+              "9,5": "675rb",
+              "9,6": "15,5jt",
+              "10,1": "7",
+              "10,2": "USB-C Hub",
+              "10,3": "Aksesori",
+              "10,4": "28",
+              "10,5": "525rb",
+              "10,6": "14,7jt",
+              "11,1": "8",
+              "11,2": "SSD Portable 1TB",
+              "11,3": "Penyimpanan",
+              "11,4": "14",
+              "11,5": "1,65jt",
+              "11,6": "23,1jt",
+              "13,2": "TOTAL",
+              "13,4": "188",
+              "13,6": "430jt",
+            };
+            const k = r + "," + c;
+            const val = sample[k] || "";
+
+            if (r === 1 && c === 1) {
+              cell.style.gridColumn = `${c + 1} / span 6`;
+              cell.style.fontSize = "14px";
+              cell.style.fontWeight = "700";
+              cell.style.color = "#202124";
+              cell.style.borderBottom = "2px solid #0f9d58";
+              cell.textContent = val;
+            } else if (r === 3 && c <= 6) {
+              cell.style.background = "#e6f4ea";
+              cell.style.color = "#137333";
+              cell.style.fontWeight = "600";
+              cell.style.borderBottom = "2px solid #0f9d58";
+              cell.textContent = val;
+            } else if (r === 13 && (c === 2 || c === 4 || c === 6)) {
+              cell.style.background = "#f1f3f4";
+              cell.style.fontWeight = "700";
+              cell.textContent = val;
+            } else {
+              cell.textContent = val;
+            }
+
+            cell.addEventListener("click", () => selectMobileCell(r, c));
+            grid.appendChild(cell);
+          }
+        }
+        selectMobileCell(1, 1);
+      }
+
+      let mobileSelected = { r: 1, c: 1 };
+      function colName(n) {
+        let s = "";
+        while (n > 0) {
+          let r = (n - 1) % 26;
+          s = String.fromCharCode(65 + r) + s;
+          n = Math.floor((n - 1) / 26);
+        }
+        return s;
+      }
+      function selectMobileCell(r, c) {
+        mobileSelected = { r, c };
+        document
+          .querySelectorAll(".mobile-cell.selected")
+          .forEach((el) => el.classList.remove("selected"));
+        const el = document.querySelector(
+          `.mobile-cell[data-r="${r}"][data-c="${c}"]`,
+        );
+        if (el) el.classList.add("selected");
+        document.getElementById("mobileNameBox").textContent = colName(c) + r;
+        document.getElementById("mobileFormatToolbar").classList.add("show");
+      }
+      function updateMobileSelection() {
+        if (!mobileView.classList.contains("active")) return;
+        // sync from desktop selection
+      }
+
+      // Mobile format buttons
+      document.getElementById("mBoldBtn")?.addEventListener("click", (e) => {
+        e.currentTarget.classList.toggle("active");
+        const el = document.querySelector(
+          `.mobile-cell[data-r="${mobileSelected.r}"][data-c="${mobileSelected.c}"]`,
+        );
+        if (el) el.classList.toggle("bold");
+      });
+      document.getElementById("mItalicBtn")?.addEventListener("click", (e) => {
+        e.currentTarget.classList.toggle("active");
+        const el = document.querySelector(
+          `.mobile-cell[data-r="${mobileSelected.r}"][data-c="${mobileSelected.c}"]`,
+        );
+        if (el)
+          el.style.fontStyle = el.style.fontStyle === "italic" ? "" : "italic";
+      });
+      document
+        .getElementById("mUnderlineBtn")
+        ?.addEventListener("click", (e) => {
+          e.currentTarget.classList.toggle("active");
+          const el = document.querySelector(
+            `.mobile-cell[data-r="${mobileSelected.r}"][data-c="${mobileSelected.c}"]`,
+          );
+          if (el)
+            el.style.textDecoration =
+              el.style.textDecoration === "underline" ? "" : "underline";
+        });
+      document.getElementById("mAlignBtn")?.addEventListener("click", () => {
+        const el = document.querySelector(
+          `.mobile-cell[data-r="${mobileSelected.r}"][data-c="${mobileSelected.c}"]`,
+        );
+        if (el) {
+          const cur = el.style.textAlign || "left";
+          el.style.textAlign =
+            cur === "left" ? "center" : cur === "center" ? "right" : "left";
+        }
+      });
+      document.getElementById("mCurrencyBtn")?.addEventListener("click", () => {
+        const el = document.querySelector(
+          `.mobile-cell[data-r="${mobileSelected.r}"][data-c="${mobileSelected.c}"]`,
+        );
+        if (el) {
+          const num = parseFloat(el.textContent.replace(/[^0-9.]/g, ""));
+          if (!isNaN(num)) {
+            el.textContent =
+              "Rp " + num.toLocaleString("id-ID", { maximumFractionDigits: 0 });
+          }
+        }
+      });
+      document
+        .getElementById("mTextColorBtn")
+        ?.addEventListener("click", () => {
+          const colors = [
+            "#ea4335",
+            "#fbbc04",
+            "#34a853",
+            "#4285f4",
+            "#a142f4",
+          ];
+          const el = document.querySelector(
+            `.mobile-cell[data-r="${mobileSelected.r}"][data-c="${mobileSelected.c}"]`,
+          );
+          if (el) {
+            const current = el.style.color;
+            const idx = colors.indexOf(current);
+            el.style.color = colors[(idx + 1) % colors.length];
+          }
+        });
+      document
+        .getElementById("mFillColorBtn")
+        ?.addEventListener("click", () => {
+          const colors = [
+            "#fce8e6",
+            "#fef7e0",
+            "#e6f4ea",
+            "#e8f0fe",
+            "#f3e8fd",
+          ];
+          const el = document.querySelector(
+            `.mobile-cell[data-r="${mobileSelected.r}"][data-c="${mobileSelected.c}"]`,
+          );
+          if (el) {
+            const current = el.style.background;
+            const idx = colors.indexOf(current);
+            el.style.background = colors[(idx + 1) % colors.length];
+          }
+        });
+      document.getElementById("mCommentBtn")?.addEventListener("click", () => {
+        alert(
+          "Komentar untuk sel " + colName(mobileSelected.c) + mobileSelected.r,
+        );
+      });
+      document.getElementById("mMoreBtn")?.addEventListener("click", () => {
+        alert(
+          "Menu lainnya:\n- Format angka\n- Pembungkusan teks\n- Sorot sel\n- Sisipkan baris/kolom",
+        );
+      });
+      document
+        .getElementById("mobileShareBtn")
+        ?.addEventListener("click", () => {
+          alert(
+            "Bagikan spreadsheet:\n- Salin link\n- Kirim via email\n- Bagikan ke aplikasi",
+          );
+        });
+      document.getElementById("mobileFab")?.addEventListener("click", () => {
+        const actions = [
+          "Sisipkan baris di bawah",
+          "Sisipkan kolom di kanan",
+          "Tambahkan tabel",
+          "Sisipkan diagram",
+        ];
+        const choice = prompt(
+          "Pilih aksi (1-4):\n" +
+            actions.map((a, i) => i + 1 + ". " + a).join("\n"),
+        );
+        if (choice && actions[choice - 1])
+          alert(actions[choice - 1] + " diterapkan");
+      });
+      document
+        .getElementById("mobileAddSheet")
+        ?.addEventListener("click", () => {
+          const name = prompt("Nama sheet baru:", "Sheet2");
+          if (name) {
+            const tabs = document.querySelector(".mobile-sheet-tabs");
+            const tab = document.createElement("div");
+            tab.className = "mobile-tab";
+            tab.textContent = name;
+            tab.addEventListener("click", () => {
+              document
+                .querySelectorAll(".mobile-tab")
+                .forEach((t) => t.classList.remove("active"));
+              tab.classList.add("active");
+            });
+            tabs.appendChild(tab);
+          }
+        });
+
+      document.querySelectorAll(".mobile-nav-bar button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".mobile-nav-bar button")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+        });
+      });
+
+      document.querySelectorAll(".mobile-tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+          document
+            .querySelectorAll(".mobile-tab")
+            .forEach((t) => t.classList.remove("active"));
+          tab.classList.add("active");
+        });
+      });
+
+      buildMobileGrid();
+    </script>
+  </body>
+</html>

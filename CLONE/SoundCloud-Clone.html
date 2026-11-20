@@ -1,0 +1,3965 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ff5500" />
+    <title>SoundCloud Clone — Desktop & Mobile</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ff5500'/%3E%3Cpath fill='%23fff' d='M6 22v-4h2v4zm4 0v-7h2v7zm4 0V11h2v11zm4 0V9h2v13zm5.5 0c2.5 0 4.5-2 4.5-4.5S26 13 23.5 13h-.6A5.4 5.4 0 0 0 18 9.6V22z'/%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --orange: #ff5500;
+        --orange-dark: #e84a00;
+        --ink: #111;
+        --mut: #999;
+        --line: #e6e6e6;
+        --soft: #f2f2f2;
+        --disp:
+          "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        --body:
+          "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        min-width: 320px;
+        color: var(--ink);
+        background: #fff;
+        font-family: var(--body);
+        font-size: 13px;
+        -webkit-font-smoothing: antialiased;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+        border: 0;
+        background: none;
+        padding: 0;
+        color: inherit;
+      }
+      a {
+        color: inherit;
+      }
+      ::selection {
+        background: #ffd9c2;
+      }
+      :focus-visible {
+        outline: 2px solid rgba(255, 85, 0, 0.55);
+        outline-offset: 2px;
+      }
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #d4d4d4;
+        border-radius: 6px;
+        border: 2px solid #fff;
+      }
+
+      /* ================= SWITCHER (Desktop <-> Mobile) ================= */
+      .switcher {
+        position: fixed;
+        top: 14px;
+        right: 14px;
+        z-index: 400;
+        display: flex;
+        gap: 3px;
+        padding: 3px;
+        border-radius: 999px;
+        background: rgba(20, 20, 22, 0.92);
+        backdrop-filter: blur(8px);
+        box-shadow: 0 8px 26px rgba(0, 0, 0, 0.28);
+      }
+      .switcher button {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        color: #b9b9c0;
+        font: 600 11px var(--disp);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 8px 14px;
+        border-radius: 999px;
+        transition: 0.2s;
+      }
+      .switcher button svg {
+        width: 14px;
+        height: 14px;
+      }
+      .switcher button:hover {
+        color: #fff;
+      }
+      .switcher button.is-active {
+        background: var(--orange);
+        color: #fff;
+        box-shadow: 0 4px 14px rgba(255, 85, 0, 0.45);
+      }
+
+      .view {
+        display: none;
+      }
+      body.mode-desktop #view-desktop {
+        display: block;
+        animation: viewIn 0.45s ease both;
+      }
+      body.mode-mobile #view-mobile {
+        display: flex;
+        animation: viewIn 0.5s ease both;
+      }
+      body.mode-mobile {
+        background: #131114;
+        overflow-x: hidden;
+      }
+      body.mode-mobile .player,
+      body.mode-mobile #toast {
+        display: none;
+      }
+      @keyframes viewIn {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      /* ================= DESKTOP · TOPBAR ================= */
+      .topbar {
+        height: 58px;
+        position: sticky;
+        top: 0;
+        z-index: 60;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 0 max(20px, calc((100vw - 1280px) / 2));
+        background: rgba(255, 255, 255, 0.97);
+        border-bottom: 1px solid #e9e9e9;
+        backdrop-filter: blur(12px);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        color: #111;
+      }
+      .brand svg {
+        height: 26px;
+        width: auto;
+        display: block;
+      }
+      .brand b {
+        font: 800 19px/1 var(--disp);
+        letter-spacing: -0.6px;
+      }
+      .main-nav {
+        display: flex;
+        gap: 20px;
+        margin-left: 6px;
+      }
+      .main-nav button {
+        font: 600 13px var(--disp);
+        color: #555;
+        padding: 4px 0;
+        border-bottom: 2px solid transparent;
+        transition: 0.15s;
+      }
+      .main-nav button:hover,
+      .main-nav button.active {
+        color: var(--orange);
+      }
+      .search-wrap {
+        flex: 1;
+        max-width: 600px;
+        position: relative;
+      }
+      .search-wrap input {
+        width: 100%;
+        height: 36px;
+        border: 1px solid #dcdcdc;
+        outline: 0;
+        padding: 0 38px 0 12px;
+        border-radius: 4px;
+        background: #fff;
+        font-size: 13px;
+        transition: 0.18s;
+      }
+      .search-wrap input:focus {
+        border-color: #aaa;
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.07);
+      }
+      .search-icon {
+        position: absolute;
+        right: 12px;
+        top: 10px;
+        color: #888;
+        pointer-events: none;
+      }
+      .top-right {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .go-link {
+        font: 600 12px var(--disp);
+        color: var(--orange);
+        text-decoration: none;
+        white-space: nowrap;
+      }
+      .go-link:hover {
+        text-decoration: underline;
+      }
+      .upload-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font: 600 12px var(--disp);
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 7px 13px;
+        background: #fff;
+        transition: 0.15s;
+      }
+      .upload-btn:hover {
+        border-color: #888;
+      }
+      .icon-link {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: #666;
+        position: relative;
+        transition: 0.15s;
+      }
+      .icon-link:hover {
+        background: #eee;
+        color: #111;
+      }
+      .icon-link .dot {
+        position: absolute;
+        top: 6px;
+        right: 7px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--orange);
+        border: 1.5px solid #fff;
+      }
+      .profile-chip {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 6px;
+        border-radius: 6px;
+      }
+      .profile-chip:hover {
+        background: #f2f2f2;
+      }
+      .profile-chip .avatar {
+        width: 26px;
+        height: 26px;
+      }
+
+      .avatar {
+        border-radius: 50%;
+        display: inline-block;
+        background: linear-gradient(135deg, #ffc58c, #7a3c26 58%, #202020);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        flex: 0 0 auto;
+      }
+      .av-a {
+        background: linear-gradient(135deg, #ea8d42, #241d2e);
+      }
+      .av-b {
+        background: linear-gradient(135deg, #397e83, #182c35);
+      }
+      .av-c {
+        background: linear-gradient(135deg, #ed7a65, #7d3a62);
+      }
+      .av-d {
+        background: linear-gradient(135deg, #617c80, #23313b);
+      }
+      .av-e {
+        background: linear-gradient(135deg, #d94d3b, #171b2c);
+      }
+      .av-f {
+        background: linear-gradient(135deg, #6c66ad, #1b233b);
+      }
+      .av-g {
+        background: linear-gradient(135deg, #9b5c4e, #392d3c);
+      }
+      .av-h {
+        background: linear-gradient(135deg, #8099a3, #243e50);
+      }
+      .avatar-sm {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        flex: 0 0 auto;
+      }
+
+      /* ================= DESKTOP · LAYOUT ================= */
+      .layout {
+        max-width: 1280px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 188px minmax(0, 1fr) 280px;
+        gap: 28px;
+        padding: 24px 20px 140px;
+        align-items: start;
+      }
+      .sidebar {
+        position: sticky;
+        top: 80px;
+      }
+      .side-nav {
+        display: grid;
+        gap: 2px;
+        margin-bottom: 8px;
+      }
+      .side-nav button,
+      .side-section button {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-align: left;
+        padding: 9px 11px;
+        border-radius: 4px;
+        color: #555;
+        font-size: 13px;
+        transition: 0.15s;
+      }
+      .side-nav button:hover,
+      .side-section button:hover {
+        background: #ececec;
+        color: #111;
+      }
+      .side-nav button.active {
+        background: #ececec;
+        color: #111;
+        font-weight: 600;
+      }
+      .side-nav svg,
+      .side-section svg {
+        width: 17px;
+        height: 17px;
+        color: #888;
+        flex: 0 0 auto;
+      }
+      .side-label {
+        margin: 0 11px 8px;
+        color: #999;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        font: 700 10px var(--disp);
+      }
+      .side-section {
+        border-top: 1px solid var(--line);
+        padding-top: 16px;
+        margin-top: 14px;
+      }
+      .side-section button {
+        padding: 7px 11px;
+        font-size: 12px;
+      }
+      .side-label .mini-plus {
+        float: right;
+        font-size: 15px;
+        color: #aaa;
+        cursor: pointer;
+      }
+      .sidebar-foot {
+        border-top: 1px solid var(--line);
+        margin-top: 20px;
+        padding: 16px 11px 0;
+        color: #aaa;
+        font-size: 10px;
+        line-height: 1.9;
+      }
+      .sidebar-foot a {
+        color: #aaa;
+        text-decoration: none;
+        margin-right: 8px;
+      }
+      .sidebar-foot a:hover {
+        color: var(--orange);
+      }
+      .main {
+        min-width: 0;
+      }
+
+      /* Go+ banner */
+      .go-banner {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        overflow: hidden;
+        background: linear-gradient(100deg, #181419, #241d20 55%, #37241b);
+        color: #fff;
+        border-radius: 6px;
+        padding: 20px 24px;
+        margin-bottom: 28px;
+      }
+      .go-banner::before {
+        content: "";
+        position: absolute;
+        right: 10%;
+        top: -70%;
+        width: 420px;
+        height: 420px;
+        background: radial-gradient(
+          circle,
+          rgba(255, 85, 0, 0.4),
+          transparent 62%
+        );
+        pointer-events: none;
+      }
+      .go-copy {
+        position: relative;
+        z-index: 2;
+        flex: 1;
+        min-width: 0;
+      }
+      .go-eyebrow {
+        font: 700 9px var(--disp);
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: #ffb38c;
+        margin-bottom: 8px;
+      }
+      .go-banner h2 {
+        margin: 0 0 6px;
+        font: 800 24px/1.05 var(--disp);
+        letter-spacing: -0.6px;
+      }
+      .go-banner p {
+        margin: 0;
+        color: #c7c2c9;
+        font-size: 12px;
+        max-width: 430px;
+      }
+      .go-actions {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        gap: 10px;
+        flex: 0 0 auto;
+      }
+      .btn-orange {
+        background: var(--orange);
+        color: #fff;
+        border-radius: 4px;
+        padding: 10px 16px;
+        font: 700 12px var(--disp);
+        transition: 0.15s;
+      }
+      .btn-orange:hover {
+        background: var(--orange-dark);
+        transform: translateY(-1px);
+      }
+      .btn-ghost {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #fff;
+        border-radius: 4px;
+        padding: 9px 14px;
+        font: 600 12px var(--disp);
+        transition: 0.15s;
+      }
+      .btn-ghost:hover {
+        border-color: #fff;
+      }
+      .go-close {
+        position: absolute;
+        z-index: 3;
+        top: 10px;
+        right: 12px;
+        color: #9b959d;
+        font-size: 15px;
+        line-height: 1;
+        padding: 4px;
+      }
+      .go-close:hover {
+        color: #fff;
+      }
+      .go-disc {
+        position: absolute;
+        z-index: 1;
+        right: -46px;
+        top: -64px;
+        width: 230px;
+        height: 230px;
+        border-radius: 50%;
+        background: repeating-radial-gradient(
+          circle at center,
+          #17171b 0 2px,
+          #333 3px 4px,
+          #121216 5px 7px
+        );
+        animation: spin 14s linear infinite;
+        opacity: 0.9;
+      }
+      .go-disc::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #f5a36c 0 6px, #4d3543 7px);
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .section-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin: 26px 0 14px;
+      }
+      .section-title {
+        font: 700 17px var(--disp);
+        letter-spacing: -0.3px;
+        margin: 0;
+      }
+      .section-sub {
+        color: #999;
+        font-size: 11px;
+        margin-left: 8px;
+      }
+      .see-all {
+        color: #999;
+        text-decoration: none;
+        font: 600 11px var(--disp);
+      }
+      .see-all:hover {
+        color: var(--orange);
+      }
+
+      /* Artworks (dipakai bersama desktop & mobile) */
+      .artwork {
+        position: relative;
+        overflow: hidden;
+        border-radius: 3px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
+        background: #333;
+      }
+      .artwork::before {
+        content: "";
+        position: absolute;
+      }
+      .art-word {
+        position: absolute;
+        inset: auto 9px 9px;
+        color: rgba(255, 255, 255, 0.92);
+        font: 900 clamp(13px, 1.6vw, 20px)/0.95 var(--disp);
+        letter-spacing: -0.8px;
+        text-shadow: 0 2px 14px rgba(0, 0, 0, 0.35);
+        z-index: 1;
+        white-space: normal;
+      }
+      .art-1 {
+        background: linear-gradient(140deg, #ea8d42, #9a2f28 45%, #241d2e);
+      }
+      .art-1::before {
+        width: 80%;
+        height: 80%;
+        border-radius: 50%;
+        border: 14px solid rgba(255, 220, 175, 0.55);
+        top: -12%;
+        right: -20%;
+        box-shadow:
+          0 0 0 12px rgba(28, 19, 34, 0.18),
+          0 0 0 26px rgba(255, 255, 255, 0.1);
+      }
+      .art-2 {
+        background: linear-gradient(135deg, #182c35, #397e83 53%, #e7b36a);
+      }
+      .art-2::before {
+        width: 42%;
+        height: 120%;
+        left: 29%;
+        top: -10%;
+        background: repeating-linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0) 0 7px,
+          rgba(255, 255, 255, 0.25) 8px 10px
+        );
+        transform: rotate(22deg);
+      }
+      .art-3 {
+        background: linear-gradient(145deg, #f6cb6b, #ed7a65 49%, #7d3a62);
+      }
+      .art-3::before {
+        width: 68%;
+        height: 68%;
+        left: 16%;
+        top: 10%;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 34% 30%,
+          #fff0c5,
+          #ec8f82 45%,
+          #6b3a63 72%
+        );
+        box-shadow: 0 12px 32px rgba(48, 17, 35, 0.24);
+      }
+      .art-4 {
+        background: linear-gradient(135deg, #c8d5cb, #617c80 50%, #23313b);
+      }
+      .art-4::before {
+        width: 75%;
+        height: 75%;
+        left: 12%;
+        top: 9%;
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: 50%;
+        box-shadow:
+          0 0 0 11px rgba(255, 255, 255, 0.1),
+          0 0 0 22px rgba(255, 255, 255, 0.09);
+      }
+      .art-5 {
+        background: linear-gradient(130deg, #d94d3b, #541f49 55%, #171b2c);
+      }
+      .art-5::before {
+        width: 53%;
+        height: 90%;
+        bottom: -22%;
+        left: 25%;
+        border-radius: 48% 48% 0 0;
+        background: linear-gradient(140deg, #ffb56d, #ca4550 60%, #41203f);
+        transform: rotate(20deg);
+      }
+      .art-6 {
+        background: linear-gradient(135deg, #1b233b, #6c66ad 50%, #ecad95);
+      }
+      .art-6::before {
+        width: 60%;
+        height: 60%;
+        border-radius: 50%;
+        top: 15%;
+        left: 20%;
+        background: repeating-conic-gradient(
+          from 15deg,
+          rgba(255, 255, 255, 0.55) 0 8deg,
+          transparent 8deg 16deg
+        );
+      }
+      .art-7 {
+        background: linear-gradient(135deg, #d2a86f, #9b5c4e 55%, #392d3c);
+      }
+      .art-7::before {
+        width: 70%;
+        height: 70%;
+        left: 15%;
+        top: 14%;
+        background:
+          linear-gradient(135deg, rgba(255, 255, 255, 0.4), transparent 50%),
+          repeating-linear-gradient(
+            45deg,
+            transparent 0 8px,
+            rgba(35, 20, 22, 0.22) 9px 11px
+          );
+        transform: rotate(-15deg);
+      }
+      .art-8 {
+        background: linear-gradient(135deg, #e5d4be, #8099a3 50%, #243e50);
+      }
+      .art-8::before {
+        width: 62%;
+        height: 62%;
+        border-radius: 50%;
+        top: 18%;
+        left: 18%;
+        background: radial-gradient(
+          circle at 35% 30%,
+          #fff,
+          #b5d4cf 38%,
+          #506c83 68%,
+          #192d3c
+        );
+      }
+
+      /* Made-for-you cards */
+      .card-row {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: calc((100% - 4 * 14px) / 5);
+        gap: 14px;
+        overflow-x: auto;
+        padding-bottom: 6px;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+      }
+      .card-row::-webkit-scrollbar {
+        display: none;
+      }
+      .music-card {
+        min-width: 0;
+        cursor: pointer;
+        scroll-snap-align: start;
+      }
+      .music-card .artwork {
+        aspect-ratio: 1;
+        transition:
+          transform 0.25s ease,
+          box-shadow 0.25s ease;
+      }
+      .music-card:hover .artwork {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+      }
+      .card-play {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%) scale(0.85);
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: var(--orange);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        opacity: 0;
+        transition: 0.18s;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+        z-index: 2;
+      }
+      .music-card:hover .card-play,
+      .music-card:focus-visible .card-play {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      .card-play:hover {
+        background: var(--orange-dark);
+      }
+      .card-title {
+        font: 600 12px var(--body);
+        color: #333;
+        margin: 9px 0 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .card-artist {
+        font-size: 11px;
+        color: #999;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .card-meta {
+        color: #b0b0b0;
+        font-size: 10px;
+        margin-top: 5px;
+      }
+
+      /* ================= WAVEFORM ================= */
+      .waveform {
+        position: relative;
+        display: flex;
+        align-items: flex-end;
+        height: 64px;
+        user-select: none;
+        touch-action: none;
+      }
+      .waveform.seekable {
+        cursor: pointer;
+      }
+      .wf-layer {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: flex-end;
+        gap: 1px;
+        pointer-events: none;
+      }
+      .wf-layer i {
+        flex: 1 1 0;
+        min-width: 0;
+        border-radius: 1px 1px 0 0;
+        background: currentColor;
+        display: block;
+      }
+      .wf-base {
+        color: #cfcfcf;
+      }
+      .waveform.seekable:hover .wf-base {
+        color: #bdbdbd;
+      }
+      .wf-fill {
+        color: var(--orange);
+        clip-path: inset(0 100% 0 0);
+      }
+      .waveform.lg {
+        height: 66px;
+      }
+      .waveform.sm {
+        height: 22px;
+      }
+      .waveform.xs {
+        height: 15px;
+        margin-top: 6px;
+      }
+      .waveform.p-wave {
+        height: 36px;
+        flex: 1;
+      }
+      .waveform.fs-wave {
+        height: 52px;
+        margin: 0 26px;
+      }
+      .waveform.seekable::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: #222;
+        left: var(--hx, 50%);
+        opacity: 0;
+        transition: opacity 0.12s;
+      }
+      .waveform.seekable:hover::after {
+        opacity: 0.45;
+      }
+
+      /* Feed items (track besar + waveform ala SoundCloud) */
+      .feed-item {
+        display: grid;
+        grid-template-columns: 160px minmax(0, 1fr);
+        gap: 18px;
+        padding: 18px 0;
+        border-bottom: 1px solid #ededed;
+        animation: feedIn 0.5s ease both;
+      }
+      @keyframes feedIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      .feed-left {
+        position: relative;
+        width: 160px;
+      }
+      .feed-art {
+        width: 160px;
+        height: 160px;
+        cursor: pointer;
+      }
+      .feed-play {
+        position: absolute;
+        top: 9px;
+        left: 9px;
+        z-index: 3;
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        background: var(--orange);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+        transition: 0.16s;
+      }
+      .feed-play:hover {
+        transform: scale(1.08);
+        background: var(--orange-dark);
+      }
+      .feed-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+      .feed-user {
+        font: 600 13px var(--body);
+        color: #333;
+      }
+      .feed-ago {
+        color: #aaa;
+        font-size: 11px;
+      }
+      .genre-pill {
+        margin-left: auto;
+        border: 1px solid #e0e0e0;
+        border-radius: 999px;
+        padding: 3px 10px;
+        font: 600 10px var(--disp);
+        color: #777;
+        letter-spacing: 0.02em;
+      }
+      .feed-title {
+        font: 600 16px var(--disp);
+        letter-spacing: -0.2px;
+        margin: 0 0 10px;
+        color: #111;
+      }
+      .feed-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+      }
+      .feed-stats {
+        display: flex;
+        gap: 16px;
+        color: #a5a5a5;
+        font-size: 11px;
+      }
+      .feed-stats span {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .feed-stats svg {
+        width: 12px;
+        height: 12px;
+      }
+      .feed-actions {
+        display: flex;
+        gap: 7px;
+      }
+      .ghost-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid #dcdcdc;
+        border-radius: 4px;
+        padding: 6px 11px;
+        font: 600 11px var(--disp);
+        color: #666;
+        transition: 0.15s;
+      }
+      .ghost-btn svg {
+        width: 13px;
+        height: 13px;
+      }
+      .ghost-btn:hover {
+        border-color: #999;
+        color: #111;
+      }
+      .ghost-btn.on {
+        color: var(--orange);
+        border-color: #ffb38c;
+        background: #fff4ee;
+      }
+      .empty-state {
+        text-align: center;
+        padding: 34px 12px;
+        color: #999;
+        font-size: 12px;
+      }
+
+      /* Equalizer badge untuk track yang sedang diputar */
+      .eq {
+        display: inline-flex;
+        align-items: flex-end;
+        gap: 2px;
+        height: 11px;
+        margin-left: 6px;
+        vertical-align: -1px;
+      }
+      .eq i {
+        width: 2.5px;
+        background: var(--orange);
+        border-radius: 1px;
+        animation: eq 1s ease-in-out infinite;
+      }
+      .eq i:nth-child(2) {
+        animation-delay: 0.22s;
+      }
+      .eq i:nth-child(3) {
+        animation-delay: 0.44s;
+      }
+      @keyframes eq {
+        0%,
+        100% {
+          height: 3px;
+        }
+        50% {
+          height: 11px;
+        }
+      }
+
+      /* Right rail */
+      .right-rail {
+        position: sticky;
+        top: 80px;
+        min-width: 0;
+      }
+      .rail-block {
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+      }
+      .rail-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+      }
+      .rail-head h3 {
+        font: 700 12px var(--disp);
+        margin: 0;
+        color: #555;
+      }
+      .rail-head a {
+        font: 600 10px var(--disp);
+        color: #aaa;
+        text-decoration: none;
+      }
+      .rail-head a:hover {
+        color: var(--orange);
+      }
+      .history-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 11px 0;
+        cursor: pointer;
+      }
+      .history-item:hover strong {
+        color: var(--orange);
+      }
+      .history-art {
+        width: 34px;
+        height: 34px;
+        flex: 0 0 auto;
+      }
+      .history-copy {
+        min-width: 0;
+        flex: 1;
+      }
+      .history-copy strong {
+        display: block;
+        font: 500 11px var(--body);
+        color: #555;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .history-copy span {
+        font-size: 10px;
+        color: #aaa;
+        display: block;
+        margin-top: 3px;
+      }
+      .follow-item {
+        display: flex;
+        gap: 9px;
+        align-items: center;
+        margin: 13px 0;
+      }
+      .follow-copy {
+        min-width: 0;
+        flex: 1;
+      }
+      .follow-copy strong {
+        color: #555;
+        font: 500 11px var(--body);
+        display: block;
+      }
+      .follow-copy span {
+        color: #aaa;
+        font-size: 10px;
+        display: block;
+        margin-top: 3px;
+      }
+      .follow-btn {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 5px 10px;
+        font: 600 10px var(--disp);
+        color: #777;
+        transition: 0.15s;
+      }
+      .follow-btn:hover {
+        border-color: #999;
+      }
+      .follow-btn.following {
+        background: #f2f2f2;
+        color: #aaa;
+      }
+      .chart-entry {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin: 11px 0;
+        cursor: pointer;
+      }
+      .chart-entry:hover strong {
+        color: var(--orange);
+      }
+      .chart-number {
+        width: 16px;
+        color: #bbb;
+        font: 700 11px var(--disp);
+      }
+      .chart-entry .history-art {
+        width: 30px;
+        height: 30px;
+      }
+      .chart-entry strong {
+        display: block;
+        font: 500 10.5px var(--body);
+        color: #555;
+      }
+      .chart-entry span {
+        display: block;
+        color: #aaa;
+        font-size: 9.5px;
+        margin-top: 2px;
+      }
+
+      /* ================= DESKTOP · PLAYER ================= */
+      .player {
+        position: fixed;
+        z-index: 80;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 80px;
+        display: grid;
+        grid-template-columns: minmax(230px, 1fr) minmax(360px, 1.7fr) minmax(
+            210px,
+            1fr
+          );
+        align-items: center;
+        gap: 18px;
+        padding: 0 max(20px, calc((100vw - 1280px) / 2));
+        background: rgba(255, 255, 255, 0.97);
+        border-top: 1px solid #e2e2e2;
+        box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.045);
+        backdrop-filter: blur(12px);
+      }
+      .now-playing {
+        display: flex;
+        gap: 11px;
+        align-items: center;
+        min-width: 0;
+      }
+      .now-art {
+        width: 50px;
+        height: 50px;
+        flex: 0 0 auto;
+      }
+      .now-art .artwork {
+        height: 100%;
+      }
+      .now-copy {
+        min-width: 0;
+      }
+      .now-copy strong {
+        display: block;
+        font: 600 12px var(--body);
+        color: #222;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .now-copy span {
+        display: block;
+        font-size: 11px;
+        color: #999;
+        margin-top: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .now-actions {
+        display: flex;
+      }
+      .icon-btn {
+        width: 29px;
+        height: 29px;
+        display: grid;
+        place-items: center;
+        color: #999;
+        border-radius: 50%;
+        transition: 0.15s;
+      }
+      .icon-btn:hover {
+        color: #222;
+        background: #eee;
+      }
+      .icon-btn.liked {
+        color: var(--orange);
+      }
+      .icon-btn svg {
+        width: 15px;
+        height: 15px;
+      }
+      .controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 16px;
+        height: 36px;
+      }
+      .controls button {
+        color: #777;
+        display: grid;
+        place-items: center;
+        padding: 4px;
+        transition: 0.15s;
+      }
+      .controls button:hover {
+        color: #111;
+      }
+      .controls svg {
+        width: 15px;
+        height: 15px;
+      }
+      .controls .play-main {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        color: #fff;
+        background: var(--orange);
+        padding-left: 4px;
+        box-shadow: 0 3px 10px rgba(255, 85, 0, 0.35);
+      }
+      .controls .play-main:hover {
+        background: var(--orange-dark);
+        color: #fff;
+        transform: scale(1.05);
+      }
+      .controls .play-main svg {
+        width: 14px;
+        height: 14px;
+      }
+      .controls .active {
+        color: var(--orange);
+      }
+      .seek-row {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        color: #aaa;
+        font-size: 9.5px;
+        font-variant-numeric: tabular-nums;
+        margin-top: 2px;
+      }
+      .player-tools {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 10px;
+        color: #999;
+      }
+      .player-tools button {
+        color: #888;
+        padding: 4px;
+        display: grid;
+        place-items: center;
+        transition: 0.15s;
+      }
+      .player-tools button:hover {
+        color: #222;
+      }
+      .volume {
+        width: 76px;
+        height: 3px;
+        appearance: none;
+        -webkit-appearance: none;
+        background: linear-gradient(90deg, var(--orange) 68%, #ddd 68%);
+        border-radius: 3px;
+        outline: none;
+        cursor: pointer;
+      }
+      .volume::-webkit-slider-thumb {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #888;
+      }
+      .volume::-moz-range-thumb {
+        width: 9px;
+        height: 9px;
+        border: 0;
+        border-radius: 50%;
+        background: #888;
+      }
+
+      .toast {
+        position: fixed;
+        z-index: 500;
+        left: 50%;
+        bottom: 98px;
+        transform: translate(-50%, 12px);
+        opacity: 0;
+        pointer-events: none;
+        background: #222;
+        color: #fff;
+        padding: 10px 15px;
+        border-radius: 4px;
+        font-size: 11.5px;
+        box-shadow: 0 8px 26px rgba(0, 0, 0, 0.22);
+        transition: 0.22s ease;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+
+      /* ================= MOBILE · STAGE + PIXEL FRAME ================= */
+      .stage {
+        position: relative;
+        min-height: 100vh;
+        align-items: center;
+        justify-content: center;
+        padding: 86px 20px 60px;
+        background:
+          radial-gradient(1100px 700px at 78% -10%, #2c2430, #161216 60%),
+          #131114;
+        overflow: hidden;
+      }
+      .stage::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          560px 420px at 50% 58%,
+          rgba(255, 85, 0, 0.16),
+          transparent 70%
+        );
+        animation: breathe 7s ease-in-out infinite;
+        pointer-events: none;
+      }
+      @keyframes breathe {
+        50% {
+          opacity: 0.55;
+        }
+      }
+      .stage-inner {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+      }
+      .stage-copy {
+        text-align: left;
+        align-self: flex-start;
+        margin-left: 6px;
+      }
+      .stage-eyebrow {
+        font: 700 10px var(--disp);
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: #ff8b4d;
+        margin-bottom: 8px;
+      }
+      .stage-copy h2 {
+        margin: 0;
+        font: 900 clamp(24px, 3.4vw, 34px)/1 var(--disp);
+        letter-spacing: -1px;
+        color: #fff;
+      }
+      .stage-copy p {
+        margin: 8px 0 0;
+        color: #8f8892;
+        font-size: 12px;
+        max-width: 340px;
+      }
+      .phone-wrap {
+        position: relative;
+      }
+      .phone {
+        position: relative;
+        width: min(388px, 92vw);
+        height: clamp(620px, calc(100vh - 210px), 806px);
+        border-radius: 52px;
+        padding: 11px;
+        background: linear-gradient(
+          150deg,
+          #3c3f44,
+          #17181b 32%,
+          #232529 72%,
+          #0e0f11
+        );
+        box-shadow:
+          0 40px 90px rgba(0, 0, 0, 0.6),
+          0 8px 22px rgba(0, 0, 0, 0.5),
+          inset 0 0 0 2px rgba(255, 255, 255, 0.06);
+      }
+      .side-btn {
+        position: absolute;
+        right: -3px;
+        width: 3.5px;
+        border-radius: 3px;
+        background: linear-gradient(90deg, #3a3d41, #101113);
+      }
+      .sb-pwr {
+        top: 168px;
+        height: 52px;
+      }
+      .sb-vol {
+        top: 240px;
+        height: 88px;
+      }
+      .screen {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border-radius: 42px;
+        background: #fafafa;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .screen::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 60;
+        pointer-events: none;
+        background: linear-gradient(
+          115deg,
+          transparent 42%,
+          rgba(255, 255, 255, 0.05) 47%,
+          transparent 53%
+        );
+      }
+      .cam {
+        position: absolute;
+        z-index: 55;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 13px;
+        height: 13px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 35% 32%,
+          #2e3038 0 18%,
+          #05060a 62%
+        );
+        box-shadow:
+          0 0 0 2px rgba(0, 0, 0, 0.55),
+          inset 0 0 3px rgba(90, 110, 255, 0.35);
+      }
+      .statusbar {
+        height: 34px;
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 4px 22px 0;
+        font: 600 11.5px var(--disp);
+        color: #111;
+      }
+      .sb-right {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #111;
+      }
+      .sb-right svg {
+        display: block;
+      }
+      .app-top {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px 8px;
+        background: #fafafa;
+      }
+      .app-brand {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .app-brand svg {
+        height: 20px;
+        width: auto;
+      }
+      .app-brand b {
+        font: 800 16px var(--disp);
+        letter-spacing: -0.5px;
+      }
+      .app-top-icons {
+        display: flex;
+        gap: 2px;
+      }
+      .app-top-icons .icon-btn {
+        width: 34px;
+        height: 34px;
+      }
+      .app-scroll {
+        flex: 1;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: 4px 0 10px;
+        scrollbar-width: none;
+      }
+      .app-scroll::-webkit-scrollbar {
+        display: none;
+      }
+      .greet {
+        padding: 8px 16px 2px;
+      }
+      .greet h2 {
+        margin: 0;
+        font: 800 21px var(--disp);
+        letter-spacing: -0.5px;
+      }
+      .greet span {
+        color: #9a9a9a;
+        font-size: 11px;
+      }
+      .mix-row {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding: 14px 16px 6px;
+        scrollbar-width: none;
+      }
+      .mix-row::-webkit-scrollbar {
+        display: none;
+      }
+      .mix-tile {
+        position: relative;
+        flex: 0 0 148px;
+        height: 88px;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: pointer;
+      }
+      .mix-tile .artwork {
+        position: absolute;
+        inset: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      .mix-tile::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          180deg,
+          rgba(0, 0, 0, 0.05),
+          rgba(0, 0, 0, 0.52)
+        );
+      }
+      .mix-label {
+        position: absolute;
+        z-index: 2;
+        left: 10px;
+        bottom: 9px;
+        color: #fff;
+        font: 800 13px/1.15 var(--disp);
+        letter-spacing: -0.3px;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      }
+      .mix-label small {
+        display: block;
+        font: 600 9px var(--body);
+        color: rgba(255, 255, 255, 0.75);
+        margin-top: 3px;
+        letter-spacing: 0;
+      }
+      .m-sec {
+        padding: 16px 0 4px;
+      }
+      .m-sec-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        padding: 0 16px;
+        margin-bottom: 11px;
+      }
+      .m-sec-head h3 {
+        margin: 0;
+        font: 700 15px var(--disp);
+        letter-spacing: -0.3px;
+      }
+      .m-link {
+        font: 600 11px var(--disp);
+        color: #999;
+      }
+      .m-cards {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        padding: 0 16px 8px;
+        scrollbar-width: none;
+      }
+      .m-cards::-webkit-scrollbar {
+        display: none;
+      }
+      .m-card {
+        flex: 0 0 116px;
+        cursor: pointer;
+      }
+      .m-card .artwork {
+        width: 116px;
+        height: 116px;
+        border-radius: 6px;
+      }
+      .m-card strong {
+        display: block;
+        font: 600 11.5px var(--body);
+        color: #222;
+        margin-top: 7px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .m-card span {
+        display: block;
+        font-size: 10px;
+        color: #9a9a9a;
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .m-list {
+        padding: 0 16px;
+      }
+      .m-row {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 8px 0;
+        border-bottom: 1px solid #efefef;
+        cursor: pointer;
+      }
+      .m-row:last-child {
+        border-bottom: 0;
+      }
+      .m-art {
+        width: 48px;
+        height: 48px;
+        border-radius: 4px;
+        flex: 0 0 auto;
+        position: relative;
+      }
+      .m-art .artwork {
+        position: absolute;
+        inset: 0;
+      }
+      .rank {
+        width: 18px;
+        text-align: center;
+        font: 800 14px var(--disp);
+        color: #c9c9c9;
+        flex: 0 0 auto;
+      }
+      .m-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .m-info strong {
+        display: flex;
+        align-items: center;
+        font: 600 12.5px var(--body);
+        color: #222;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .m-info > span {
+        display: block;
+        font-size: 10.5px;
+        color: #9a9a9a;
+        margin-top: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .m-dur {
+        color: #b0b0b0;
+        font-size: 10.5px;
+        font-variant-numeric: tabular-nums;
+      }
+      .m-foot-note {
+        padding: 22px 16px 8px;
+        color: #b8b8b8;
+        font-size: 9.5px;
+        line-height: 1.9;
+      }
+      .m-foot-note a {
+        color: #b8b8b8;
+        text-decoration: none;
+        margin-right: 9px;
+      }
+
+      /* Mini player */
+      .mini-player {
+        position: relative;
+        flex: 0 0 auto;
+        margin: 8px 10px 6px;
+        padding: 9px 10px;
+        background: #fff;
+        border-radius: 8px;
+        border: 1px solid #ececec;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.09);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        overflow: hidden;
+      }
+      .mini-prog {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 2.5px;
+        width: 0;
+        background: var(--orange);
+      }
+      .mini-art {
+        width: 40px;
+        height: 40px;
+        flex: 0 0 auto;
+      }
+      .mini-art .artwork {
+        position: absolute;
+        inset: 0;
+      }
+      .mini-art {
+        position: relative;
+      }
+      .mini-copy {
+        flex: 1;
+        min-width: 0;
+      }
+      .mini-copy strong {
+        display: block;
+        font: 600 12px var(--body);
+        color: #222;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .mini-copy span {
+        display: block;
+        font-size: 10.5px;
+        color: #999;
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .mini-play {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: var(--orange);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+        transition: 0.15s;
+      }
+      .mini-play:hover {
+        background: var(--orange-dark);
+      }
+      .mini-play svg {
+        width: 15px;
+        height: 15px;
+      }
+
+      /* Bottom nav app */
+      .app-nav {
+        flex: 0 0 auto;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        background: #fff;
+        border-top: 1px solid #ececec;
+        padding-bottom: 4px;
+      }
+      .app-nav button {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        color: #9a9a9a;
+        font: 600 9px var(--disp);
+        min-width: 52px;
+      }
+      .app-nav button svg {
+        width: 21px;
+        height: 21px;
+      }
+      .app-nav button.active {
+        color: var(--orange);
+      }
+      .app-nav .up-btn svg {
+        width: 40px;
+        height: 40px;
+        filter: drop-shadow(0 4px 10px rgba(255, 85, 0, 0.4));
+      }
+      .gesture-bar {
+        position: absolute;
+        z-index: 45;
+        bottom: 6px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 104px;
+        height: 4px;
+        border-radius: 4px;
+        background: rgba(0, 0, 0, 0.75);
+        pointer-events: none;
+      }
+
+      /* Fullscreen player (dalam layar HP) */
+      .fs-player {
+        position: absolute;
+        inset: 0;
+        z-index: 40;
+        display: flex;
+        flex-direction: column;
+        padding: 14px 0 26px;
+        color: #fff;
+        transform: translateY(103%);
+        transition: transform 0.38s cubic-bezier(0.32, 0.72, 0.28, 1);
+        background: #222;
+      }
+      .fs-player.open {
+        transform: none;
+      }
+      .fs-player::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(10, 8, 10, 0.45);
+      }
+      .fs-player > * {
+        position: relative;
+      }
+      .fsp-art-1 {
+        background: linear-gradient(165deg, #9a2f28, #241d2e);
+      }
+      .fs-player.fsp-art-1::before {
+        background: linear-gradient(
+          180deg,
+          rgba(234, 141, 66, 0.28),
+          rgba(10, 8, 10, 0.72)
+        );
+      }
+      .fsp-art-2 {
+        background: linear-gradient(165deg, #397e83, #182c35);
+      }
+      .fs-player.fsp-art-2::before {
+        background: linear-gradient(
+          180deg,
+          rgba(231, 179, 106, 0.2),
+          rgba(10, 8, 10, 0.72)
+        );
+      }
+      .fsp-art-3 {
+        background: linear-gradient(165deg, #ed7a65, #7d3a62);
+      }
+      .fs-player.fsp-art-3::before {
+        background: linear-gradient(
+          180deg,
+          rgba(246, 203, 107, 0.24),
+          rgba(10, 8, 10, 0.72)
+        );
+      }
+      .fsp-art-4 {
+        background: linear-gradient(165deg, #617c80, #23313b);
+      }
+      .fs-player.fsp-art-4::before {
+        background: linear-gradient(
+          180deg,
+          rgba(200, 213, 203, 0.18),
+          rgba(10, 8, 10, 0.72)
+        );
+      }
+      .fsp-art-5 {
+        background: linear-gradient(165deg, #d94d3b, #171b2c);
+      }
+      .fs-player.fsp-art-5::before {
+        background: linear-gradient(
+          180deg,
+          rgba(255, 181, 109, 0.22),
+          rgba(10, 8, 10, 0.72)
+        );
+      }
+      .fsp-art-6 {
+        background: linear-gradient(165deg, #6c66ad, #1b233b);
+      }
+      .fs-player.fsp-art-6::before {
+        background: linear-gradient(
+          180deg,
+          rgba(236, 173, 149, 0.22),
+          rgba(10, 8, 10, 0.72)
+        );
+      }
+      .fsp-art-7 {
+        background: linear-gradient(165deg, #9b5c4e, #392d3c);
+      }
+      .fs-player.fsp-art-7::before {
+        background: linear-gradient(
+          180deg,
+          rgba(210, 168, 111, 0.22),
+          rgba(10, 8, 10, 0.72)
+        );
+      }
+      .fsp-art-8 {
+        background: linear-gradient(165deg, #8099a3, #243e50);
+      }
+      .fs-player.fsp-art-8::before {
+        background: linear-gradient(
+          180deg,
+          rgba(229, 212, 190, 0.2),
+          rgba(10, 8, 10, 0.72)
+        );
+      }
+      .fs-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 12px;
+        margin-bottom: 6px;
+      }
+      .fs-top span {
+        font: 600 10px var(--disp);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.72);
+      }
+      .fs-top .icon-btn {
+        color: rgba(255, 255, 255, 0.9);
+        width: 36px;
+        height: 36px;
+      }
+      .fs-top .icon-btn:hover {
+        background: rgba(255, 255, 255, 0.12);
+      }
+      .fs-art-wrap {
+        display: flex;
+        justify-content: center;
+        padding: 16px 0 20px;
+      }
+      .fs-art {
+        width: min(238px, 62%);
+        aspect-ratio: 1;
+        border-radius: 10px;
+        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.5);
+      }
+      .fs-art .artwork {
+        position: absolute;
+        inset: 0;
+      }
+      .fs-art {
+        position: relative;
+      }
+      .fs-art .art-word {
+        font-size: 24px;
+        inset: auto 12px 12px;
+      }
+      .fs-player.open.playing .fs-art {
+        animation: fsFloat 3.2s ease-in-out infinite;
+      }
+      @keyframes fsFloat {
+        50% {
+          transform: translateY(-5px) scale(1.012);
+        }
+      }
+      .fs-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 26px;
+        margin-bottom: 12px;
+      }
+      .fs-meta strong {
+        display: block;
+        font: 700 17px var(--disp);
+        letter-spacing: -0.3px;
+      }
+      .fs-meta span {
+        display: block;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.72);
+        margin-top: 3px;
+      }
+      .fs-meta .icon-btn {
+        color: rgba(255, 255, 255, 0.85);
+      }
+      .fs-meta .icon-btn.liked {
+        color: #ff9d6b;
+      }
+      .fs-wave .wf-base {
+        color: rgba(255, 255, 255, 0.3);
+      }
+      .fs-wave .wf-fill {
+        color: #ff8a4d;
+      }
+      .fs-times {
+        display: flex;
+        justify-content: space-between;
+        padding: 7px 26px 0;
+        font-size: 10px;
+        color: rgba(255, 255, 255, 0.62);
+        font-variant-numeric: tabular-nums;
+      }
+      .fs-controls {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 26px;
+        padding: 14px 0 10px;
+      }
+      .fs-controls button {
+        color: #fff;
+        display: grid;
+        place-items: center;
+        opacity: 0.92;
+      }
+      .fs-controls button.active {
+        color: #ff9d6b;
+      }
+      .fs-controls svg {
+        width: 19px;
+        height: 19px;
+      }
+      .fs-controls .play-big {
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        background: var(--orange);
+        box-shadow: 0 10px 26px rgba(255, 85, 0, 0.45);
+        padding-left: 5px;
+        transition: 0.15s;
+      }
+      .fs-controls .play-big:hover {
+        transform: scale(1.05);
+      }
+      .fs-controls .play-big svg {
+        width: 22px;
+        height: 22px;
+      }
+      .fs-foot {
+        display: flex;
+        justify-content: center;
+        gap: 34px;
+        padding-top: 8px;
+        color: rgba(255, 255, 255, 0.85);
+      }
+      .fs-foot button {
+        display: grid;
+        place-items: center;
+      }
+      .fs-foot svg {
+        width: 19px;
+        height: 19px;
+      }
+      .m-toast {
+        position: absolute;
+        z-index: 70;
+        left: 50%;
+        bottom: 148px;
+        transform: translate(-50%, 10px);
+        opacity: 0;
+        pointer-events: none;
+        background: #222;
+        color: #fff;
+        padding: 9px 13px;
+        border-radius: 6px;
+        font-size: 11px;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3);
+        transition: 0.22s;
+        white-space: nowrap;
+        max-width: 88%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .m-toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      .stage-hint {
+        color: #6f6875;
+        font-size: 11px;
+        text-align: center;
+      }
+      .stage-hint kbd {
+        background: #241f26;
+        border: 1px solid #3a3440;
+        border-radius: 4px;
+        padding: 1px 6px;
+        font: 600 10px var(--disp);
+        color: #cfc8d4;
+      }
+      .spec {
+        position: absolute;
+        z-index: 3;
+        font: 600 9px var(--disp);
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #8b8590;
+        white-space: nowrap;
+      }
+      .spec::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: 34px;
+        height: 1px;
+        background: #4a4450;
+      }
+      .spec-l {
+        left: -158px;
+        top: 26px;
+      }
+      .spec-l::before {
+        left: calc(100% + 12px);
+      }
+      .spec-r {
+        right: -150px;
+        bottom: 96px;
+      }
+      .spec-r::before {
+        right: calc(100% + 12px);
+      }
+
+      /* ================= RESPONSIVE (mode desktop) ================= */
+      @media (max-width: 1180px) {
+        .layout {
+          grid-template-columns: 180px minmax(0, 1fr);
+        }
+        .right-rail {
+          display: none;
+        }
+      }
+      @media (max-width: 1100px) {
+        .spec {
+          display: none;
+        }
+      }
+      @media (max-width: 960px) {
+        .layout {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .sidebar {
+          display: none;
+        }
+        .card-row {
+          grid-auto-columns: calc((100% - 2 * 14px) / 3);
+        }
+      }
+      @media (max-width: 820px) {
+        .main-nav,
+        .go-link {
+          display: none;
+        }
+        .player {
+          grid-template-columns: minmax(150px, 1fr) minmax(220px, 2fr);
+          height: 76px;
+        }
+        .player-tools {
+          display: none;
+        }
+        .feed-item {
+          grid-template-columns: 120px minmax(0, 1fr);
+        }
+        .feed-left,
+        .feed-art {
+          width: 120px;
+        }
+        .feed-art {
+          height: 120px;
+        }
+        .feed-actions .ghost-btn span {
+          display: none;
+        }
+      }
+      @media (max-width: 560px) {
+        .topbar {
+          padding: 0 12px;
+          gap: 10px;
+        }
+        .upload-btn {
+          display: none;
+        }
+        .layout {
+          padding: 16px 12px 120px;
+        }
+        .card-row {
+          grid-auto-columns: calc((100% - 14px) / 2);
+        }
+        .go-banner {
+          flex-wrap: wrap;
+        }
+        .go-disc {
+          display: none;
+        }
+        .feed-item {
+          grid-template-columns: 88px minmax(0, 1fr);
+          gap: 12px;
+        }
+        .feed-left,
+        .feed-art {
+          width: 88px;
+        }
+        .feed-art {
+          height: 88px;
+        }
+        .feed-play {
+          width: 36px;
+          height: 36px;
+        }
+        .feed-stats {
+          display: none;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body class="mode-desktop">
+    <!-- Switcher Desktop / Mobile -->
+    <div class="switcher" role="group" aria-label="Ganti tampilan">
+      <button id="swDesktop" class="is-active" title="Tampilan desktop (D)">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        >
+          <rect x="3" y="4" width="18" height="12" rx="1.5" />
+          <path d="M8 20h8M12 16v4" /></svg
+        >Desktop
+      </button>
+      <button id="swMobile" title="Tampilan mobile — Pixel frame (M)">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        >
+          <rect x="7" y="2.5" width="10" height="19" rx="2.5" />
+          <path d="M11 18.5h2" /></svg
+        >Mobile
+      </button>
+    </div>
+
+    <!-- ============================================================ DESKTOP ============================================================ -->
+    <div id="view-desktop" class="view">
+      <header class="topbar">
+        <a class="brand" href="#home" aria-label="SoundCloud home">
+          <svg viewBox="0 0 46 32" aria-hidden="true">
+            <g fill="#ff5500">
+              <rect x="1.5" y="17" width="2.8" height="12" rx="1.4" />
+              <rect x="6.3" y="13" width="2.8" height="16" rx="1.4" />
+              <rect x="11.1" y="10" width="2.8" height="19" rx="1.4" />
+              <rect x="15.9" y="12" width="2.8" height="17" rx="1.4" />
+              <path
+                d="M21.5 29V13.2c0-3.9 2.9-7.2 6.7-7.7 1-.1 2 .1 2.9.4C32.4 3.3 35.1 1.6 38.2 1.6c4.3 0 7.9 3.4 8 7.7 2.8.2 5 2.5 5 5.4 0 3-2.5 5.3-5.6 5.3H21.5z"
+              />
+              <g fill="#fff">
+                <rect x="24" y="14" width="2.1" height="15" />
+                <rect x="27.9" y="10.5" width="2.1" height="18.5" />
+                <rect x="31.8" y="7.8" width="2.1" height="21.2" />
+                <rect x="35.7" y="7" width="2.1" height="22" />
+                <rect x="39.6" y="9" width="2.1" height="20" />
+                <rect x="43.5" y="13" width="2.1" height="16" />
+              </g>
+            </g>
+          </svg>
+          <b>SoundCloud</b>
+        </a>
+        <nav class="main-nav" aria-label="Navigasi utama">
+          <button class="active" data-nav="Home">Home</button>
+          <button data-nav="Feed">Feed</button>
+          <button data-nav="Library">Library</button>
+        </nav>
+        <div class="search-wrap">
+          <input
+            id="searchInput"
+            type="search"
+            placeholder="Search for artists, bands, tracks, podcasts"
+            autocomplete="off"
+            aria-label="Cari musik"
+          />
+          <svg
+            class="search-icon"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+          >
+            <circle cx="10.8" cy="10.8" r="6.6" />
+            <path d="m16 16 4.5 4.5" />
+          </svg>
+        </div>
+        <div class="top-right">
+          <a href="#go" class="go-link" data-toast="SoundCloud Go+ preview"
+            >Try Next Pro</a
+          >
+          <button class="upload-btn" data-toast="Upload is a demo action">
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M12 16V4m0 0 4 4m-4-4L8 8M4 20h16" /></svg
+            >Upload
+          </button>
+          <button
+            class="icon-link"
+            aria-label="Notifikasi"
+            data-toast="No new notifications"
+          >
+            <svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+            >
+              <path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6" />
+              <path d="M10 20a2.2 2.2 0 0 0 4 0" /></svg
+            ><span class="dot"></span>
+          </button>
+          <button
+            class="icon-link"
+            aria-label="Pesan"
+            data-toast="Messages · demo"
+          >
+            <svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+            >
+              <path d="M21 12a8 8 0 0 1-8 8H4l2.4-2.9A8 8 0 1 1 21 12z" />
+            </svg>
+          </button>
+          <button class="profile-chip" id="profileBtn">
+            <span class="avatar"></span
+            ><svg
+              width="11"
+              height="11"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="layout" id="home">
+        <aside class="sidebar">
+          <nav class="side-nav" aria-label="Sidebar navigation">
+            <button class="active" data-nav="Home">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+              >
+                <path
+                  d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"
+                /></svg
+              >Home
+            </button>
+            <button data-nav="Feed">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+              >
+                <path d="M4 5h16M4 12h16M4 19h16" />
+                <circle cx="7" cy="5" r="1" fill="currentColor" />
+                <circle cx="7" cy="12" r="1" fill="currentColor" />
+                <circle cx="7" cy="19" r="1" fill="currentColor" /></svg
+              >Feed
+            </button>
+            <button data-nav="Library">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+              >
+                <path d="M4 4h16v16H4z" />
+                <path d="M8 4v16M12 4v16M16 4v16" /></svg
+              >Library
+            </button>
+          </nav>
+          <div class="side-section">
+            <div class="side-label">Your collection</div>
+            <button data-nav="Liked tracks">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+              >
+                <path
+                  d="M20.8 8.9c0 5.1-8.8 10.1-8.8 10.1S3.2 14 3.2 8.9A4.4 4.4 0 0 1 12 6.4a4.4 4.4 0 0 1 8.8 2.5Z"
+                /></svg
+              >Liked tracks
+            </button>
+            <button data-nav="Playlists">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+              >
+                <path d="M4 6h16M4 12h16M4 18h11" />
+                <path d="m18 16 3 2-3 2z" /></svg
+              >Playlists
+            </button>
+            <button data-nav="Stations">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+              >
+                <circle cx="12" cy="12" r="8.5" />
+                <path d="m10 8 6 4-6 4z" /></svg
+              >Stations
+            </button>
+            <button data-nav="History">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+              >
+                <circle cx="12" cy="12" r="8.5" />
+                <path d="M12 7v5l3 2" /></svg
+              >History
+            </button>
+          </div>
+          <div class="side-section">
+            <div class="side-label">
+              Your playlists
+              <span class="mini-plus" data-toast="Create playlist · demo"
+                >＋</span
+              >
+            </div>
+            <button data-nav="Late Night Finds">Late Night Finds</button>
+            <button data-nav="Daily Rotation">Daily Rotation</button>
+            <button data-nav="Indonesian Indie">Indonesian Indie</button>
+            <button data-nav="Focus Mode">Focus Mode</button>
+          </div>
+          <div class="sidebar-foot">
+            <div>
+              <a href="#legal">About us</a><a href="#legal">Legal</a
+              ><a href="#legal">Privacy</a>
+            </div>
+            <div>
+              <a href="#legal">Copyright</a><a href="#legal">Cookies</a>
+            </div>
+            <div>Language: <b>English (US)</b></div>
+          </div>
+        </aside>
+
+        <main class="main">
+          <section class="go-banner" id="goBanner">
+            <div class="go-copy">
+              <div class="go-eyebrow">SoundCloud Go+</div>
+              <h2>Unlock everything.<br />Listen without limits.</h2>
+              <p>
+                Ad-free listening, offline downloads and high-quality audio from
+                320 million+ tracks.
+              </p>
+            </div>
+            <div class="go-actions">
+              <button class="btn-orange" id="btnGo">Try it free</button>
+              <button class="btn-ghost" data-toast="Learn more · demo">
+                Learn more
+              </button>
+            </div>
+            <div class="go-disc" aria-hidden="true"></div>
+            <button class="go-close" id="closeGo" aria-label="Tutup banner">
+              ✕
+            </button>
+          </section>
+
+          <section aria-labelledby="mixTitle">
+            <div class="section-head">
+              <div>
+                <h2 class="section-title" id="mixTitle">Made for you</h2>
+                <span class="section-sub">A little something for today</span>
+              </div>
+              <a
+                class="see-all"
+                href="#mix"
+                data-toast="Showing all recommendations"
+                >See all</a
+              >
+            </div>
+            <div class="card-row" id="cardsRec"></div>
+          </section>
+
+          <section aria-labelledby="feedTitle">
+            <div class="section-head">
+              <div>
+                <h2 class="section-title" id="feedTitle">Your stream</h2>
+                <span class="section-sub" id="feedSub"
+                  >Latest from creators you follow</span
+                >
+              </div>
+              <a class="see-all" href="#stream" data-toast="Stream refreshed"
+                >Refresh</a
+              >
+            </div>
+            <div id="feedList"></div>
+            <div class="empty-state" id="feedEmpty" hidden>
+              No tracks found. Try another search.
+            </div>
+          </section>
+
+          <section aria-labelledby="freshTitle">
+            <div class="section-head">
+              <div>
+                <h2 class="section-title" id="freshTitle">Fresh finds</h2>
+                <span class="section-sub">Tracks you might have missed</span>
+              </div>
+              <a class="see-all" href="#fresh" data-toast="Fresh finds opened"
+                >View all</a
+              >
+            </div>
+            <div class="card-row" id="cardsFresh"></div>
+          </section>
+        </main>
+
+        <aside class="right-rail">
+          <section class="rail-block">
+            <div class="rail-head">
+              <h3>Listening history</h3>
+              <a href="#history" data-toast="Full listening history"
+                >View all</a
+              >
+            </div>
+            <div id="histList"></div>
+          </section>
+          <section class="rail-block">
+            <div class="rail-head">
+              <h3>Who to follow</h3>
+              <a href="#people" data-toast="More creators to follow"
+                >View all</a
+              >
+            </div>
+            <div id="followList"></div>
+          </section>
+          <section class="rail-block">
+            <div class="rail-head">
+              <h3>Top 50 · All music</h3>
+              <a href="#charts" data-toast="Global charts opened"
+                >Full charts</a
+              >
+            </div>
+            <div id="chartList"></div>
+          </section>
+          <div style="color: #aaa; font-size: 10px; line-height: 1.7">
+            Discover more music from independent artists around the world.
+          </div>
+        </aside>
+      </div>
+
+      <footer class="player" aria-label="Music player">
+        <div class="now-playing">
+          <div class="now-art" id="dArt"></div>
+          <div class="now-copy">
+            <strong id="dTitle"></strong><span id="dArtist"></span>
+          </div>
+          <div class="now-actions">
+            <button
+              class="icon-btn like-current"
+              aria-label="Like current track"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+              >
+                <path
+                  d="M20.8 8.9c0 5.1-8.8 10.1-8.8 10.1S3.2 14 3.2 8.9A4.4 4.4 0 0 1 12 6.4a4.4 4.4 0 0 1 8.8 2.5Z"
+                />
+              </svg>
+            </button>
+            <button class="icon-btn" data-toast="More options">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="5" cy="12" r="1.5" />
+                <circle cx="12" cy="12" r="1.5" />
+                <circle cx="19" cy="12" r="1.5" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="player-center">
+          <div class="controls">
+            <button id="shuffleBtn" aria-label="Shuffle">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <path d="M16 3h5v5M4 20 21 3M21 16v5h-5M4 4l5 5m3 3 4 4" />
+              </svg>
+            </button>
+            <button data-prev aria-label="Previous">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M6 5h2v14H6zM19 5v14L9 12z" />
+              </svg>
+            </button>
+            <button class="play-main" data-toggle-play aria-label="Play">
+              <svg data-play-icon viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </button>
+            <button data-next aria-label="Next">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M16 5h2v14h-2zM5 5v14l10-7z" />
+              </svg>
+            </button>
+            <button id="repeatBtn" aria-label="Repeat">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <path
+                  d="m17 2 4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4m14-1v2a3 3 0 0 1-3 3H3"
+                />
+              </svg>
+            </button>
+          </div>
+          <div class="seek-row">
+            <span id="dElapsed">0:00</span>
+            <div
+              class="waveform p-wave seekable"
+              id="pWave"
+              data-count="110"
+              data-seek
+              aria-label="Seek track"
+            ></div>
+            <span id="dDuration">0:00</span>
+          </div>
+        </div>
+        <div class="player-tools">
+          <button aria-label="Cast" data-toast="No connected devices">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+            >
+              <path
+                d="M3 19a3 3 0 0 1 3 3M3 15a7 7 0 0 1 7 7M3 11a11 11 0 0 1 11 11"
+              />
+              <path d="M3 5h18v14h-7" />
+            </svg>
+          </button>
+          <button
+            aria-label="Queue"
+            data-toast="Your queue is empty in this demo"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+            >
+              <path d="M4 6h16M4 12h11M4 18h16M18 9l3 3-3 3" />
+            </svg>
+          </button>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+          >
+            <path d="M4 10v4h4l5 4V6l-5 4zM17 9a5 5 0 0 1 0 6" />
+          </svg>
+          <input
+            type="range"
+            class="volume"
+            id="volume"
+            min="0"
+            max="100"
+            value="68"
+            aria-label="Volume"
+          />
+          <button aria-label="Fullscreen" data-toast="Fullscreen · demo">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+            </svg>
+          </button>
+        </div>
+      </footer>
+    </div>
+
+    <!-- ============================================================ MOBILE (PIXEL FRAME) ============================================================ -->
+    <div id="view-mobile" class="view stage">
+      <div class="stage-inner">
+        <div class="stage-copy">
+          <div class="stage-eyebrow">Android · Pixel frame</div>
+          <h2>SoundCloud Mobile</h2>
+          <p>
+            Tap the mini player untuk membuka full-screen player. Semua kontrol
+            tersinkron dengan versi desktop.
+          </p>
+        </div>
+
+        <div class="phone-wrap">
+          <span class="spec spec-l">Punch-hole camera</span>
+          <span class="spec spec-r">Gesture bar</span>
+          <div class="phone">
+            <span class="side-btn sb-pwr"></span
+            ><span class="side-btn sb-vol"></span>
+            <div class="screen">
+              <span class="cam"></span>
+              <div class="statusbar">
+                <span id="mClock">--:--</span>
+                <span class="sb-right">
+                  <svg width="15" height="11" viewBox="0 0 16 12" fill="#111">
+                    <rect x="0" y="8" width="2.6" height="4" rx="0.6" />
+                    <rect x="4.2" y="5.6" width="2.6" height="6.4" rx="0.6" />
+                    <rect x="8.4" y="3" width="2.6" height="9" rx="0.6" />
+                    <rect x="12.6" y="0.4" width="2.6" height="11.6" rx="0.6" />
+                  </svg>
+                  <svg
+                    width="15"
+                    height="11"
+                    viewBox="0 0 24 18"
+                    fill="none"
+                    stroke="#111"
+                    stroke-width="2.2"
+                  >
+                    <path d="M2.5 6.5a14 14 0 0 1 19 0" />
+                    <path d="M6 10.2a9 9 0 0 1 12 0" />
+                    <path d="M9.5 13.8a4.5 4.5 0 0 1 5 0" />
+                    <circle
+                      cx="12"
+                      cy="16.5"
+                      r="1.3"
+                      fill="#111"
+                      stroke="none"
+                    />
+                  </svg>
+                  <svg width="22" height="11" viewBox="0 0 26 12">
+                    <rect
+                      x="0.8"
+                      y="0.8"
+                      width="21"
+                      height="10.4"
+                      rx="2.6"
+                      fill="none"
+                      stroke="#111"
+                      stroke-width="1.4"
+                    />
+                    <rect
+                      x="2.6"
+                      y="2.6"
+                      width="13"
+                      height="6.8"
+                      rx="1.2"
+                      fill="#111"
+                    />
+                    <rect
+                      x="23.4"
+                      y="3.6"
+                      width="2.2"
+                      height="4.8"
+                      rx="1"
+                      fill="#111"
+                    />
+                  </svg>
+                </span>
+              </div>
+
+              <header class="app-top">
+                <span class="app-brand">
+                  <svg viewBox="0 0 46 32" aria-hidden="true">
+                    <g fill="#ff5500">
+                      <rect x="1.5" y="17" width="2.8" height="12" rx="1.4" />
+                      <rect x="6.3" y="13" width="2.8" height="16" rx="1.4" />
+                      <rect x="11.1" y="10" width="2.8" height="19" rx="1.4" />
+                      <rect x="15.9" y="12" width="2.8" height="17" rx="1.4" />
+                      <path
+                        d="M21.5 29V13.2c0-3.9 2.9-7.2 6.7-7.7 1-.1 2 .1 2.9.4C32.4 3.3 35.1 1.6 38.2 1.6c4.3 0 7.9 3.4 8 7.7 2.8.2 5 2.5 5 5.4 0 3-2.5 5.3-5.6 5.3H21.5z"
+                      />
+                      <g fill="#fafafa">
+                        <rect x="24" y="14" width="2.1" height="15" />
+                        <rect x="27.9" y="10.5" width="2.1" height="18.5" />
+                        <rect x="31.8" y="7.8" width="2.1" height="21.2" />
+                        <rect x="35.7" y="7" width="2.1" height="22" />
+                        <rect x="39.6" y="9" width="2.1" height="20" />
+                        <rect x="43.5" y="13" width="2.1" height="16" />
+                      </g>
+                    </g>
+                  </svg>
+                  <b>soundcloud</b>
+                </span>
+                <span class="app-top-icons">
+                  <button
+                    class="icon-btn"
+                    aria-label="Search"
+                    data-toast="Search · demo mobile"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.9"
+                    >
+                      <circle cx="10.8" cy="10.8" r="6.6" />
+                      <path d="m16 16 4.5 4.5" />
+                    </svg>
+                  </button>
+                  <button
+                    class="icon-btn"
+                    aria-label="Settings"
+                    data-toast="Settings · demo mobile"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                    >
+                      <circle cx="12" cy="12" r="3" />
+                      <path
+                        d="M12 2.8v2.6M12 18.6v2.6M4.9 4.9l1.9 1.9M17.2 17.2l1.9 1.9M2.8 12h2.6M18.6 12h2.6M4.9 19.1l1.9-1.9M17.2 6.8l1.9-1.9"
+                      />
+                    </svg>
+                  </button>
+                </span>
+              </header>
+
+              <div class="app-scroll" id="appScroll">
+                <div class="greet">
+                  <h2 id="mGreet">Good evening</h2>
+                  <span>Here’s what’s playing today</span>
+                </div>
+                <div class="mix-row">
+                  <div class="mix-tile" data-play="7">
+                    <span class="artwork art-8"></span
+                    ><span class="mix-label"
+                      >Sunset Electro<small>Playlist · 42 tracks</small></span
+                    >
+                  </div>
+                  <div class="mix-tile" data-play="3">
+                    <span class="artwork art-4"></span
+                    ><span class="mix-label"
+                      >Indie Nusantara<small>Playlist · 36 tracks</small></span
+                    >
+                  </div>
+                  <div class="mix-tile" data-play="4">
+                    <span class="artwork art-5"></span
+                    ><span class="mix-label"
+                      >Rap Cuts<small>Playlist · 28 tracks</small></span
+                    >
+                  </div>
+                  <div class="mix-tile" data-play="1">
+                    <span class="artwork art-2"></span
+                    ><span class="mix-label"
+                      >Deep Focus<small>Playlist · 51 tracks</small></span
+                    >
+                  </div>
+                  <div class="mix-tile" data-play="5">
+                    <span class="artwork art-6"></span
+                    ><span class="mix-label"
+                      >Dance Hits<small>Playlist · 60 tracks</small></span
+                    >
+                  </div>
+                </div>
+                <div class="m-sec">
+                  <div class="m-sec-head">
+                    <h3>Made for you</h3>
+                    <button class="m-link" data-toast="More mixes · demo">
+                      See all
+                    </button>
+                  </div>
+                  <div class="m-cards" id="mRec"></div>
+                </div>
+                <div class="m-sec">
+                  <div class="m-sec-head">
+                    <h3>Trending on SoundCloud</h3>
+                    <button class="m-link" data-toast="Full charts · demo">
+                      Charts
+                    </button>
+                  </div>
+                  <div class="m-list" id="mTrend"></div>
+                </div>
+                <div class="m-sec">
+                  <div class="m-sec-head">
+                    <h3>From artists you follow</h3>
+                    <button class="m-link" data-toast="Stream refreshed">
+                      Refresh
+                    </button>
+                  </div>
+                  <div class="m-list" id="mStream"></div>
+                </div>
+                <div class="m-foot-note">
+                  <a href="#l">Legal</a><a href="#l">Privacy</a
+                  ><a href="#l">Cookies</a><br />© 2026 SoundCloud clone — demo
+                  frontend
+                </div>
+              </div>
+
+              <div class="mini-player" id="miniPlayer">
+                <span class="mini-prog" id="mProg"></span>
+                <div class="mini-art" id="mArt"></div>
+                <div class="mini-copy">
+                  <strong id="mTitle"></strong><span id="mArtist"></span>
+                </div>
+                <button class="icon-btn like-current" aria-label="Like">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                  >
+                    <path
+                      d="M20.8 8.9c0 5.1-8.8 10.1-8.8 10.1S3.2 14 3.2 8.9A4.4 4.4 0 0 1 12 6.4a4.4 4.4 0 0 1 8.8 2.5Z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  class="mini-play"
+                  data-toggle-play
+                  aria-label="Play/Pause"
+                >
+                  <svg data-play-icon viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </button>
+              </div>
+
+              <nav class="app-nav" aria-label="Mobile navigation">
+                <button class="active" data-mnav="Home">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  >
+                    <path
+                      d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"
+                    /></svg
+                  >Home
+                </button>
+                <button data-mnav="Feed">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  >
+                    <path d="M4 6h16M4 12h16M4 18h10" /></svg
+                  >Feed
+                </button>
+                <button class="up-btn" data-mnav="Upload" aria-label="Upload">
+                  <svg viewBox="0 0 44 44">
+                    <circle cx="22" cy="22" r="20" fill="#ff5500" />
+                    <path
+                      d="M22 14v16M14 22h16"
+                      stroke="#fff"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </button>
+                <button data-mnav="Library">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  >
+                    <path d="M4 4h16v16H4z" />
+                    <path d="M8 4v16M12 4v16M16 4v16" /></svg
+                  >Library
+                </button>
+                <button data-mnav="Profile">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  >
+                    <circle cx="12" cy="8.5" r="3.8" />
+                    <path d="M4.5 20.5a7.5 7.5 0 0 1 15 0" /></svg
+                  >You
+                </button>
+              </nav>
+
+              <!-- Fullscreen player -->
+              <div class="fs-player fsp-art-1" id="fsPlayer">
+                <div class="fs-top">
+                  <button
+                    class="icon-btn"
+                    id="fsClose"
+                    aria-label="Tutup player"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </button>
+                  <span id="fsSource">Playing from your stream</span>
+                  <button class="icon-btn" data-toast="More options">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="5" cy="12" r="1.5" />
+                      <circle cx="12" cy="12" r="1.5" />
+                      <circle cx="19" cy="12" r="1.5" />
+                    </svg>
+                  </button>
+                </div>
+                <div class="fs-art-wrap">
+                  <div class="fs-art" id="fsArt"></div>
+                </div>
+                <div class="fs-meta">
+                  <div>
+                    <strong id="fsTitle"></strong><span id="fsArtist"></span>
+                  </div>
+                  <button class="icon-btn like-current" aria-label="Like">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                    >
+                      <path
+                        d="M20.8 8.9c0 5.1-8.8 10.1-8.8 10.1S3.2 14 3.2 8.9A4.4 4.4 0 0 1 12 6.4a4.4 4.4 0 0 1 8.8 2.5Z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <div
+                  class="waveform fs-wave seekable"
+                  id="fsWave"
+                  data-count="64"
+                  data-seek
+                ></div>
+                <div class="fs-times">
+                  <span id="fsElapsed">0:00</span
+                  ><span id="fsDuration">0:00</span>
+                </div>
+                <div class="fs-controls">
+                  <button data-shuffle aria-label="Shuffle">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                    >
+                      <path
+                        d="M16 3h5v5M4 20 21 3M21 16v5h-5M4 4l5 5m3 3 4 4"
+                      />
+                    </svg>
+                  </button>
+                  <button data-prev aria-label="Previous">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M6 5h2v14H6zM19 5v14L9 12z" />
+                    </svg>
+                  </button>
+                  <button
+                    class="play-big"
+                    data-toggle-play
+                    aria-label="Play/Pause"
+                  >
+                    <svg data-play-icon viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </button>
+                  <button data-next aria-label="Next">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M16 5h2v14h-2zM5 5v14l10-7z" />
+                    </svg>
+                  </button>
+                  <button data-repeat aria-label="Repeat">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                    >
+                      <path
+                        d="m17 2 4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4m14-1v2a3 3 0 0 1-3 3H3"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <div class="fs-foot">
+                  <button aria-label="Repost" data-toast="Reposted · demo">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                    >
+                      <path
+                        d="m17 2 4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4m14-1v2a3 3 0 0 1-3 3H3"
+                      />
+                    </svg>
+                  </button>
+                  <button aria-label="Share" data-toast="Link copied · demo">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                    >
+                      <path d="M4 12v7h16v-7M12 15V3m0 0 4 4m-4-4L8 7" />
+                    </svg>
+                  </button>
+                  <button aria-label="Queue" data-toast="Queue · demo">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                    >
+                      <path d="M4 6h16M4 12h11M4 18h16M18 9l3 3-3 3" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <span class="gesture-bar"></span>
+              <div class="m-toast" id="mToast" role="status"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stage-hint">
+          Shortcut: tekan <kbd>D</kbd> desktop · <kbd>M</kbd> mobile
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      (function () {
+        "use strict";
+        /* ---------- Data ---------- */
+        const T = [
+          {
+            title: "Golden Hour",
+            artist: "JVKE",
+            dur: "3:42",
+            plays: "2.4M",
+            likes: "48.2K",
+            reposts: "3.1K",
+            genre: "Pop",
+            ago: "2 days ago",
+            art: "art-1",
+            word: "GOLDEN HOUR",
+            seed: 11,
+            av: "av-a",
+          },
+          {
+            title: "blue",
+            artist: "yung kai",
+            dur: "2:31",
+            plays: "865K",
+            likes: "21.6K",
+            reposts: "1.4K",
+            genre: "R&B",
+            ago: "5 hours ago",
+            art: "art-2",
+            word: "BLUE",
+            seed: 23,
+            av: "av-b",
+          },
+          {
+            title: "Snooze (Acoustic)",
+            artist: "SZA",
+            dur: "3:12",
+            plays: "1.8M",
+            likes: "32.1K",
+            reposts: "2.2K",
+            genre: "R&B",
+            ago: "1 day ago",
+            art: "art-3",
+            word: "SNOOZE",
+            seed: 37,
+            av: "av-c",
+          },
+          {
+            title: "Beranjak Dewasa",
+            artist: "Nadin Amizah",
+            dur: "4:02",
+            plays: "724K",
+            likes: "19.8K",
+            reposts: "980",
+            genre: "Indie Pop",
+            ago: "3 days ago",
+            art: "art-4",
+            word: "BERANJAK",
+            seed: 41,
+            av: "av-d",
+          },
+          {
+            title: "Tiba-Tiba",
+            artist: "Quinn Salman",
+            dur: "3:18",
+            plays: "531K",
+            likes: "11.4K",
+            reposts: "640",
+            genre: "Pop",
+            ago: "1 week ago",
+            art: "art-5",
+            word: "TIBA-TIBA",
+            seed: 53,
+            av: "av-e",
+          },
+          {
+            title: "Back on 74",
+            artist: "Jungle",
+            dur: "3:29",
+            plays: "3.1M",
+            likes: "66.7K",
+            reposts: "5.8K",
+            genre: "Electronic",
+            ago: "4 days ago",
+            art: "art-6",
+            word: "VOLCANO",
+            seed: 67,
+            av: "av-f",
+          },
+          {
+            title: "The Recipe",
+            artist: "SiR",
+            dur: "3:56",
+            plays: "428K",
+            likes: "9.2K",
+            reposts: "410",
+            genre: "Hip-hop",
+            ago: "6 hours ago",
+            art: "art-7",
+            word: "THE RECIPE",
+            seed: 71,
+            av: "av-g",
+          },
+          {
+            title: "Sunset Lover",
+            artist: "Petit Biscuit",
+            dur: "3:57",
+            plays: "1.2M",
+            likes: "28.4K",
+            reposts: "2.9K",
+            genre: "Electronic",
+            ago: "2 weeks ago",
+            art: "art-8",
+            word: "SUNSET",
+            seed: 83,
+            av: "av-h",
+          },
+        ];
+        const REC = [0, 5, 2, 3, 7],
+          FRESH = [6, 1, 4, 2, 5],
+          FEED = [0, 3, 6, 1, 4, 7],
+          HIST = [2, 0, 7, 5],
+          CHART = [5, 0, 1, 7, 3],
+          MREC = [7, 5, 0, 3, 6],
+          MTREND = [5, 0, 7, 2, 4],
+          MSTREAM = [3, 1, 6, 4, 2];
+        const FOLLOWS = [
+          {
+            n: "Olivia Dean",
+            d: "Singer-songwriter · London",
+            f: "1.2M followers",
+            av: "av-c",
+          },
+          {
+            n: "Hindia",
+            d: "Musician · Jakarta",
+            f: "890K followers",
+            av: "av-e",
+          },
+          {
+            n: "Jordan Rakei",
+            d: "Producer · New Zealand",
+            f: "412K followers",
+            av: "av-b",
+          },
+        ];
+
+        const $ = (s) => document.querySelector(s),
+          $$ = (s) => document.querySelectorAll(s);
+        let current = 0,
+          playing = false,
+          elapsed = 0,
+          lastTs = null;
+        const liked = new Set([0]),
+          reposted = new Set();
+        const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+        const P_PLAY = '<path d="M8 5v14l11-7z"/>',
+          P_PAUSE = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
+        const I = {
+          play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+          heart:
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20.8 8.9c0 5.1-8.8 10.1-8.8 10.1S3.2 14 3.2 8.9A4.4 4.4 0 0 1 12 6.4a4.4 4.4 0 0 1 8.8 2.5Z"/></svg>',
+          repost:
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m17 2 4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4m14-1v2a3 3 0 0 1-3 3H3"/></svg>',
+          share:
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 12v7h16v-7M12 15V3m0 0 4 4m-4-4L8 7"/></svg>',
+          dots: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>',
+        };
+
+        /* ---------- Waveform generator (deterministik) ---------- */
+        function prng(a) {
+          return function () {
+            a |= 0;
+            a = (a + 0x6d2b79f5) | 0;
+            let t = Math.imul(a ^ (a >>> 15), 1 | a);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+          };
+        }
+        const wfCache = {};
+        function bars(seed, n) {
+          const k = seed + "-" + n;
+          if (wfCache[k]) return wfCache[k];
+          const r = prng(seed),
+            out = [];
+          let v = 0.45;
+          for (let i = 0; i < n; i++) {
+            v += (r() - 0.5) * 0.5;
+            v = Math.min(1, Math.max(0.15, v));
+            let h =
+              (r() > 0.94 ? 1 : v) *
+              Math.pow(Math.sin((Math.PI * i) / n), 0.32) *
+              (0.7 + r() * 0.3);
+            out.push(Math.max(0.12, Math.min(1, h)));
+          }
+          return (wfCache[k] = out);
+        }
+        function barsHTML(seed, n) {
+          return bars(seed, n)
+            .map((h) => `<i style="height:${(h * 100).toFixed(1)}%"></i>`)
+            .join("");
+        }
+        function setWave(el, trackId, count) {
+          el.dataset.wfTrack = trackId;
+          const b = barsHTML(T[trackId].seed, count);
+          el.innerHTML = `<div class="wf-layer wf-base">${b}</div><div class="wf-layer wf-fill">${b}</div>`;
+        }
+        function waveHTML(id, count, cls) {
+          return `<div class="waveform seekable ${cls || ""}" data-wf-track="${id}" data-count="${count}" data-seek aria-hidden="true"><div class="wf-layer wf-base">${barsHTML(T[id].seed, count)}</div><div class="wf-layer wf-fill">${barsHTML(T[id].seed, count)}</div></div>`;
+        }
+
+        /* ---------- Util ---------- */
+        const parseDur = (d) => {
+          const [a, b] = d.split(":").map(Number);
+          return a * 60 + b;
+        };
+        const fmt = (s) => {
+          s = Math.max(0, Math.floor(s));
+          return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+        };
+        function toastHost() {
+          return document.body.classList.contains("mode-mobile")
+            ? $("#mToast")
+            : $("#toast");
+        }
+        let toastTimer = null;
+        function notify(msg) {
+          const el = toastHost();
+          if (!el) return;
+          $$("#toast,#mToast").forEach((t) => t.classList.remove("show"));
+          el.textContent = msg;
+          el.classList.add("show");
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(() => el.classList.remove("show"), 2200);
+        }
+
+        /* ---------- Render: desktop ---------- */
+        function artEl(t, withWord) {
+          return `<div class="artwork ${t.art}">${withWord ? `<span class="art-word">${t.word}</span>` : ""}</div>`;
+        }
+
+        function feedHTML(t, id) {
+          return `<article class="feed-item" data-feed-track="${id}">
+      <div class="feed-left">
+        <div class="feed-art" data-play="${id}">${artEl(t, true)}</div>
+        <button class="feed-play" data-play="${id}" aria-label="Putar ${t.title}"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+      </div>
+      <div class="feed-right">
+        <div class="feed-head"><span class="avatar-sm ${t.av}"></span><span class="feed-user">${t.artist}</span><span class="feed-ago">· ${t.ago}</span><span class="genre-pill">${t.genre}</span></div>
+        <h3 class="feed-title">${t.title}</h3>
+        ${waveHTML(id, 110, "lg")}
+        <div class="feed-foot">
+          <div class="feed-stats"><span>${I.play}${t.plays} plays</span><span>${I.heart}${t.likes}</span><span>${I.repost}${t.reposts}</span></div>
+          <div class="feed-actions">
+            <button class="ghost-btn${liked.has(id) ? " on" : ""}" data-like="${id}">${I.heart}<span>Like</span></button>
+            <button class="ghost-btn${reposted.has(id) ? " on" : ""}" data-repost="${id}">${I.repost}<span>Repost</span></button>
+            <button class="ghost-btn" data-share>${I.share}<span>Share</span></button>
+            <button class="ghost-btn" data-toast="More options for ${t.title}">${I.dots}</button>
+          </div>
+        </div>
+      </div>
+    </article>`;
+        }
+        function renderFeed(q) {
+          const query = (q || "").toLowerCase(),
+            list = $("#feedList");
+          const ids = FEED.filter((i) =>
+            (T[i].title + " " + T[i].artist).toLowerCase().includes(query),
+          );
+          list.innerHTML = ids.map((i) => feedHTML(T[i], i)).join("");
+          $("#feedEmpty").hidden = ids.length > 0;
+        }
+        function cardHTML(t, id) {
+          return `<article class="music-card" data-track="${id}" tabindex="0" role="button" aria-label="Putar ${t.title}">
+      <div class="artwork ${t.art}"><span class="art-word">${t.word}</span>
+        <button class="card-play" data-play="${id}" aria-label="Play ${t.title}"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+      </div>
+      <div class="card-title">${t.title}</div><div class="card-artist">by ${t.artist}</div><div class="card-meta">${t.plays} plays · ${t.genre}</div>
+    </article>`;
+        }
+        function renderCards(id, ids) {
+          $(id).innerHTML = ids.map((i) => cardHTML(T[i], i)).join("");
+        }
+        function renderRail() {
+          $("#histList").innerHTML = HIST.map(
+            (i) =>
+              `<div class="history-item" data-play="${i}"><div class="history-art">${artEl(T[i], false)}</div><div class="history-copy"><strong>${T[i].title}</strong><span>${T[i].artist}</span></div></div>`,
+          ).join("");
+          $("#chartList").innerHTML = CHART.map(
+            (ti, n) =>
+              `<div class="chart-entry" data-play="${ti}"><span class="chart-number">0${n + 1}</span><div class="history-art">${artEl(T[ti], false)}</div><div><strong>${T[ti].title}</strong><span>${T[ti].artist}</span></div></div>`,
+          ).join("");
+          $("#followList").innerHTML = FOLLOWS.map(
+            (f) =>
+              `<div class="follow-item"><span class="avatar-sm ${f.av}" style="width:34px;height:34px"></span><div class="follow-copy"><strong>${f.n}</strong><span>${f.d} · ${f.f}</span></div><button class="follow-btn">Follow</button></div>`,
+          ).join("");
+        }
+
+        /* ---------- Render: mobile ---------- */
+        function renderMobile() {
+          $("#mRec").innerHTML = MREC.map(
+            (i) =>
+              `<div class="m-card" data-play="${i}"><div class="artwork ${T[i].art}"><span class="art-word">${T[i].word}</span></div><strong>${T[i].title}</strong><span>Mix · ${T[i].artist}</span></div>`,
+          ).join("");
+          $("#mTrend").innerHTML = MTREND.map(
+            (ti, n) =>
+              `<div class="m-row" data-play="${ti}"><span class="rank">${n + 1}</span><div class="m-art">${artEl(T[ti], false)}</div><div class="m-info"><strong data-row-title>${T[ti].title}</strong><span>${T[ti].artist}</span></div><span class="m-dur">${T[ti].dur}</span></div>`,
+          ).join("");
+          $("#mStream").innerHTML = MSTREAM.map(
+            (i) =>
+              `<div class="m-row" data-play="${i}"><div class="m-art">${artEl(T[i], false)}</div><div class="m-info"><strong data-row-title>${T[i].title}</strong><span>${T[i].artist}</span>${waveHTML(i, 42, "xs")}</div><span class="m-dur">${T[i].dur}</span><button class="icon-btn" data-toast="More options">${I.dots}</button></div>`,
+          ).join("");
+        }
+
+        /* ---------- State / player ---------- */
+        function refreshProgress() {
+          const dur = parseDur(T[current].dur),
+            p = Math.min(100, (elapsed / dur) * 100);
+          $$('.waveform[data-wf-track="' + current + '"] .wf-fill').forEach(
+            (el) => (el.style.clipPath = `inset(0 ${100 - p}% 0 0)`),
+          );
+          const mp = $("#mProg");
+          if (mp) mp.style.width = p + "%";
+          $("#dElapsed").textContent = fmt(elapsed);
+          $("#dDuration").textContent = T[current].dur;
+          $("#fsElapsed").textContent = fmt(elapsed);
+          $("#fsDuration").textContent = T[current].dur;
+        }
+        function resetOtherWaves() {
+          $$(".waveform").forEach((w) => {
+            if (+w.dataset.wfTrack !== current) {
+              const f = w.querySelector(".wf-fill");
+              if (f) f.style.clipPath = "inset(0 100% 0 0)";
+            }
+          });
+        }
+        function refreshStateUI() {
+          const t = T[current],
+            eqHTML = playing
+              ? '<span class="eq"><i></i><i></i><i></i></span>'
+              : "";
+          // play/pause icons di semua tombol
+          $$("[data-play-icon]").forEach(
+            (svg) => (svg.innerHTML = playing ? P_PAUSE : P_PLAY),
+          );
+          $$("[data-toggle-play]").forEach((b) =>
+            b.setAttribute("aria-label", playing ? "Pause" : "Play"),
+          );
+          // play button di artwork
+          $$("[data-play]").forEach((b) => {
+            const id = +b.dataset.play,
+              on = id === current && playing;
+            const svg = b.querySelector("svg");
+            if (svg) svg.innerHTML = on ? P_PAUSE : P_PLAY;
+          });
+          // judul baris + equalizer
+          $$("[data-row-title]").forEach((el) => {
+            const row = el.closest("[data-play]");
+            const id = row ? +row.dataset.play : -1;
+            el.innerHTML = T[id].title + (id === current ? eqHTML : "");
+          });
+          // waveform playing class + like
+          $$(".waveform").forEach((w) =>
+            w.classList.toggle(
+              "playing",
+              playing && +w.dataset.wfTrack === current,
+            ),
+          );
+          $$(".like-current").forEach((b) =>
+            b.classList.toggle("liked", liked.has(current)),
+          );
+          $$(".icon-btn[data-like], .ghost-btn[data-like]").forEach(() => {});
+          $$(`.ghost-btn[data-like]`).forEach((b) =>
+            b.classList.toggle("on", liked.has(+b.dataset.like)),
+          );
+          $$(`.ghost-btn[data-repost]`).forEach((b) =>
+            b.classList.toggle("on", reposted.has(+b.dataset.repost)),
+          );
+          $$(".feed-item").forEach((f) =>
+            f.classList.toggle("is-current", +f.dataset.feedTrack === current),
+          );
+          // fullscreen player class
+          const fs = $("#fsPlayer");
+          fs.className =
+            "fs-player fsp-art-" +
+            t.art.split("-")[1] +
+            (fs.classList.contains("open") ? " open" : "") +
+            (playing ? " playing" : "");
+        }
+        function refreshAll() {
+          const t = T[current];
+          $("#dTitle").textContent = t.title;
+          $("#dArtist").textContent = t.artist;
+          $("#dArt").innerHTML = artEl(t, false);
+          $("#mTitle").textContent = t.title;
+          $("#mArtist").textContent = t.artist;
+          $("#mArt").innerHTML = artEl(t, false);
+          $("#fsTitle").textContent = t.title;
+          $("#fsArtist").textContent = t.artist;
+          $("#fsArt").innerHTML = artEl(t, true);
+          setWave($("#pWave"), current, 110);
+          setWave($("#fsWave"), current, 64);
+          resetOtherWaves();
+          refreshProgress();
+          refreshStateUI();
+        }
+        function togglePlay() {
+          playing = !playing;
+          refreshStateUI();
+          if (playing)
+            notify("Now playing: " + T[current].title + " · demo player");
+        }
+        function playTrack(id, atRatio) {
+          id = +id;
+          const changed = id !== current;
+          current = id;
+          if (changed) elapsed = 0;
+          if (atRatio != null) elapsed = atRatio * parseDur(T[id].dur);
+          playing = true;
+          refreshAll();
+        }
+        function pickNext(dir) {
+          let n;
+          if ($("#shuffleBtn").classList.contains("active") && !reduced) {
+            do {
+              n = Math.floor(Math.random() * T.length);
+            } while (n === current && T.length > 1);
+          } else n = (current + dir + T.length) % T.length;
+          current = n;
+          elapsed = 0;
+          if (playing) refreshAll();
+          else {
+            refreshAll();
+            playing = true;
+            refreshStateUI();
+          }
+        }
+        function prevTrack() {
+          if (elapsed > 4) elapsed = 0;
+          else {
+            current = (current - 1 + T.length) % T.length;
+            elapsed = 0;
+          }
+          refreshAll();
+        }
+
+        /* rAF loop — progress waveform mulus */
+        function loop(ts) {
+          if (lastTs == null) lastTs = ts;
+          const dt = (ts - lastTs) / 1000;
+          lastTs = ts;
+          if (playing) {
+            elapsed += dt;
+            const dur = parseDur(T[current].dur);
+            if (elapsed >= dur) {
+              elapsed = 0;
+              if ($("#repeatBtn").classList.contains("active")) {
+                refreshProgress();
+              } else {
+                current = (current + 1) % T.length;
+                refreshAll();
+              }
+            }
+          }
+          if (playing) refreshProgress();
+          requestAnimationFrame(loop);
+        }
+
+        /* ---------- Wire: waveform seek ---------- */
+        function wireSeek(el) {
+          let drag = false;
+          const apply = (x) => {
+            const r = el.getBoundingClientRect();
+            const ratio = Math.min(1, Math.max(0, (x - r.left) / r.width));
+            const id = +el.dataset.wfTrack;
+            if (id !== current) {
+              playTrack(id, ratio);
+              return;
+            }
+            elapsed = ratio * parseDur(T[id].dur);
+            refreshProgress();
+          };
+          el.addEventListener("pointerdown", (e) => {
+            drag = true;
+            el.setPointerCapture(e.pointerId);
+            apply(e.clientX);
+            e.stopPropagation();
+            e.preventDefault();
+          });
+          el.addEventListener("pointermove", (e) => {
+            if (drag) apply(e.clientX);
+            const r = el.getBoundingClientRect();
+            el.style.setProperty(
+              "--hx",
+              ((e.clientX - r.left) / r.width) * 100 + "%",
+            );
+          });
+          ["pointerup", "pointercancel"].forEach((ev) =>
+            el.addEventListener(ev, () => (drag = false)),
+          );
+        }
+        function wireAllSeeks() {
+          $$(".waveform[data-seek]").forEach((el) => {
+            if (!el.dataset.wired) {
+              el.dataset.wired = "1";
+              wireSeek(el);
+            }
+          });
+        }
+
+        /* ---------- Init ---------- */
+        renderFeed();
+        renderCards("#cardsRec", REC);
+        renderCards("#cardsFresh", FRESH);
+        renderRail();
+        renderMobile();
+        refreshAll();
+        wireAllSeeks();
+        requestAnimationFrame(loop);
+
+        /* jam status bar + greeting */
+        function tickClock() {
+          const d = new Date();
+          $("#mClock").textContent =
+            String(d.getHours()).padStart(2, "0") +
+            ":" +
+            String(d.getMinutes()).padStart(2, "0");
+          const h = d.getHours(),
+            g =
+              h < 4
+                ? "Good night"
+                : h < 11
+                  ? "Good morning"
+                  : h < 15
+                    ? "Good afternoon"
+                    : h < 19
+                      ? "Good evening"
+                      : "Good night";
+          $("#mGreet").textContent = g + ", Raka";
+        }
+        tickClock();
+        setInterval(tickClock, 20000);
+
+        /* volume */
+        const vol = $("#volume");
+        const volPaint = () =>
+          (vol.style.background = `linear-gradient(90deg,var(--orange) ${vol.value}%,#ddd ${vol.value}%)`);
+        vol.addEventListener("input", volPaint);
+        volPaint();
+
+        /* ---------- Delegasi klik global ---------- */
+        document.addEventListener("click", (e) => {
+          const tg = e.target;
+          if (tg.closest(".waveform")) return; // seek sudah via pointer events
+          if (tg.closest("[data-toggle-play]")) {
+            togglePlay();
+            return;
+          }
+          if (tg.closest("[data-prev]")) {
+            prevTrack();
+            return;
+          }
+          if (tg.closest("[data-next]")) {
+            pickNext(1);
+            return;
+          }
+          const p = tg.closest("[data-play]");
+          if (p) {
+            playTrack(p.dataset.play);
+            return;
+          }
+          const card = tg.closest(".music-card");
+          if (card) {
+            playTrack(card.dataset.track);
+            return;
+          }
+          const like = tg.closest("[data-like]");
+          if (like) {
+            const id = +like.dataset.like;
+            liked.has(id) ? liked.delete(id) : liked.add(id);
+            notify(
+              liked.has(id)
+                ? "Added to Liked tracks"
+                : "Removed from Liked tracks",
+            );
+            refreshStateUI();
+            return;
+          }
+          if (tg.closest(".like-current")) {
+            liked.has(current) ? liked.delete(current) : liked.add(current);
+            notify(
+              liked.has(current)
+                ? "Added to Liked tracks"
+                : "Removed from Liked tracks",
+            );
+            refreshStateUI();
+            return;
+          }
+          const rp = tg.closest("[data-repost]");
+          if (rp) {
+            const id = +rp.dataset.repost;
+            reposted.has(id) ? reposted.delete(id) : reposted.add(id);
+            notify(
+              reposted.has(id) ? "Reposted to your profile" : "Repost removed",
+            );
+            refreshStateUI();
+            return;
+          }
+          if (tg.closest("[data-share]")) {
+            notify("Link copied to clipboard · demo");
+            return;
+          }
+          const fb = tg.closest(".follow-btn");
+          if (fb) {
+            fb.classList.toggle("following");
+            fb.textContent = fb.classList.contains("following")
+              ? "Following"
+              : "Follow";
+            return;
+          }
+          const mn = tg.closest("[data-mnav]");
+          if (mn) {
+            $$("[data-mnav]").forEach((b) => b.classList.remove("active"));
+            mn.classList.add("active");
+            const name = mn.dataset.mnav;
+            if (name === "Home")
+              $("#appScroll").scrollTo({ top: 0, behavior: "smooth" });
+            notify(
+              name === "Upload"
+                ? "Upload is coming soon · demo"
+                : name + " · demo navigation",
+            );
+            return;
+          }
+          const nav = tg.closest("[data-nav]");
+          if (nav) {
+            $$("[data-nav]").forEach((b) => b.classList.remove("active"));
+            $$(`[data-nav="${nav.dataset.nav}"]`).forEach((b) =>
+              b.classList.add("active"),
+            );
+            notify(nav.dataset.nav + " selected · demo navigation");
+            return;
+          }
+          if (tg.closest("#miniPlayer")) {
+            $("#fsPlayer").classList.add("open");
+            return;
+          }
+          if (tg.closest("#fsClose")) {
+            $("#fsPlayer").classList.remove("open");
+            return;
+          }
+          const tst = tg.closest("[data-toast]");
+          if (tst) {
+            e.preventDefault();
+            notify(tst.dataset.toast);
+            return;
+          }
+        });
+
+        document.addEventListener("keydown", (e) => {
+          if (e.target.matches("input")) return;
+          if (e.key === "Enter" || e.key === " ") {
+            const card = e.target.closest(".music-card");
+            if (card) {
+              e.preventDefault();
+              playTrack(card.dataset.track);
+            }
+          }
+          const k = e.key.toLowerCase();
+          if (k === "d") setMode("desktop");
+          if (k === "m") setMode("mobile");
+          if (k === "escape") $("#fsPlayer").classList.remove("open");
+        });
+
+        /* search (desktop) */
+        $("#searchInput").addEventListener("input", (e) => {
+          const q = e.target.value.trim();
+          renderFeed(q);
+          $("#feedTitle").textContent = q ? "Search results" : "Your stream";
+          $("#feedSub").textContent = q
+            ? `Matching “${q}”`
+            : "Latest from creators you follow";
+        });
+
+        /* banner Go+ */
+        $("#closeGo").addEventListener("click", () => {
+          $("#goBanner").style.display = "none";
+        });
+        $("#btnGo").addEventListener("click", () =>
+          notify("SoundCloud Go+ trial started · demo"),
+        );
+        $("#profileBtn").addEventListener("click", () =>
+          notify("Profile menu · demo"),
+        );
+        $("#shuffleBtn").addEventListener("click", (e) => {
+          e.currentTarget.classList.toggle("active");
+          notify(
+            e.currentTarget.classList.contains("active")
+              ? "Shuffle on"
+              : "Shuffle off",
+          );
+        });
+        $("#repeatBtn").addEventListener("click", (e) => {
+          e.currentTarget.classList.toggle("active");
+          notify(
+            e.currentTarget.classList.contains("active")
+              ? "Repeat on"
+              : "Repeat off",
+          );
+        });
+        $$(".fs-controls [data-shuffle]").forEach((b) =>
+          b.addEventListener("click", () => $("#shuffleBtn").click()),
+        );
+        $$(".fs-controls [data-repeat]").forEach((b) =>
+          b.addEventListener("click", () => $("#repeatBtn").click()),
+        );
+
+        /* ---------- Mode switcher ---------- */
+        function setMode(mode) {
+          document.body.classList.toggle("mode-desktop", mode === "desktop");
+          document.body.classList.toggle("mode-mobile", mode === "mobile");
+          $("#swDesktop").classList.toggle("is-active", mode === "desktop");
+          $("#swMobile").classList.toggle("is-active", mode === "mobile");
+          window.scrollTo(0, 0);
+          setTimeout(
+            () =>
+              notify(
+                mode === "mobile"
+                  ? "Mobile preview · Pixel frame"
+                  : "Desktop view · SoundCloud web",
+              ),
+            120,
+          );
+        }
+        $("#swDesktop").addEventListener("click", () => setMode("desktop"));
+        $("#swMobile").addEventListener("click", () => setMode("mobile"));
+      })();
+    </script>
+  </body>
+</html>

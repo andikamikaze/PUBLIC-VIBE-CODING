@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#047857">
+<meta name="description" content="Kalkulator HPP (Harga Pokok Penjualan): hitung biaya bahan baku, kemasan, dan overhead produksi, simulasi margin keuntungan, simpan resep produk, dan dapatkan rekomendasi harga jual kompetitif.">
+<title>Aplikasi Harga Pokok Penjualan &amp; Harga Jual</title>
+<style>
+:root{
+  --bg:#f1f5f9;--card:#ffffff;--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;
+  --primary:#059669;--primary-dark:#047857;--primary-soft:#ecfdf5;--primary-line:#a7f3d0;
+  --bahan:#d97706;--bahan-soft:#fffbeb;--bahan-line:#fde68a;
+  --kemasan:#2563eb;--kemasan-soft:#eff6ff;--kemasan-line:#bfdbfe;
+  --overhead:#7c3aed;--overhead-soft:#f5f3ff;--overhead-line:#ddd6fe;
+  --danger:#dc2626;--danger-soft:#fef2f2;
+  --warn:#b45309;--warn-soft:#fffbeb;--warn-line:#fcd34d;
+  --radius:16px;
+  --shadow:0 1px 2px rgba(15,23,42,.05),0 8px 24px rgba(15,23,42,.07);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased;padding-bottom:30px}
+.container{max-width:1060px;margin:0 auto;padding:0 20px}
+
+/* ===== Header ===== */
+.hero{background:linear-gradient(135deg,#064e3b 0%,#047857 48%,#059669 100%);color:#fff;padding:42px 0 36px}
+.hero-inner{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;flex-wrap:wrap}
+.brand{display:flex;gap:14px;align-items:center}
+.brand-mark{width:48px;height:48px;border-radius:13px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.32);display:grid;place-items:center;font-weight:800;font-size:.92rem;flex:none}
+.hero h1{font-size:clamp(1.65rem,3.6vw,2.35rem);letter-spacing:-.02em;line-height:1.12}
+.tagline{opacity:.92;max-width:640px;margin-top:7px;font-size:.96rem}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+/* ===== Tombol ===== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;cursor:pointer;font:inherit;font-weight:700;border-radius:10px;padding:10px 18px;font-size:.93rem;transition:background .15s,transform .08s,box-shadow .15s;text-decoration:none}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 6px 16px rgba(5,150,105,.28)}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-ghost{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.35)}
+.btn-ghost:hover{background:rgba(255,255,255,.22)}
+.btn-outline{background:#fff;color:var(--primary-dark);border:1.5px solid var(--primary)}
+.btn-outline:hover{background:var(--primary-soft)}
+.btn-danger-outline{background:#fff;color:var(--danger);border:1.5px solid #fca5a5}
+.btn-danger-outline:hover{background:var(--danger-soft)}
+.btn-sm{padding:7px 13px;font-size:.85rem;border-radius:8px}
+
+/* ===== Bar ringkasan menempel ===== */
+.sticky-bar{position:sticky;top:0;z-index:50;background:rgba(15,23,42,.93);backdrop-filter:blur(8px);color:#fff;box-shadow:0 4px 18px rgba(15,23,42,.28)}
+.sticky-inner{max-width:1060px;margin:0 auto;padding:9px 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.sb-item{display:flex;flex-direction:column;line-height:1.3}
+.sb-label{font-size:.66rem;text-transform:uppercase;letter-spacing:.09em;color:#94a3b8;font-weight:700}
+.sb-item strong{font-size:1.02rem;white-space:nowrap}
+
+/* ===== Kartu seksi ===== */
+section.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px 24px 20px;margin-top:26px;border:1px solid rgba(226,232,240,.7)}
+.sec-head{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px}
+.sec-num{flex:none;width:34px;height:34px;border-radius:10px;background:var(--primary-soft);color:var(--primary-dark);font-weight:800;display:grid;place-items:center}
+.sec-head h2{font-size:1.22rem;letter-spacing:-.01em}
+.sec-sub{color:var(--muted);font-size:.89rem;margin-top:2px}
+
+/* ===== Form ===== */
+input[type=text],input[type=number],input[type=date],select{width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font:inherit;font-size:.94rem;background:#fff;color:var(--ink);transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(5,150,105,.13)}
+input[type=number],.f-harga{text-align:right}
+label,.lbl{display:block;font-size:.8rem;font-weight:700;color:#334155;margin-bottom:6px}
+label small{font-weight:500;color:var(--muted)}
+.grid-info{display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px}
+.field .hint{margin-top:6px}
+.hint{font-size:.84rem;color:var(--muted)}
+.mt14{margin-top:14px}
+
+/* ===== Kategori biaya ===== */
+.kategori{border:1.5px solid var(--line);border-radius:14px;padding:16px;margin-top:14px}
+.k-bahan{background:var(--bahan-soft);border-color:var(--bahan-line)}
+.k-kemasan{background:var(--kemasan-soft);border-color:var(--kemasan-line)}
+.k-overhead{background:var(--overhead-soft);border-color:var(--overhead-line)}
+.kat-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.kat-head h3{font-size:1rem;display:flex;align-items:center;gap:8px}
+.dot{width:11px;height:11px;border-radius:4px;display:inline-block;flex:none}
+.kat-desc{font-size:.8rem;color:var(--muted);font-weight:400;margin-top:2px}
+.row-grid{display:grid;grid-template-columns:minmax(150px,1fr) 68px 86px 120px 120px 34px;gap:8px;align-items:center}
+.rows-head{padding-bottom:8px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.rows-head span:nth-child(4),.rows-head span:nth-child(5){text-align:right}
+.rows .row{padding:2px 0}
+.f-subtotal{font-weight:700;text-align:right;white-space:nowrap;font-size:.92rem;min-height:1.45rem}
+.btn-del{width:34px;height:37px;border:none;background:#fee2e2;color:#dc2626;border-radius:9px;cursor:pointer;font-size:1.2rem;line-height:1;transition:background .15s}
+.btn-del:hover{background:#fecaca}
+.kat-total{display:flex;justify-content:space-between;gap:6px;padding-top:10px;border-top:1.5px dashed rgba(100,116,139,.35);margin-top:10px;font-size:.93rem;color:#334155}
+.rows-wrap{overflow-x:auto;padding-bottom:4px}
+
+/* ===== Kartu statistik ===== */
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.stat-card{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px 16px}
+.stat-label{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.stat-card .amt{display:block;font-size:1.22rem;margin-top:3px;letter-spacing:-.01em}
+.stat-sub{font-size:.79rem;color:var(--muted);margin-top:1px;display:block}
+.bar{height:6px;border-radius:4px;background:#eef2f7;margin-top:10px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:4px;width:0%;transition:width .35s}
+
+/* ===== Panel HPP + donat ===== */
+.hpp-wrap{display:grid;grid-template-columns:1.25fr .95fr;gap:16px;margin-top:16px}
+.hpp-panel{background:linear-gradient(135deg,#064e3b,#047857);border-radius:16px;color:#fff;padding:22px 24px;display:flex;flex-direction:column;justify-content:center}
+.hpp-panel .stat-label{color:#a7f3d0}
+.hpp-big{font-size:clamp(1.9rem,4vw,2.6rem);font-weight:800;letter-spacing:-.02em;margin:4px 0 2px}
+.hpp-sub{color:#d1fae5;font-size:.87rem}
+.hpp-mini{display:flex;gap:26px;margin-top:14px;flex-wrap:wrap}
+.hpp-mini span{display:block;font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:#a7f3d0;font-weight:700}
+.hpp-mini strong{font-size:1.02rem}
+.donut-card{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:18px;display:flex;gap:20px;align-items:center;justify-content:center;flex-wrap:wrap}
+.donut{width:150px;height:150px;border-radius:50%;background:#e2e8f0;flex:none;display:grid;place-items:center}
+.donut-hole{width:92px;height:92px;border-radius:50%;background:#fff;display:grid;place-items:center;text-align:center;box-shadow:inset 0 0 0 1.5px var(--line)}
+.donut-hole span{font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);display:block;font-weight:700}
+.donut-hole strong{font-size:.84rem;display:block;white-space:nowrap}
+.legend{display:flex;flex-direction:column;gap:10px;font-size:.9rem;min-width:200px}
+.leg-item{display:flex;align-items:center;gap:9px}
+.leg-dot{width:12px;height:12px;border-radius:4px;flex:none}
+.leg-item b{margin-left:auto;white-space:nowrap;font-size:.86rem}
+
+/* ===== Simulasi ===== */
+.sim-grid{display:grid;grid-template-columns:1.05fr 1fr;gap:22px}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:#eef2f7;border-radius:11px;padding:4px;gap:4px}
+.seg button{border:none;background:transparent;padding:9px 8px;border-radius:8px;font:inherit;font-weight:700;font-size:.87rem;color:var(--muted);cursor:pointer;transition:all .15s}
+.seg button.active{background:#fff;color:var(--primary-dark);box-shadow:0 1px 5px rgba(15,23,42,.14)}
+.persen-input{display:flex;align-items:center;gap:7px}
+.persen-input span{font-weight:700;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--primary);margin-top:14px}
+.range-marks{display:flex;justify-content:space-between;font-size:.68rem;color:var(--muted);margin-top:3px}
+.hint-mode{font-size:.82rem;color:var(--muted);margin-top:10px;min-height:2.4em}
+.note{background:#f8fafc;border-left:4px solid var(--primary);padding:11px 14px;border-radius:0 10px 10px 0;font-size:.89rem;margin-top:14px}
+.note-warn{background:var(--warn-soft);border-left-color:#d97706}
+.result-panel{background:var(--primary-soft);border:1.5px solid var(--primary-line);border-radius:14px;padding:20px;display:flex;flex-direction:column;justify-content:center}
+.result-big{font-size:clamp(1.7rem,3.5vw,2.3rem);font-weight:800;color:var(--primary-dark);letter-spacing:-.02em;margin:3px 0 4px}
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.result-grid>div{background:#fff;border-radius:10px;padding:9px 12px}
+.result-grid span{display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+.result-grid strong{font-size:1.02rem}
+
+/* ===== Rekomendasi ===== */
+.grid-komp{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+.rec-final{border-color:var(--primary-line);background:var(--primary-soft)}
+.rec-final .amt{color:var(--primary-dark);font-size:1.42rem}
+.rec-final.warn{border-color:var(--warn-line);background:var(--warn-soft)}
+.rec-final.warn .amt{color:var(--warn)}
+.mini-title{font-size:.95rem;margin:18px 0 8px}
+.table-wrap{overflow-x:auto}
+.harga-table{width:100%;border-collapse:collapse;font-size:.9rem;min-width:520px}
+.harga-table th,.harga-table td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.harga-table th{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.harga-table th:first-child,.harga-table td:first-child{text-align:left}
+.harga-table tbody tr:hover{background:#f8fafc}
+.harga-table tr.hl{background:var(--primary-soft)}
+.harga-table tr.hl td{font-weight:700;color:var(--primary-dark)}
+
+/* ===== Resep ===== */
+.resep-save{display:flex;gap:10px;flex-wrap:wrap}
+.resep-save input{flex:1;min-width:220px}
+.resep-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.hint-inline{font-size:.8rem;color:var(--muted)}
+.resep-item{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:10px;flex-wrap:wrap}
+.resep-item:hover{border-color:#cbd5e1}
+.resep-info strong{font-size:.98rem}
+.resep-meta{display:block;font-size:.8rem;color:var(--muted);margin-top:2px}
+.resep-actions{display:flex;gap:8px}
+.empty{border:1.5px dashed var(--line);border-radius:12px;padding:24px;text-align:center;color:var(--muted);font-size:.9rem;margin-top:12px}
+
+/* ===== Toast & footer ===== */
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,16px);background:#0f172a;color:#fff;padding:11px 20px;border-radius:12px;font-size:.9rem;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:99;box-shadow:0 10px 30px rgba(15,23,42,.4);max-width:min(90vw,480px)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast.err{background:#b91c1c}
+footer{margin-top:34px;padding:26px 0 8px;text-align:center;color:var(--muted);font-size:.84rem}
+footer p+p{margin-top:4px}
+
+/* ===== Responsif ===== */
+@media (max-width:860px){
+  .sim-grid{grid-template-columns:1fr}
+  .hpp-wrap{grid-template-columns:1fr}
+  .grid-komp{grid-template-columns:1fr 1fr}
+}
+@media (max-width:700px){
+  .grid-3{grid-template-columns:1fr}
+  .grid-info{grid-template-columns:1fr}
+  .sticky-inner{grid-template-columns:repeat(2,1fr);gap:6px 14px}
+  .row-grid{min-width:540px}
+  section.card{padding:18px 14px 16px}
+}
+
+/* ===== Cetak ===== */
+@media print{
+  .no-print{display:none!important}
+  .sticky-bar{display:none!important}
+  .btn-del,.btn-add,.resep-actions,.resep-tools,.resep-save,.hero-actions{display:none!important}
+  body{background:#fff;padding:0}
+  section.card{box-shadow:none;border:1px solid #cbd5e1;break-inside:avoid;margin-top:14px}
+  .hero{padding:24px 0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="container hero-inner">
+    <div class="brand">
+      <div class="brand-mark">HPP</div>
+      <div>
+        <h1>Kalkulator HPP</h1>
+        <p class="tagline">Hitung Harga Pokok Penjualan per unit, simulasi margin keuntungan, simpan resep produksi, dan dapatkan rekomendasi harga jual kompetitif — semua berjalan lokal di browser Anda.</p>
+      </div>
+    </div>
+    <div class="hero-actions no-print">
+      <button type="button" class="btn btn-ghost" id="btnContoh">Muat Contoh Data</button>
+      <button type="button" class="btn btn-ghost" id="btnCetak">Cetak Laporan</button>
+      <button type="button" class="btn btn-ghost" id="btnReset">Kosongkan Form</button>
+    </div>
+  </div>
+</header>
+
+<div class="sticky-bar" aria-hidden="true">
+  <div class="sticky-inner">
+    <div class="sb-item"><span class="sb-label">HPP / Unit</span><strong id="sbHpp">Rp0</strong></div>
+    <div class="sb-item"><span class="sb-label">Harga Jual</span><strong id="sbHj">Rp0</strong></div>
+    <div class="sb-item"><span class="sb-label">Profit / Unit</span><strong id="sbProfit">Rp0</strong></div>
+    <div class="sb-item"><span class="sb-label">Margin Aktual</span><strong id="sbMargin">0%</strong></div>
+  </div>
+</div>
+
+<main class="container">
+
+  <!-- ====== 1. INFORMASI PRODUK ====== -->
+  <section class="card" id="sec-info">
+    <div class="sec-head">
+      <span class="sec-num">1</span>
+      <div>
+        <h2>Informasi Produk</h2>
+        <p class="sec-sub">Isi nama produk dan jumlah unit yang dihasilkan dari sekali proses produksi (batch).</p>
+      </div>
+    </div>
+    <div class="grid-info">
+      <div class="field">
+        <label for="inpNama">Nama Produk</label>
+        <input type="text" id="inpNama" placeholder="mis. Keripik Singkong Balado">
+      </div>
+      <div class="field">
+        <label for="inpBatch">Jumlah Produksi per Batch</label>
+        <input type="number" id="inpBatch" min="1" step="1" value="100" placeholder="mis. 100">
+        <p class="hint">unit / pack / porsi / botol</p>
+      </div>
+      <div class="field">
+        <label for="inpTanggal">Tanggal Produksi</label>
+        <input type="date" id="inpTanggal">
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== 2. KOMPONEN BIAYA ====== -->
+  <section class="card" id="sec-biaya">
+    <div class="sec-head">
+      <span class="sec-num">2</span>
+      <div>
+        <h2>Komponen Biaya Produksi</h2>
+        <p class="sec-sub">Input semua biaya untuk satu batch produksi. Subtotal dan total dihitung otomatis (Qty × Harga Satuan).</p>
+      </div>
+    </div>
+
+    <div class="kategori k-bahan">
+      <div class="kat-head">
+        <div>
+          <h3><span class="dot" style="background:var(--bahan)"></span> Bahan Baku</h3>
+          <p class="kat-desc">Bahan utama produk, misalnya singkong, tepung, gula, minyak, bumbu.</p>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline btn-add" data-kat="bahan">+ Tambah</button>
+      </div>
+      <div class="rows-wrap">
+        <div class="rows-head row-grid">
+          <span>Nama Item</span><span>Qty</span><span>Satuan</span><span>Harga Satuan</span><span>Subtotal</span><span></span>
+        </div>
+        <div class="rows" id="rows-bahan"></div>
+      </div>
+      <div class="kat-total"><span>Total Bahan Baku</span><strong id="totBahan">Rp0</strong></div>
+    </div>
+
+    <div class="kategori k-kemasan">
+      <div class="kat-head">
+        <div>
+          <h3><span class="dot" style="background:var(--kemasan)"></span> Kemasan</h3>
+          <p class="kat-desc">Kemasan dan pelengkap, misalnya plastik pouch, label, lakban, dus.</p>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline btn-add" data-kat="kemasan">+ Tambah</button>
+      </div>
+      <div class="rows-wrap">
+        <div class="rows-head row-grid">
+          <span>Nama Item</span><span>Qty</span><span>Satuan</span><span>Harga Satuan</span><span>Subtotal</span><span></span>
+        </div>
+        <div class="rows" id="rows-kemasan"></div>
+      </div>
+      <div class="kat-total"><span>Total Kemasan</span><strong id="totKemasan">Rp0</strong></div>
+    </div>
+
+    <div class="kategori k-overhead">
+      <div class="kat-head">
+        <div>
+          <h3><span class="dot" style="background:var(--overhead)"></span> Overhead Produksi</h3>
+          <p class="kat-desc">Biaya pendukung per batch, misalnya gas, listrik, tenaga kerja, transport.</p>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline btn-add" data-kat="overhead">+ Tambah</button>
+      </div>
+      <div class="rows-wrap">
+        <div class="rows-head row-grid">
+          <span>Nama Item</span><span>Qty</span><span>Satuan</span><span>Harga Satuan</span><span>Subtotal</span><span></span>
+        </div>
+        <div class="rows" id="rows-overhead"></div>
+      </div>
+      <div class="kat-total"><span>Total Overhead Produksi</span><strong id="totOverhead">Rp0</strong></div>
+    </div>
+  </section>
+
+  <!-- ====== 3. RINGKASAN HPP ====== -->
+  <section class="card" id="sec-hpp">
+    <div class="sec-head">
+      <span class="sec-num">3</span>
+      <div>
+        <h2>Ringkasan HPP</h2>
+        <p class="sec-sub">Total biaya produksi dan HPP per unit dihitung otomatis dari komponen di atas.</p>
+      </div>
+    </div>
+    <div class="grid-3">
+      <div class="stat-card">
+        <span class="stat-label" style="color:var(--bahan)">Bahan Baku</span>
+        <strong class="amt" id="scBahan">Rp0</strong>
+        <span class="stat-sub" id="scBahanPct">0% dari total biaya</span>
+        <div class="bar"><i id="barBahan" style="background:var(--bahan)"></i></div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label" style="color:var(--kemasan)">Kemasan</span>
+        <strong class="amt" id="scKemasan">Rp0</strong>
+        <span class="stat-sub" id="scKemasanPct">0% dari total biaya</span>
+        <div class="bar"><i id="barKemasan" style="background:var(--kemasan)"></i></div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label" style="color:var(--overhead)">Overhead</span>
+        <strong class="amt" id="scOverhead">Rp0</strong>
+        <span class="stat-sub" id="scOverheadPct">0% dari total biaya</span>
+        <div class="bar"><i id="barOverhead" style="background:var(--overhead)"></i></div>
+      </div>
+    </div>
+    <div class="hpp-wrap">
+      <div class="hpp-panel">
+        <span class="stat-label">HPP per Unit</span>
+        <div class="hpp-big" id="hppUnit">Rp0</div>
+        <p class="hpp-sub" id="hppSub">Isi jumlah produksi per batch di bagian Informasi Produk.</p>
+        <div class="hpp-mini">
+          <div><span>Total Biaya / Batch</span><strong id="totalBiaya">Rp0</strong></div>
+          <div><span>Jumlah Produksi</span><strong id="hppBatchInfo">—</strong></div>
+        </div>
+      </div>
+      <div class="donut-card">
+        <div class="donut" id="donut">
+          <div class="donut-hole"><div><span>Total Biaya</span><strong id="donutTotal">Rp0</strong></div></div>
+        </div>
+        <div class="legend">
+          <div class="leg-item"><span class="leg-dot" style="background:var(--bahan)"></span> Bahan Baku <b id="legBahan">—</b></div>
+          <div class="leg-item"><span class="leg-dot" style="background:var(--kemasan)"></span> Kemasan <b id="legKemasan">—</b></div>
+          <div class="leg-item"><span class="leg-dot" style="background:var(--overhead)"></span> Overhead <b id="legOverhead">—</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== 4. SIMULASI MARGIN ====== -->
+  <section class="card" id="sec-simulasi">
+    <div class="sec-head">
+      <span class="sec-num">4</span>
+      <div>
+        <h2>Simulasi Margin &amp; Harga Jual Akhir</h2>
+        <p class="sec-sub">Geser slider atau isi angka untuk melihat harga jual akhir beserta keuntungan yang Anda dapat.</p>
+      </div>
+    </div>
+    <div class="sim-grid">
+      <div>
+        <span class="lbl">Metode Perhitungan Keuntungan</span>
+        <div class="seg no-print">
+          <button type="button" id="modeMarkup" class="active">Markup dari HPP</button>
+          <button type="button" id="modeMargin">Margin dari Harga Jual</button>
+        </div>
+        <p class="hint-mode" id="hintMode">Markup = keuntungan dihitung dari HPP. Contoh: HPP Rp1.000 dengan markup 30% berarti harga jual Rp1.300 (profit Rp300).</p>
+        <div class="mt14">
+          <label for="inpPersen" id="lblPersen">Target Markup (% dari HPP)</label>
+          <div class="persen-input">
+            <input type="number" id="inpPersen" min="0" max="999" step="1" value="30">
+            <span>%</span>
+          </div>
+        </div>
+        <input type="range" id="sliderPersen" min="0" max="100" step="1" value="30" aria-label="Target keuntungan">
+        <div class="range-marks" id="rangeMarks"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+        <div class="note" id="rumusSim">Rumus: Harga jual = HPP × (1 + 30%)</div>
+      </div>
+      <div class="result-panel">
+        <span class="stat-label">Harga Jual per Unit</span>
+        <div class="result-big" id="hjSim">Rp0</div>
+        <div class="result-grid">
+          <div><span>Keuntungan / Unit</span><strong id="profitUnit">Rp0</strong></div>
+          <div><span>Keuntungan / Batch</span><strong id="profitBatch">Rp0</strong></div>
+          <div><span>Margin Aktual</span><strong id="marginAktual">0%</strong></div>
+          <div><span>Markup Aktual</span><strong id="markupAktual">0%</strong></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== 5. REKOMENDASI ====== -->
+  <section class="card" id="sec-rekomendasi">
+    <div class="sec-head">
+      <span class="sec-num">5</span>
+      <div>
+        <h2>Rekomendasi Harga Jual Kompetitif</h2>
+        <p class="sec-sub">Masukkan harga pesaing (jika ada) — sistem membandingkannya dengan harga minimal target profit Anda dan merekomendasikan harga jual terbaik.</p>
+      </div>
+    </div>
+    <div class="grid-komp">
+      <div class="field"><label for="komp1">Harga Pesaing 1 (opsional)</label><input type="text" inputmode="numeric" class="f-harga" id="komp1" placeholder="0"></div>
+      <div class="field"><label for="komp2">Harga Pesaing 2 (opsional)</label><input type="text" inputmode="numeric" class="f-harga" id="komp2" placeholder="0"></div>
+      <div class="field"><label for="komp3">Harga Pesaing 3 (opsional)</label><input type="text" inputmode="numeric" class="f-harga" id="komp3" placeholder="0"></div>
+      <div class="field">
+        <label for="selPembulatan">Pembulatan Harga</label>
+        <select id="selPembulatan">
+          <option value="0">Tanpa pembulatan</option>
+          <option value="100">Kelipatan Rp100</option>
+          <option value="500">Kelipatan Rp500</option>
+          <option value="1000">Kelipatan Rp1.000</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid-3">
+      <div class="stat-card">
+        <span class="stat-label">Harga Minimal</span>
+        <strong class="amt" id="recMin">—</strong>
+        <span class="stat-sub" id="recMinSub">harga terendah agar target profit tercapai</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Rata-rata Pasar</span>
+        <strong class="amt" id="recAvg">—</strong>
+        <span class="stat-sub" id="recAvgSub">rata-rata harga pesaing</span>
+      </div>
+      <div class="stat-card rec-final" id="recFinalCard">
+        <span class="stat-label">Harga Rekomendasi</span>
+        <strong class="amt" id="recFinal">—</strong>
+        <span class="stat-sub" id="recFinalSub">—</span>
+      </div>
+    </div>
+    <div class="note" id="recAlasan">Lengkapi komponen biaya dan jumlah produksi agar rekomendasi harga jual dapat dihitung.</div>
+    <h3 class="mini-title">Simulasi Harga pada Berbagai Tingkat Keuntungan</h3>
+    <div class="table-wrap">
+      <table class="harga-table">
+        <thead>
+          <tr><th>Tingkat Profit</th><th>Harga Jual / Unit</th><th>Profit / Unit</th><th>Profit / Batch</th></tr>
+        </thead>
+        <tbody id="tabelHargaBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ====== 6. RESEP TERSIMPAN ====== -->
+  <section class="card" id="sec-resep">
+    <div class="sec-head">
+      <span class="sec-num">6</span>
+      <div>
+        <h2>Resep &amp; Produk Tersimpan</h2>
+        <p class="sec-sub">Simpan resep produksi agar bisa dimuat kembali kapan saja tanpa mengisi ulang dari awal.</p>
+      </div>
+    </div>
+    <div class="resep-save no-print">
+      <input type="text" id="inpResepNama" placeholder="Nama resep, mis. Keripik Balado - Batch Standar (kosongkan untuk memakai nama produk)">
+      <button type="button" class="btn btn-primary" id="btnSimpanResep">Simpan Resep</button>
+    </div>
+    <div class="resep-tools no-print">
+      <button type="button" class="btn btn-sm btn-outline" id="btnEkspor">Ekspor JSON</button>
+      <button type="button" class="btn btn-sm btn-outline" id="btnImpor">Impor JSON</button>
+      <input type="file" id="fileImpor" accept=".json,application/json" hidden>
+      <span class="hint-inline">Resep tersimpan otomatis di browser ini (localStorage) dan dapat dipindahkan antar perangkat lewat Ekspor/Impor JSON.</span>
+    </div>
+    <div id="resepList"></div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <p><strong>Kalkulator HPP</strong> — alat bantu penetapan Harga Pokok Penjualan untuk UMKM dan produsen.</p>
+    <p>Seluruh perhitungan dan penyimpanan data berjalan lokal di browser Anda; tidak ada data yang dikirim ke server mana pun.</p>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<datalist id="satuan-list">
+  <option value="kg"></option><option value="gram"></option><option value="liter"></option>
+  <option value="ml"></option><option value="pcs"></option><option value="buah"></option>
+  <option value="pack"></option><option value="dus"></option><option value="lusin"></option>
+  <option value="roll"></option><option value="meter"></option><option value="tabung"></option>
+  <option value="jam"></option><option value="hari"></option><option value="batch"></option>
+  <option value="porsi"></option><option value="botol"></option>
+</datalist>
+
+<script>
+(function(){
+'use strict';
+
+/* ==================== Util ==================== */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const KATS = ['bahan','kemasan','overhead'];
+const LS_RESEP = 'kalkulatorHPP_resep_v1';
+const LS_DRAFT = 'kalkulatorHPP_draft_v1';
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function toNum(v){ const n = parseFloat(v); return isFinite(n) ? n : 0; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function parseRp(s){ const d = String(s==null?'':s).replace(/[^\d]/g,''); return d ? parseInt(d,10) : 0; }
+const fmtInt = new Intl.NumberFormat('id-ID');
+function rp(n, dec){
+  if(!isFinite(n)) return '—';
+  dec = (dec==null) ? 0 : dec;
+  return 'Rp' + new Intl.NumberFormat('id-ID',{minimumFractionDigits:dec, maximumFractionDigits:dec}).format(n);
+}
+function rpSmart(n){
+  if(!isFinite(n)) return '—';
+  const bulat = Math.abs(n - Math.round(n)) < 0.005;
+  return rp(n, bulat ? 0 : 2);
+}
+function rpInputVal(v){ const n = toNum(v); return n > 0 ? fmtInt.format(n) : ''; }
+function clamp(v,a,b){ return Math.min(b, Math.max(a, v)); }
+function f1(v){ return v.toFixed(1).replace('.',','); }
+function todayISO(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function formatTanggal(iso){
+  try{ return new Date(iso).toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'}); }
+  catch(e){ return ''; }
+}
+
+/* ==================== State ==================== */
+function itemBaru(){ return {id:uid(), nama:'', qty:'', satuan:'', harga:''}; }
+function stateBaru(){
+  return {
+    nama:'', batch:100, tanggal: todayISO(),
+    bahan:[itemBaru(), itemBaru()],
+    kemasan:[itemBaru()],
+    overhead:[itemBaru()],
+    mode:'markup', persen:30, pembulatan:0,
+    kompetitor:[null,null,null]
+  };
+}
+let state = stateBaru();
+
+function dataContoh(){
+  return {
+    nama:'Keripik Singkong Balado', batch:100, tanggal: todayISO(),
+    bahan:[
+      {id:uid(), nama:'Singkong segar', qty:20, satuan:'kg', harga:8000},
+      {id:uid(), nama:'Minyak goreng', qty:3, satuan:'liter', harga:18000},
+      {id:uid(), nama:'Bumbu balado', qty:2, satuan:'kg', harga:25000},
+      {id:uid(), nama:'Garam & penyedap', qty:1, satuan:'pack', harga:10000}
+    ],
+    kemasan:[
+      {id:uid(), nama:'Standing pouch 100 gr', qty:100, satuan:'pcs', harga:500},
+      {id:uid(), nama:'Label produk', qty:100, satuan:'pcs', harga:200},
+      {id:uid(), nama:'Lakban & tali', qty:1, satuan:'roll', harga:15000}
+    ],
+    overhead:[
+      {id:uid(), nama:'Gas LPG 3 kg', qty:1, satuan:'tabung', harga:21000},
+      {id:uid(), nama:'Listrik', qty:1, satuan:'batch', harga:10000},
+      {id:uid(), nama:'Tenaga kerja', qty:1, satuan:'batch', harga:60000},
+      {id:uid(), nama:'Transport bahan baku', qty:1, satuan:'batch', harga:15000}
+    ],
+    mode:'markup', persen:40, pembulatan:500,
+    kompetitor:[7000, 7500, 8000]
+  };
+}
+
+function hydrate(d){
+  const s = stateBaru();
+  s.nama = d.nama || '';
+  s.batch = d.batch == null ? 100 : d.batch;
+  s.tanggal = d.tanggal || todayISO();
+  s.bahan = (Array.isArray(d.bahan) ? d.bahan : []).map(it => Object.assign(itemBaru(), it));
+  s.kemasan = (Array.isArray(d.kemasan) ? d.kemasan : []).map(it => Object.assign(itemBaru(), it));
+  s.overhead = (Array.isArray(d.overhead) ? d.overhead : []).map(it => Object.assign(itemBaru(), it));
+  if(!s.bahan.length) s.bahan = [itemBaru()];
+  if(!s.kemasan.length) s.kemasan = [itemBaru()];
+  if(!s.overhead.length) s.overhead = [itemBaru()];
+  s.mode = d.mode === 'margin' ? 'margin' : 'markup';
+  s.persen = d.persen == null ? 30 : clamp(Math.round(toNum(d.persen)), 0, 999);
+  s.pembulatan = toNum(d.pembulatan);
+  s.kompetitor = (Array.isArray(d.kompetitor) && d.kompetitor.length === 3) ? d.kompetitor : [null,null,null];
+  return s;
+}
+
+/* ==================== Perhitungan inti ==================== */
+const subtotalOf = it => toNum(it.qty) * toNum(it.harga);
+function totalKategori(k){ return state[k].reduce((s,it) => s + subtotalOf(it), 0); }
+
+function hargaJual(hpp, mode, persen){
+  if(mode === 'margin') return persen >= 100 ? Infinity : hpp / (1 - persen/100);
+  return hpp * (1 + persen/100);
+}
+
+/* ==================== Render baris biaya ==================== */
+function rowHTML(it){
+  return '<div class="row row-grid" data-id="'+it.id+'">'
+    + '<input class="f-nama" type="text" placeholder="Nama item" value="'+esc(it.nama)+'">'
+    + '<input class="f-qty" type="number" min="0" step="any" placeholder="0" value="'+(it.qty==null?'':it.qty)+'">'
+    + '<input class="f-satuan" type="text" list="satuan-list" placeholder="satuan" value="'+esc(it.satuan)+'">'
+    + '<input class="f-harga" type="text" inputmode="numeric" placeholder="0" value="'+rpInputVal(it.harga)+'">'
+    + '<div class="f-subtotal">—</div>'
+    + '<button class="btn-del" type="button" title="Hapus baris" aria-label="Hapus baris">×</button>'
+    + '</div>';
+}
+function renderRows(k){
+  $('#rows-'+k).innerHTML = state[k].map(rowHTML).join('');
+  state[k].forEach(it => updateSubtotal(k, it.id));
+}
+function updateSubtotal(k, id){
+  const row = document.querySelector('#rows-'+k+' .row[data-id="'+id+'"]');
+  if(!row) return;
+  const it = state[k].find(x => x.id === id);
+  if(it) row.querySelector('.f-subtotal').textContent = rp(subtotalOf(it));
+}
+
+/* ==================== Recalc utama ==================== */
+function recalc(){
+  const tot = {bahan:totalKategori('bahan'), kemasan:totalKategori('kemasan'), overhead:totalKategori('overhead')};
+  const total = tot.bahan + tot.kemasan + tot.overhead;
+  const batch = Math.round(toNum(state.batch));
+  const hpp = batch > 0 ? total / batch : 0;
+
+  $('#totBahan').textContent = rp(tot.bahan);
+  $('#totKemasan').textContent = rp(tot.kemasan);
+  $('#totOverhead').textContent = rp(tot.overhead);
+
+  const pctB = total > 0 ? tot.bahan/total*100 : 0;
+  const pctK = total > 0 ? tot.kemasan/total*100 : 0;
+  const pctO = total > 0 ? tot.overhead/total*100 : 0;
+  $('#scBahan').textContent = rp(tot.bahan);
+  $('#scKemasan').textContent = rp(tot.kemasan);
+  $('#scOverhead').textContent = rp(tot.overhead);
+  $('#scBahanPct').textContent = f1(pctB) + '% dari total biaya';
+  $('#scKemasanPct').textContent = f1(pctK) + '% dari total biaya';
+  $('#scOverheadPct').textContent = f1(pctO) + '% dari total biaya';
+  $('#barBahan').style.width = pctB + '%';
+  $('#barKemasan').style.width = pctK + '%';
+  $('#barOverhead').style.width = pctO + '%';
+
+  $('#totalBiaya').textContent = rp(total);
+  $('#donutTotal').textContent = rp(total);
+  $('#hppUnit').textContent = rpSmart(hpp);
+  $('#hppBatchInfo').textContent = batch > 0 ? fmtInt.format(batch) + ' unit' : '—';
+  $('#hppSub').textContent = batch > 0
+    ? 'HPP untuk 1 unit produk = total biaya ' + rp(total) + ' ÷ ' + fmtInt.format(batch) + ' unit per batch.'
+    : 'Isi jumlah produksi per batch di bagian Informasi Produk.';
+
+  $('#donut').style.background = total > 0
+    ? 'conic-gradient(var(--bahan) 0% ' + pctB + '%, var(--kemasan) ' + pctB + '% ' + (pctB+pctK) + '%, var(--overhead) ' + (pctB+pctK) + '% 100%)'
+    : '#e2e8f0';
+  $('#legBahan').textContent = rp(tot.bahan) + ' · ' + Math.round(pctB) + '%';
+  $('#legKemasan').textContent = rp(tot.kemasan) + ' · ' + Math.round(pctK) + '%';
+  $('#legOverhead').textContent = rp(tot.overhead) + ' · ' + Math.round(pctO) + '%';
+
+  // simulasi margin
+  const persen = Math.round(toNum(state.persen));
+  const hj = hargaJual(hpp, state.mode, persen);
+  const profUnit = hj - hpp;
+  const profBatch = profUnit * batch;
+  const marginAkt = hj > 0 ? profUnit/hj*100 : 0;
+  const markupAkt = hpp > 0 ? profUnit/hpp*100 : 0;
+  $('#hjSim').textContent = rpSmart(hj);
+  $('#profitUnit').textContent = rpSmart(profUnit);
+  $('#profitBatch').textContent = rp(profBatch);
+  $('#marginAktual').textContent = f1(marginAkt) + '%';
+  $('#markupAktual').textContent = f1(markupAkt) + '%';
+  $('#rumusSim').textContent = state.mode === 'markup'
+    ? 'Rumus: Harga jual = HPP × (1 + ' + persen + '%) = ' + rpSmart(hpp) + ' × ' + (1 + persen/100).toLocaleString('id-ID',{maximumFractionDigits:2}) + ' = ' + rpSmart(hj)
+    : 'Rumus: Harga jual = HPP ÷ (1 − ' + persen + '%) = ' + rpSmart(hpp) + ' ÷ ' + (1 - persen/100).toLocaleString('id-ID',{maximumFractionDigits:2}) + ' = ' + rpSmart(hj);
+
+  $('#sbHpp').textContent = rpSmart(hpp);
+  $('#sbHj').textContent = rpSmart(hj);
+  $('#sbProfit').textContent = rpSmart(profUnit);
+  $('#sbMargin').textContent = f1(marginAkt) + '%';
+
+  updateRekomendasi(hpp, batch);
+}
+
+/* ==================== Rekomendasi harga ==================== */
+function updateRekomendasi(hpp, batch){
+  const persen = Math.round(toNum(state.persen));
+  const targetTxt = state.mode === 'markup' ? 'markup ' + persen + '% dari HPP' : 'margin ' + persen + '% dari harga jual';
+
+  if(hpp <= 0){
+    $('#recMin').textContent = '—'; $('#recAvg').textContent = '—'; $('#recFinal').textContent = '—';
+    $('#recMinSub').textContent = 'lengkapi biaya dulu';
+    $('#recAvgSub').textContent = 'belum ada data';
+    $('#recFinalSub').textContent = '—';
+    $('#recFinalCard').classList.remove('warn');
+    $('#recAlasan').className = 'note';
+    $('#recAlasan').textContent = 'Lengkapi komponen biaya dan jumlah produksi agar rekomendasi harga jual dapat dihitung.';
+    $('#tabelHargaBody').innerHTML = '';
+    return;
+  }
+
+  const p = toNum(state.pembulatan);
+  const bulatNaik = v => p > 0 ? Math.ceil(v/p)*p : Math.ceil(v - 0.000001);
+  const bulatPas  = v => p > 0 ? Math.round(v/p)*p : Math.round(v);
+  const marginPct = h => h > 0 ? (h - hpp)/h*100 : 0;
+  const markupPct = h => hpp > 0 ? (h - hpp)/hpp*100 : 0;
+
+  const minRaw = hargaJual(hpp, state.mode, persen);
+  const minB = bulatNaik(minRaw);
+  $('#recMin').textContent = rp(minB);
+  $('#recMinSub').textContent = 'harga terendah agar ' + targetTxt + ' tercapai';
+
+  const komp = state.kompetitor.map(toNum).filter(v => v > 0);
+  const avg = komp.length ? komp.reduce((a,b) => a+b, 0) / komp.length : null;
+  let final = minB, alasan = '', warn = false;
+
+  if(avg === null){
+    $('#recAvg').textContent = '—';
+    $('#recAvgSub').textContent = 'belum ada data pesaing';
+    alasan = 'Tanpa data pesaing, rekomendasi sementara adalah harga minimal ' + rp(minB) + ' (pembulatan ' + (p > 0 ? 'kelipatan ' + rp(p) : 'ke rupiah terdekat ke atas') + ') agar ' + targetTxt + ' tercapai. Isi satu atau beberapa harga pesaing di atas untuk mendapatkan rekomendasi yang lebih kompetitif.';
+  } else {
+    const avgB = bulatPas(avg);
+    $('#recAvg').textContent = rp(avgB);
+    $('#recAvgSub').textContent = 'dari ' + komp.length + ' harga pesaing yang diinput';
+    if(minRaw <= avg){
+      final = Math.max(minB, bulatPas(avg * 0.95));
+      if(final > minB){
+        const diBawah = (1 - final/avg) * 100;
+        alasan = 'Target ' + targetTxt + ' sudah tercapai di harga ' + rp(minB) + ', sementara rata-rata pasar ' + rp(avgB) + ' masih lebih tinggi. Ada ruang harga yang sehat: jual di ' + rp(final) + ' (sekitar ' + f1(diBawah) + '% di bawah rata-rata pasar) agar tetap kompetitif sekaligus profit melebihi target (' + f1(markupPct(final)) + '% markup / ' + f1(marginPct(final)) + '% margin).';
+      } else {
+        alasan = 'Harga minimal Anda (' + rp(minB) + ') sudah berada di bawah rata-rata pasar (' + rp(avgB) + '). Menjual di ' + rp(final) + ' membuat produk tetap kompetitif dengan target ' + targetTxt + ' tercapai (profit aktual ' + f1(markupPct(final)) + '% markup / ' + f1(marginPct(final)) + '% margin).';
+      }
+    } else {
+      warn = true;
+      final = minB;
+      alasan = 'Perhatian: harga minimal untuk target ' + targetTxt + ' adalah ' + rp(minB) + ', lebih tinggi dari rata-rata pasar ' + rp(avgB) + '. Dua pilihan: (1) ikuti harga pasar di sekitar ' + rp(avgB) + ' — margin efektif hanya ' + f1(marginPct(avgB)) + '% (di bawah target); atau (2) bertahan di ' + rp(minB) + ' dengan positioning premium (kualitas, kemasan, atau keunggulan produk yang membedakan). Alternatif lain: efisienkan biaya bahan, kemasan, atau overhead agar HPP turun dan harga minimal lebih dekat ke harga pasar.';
+    }
+  }
+
+  $('#recFinal').textContent = rp(final);
+  $('#recFinalSub').textContent = 'profit aktual ' + f1(markupPct(final)) + '% markup / ' + f1(marginPct(final)) + '% margin per unit';
+  $('#recFinalCard').classList.toggle('warn', warn);
+  $('#recAlasan').className = 'note' + (warn ? ' note-warn' : '');
+  $('#recAlasan').textContent = alasan;
+
+  const tingkat = [10,20,30,40,50,60];
+  const terdekat = tingkat.reduce((a,b) => Math.abs(b - persen) < Math.abs(a - persen) ? b : a);
+  const labelMode = state.mode === 'markup' ? 'Markup' : 'Margin';
+  $('#tabelHargaBody').innerHTML = tingkat.map(t => {
+    const hj = hargaJual(hpp, state.mode, t);
+    const pr = hj - hpp;
+    const hl = t === terdekat ? ' class="hl"' : '';
+    return '<tr'+hl+'><td>'+labelMode+' '+t+'%</td><td>'+rpSmart(hj)+'</td><td>'+rpSmart(pr)+'</td><td>'+rp(pr*batch)+'</td></tr>';
+  }).join('');
+}
+
+/* ==================== Penyimpanan draft (autosave) ==================== */
+let draftTimer;
+function simpanDraft(){
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(() => {
+    try{ localStorage.setItem(LS_DRAFT, JSON.stringify(state)); }catch(e){}
+  }, 250);
+}
+function muatDraft(){
+  try{
+    const d = JSON.parse(localStorage.getItem(LS_DRAFT) || 'null');
+    if(d && Array.isArray(d.bahan)){
+      state = hydrate(d);
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+
+/* ==================== Resep (localStorage) ==================== */
+function getResep(){
+  try{
+    const l = JSON.parse(localStorage.getItem(LS_RESEP) || '[]');
+    return Array.isArray(l) ? l : [];
+  }catch(e){ return []; }
+}
+function setResep(list){
+  try{ localStorage.setItem(LS_RESEP, JSON.stringify(list)); }catch(e){}
+}
+function bersihkan(list){
+  return list.filter(it => String(it.nama||'').trim() !== '' || toNum(it.qty) > 0 || toNum(it.harga) > 0);
+}
+function renderResep(){
+  const list = getResep();
+  const box = $('#resepList');
+  if(!list.length){
+    box.innerHTML = '<div class="empty">Belum ada resep tersimpan. Isi komponen biaya di atas, lalu klik <strong>Simpan Resep</strong>. Resep dapat dimuat kembali kapan saja.</div>';
+    return;
+  }
+  box.innerHTML = list.map(r => {
+    const d = r.data || {};
+    const total = ['bahan','kemasan','overhead'].reduce((s,k) => s + (Array.isArray(d[k]) ? d[k] : []).reduce((x,it) => x + toNum(it.qty)*toNum(it.harga), 0), 0);
+    const hpp = toNum(d.batch) > 0 ? total/toNum(d.batch) : 0;
+    const nItem = ['bahan','kemasan','overhead'].reduce((s,k) => s + (Array.isArray(d[k]) ? d[k].length : 0), 0);
+    return '<div class="resep-item" data-id="'+r.id+'">'
+      + '<div class="resep-info"><strong>'+esc(r.nama)+'</strong>'
+      + '<span class="resep-meta">'+formatTanggal(r.tanggal)+' · '+esc(d.nama||'tanpa nama produk')+' · '+fmtInt.format(toNum(d.batch))+' unit/batch · '+nItem+' item · HPP '+rpSmart(hpp)+'</span></div>'
+      + '<div class="resep-actions no-print">'
+      + '<button type="button" class="btn btn-sm btn-outline" data-act="load">Muat</button>'
+      + '<button type="button" class="btn btn-sm btn-danger-outline" data-act="del">Hapus</button>'
+      + '</div></div>';
+  }).join('');
+}
+function muatResep(id){
+  const r = getResep().find(x => x.id === id);
+  if(!r) return;
+  state = hydrate(r.data || {});
+  renderAll();
+  recalc();
+  simpanDraft();
+  toast('Resep "' + r.nama + '" berhasil dimuat');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ==================== Toast ==================== */
+let toastTimer;
+function toast(msg, tipe){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (tipe === 'err' ? ' err' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = 'toast'; }, 2800);
+}
+
+/* ==================== Render semua kontrol ==================== */
+function syncPersenUI(){
+  const maks = toNum($('#sliderPersen').max) || 100;
+  $('#sliderPersen').value = clamp(toNum(state.persen), 0, maks);
+  $('#inpPersen').value = state.persen;
+}
+function syncSimUI(){
+  const markup = state.mode === 'markup';
+  $('#modeMarkup').classList.toggle('active', markup);
+  $('#modeMargin').classList.toggle('active', !markup);
+  $('#lblPersen').textContent = markup ? 'Target Markup (% dari HPP)' : 'Target Margin (% dari harga jual)';
+  $('#hintMode').textContent = markup
+    ? 'Markup = keuntungan dihitung dari HPP. Contoh: HPP Rp1.000 dengan markup 30% berarti harga jual Rp1.300 (profit Rp300).'
+    : 'Margin = porsi keuntungan dari harga jual. Contoh: HPP Rp1.000 dengan margin 30% berarti harga jual Rp1.429 (profit Rp429).';
+  $('#sliderPersen').max = markup ? 100 : 90;
+  $('#rangeMarks').innerHTML = markup
+    ? '<span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>'
+    : '<span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>90%</span>';
+  syncPersenUI();
+}
+function renderAll(){
+  $('#inpNama').value = state.nama;
+  $('#inpBatch').value = state.batch;
+  $('#inpTanggal').value = state.tanggal || todayISO();
+  KATS.forEach(renderRows);
+  syncSimUI();
+  $('#selPembulatan').value = String(toNum(state.pembulatan));
+  [1,2,3].forEach(i => { $('#komp'+i).value = rpInputVal(state.kompetitor[i-1]); });
+  renderResep();
+}
+
+/* ==================== Pengikatan event ==================== */
+function bindSemua(){
+
+  // Baris biaya per kategori (delegasi)
+  KATS.forEach(k => {
+    const box = $('#rows-'+k);
+    box.addEventListener('input', e => {
+      const row = e.target.closest('.row'); if(!row) return;
+      const it = state[k].find(x => x.id === row.dataset.id); if(!it) return;
+      const cls = e.target.classList;
+      if(cls.contains('f-nama')) it.nama = e.target.value;
+      else if(cls.contains('f-qty')) it.qty = e.target.value;
+      else if(cls.contains('f-satuan')) it.satuan = e.target.value;
+      else if(cls.contains('f-harga')) it.harga = parseRp(e.target.value);
+      updateSubtotal(k, it.id);
+      recalc();
+      simpanDraft();
+    });
+    box.addEventListener('focusout', e => {
+      if(e.target.classList.contains('f-harga')) e.target.value = rpInputVal(e.target.value);
+    });
+    box.addEventListener('click', e => {
+      const btn = e.target.closest('.btn-del'); if(!btn) return;
+      const id = btn.closest('.row').dataset.id;
+      state[k] = state[k].filter(x => x.id !== id);
+      renderRows(k); recalc(); simpanDraft();
+    });
+  });
+
+  // Tombol tambah baris
+  $$('.btn-add').forEach(b => {
+    b.addEventListener('click', () => {
+      const k = b.dataset.kat;
+      state[k].push(itemBaru());
+      renderRows(k); recalc(); simpanDraft();
+      const rows = $$('#rows-'+k+' .row');
+      if(rows.length) rows[rows.length-1].querySelector('.f-nama').focus();
+    });
+  });
+
+  // Info produk
+  $('#inpNama').addEventListener('input', e => { state.nama = e.target.value; simpanDraft(); });
+  $('#inpBatch').addEventListener('input', e => { state.batch = e.target.value; recalc(); simpanDraft(); });
+  $('#inpTanggal').addEventListener('input', e => { state.tanggal = e.target.value; simpanDraft(); });
+
+  // Simulasi
+  function setMode(m){
+    state.mode = m;
+    if(m === 'margin' && toNum(state.persen) > 90) state.persen = 90;
+    syncSimUI(); recalc(); simpanDraft();
+  }
+  $('#modeMarkup').addEventListener('click', () => setMode('markup'));
+  $('#modeMargin').addEventListener('click', () => setMode('margin'));
+  function setPersen(v){
+    const maks = state.mode === 'margin' ? 90 : 999;
+    state.persen = clamp(Math.round(toNum(v)), 0, maks);
+    syncPersenUI(); recalc(); simpanDraft();
+  }
+  $('#sliderPersen').addEventListener('input', e => setPersen(e.target.value));
+  $('#inpPersen').addEventListener('input', e => setPersen(e.target.value));
+
+  // Rekomendasi
+  [1,2,3].forEach(i => {
+    const el = $('#komp'+i);
+    el.addEventListener('input', () => { state.kompetitor[i-1] = parseRp(el.value) || null; recalc(); simpanDraft(); });
+    el.addEventListener('focusout', () => { el.value = rpInputVal(el.value); });
+  });
+  $('#selPembulatan').addEventListener('change', e => { state.pembulatan = toNum(e.target.value); recalc(); simpanDraft(); });
+
+  // Resep
+  $('#btnSimpanResep').addEventListener('click', () => {
+    const nama = ($('#inpResepNama').value || state.nama || '').trim();
+    if(!nama){ toast('Isi nama resep atau nama produk terlebih dahulu', 'err'); $('#inpResepNama').focus(); return; }
+    if(toNum(state.batch) <= 0){ toast('Jumlah produksi per batch belum diisi', 'err'); return; }
+    const data = {
+      nama: state.nama, batch: state.batch, tanggal: state.tanggal,
+      bahan: bersihkan(state.bahan), kemasan: bersihkan(state.kemasan), overhead: bersihkan(state.overhead),
+      mode: state.mode, persen: state.persen, pembulatan: state.pembulatan, kompetitor: state.kompetitor
+    };
+    if(!data.bahan.length && !data.kemasan.length && !data.overhead.length){
+      toast('Belum ada komponen biaya yang diisi', 'err'); return;
+    }
+    const list = getResep();
+    list.unshift({id: uid(), nama: nama, tanggal: new Date().toISOString(), data: data});
+    setResep(list); renderResep();
+    $('#inpResepNama').value = '';
+    toast('Resep "' + nama + '" berhasil disimpan');
+  });
+
+  $('#resepList').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-act]'); if(!btn) return;
+    const item = btn.closest('.resep-item'); if(!item) return;
+    const id = item.dataset.id;
+    if(btn.dataset.act === 'load'){ muatResep(id); }
+    else if(btn.dataset.act === 'del'){
+      const r = getResep().find(x => x.id === id);
+      if(confirm('Hapus resep "' + (r ? r.nama : '') + '"?')){
+        setResep(getResep().filter(x => x.id !== id));
+        renderResep();
+        toast('Resep dihapus');
+      }
+    }
+  });
+
+  $('#btnEkspor').addEventListener('click', () => {
+    const list = getResep();
+    if(!list.length){ toast('Belum ada resep untuk diekspor', 'err'); return; }
+    const blob = new Blob([JSON.stringify(list, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'resep-hpp-' + todayISO() + '.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    toast(list.length + ' resep diekspor sebagai JSON');
+  });
+
+  $('#btnImpor').addEventListener('click', () => $('#fileImpor').click());
+  $('#fileImpor').addEventListener('change', e => {
+    const f = e.target.files[0]; if(!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const arr = JSON.parse(reader.result);
+        if(!Array.isArray(arr)) throw new Error('bukan array');
+        const valid = arr.filter(x => x && x.data && Array.isArray(x.data.bahan));
+        if(!valid.length){ toast('File tidak berisi resep yang valid', 'err'); return; }
+        const list = getResep();
+        valid.forEach(v => list.unshift({
+          id: uid(),
+          nama: String(v.nama || 'Resep tanpa nama'),
+          tanggal: v.tanggal || new Date().toISOString(),
+          data: v.data
+        }));
+        setResep(list); renderResep();
+        toast(valid.length + ' resep berhasil diimpor');
+      }catch(err){ toast('Gagal membaca file JSON', 'err'); }
+    };
+    reader.readAsText(f);
+    e.target.value = '';
+  });
+
+  // Tombol header
+  $('#btnContoh').addEventListener('click', () => {
+    if(confirm('Ganti isian saat ini dengan data contoh (Keripik Singkong Balado)?')){
+      state = dataContoh();
+      renderAll(); recalc(); simpanDraft();
+      toast('Data contoh dimuat — silakan sesuaikan dengan produk Anda');
+    }
+  });
+  $('#btnReset').addEventListener('click', () => {
+    if(confirm('Kosongkan semua isian dan mulai dari awal?')){
+      state = stateBaru();
+      renderAll(); recalc(); simpanDraft();
+      toast('Formulir dikosongkan');
+    }
+  });
+  $('#btnCetak').addEventListener('click', () => window.print());
+}
+
+/* ==================== Init ==================== */
+function init(){
+  bindSemua();
+  const punyaDraft = muatDraft();
+  if(!punyaDraft) state = dataContoh();
+  renderAll();
+  recalc();
+  if(!punyaDraft) setTimeout(() => toast('Data contoh dimuat — silakan sesuaikan dengan produk Anda'), 700);
+}
+init();
+
+})();
+</script>
+</body>
+</html>

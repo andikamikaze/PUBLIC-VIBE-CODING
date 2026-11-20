@@ -1,0 +1,1590 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="GitHub Profile Viewer — explore public developer profiles and repositories."
+    />
+    <title>Simple GitHub Profile Viewer</title>
+    <style>
+      :root {
+        --bg: #fafafa;
+        --surface: #ffffff;
+        --text-primary: #111827;
+        --text-secondary: #6b7280;
+        --border: #e5e7eb;
+        --accent: #2563eb;
+        --accent-bg: #eff6ff;
+        --radius: 12px;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      }
+
+      /* Dark Mode Variables */
+      [data-theme="dark"] {
+        --bg: #0d1117;
+        --surface: #161b22;
+        --text-primary: #c9d1d9;
+        --text-secondary: #8b949e;
+        --border: #30363d;
+        --accent: #58a6ff;
+        --accent-bg: rgba(31, 111, 235, 0.15);
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #0d1117;
+          --surface: #161b22;
+          --text-primary: #c9d1d9;
+          --text-secondary: #8b949e;
+          --border: #30363d;
+          --accent: #58a6ff;
+          --accent-bg: rgba(31, 111, 235, 0.15);
+          --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text-primary);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          "Helvetica Neue",
+          Arial,
+          sans-serif;
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        transition:
+          background-color 0.3s ease,
+          color 0.3s ease;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      a:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .app {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 0 24px 64px;
+      }
+
+      /* Topbar */
+      .topbar {
+        padding: 24px 0;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 40px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 600;
+        font-size: 18px;
+        letter-spacing: -0.02em;
+        color: var(--text-primary);
+      }
+      .brand-mark {
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        background: var(--text-primary);
+        color: var(--bg);
+        border-radius: 8px;
+        transition:
+          background-color 0.3s ease,
+          color 0.3s ease;
+      }
+      .brand-mark svg {
+        width: 18px;
+        height: 18px;
+      }
+      .top-meta {
+        font-size: 13px;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #10b981;
+      }
+
+      /* Theme Toggle Button */
+      .btn-icon {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        border-radius: 8px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        display: grid;
+        place-items: center;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .btn-icon:hover {
+        background: var(--accent-bg);
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .btn-icon svg {
+        width: 20px;
+        height: 20px;
+      }
+      [data-theme="light"] .icon-sun,
+      [data-theme="dark"] .icon-moon {
+        display: none;
+      }
+      [data-theme="light"] .icon-moon,
+      [data-theme="dark"] .icon-sun {
+        display: block;
+      }
+
+      /* Search */
+      .search-container {
+        margin-bottom: 40px;
+      }
+      .search-form {
+        display: flex;
+        gap: 12px;
+      }
+      .search-input-wrap {
+        position: relative;
+        flex: 1;
+      }
+      .search-input-wrap svg {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 18px;
+        height: 18px;
+        color: var(--text-secondary);
+        pointer-events: none;
+      }
+      .search-input {
+        width: 100%;
+        height: 48px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+        padding: 0 16px 0 44px;
+        color: var(--text-primary);
+        font-size: 15px;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+      .search-input::placeholder {
+        color: #9ca3af;
+      }
+      .search-input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-bg);
+        outline: none;
+      }
+      .btn {
+        height: 48px;
+        padding: 0 24px;
+        border-radius: var(--radius);
+        font-weight: 500;
+        font-size: 15px;
+        border: 1px solid transparent;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+      .btn-primary {
+        background: var(--text-primary);
+        color: var(--bg);
+      }
+      .btn-primary:hover {
+        opacity: 0.9;
+      }
+      .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .btn-secondary {
+        background: var(--surface);
+        border-color: var(--border);
+        color: var(--text-primary);
+      }
+      .btn-secondary:hover {
+        background: var(--accent-bg);
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      /* Search History */
+      .search-history {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 16px;
+        align-items: center;
+      }
+      .history-label {
+        font-size: 13px;
+        color: var(--text-secondary);
+        font-weight: 500;
+        margin-right: 4px;
+      }
+      .history-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        border-radius: 99px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .history-chip:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: var(--accent-bg);
+      }
+      .history-chip svg {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+      }
+
+      /* Message */
+      .message {
+        display: none;
+        margin: 0 0 24px;
+        padding: 12px 16px;
+        border-radius: var(--radius);
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .message.show {
+        display: block;
+      }
+      .message.error {
+        background: #fef2f2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+      }
+      [data-theme="dark"] .message.error {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: rgba(239, 68, 68, 0.3);
+        color: #fca5a5;
+      }
+      .message.success {
+        background: #f0fdf4;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+      }
+      [data-theme="dark"] .message.success {
+        background: rgba(34, 197, 94, 0.1);
+        border-color: rgba(34, 197, 94, 0.3);
+        color: #86efac;
+      }
+
+      /* Profile Card */
+      .profile-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 32px;
+        display: grid;
+        grid-template-columns: 96px 1fr;
+        gap: 24px;
+        margin-bottom: 32px;
+      }
+      .avatar {
+        width: 96px;
+        height: 96px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 1px solid var(--border);
+        background: #f3f4f6;
+      }
+      .profile-header {
+        min-width: 0;
+      }
+      .profile-name {
+        font-size: 24px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        margin: 0 0 4px;
+        overflow-wrap: anywhere;
+      }
+      .username {
+        color: var(--text-secondary);
+        font-size: 15px;
+        font-weight: 500;
+      }
+      .username:hover {
+        color: var(--accent);
+      }
+      .bio {
+        color: var(--text-secondary);
+        margin: 16px 0 24px;
+        font-size: 15px;
+        line-height: 1.6;
+      }
+
+      .profile-details {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px 24px;
+        margin-bottom: 24px;
+        font-size: 14px;
+        color: var(--text-secondary);
+      }
+      .detail {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .detail svg {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+      }
+      .detail a {
+        color: var(--accent);
+      }
+      .detail a:hover {
+        text-decoration: underline;
+      }
+
+      .profile-actions {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      .stats {
+        display: flex;
+        gap: 32px;
+        padding-top: 24px;
+        border-top: 1px solid var(--border);
+      }
+      .stat-value {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+      .stat-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+        margin-top: 2px;
+      }
+
+      /* Tabs */
+      .tabs {
+        display: flex;
+        gap: 24px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 24px;
+      }
+      .tab {
+        background: none;
+        border: none;
+        padding: 12px 0;
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        cursor: pointer;
+        position: relative;
+        transition: color 0.2s;
+      }
+      .tab:hover {
+        color: var(--text-primary);
+      }
+      .tab[aria-selected="true"] {
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+      .tab[aria-selected="true"]::after {
+        content: "";
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--text-primary);
+        border-radius: 2px 2px 0 0;
+      }
+      .tab-count {
+        font-size: 12px;
+        background: #f3f4f6;
+        color: var(--text-secondary);
+        padding: 2px 8px;
+        border-radius: 99px;
+        margin-left: 6px;
+        font-weight: 600;
+      }
+      [data-theme="dark"] .tab-count {
+        background: #30363d;
+      }
+
+      /* Tab Content */
+      .tab-content {
+        min-height: 200px;
+      }
+      .section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .section-head h2 {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0;
+        letter-spacing: -0.01em;
+      }
+      .section-head p {
+        font-size: 14px;
+        color: var(--text-secondary);
+        margin: 4px 0 0;
+      }
+
+      /* Overview Metrics */
+      .overview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 32px;
+      }
+      .metric {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+      }
+      .metric-label {
+        font-size: 13px;
+        color: var(--text-secondary);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .metric-value {
+        font-size: 28px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        margin-top: 8px;
+        color: var(--text-primary);
+      }
+
+      /* Repositories */
+      .repo-tools {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+      .repo-search,
+      .select {
+        height: 40px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0 12px;
+        background: var(--surface);
+        color: var(--text-primary);
+        font-size: 14px;
+      }
+      .repo-search {
+        flex: 1;
+        min-width: 200px;
+      }
+      .repo-search:focus,
+      .select:focus {
+        border-color: var(--accent);
+        outline: none;
+        box-shadow: 0 0 0 3px var(--accent-bg);
+      }
+      .repo-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .repo {
+        padding: 20px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+      .repo:hover {
+        border-color: var(--accent);
+        box-shadow: var(--shadow-sm);
+      }
+      .repo-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      .repo-name {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--accent);
+        overflow-wrap: anywhere;
+      }
+      .repo-name:hover {
+        text-decoration: underline;
+      }
+      .visibility {
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 99px;
+        white-space: nowrap;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .repo-description {
+        color: var(--text-secondary);
+        margin: 8px 0 16px;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      .repo-meta {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        color: var(--text-secondary);
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .repo-meta span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .lang-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+
+      /* Languages */
+      .language-block {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 24px;
+      }
+      .language-row {
+        display: grid;
+        grid-template-columns: 120px 1fr 40px;
+        align-items: center;
+        gap: 16px;
+        margin: 12px 0;
+        font-size: 14px;
+      }
+      .bar {
+        height: 8px;
+        background: #f3f4f6;
+        border-radius: 99px;
+        overflow: hidden;
+      }
+      [data-theme="dark"] .bar {
+        background: #30363d;
+      }
+      .bar span {
+        display: block;
+        height: 100%;
+        border-radius: 99px;
+      }
+
+      /* Empty & Loading States */
+      .empty-state,
+      .activity-empty {
+        padding: 40px 20px;
+        text-align: center;
+        color: var(--text-secondary);
+        border: 1px dashed var(--border);
+        border-radius: var(--radius);
+      }
+      .empty-state strong,
+      .activity-empty strong {
+        display: block;
+        color: var(--text-primary);
+        font-size: 16px;
+        margin-bottom: 8px;
+      }
+      .loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        color: var(--text-secondary);
+        padding: 40px 0;
+        font-weight: 500;
+      }
+      .spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--border);
+        border-top-color: var(--text-primary);
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      /* Footer */
+      .footer {
+        margin-top: 48px;
+        padding-top: 24px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        color: var(--text-secondary);
+        font-size: 13px;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+      .footer a {
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+      .footer a:hover {
+        color: var(--accent);
+      }
+
+      /* Responsive */
+      @media (max-width: 640px) {
+        .app {
+          padding: 0 16px 48px;
+        }
+        .topbar {
+          margin-bottom: 24px;
+          padding: 16px 0;
+        }
+        .top-meta {
+          gap: 8px;
+        }
+        .top-meta span:not(.status-dot) {
+          display: none;
+        }
+        .search-form {
+          flex-direction: column;
+        }
+        .btn {
+          width: 100%;
+        }
+        .profile-card {
+          grid-template-columns: 1fr;
+          text-align: center;
+          padding: 24px;
+        }
+        .avatar {
+          margin: 0 auto;
+        }
+        .profile-details {
+          justify-content: center;
+        }
+        .profile-actions {
+          justify-content: center;
+          flex-direction: column;
+        }
+        .profile-actions .btn {
+          width: 100%;
+        }
+        .stats {
+          justify-content: center;
+        }
+        .section-head {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 12px;
+        }
+        .repo-tools {
+          flex-direction: column;
+        }
+        .repo-search,
+        .select {
+          width: 100%;
+        }
+        .language-row {
+          grid-template-columns: 100px 1fr 32px;
+          gap: 12px;
+        }
+        .footer {
+          flex-direction: column;
+          text-align: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="GitHub Profile Viewer home">
+          <span class="brand-mark">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
+              ></path>
+            </svg>
+          </span>
+          <span>GitHub Profile Viewer</span>
+        </a>
+        <div class="top-meta">
+          <span class="status-dot"></span> <span>Public API</span>
+          <button
+            id="theme-toggle"
+            class="btn-icon"
+            aria-label="Toggle dark mode"
+            title="Toggle theme"
+          >
+            <svg
+              class="icon-sun"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="5" />
+              <line x1="12" y1="1" x2="12" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="23" />
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+              <line x1="1" y1="12" x2="3" y2="12" />
+              <line x1="21" y1="12" x2="23" y2="12" />
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </svg>
+            <svg
+              class="icon-moon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <main>
+        <div class="search-container">
+          <form id="search-form" class="search-form" novalidate>
+            <div class="search-input-wrap">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.3-4.3"></path>
+              </svg>
+              <input
+                id="username"
+                class="search-input"
+                placeholder="Search GitHub username (e.g. octocat)"
+                autocomplete="off"
+                autocapitalize="none"
+                maxlength="39"
+                aria-label="GitHub username"
+              />
+            </div>
+            <button id="search-button" class="btn btn-primary" type="submit">
+              Search
+            </button>
+          </form>
+          <div id="search-history" class="search-history"></div>
+        </div>
+
+        <div
+          id="message"
+          class="message"
+          role="status"
+          aria-live="polite"
+        ></div>
+
+        <div id="profile-container" class="hidden">
+          <section class="profile-card" id="profile-card">
+            <img id="avatar" class="avatar" src="" alt="GitHub avatar" />
+            <div class="profile-header">
+              <h1 id="profile-name" class="profile-name"></h1>
+              <a
+                id="handle"
+                class="username"
+                href="#"
+                target="_blank"
+                rel="noopener noreferrer"
+              ></a>
+              <p id="bio" class="bio"></p>
+
+              <div class="profile-details">
+                <div class="detail hidden" id="location-row">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" />
+                    <circle cx="12" cy="10" r="2.5" />
+                  </svg>
+                  <span id="location"></span>
+                </div>
+                <div class="detail hidden" id="company-row">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="3" y="7" width="18" height="14" rx="2" />
+                    <path d="M8 7V4h8v3M3 12h18M10 12v2h4v-2" />
+                  </svg>
+                  <span id="company"></span>
+                </div>
+                <div class="detail hidden" id="website-row">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                    <path
+                      d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"
+                    />
+                  </svg>
+                  <a
+                    id="website"
+                    href="#"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  ></a>
+                </div>
+                <div class="detail">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M7 3v4m10-4v4M4 9h16M5 5h14a1 1 0 0 1 1 1v13H4V6a1 1 0 0 1 1-1Z"
+                    />
+                  </svg>
+                  <span id="joined"></span>
+                </div>
+              </div>
+
+              <div class="profile-actions">
+                <a
+                  id="open-github"
+                  class="btn btn-primary"
+                  href="#"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >Open GitHub ↗</a
+                >
+                <button
+                  id="copy-username"
+                  class="btn btn-secondary"
+                  type="button"
+                >
+                  Copy Username
+                </button>
+              </div>
+
+              <div class="stats">
+                <div class="stat">
+                  <div id="repo-count" class="stat-value">0</div>
+                  <div class="stat-label">Repositories</div>
+                </div>
+                <div class="stat">
+                  <div id="followers" class="stat-value">0</div>
+                  <div class="stat-label">Followers</div>
+                </div>
+                <div class="stat">
+                  <div id="following" class="stat-value">0</div>
+                  <div class="stat-label">Following</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="tabs" role="tablist" aria-label="Profile sections">
+            <button
+              class="tab"
+              id="tab-overview"
+              role="tab"
+              aria-selected="true"
+              data-tab="overview"
+            >
+              Overview
+            </button>
+            <button
+              class="tab"
+              id="tab-repositories"
+              role="tab"
+              aria-selected="false"
+              data-tab="repositories"
+            >
+              Repositories <span id="repo-tab-count" class="tab-count">0</span>
+            </button>
+            <button
+              class="tab"
+              id="tab-languages"
+              role="tab"
+              aria-selected="false"
+              data-tab="languages"
+            >
+              Languages
+            </button>
+          </div>
+
+          <div id="tab-panel" class="tab-content">
+            <!-- Overview View -->
+            <div id="overview-view">
+              <div class="section-head">
+                <div>
+                  <h2>Profile Overview</h2>
+                  <p>A quick snapshot of this developer's public work.</p>
+                </div>
+              </div>
+              <div class="overview-grid">
+                <div class="metric">
+                  <div class="metric-label">Public Repositories</div>
+                  <div id="metric-repos" class="metric-value">0</div>
+                </div>
+                <div class="metric">
+                  <div class="metric-label">Followers</div>
+                  <div id="metric-followers" class="metric-value">0</div>
+                </div>
+                <div class="metric">
+                  <div class="metric-label">Following</div>
+                  <div id="metric-following" class="metric-value">0</div>
+                </div>
+                <div class="metric">
+                  <div class="metric-label">Account Created</div>
+                  <div id="metric-created" class="metric-value">—</div>
+                </div>
+              </div>
+              <div class="section-head" style="margin-top: 32px">
+                <h2>Recently Updated</h2>
+              </div>
+              <div id="overview-repos" class="repo-list"></div>
+            </div>
+
+            <!-- Repositories View -->
+            <div id="repositories-view" class="hidden">
+              <div class="section-head">
+                <div>
+                  <h2>Repositories</h2>
+                  <p id="repo-summary">
+                    Public repositories, sorted by recent updates.
+                  </p>
+                </div>
+                <select
+                  id="repo-sort"
+                  class="select"
+                  aria-label="Sort repositories"
+                >
+                  <option value="updated">Recently updated</option>
+                  <option value="stars">Most stars</option>
+                  <option value="name">Name A–Z</option>
+                </select>
+              </div>
+              <div class="repo-tools">
+                <input
+                  id="repo-filter"
+                  class="repo-search"
+                  placeholder="Filter repositories…"
+                  aria-label="Filter repositories"
+                />
+                <select
+                  id="language-filter"
+                  class="select"
+                  aria-label="Filter by language"
+                >
+                  <option value="">All languages</option>
+                </select>
+              </div>
+              <div id="repo-list" class="repo-list"></div>
+              <button
+                id="load-more"
+                class="btn btn-secondary hidden"
+                style="width: 100%; margin-top: 16px"
+              >
+                Load more repositories
+              </button>
+            </div>
+
+            <!-- Languages View -->
+            <div id="languages-view" class="hidden">
+              <div class="section-head">
+                <div>
+                  <h2>Languages</h2>
+                  <p>
+                    Languages used across the public repositories loaded for
+                    this profile.
+                  </p>
+                </div>
+              </div>
+              <div id="language-chart" class="language-block"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Initial Empty State -->
+        <div id="initial-state" class="empty-state">
+          <strong>Ready to explore</strong>
+          <p>
+            Enter a GitHub username above to view their public profile,
+            repositories, and language statistics.
+          </p>
+        </div>
+
+        <footer class="footer">
+          <span
+            >GitHub Profile Viewer · Independent public profile explorer</span
+          >
+          <span
+            >Data provided by
+            <a
+              href="https://docs.github.com/en/rest"
+              target="_blank"
+              rel="noopener noreferrer"
+              >GitHub REST API</a
+            ></span
+          >
+        </footer>
+      </main>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+
+      const state = {
+        user: null,
+        repos: [],
+        allRepos: [],
+        page: 1,
+        perPage: 30,
+        activeTab: "overview",
+        busy: false,
+      };
+
+      const fmt = (n) =>
+        new Intl.NumberFormat("en", {
+          notation: n >= 10000 ? "compact" : "standard",
+          maximumFractionDigits: 1,
+        }).format(n ?? 0);
+
+      const esc = (s) =>
+        String(s ?? "").replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+
+      // --- Search History Logic ---
+      function getHistory() {
+        try {
+          return JSON.parse(localStorage.getItem("gh-viewer-history") || "[]");
+        } catch {
+          return [];
+        }
+      }
+
+      function saveToHistory(username) {
+        let history = getHistory().filter(
+          (u) => u.toLowerCase() !== username.toLowerCase(),
+        );
+        history.unshift(username);
+        history = history.slice(0, 5); // Keep last 5 searches
+        localStorage.setItem("gh-viewer-history", JSON.stringify(history));
+        renderHistory();
+      }
+
+      function renderHistory() {
+        const history = getHistory();
+        const container = $("search-history");
+        if (!history.length) {
+          container.innerHTML = "";
+          return;
+        }
+        container.innerHTML =
+          '<span class="history-label">Recent:</span>' +
+          history
+            .map(
+              (u) => `<button class="history-chip" data-user="${esc(u)}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            ${esc(u)}
+          </button>`,
+            )
+            .join("");
+
+        container.querySelectorAll(".history-chip").forEach((chip) => {
+          chip.addEventListener("click", () => {
+            $("username").value = chip.dataset.user;
+            searchUser(chip.dataset.user);
+          });
+        });
+      }
+
+      // --- Theme Toggle Logic ---
+      function initTheme() {
+        const savedTheme = localStorage.getItem("gh-viewer-theme");
+        if (savedTheme) {
+          document.documentElement.setAttribute("data-theme", savedTheme);
+        } else {
+          if (
+            window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches
+          ) {
+            document.documentElement.setAttribute("data-theme", "dark");
+          } else {
+            document.documentElement.setAttribute("data-theme", "light");
+          }
+        }
+      }
+
+      function toggleTheme() {
+        const current = document.documentElement.getAttribute("data-theme");
+        const next = current === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        localStorage.setItem("gh-viewer-theme", next);
+      }
+
+      // --- Core Functions ---
+      function message(text, type = "error") {
+        const el = $("message");
+        el.textContent = text;
+        el.className = "message show " + type;
+        setTimeout(() => {
+          if (el.textContent === text) el.className = "message";
+        }, 5000);
+      }
+
+      function clearMessage() {
+        $("message").className = "message";
+      }
+
+      async function api(url) {
+        const res = await fetch(url, {
+          headers: {
+            Accept: "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+          },
+        });
+        if (!res.ok) {
+          if (res.status === 404)
+            throw Error("No profile found. Check the username and try again.");
+          if (res.status === 403 || res.status === 429)
+            throw Error(
+              "GitHub API rate limit reached. Please wait a little and try again.",
+            );
+          throw Error(
+            "GitHub could not complete the request. Please try again.",
+          );
+        }
+        return res.json();
+      }
+
+      function niceDate(s) {
+        if (!s) return "—";
+        return new Date(s).toLocaleDateString("en", {
+          month: "short",
+          year: "numeric",
+        });
+      }
+
+      function setText(id, value, fallback = "Not shared") {
+        $(id).textContent = value || fallback;
+      }
+
+      function getLangColor(lang) {
+        const colors = {
+          JavaScript: "#f1e05a",
+          TypeScript: "#3178c6",
+          Python: "#3572A5",
+          Java: "#b07219",
+          HTML: "#e34c26",
+          CSS: "#563d7c",
+          Go: "#00ADD8",
+          Rust: "#dea584",
+          Ruby: "#701516",
+          C: "#555555",
+          "C++": "#f34b7d",
+          Shell: "#89e051",
+          PHP: "#4F5D95",
+          Swift: "#F05138",
+        };
+        return colors[lang] || "#8585d9";
+      }
+
+      function renderProfile(u) {
+        $("avatar").src = u.avatar_url;
+        $("avatar").alt = (u.name || u.login) + " avatar";
+        $("profile-name").textContent = u.name || u.login;
+        $("handle").textContent = "@" + u.login;
+        $("handle").href = u.html_url;
+        $("open-github").href = u.html_url;
+
+        setText("bio", u.bio, "No bio provided.");
+        setText("location", u.location);
+        setText("company", u.company);
+
+        $("location-row").classList.toggle("hidden", !u.location);
+        $("company-row").classList.toggle("hidden", !u.company);
+
+        const site = $("website");
+        let blog = u.blog || "";
+        if (blog && !/^https?:\/\//i.test(blog)) blog = "https://" + blog;
+        $("website-row").classList.toggle("hidden", !u.blog);
+        site.href = blog;
+        site.textContent = u.blog ? u.blog.replace(/^https?:\/\//i, "") : "";
+
+        setText("joined", "Joined " + niceDate(u.created_at), "Joined GitHub");
+
+        $("repo-count").textContent = fmt(u.public_repos);
+        $("followers").textContent = fmt(u.followers);
+        $("following").textContent = fmt(u.following);
+
+        $("metric-repos").textContent = fmt(u.public_repos);
+        $("metric-followers").textContent = fmt(u.followers);
+        $("metric-following").textContent = fmt(u.following);
+        $("metric-created").textContent = niceDate(u.created_at);
+        $("repo-tab-count").textContent = fmt(u.public_repos);
+      }
+
+      function repoCard(r) {
+        const lang = r.language
+          ? `<span><span class="lang-dot" style="background: ${getLangColor(r.language)}"></span>${esc(r.language)}</span>`
+          : "";
+        return `<article class="repo">
+        <div class="repo-top">
+          <a class="repo-name" href="${esc(r.html_url)}" target="_blank" rel="noopener noreferrer">${esc(r.name)}</a>
+          <span class="visibility">${r.fork ? "Fork" : "Public"}</span>
+        </div>
+        <p class="repo-description">${esc(r.description || "No description provided.")}</p>
+        <div class="repo-meta">
+          ${lang}
+          <span>☆ ${fmt(r.stargazers_count)} stars</span>
+          <span>⑂ ${fmt(r.forks_count)} forks</span>
+          <span>Updated ${niceDate(r.updated_at)}</span>
+        </div>
+      </article>`;
+      }
+
+      function filteredRepos() {
+        let list = [...state.allRepos];
+        const q = $("repo-filter").value.trim().toLowerCase();
+        const lang = $("language-filter").value;
+        const sort = $("repo-sort").value;
+
+        if (q)
+          list = list.filter(
+            (r) =>
+              r.name.toLowerCase().includes(q) ||
+              (r.description || "").toLowerCase().includes(q),
+          );
+        if (lang) list = list.filter((r) => r.language === lang);
+
+        if (sort === "stars")
+          list.sort((a, b) => b.stargazers_count - a.stargazers_count);
+        else if (sort === "name")
+          list.sort((a, b) => a.name.localeCompare(b.name));
+        else
+          list.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+
+        return list;
+      }
+
+      function renderRepos() {
+        const list = filteredRepos();
+        const visible = list.slice(0, state.page * state.perPage);
+
+        $("repo-summary").textContent =
+          `${list.length} ${list.length === 1 ? "repository" : "repositories"} match your filters.`;
+        $("repo-list").innerHTML = visible.length
+          ? visible.map(repoCard).join("")
+          : '<div class="activity-empty"><strong>No repositories found</strong>Try another search or language filter.</div>';
+
+        $("load-more").classList.toggle(
+          "hidden",
+          visible.length >= list.length,
+        );
+        $("load-more").textContent =
+          `Load more repositories (${list.length - visible.length} remaining)`;
+      }
+
+      function renderLanguages() {
+        const totals = {};
+        state.allRepos.forEach((r) => {
+          if (r.language) totals[r.language] = (totals[r.language] || 0) + 1;
+        });
+
+        const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+        const total = entries.reduce((n, x) => n + x[1], 0);
+
+        $("language-chart").innerHTML = entries.length
+          ? entries
+              .map(([name, count]) => {
+                const pct = Math.round((count / total) * 100);
+                return `<div class="language-row">
+              <span style="font-weight: 500;">${esc(name)}</span>
+              <div class="bar"><span style="width: ${Math.max(3, pct)}%; background: ${getLangColor(name)}"></span></div>
+              <span style="color: var(--text-secondary); font-weight: 500;">${pct}%</span>
+            </div>`;
+              })
+              .join("")
+          : '<div class="activity-empty"><strong>No language information</strong>The repositories loaded for this profile do not report a primary language.</div>';
+      }
+
+      function renderOverview() {
+        const list = [...state.allRepos]
+          .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
+          .slice(0, 3);
+
+        $("overview-repos").innerHTML = list.length
+          ? list.map(repoCard).join("")
+          : '<div class="activity-empty"><strong>No public repositories</strong>This profile has no public repositories to display.</div>';
+      }
+
+      function updateLanguageOptions() {
+        const current = $("language-filter").value;
+        const langs = [
+          ...new Set(state.allRepos.map((r) => r.language).filter(Boolean)),
+        ].sort();
+        $("language-filter").innerHTML =
+          '<option value="">All languages</option>' +
+          langs
+            .map((l) => `<option value="${esc(l)}">${esc(l)}</option>`)
+            .join("");
+        if (langs.includes(current)) $("language-filter").value = current;
+      }
+
+      function switchTab(tab) {
+        state.activeTab = tab;
+        document
+          .querySelectorAll(".tab")
+          .forEach((b) =>
+            b.setAttribute("aria-selected", String(b.dataset.tab === tab)),
+          );
+        ["overview", "repositories", "languages"].forEach((t) =>
+          $(t + "-view").classList.toggle("hidden", t !== tab),
+        );
+        if (tab === "repositories") renderRepos();
+        if (tab === "languages") renderLanguages();
+      }
+
+      async function searchUser(raw) {
+        if (state.busy) return;
+        const username = raw.trim();
+        if (!/^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$/.test(username)) {
+          message("Enter a valid GitHub username, not a profile URL.");
+          $("username").focus();
+          return;
+        }
+
+        state.busy = true;
+        $("search-button").disabled = true;
+        $("search-button").textContent = "Searching…";
+        $("profile-container").classList.add("hidden");
+        $("initial-state").classList.add("hidden");
+        $("message").insertAdjacentHTML(
+          "afterbegin",
+          '<div class="loading"><span class="spinner"></span>Loading public profile…</div>',
+        );
+        clearMessage();
+
+        try {
+          const user = await api(
+            "https://api.github.com/users/" + encodeURIComponent(username),
+          );
+          const repos = await api(
+            "https://api.github.com/users/" +
+              encodeURIComponent(username) +
+              "/repos?sort=updated&per_page=100&type=owner",
+          );
+
+          state.user = user;
+          state.allRepos = repos;
+          state.page = 1;
+
+          saveToHistory(username); // Save to history on successful fetch
+
+          renderProfile(user);
+          updateLanguageOptions();
+          renderRepos();
+          renderOverview();
+          renderLanguages();
+          switchTab("overview");
+
+          $("profile-container").classList.remove("hidden");
+          message(`Loaded public profile for @${user.login}.`, "success");
+        } catch (err) {
+          $("profile-container").classList.add("hidden");
+          $("initial-state").classList.remove("hidden");
+          message(
+            err instanceof TypeError
+              ? "Could not connect to GitHub. Check your internet connection."
+              : err.message,
+          );
+        } finally {
+          state.busy = false;
+          $("search-button").disabled = false;
+          $("search-button").textContent = "Search";
+          const loading = $("message").querySelector(".loading");
+          if (loading) loading.remove();
+        }
+      }
+
+      // Event Listeners
+      $("search-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        searchUser($("username").value);
+      });
+
+      document
+        .querySelectorAll(".tab")
+        .forEach((b) =>
+          b.addEventListener("click", () => switchTab(b.dataset.tab)),
+        );
+
+      $("repo-filter").addEventListener("input", () => {
+        state.page = 1;
+        renderRepos();
+      });
+      $("repo-sort").addEventListener("change", () => {
+        state.page = 1;
+        renderRepos();
+      });
+      $("language-filter").addEventListener("change", () => {
+        state.page = 1;
+        renderRepos();
+      });
+
+      $("load-more").addEventListener("click", () => {
+        state.page++;
+        renderRepos();
+      });
+
+      $("copy-username").addEventListener("click", async () => {
+        if (!state.user) return;
+        try {
+          await navigator.clipboard.writeText(state.user.login);
+          const btn = $("copy-username");
+          const originalText = btn.textContent;
+          btn.textContent = "Copied!";
+          setTimeout(() => {
+            btn.textContent = originalText;
+          }, 1500);
+        } catch {
+          $("username").value = state.user.login;
+          $("username").select();
+          message("Username selected. Copy it using Ctrl+C.", "success");
+        }
+      });
+
+      $("avatar").addEventListener("error", () => {
+        $("avatar").style.visibility = "hidden";
+      });
+
+      $("theme-toggle").addEventListener("click", toggleTheme);
+
+      // Initialize app state
+      initTheme();
+      renderHistory();
+
+      // Load a real, public sample profile on startup
+      searchUser("octocat");
+    </script>
+  </body>
+</html>

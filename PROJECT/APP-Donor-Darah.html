@@ -1,0 +1,3909 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Aplikasi Donor Darah Komunitas</title>
+    <meta
+      name="description"
+      content="Database pendonor darah sukarela, jadwal kegiatan donor, permintaan darurat rumah sakit, sertifikat digital, dan peta lokasi PMI terdekat."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23d32f2f' d='M12 2.8c3.5 3.8 6.2 6.9 6.2 10a6.2 6.2 0 1 1-12.4 0c0-3.1 2.7-6.2 6.2-10z'/%3E%3C/svg%3E"
+    />
+    <style>
+      /* ===== Dasar ===== */
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+        background: #f7f7f8;
+        color: #191a1b;
+        line-height: 1.55;
+        font-size: 16px;
+      }
+      img,
+      svg {
+        display: inline-block;
+        vertical-align: middle;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      button {
+        font: inherit;
+        cursor: pointer;
+        background: none;
+        border: none;
+        color: inherit;
+      }
+      :focus-visible {
+        outline: 2px solid #d32f2f;
+        outline-offset: 2px;
+      }
+      .ic {
+        width: 18px;
+        height: 18px;
+        flex: none;
+      }
+      .container {
+        max-width: 1080px;
+        margin-inline: auto;
+        padding-inline: clamp(16px, 4vw, 28px);
+      }
+      .skip-link {
+        position: absolute;
+        left: -9999px;
+        top: 0;
+        background: #191a1b;
+        color: #fff;
+        padding: 8px 14px;
+        border-radius: 0 0 8px 0;
+        z-index: 99;
+      }
+      .skip-link:focus {
+        left: 0;
+      }
+
+      /* ===== Header ===== */
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        background: #fff;
+        border-bottom: 1px solid #e7e7e9;
+      }
+      .topbar-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        height: 64px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .brand-mark {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: #d32f2f;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+      }
+      .brand-mark .ic {
+        width: 19px;
+        height: 19px;
+      }
+      .brand-mark.sm {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+      }
+      .brand-mark.sm .ic {
+        width: 15px;
+        height: 15px;
+      }
+      .brand-text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.15;
+      }
+      .brand-name {
+        font-weight: 700;
+        font-size: 17px;
+        letter-spacing: -0.01em;
+      }
+      .brand-sub {
+        font-size: 11px;
+        color: #667085;
+      }
+      .top-nav {
+        display: none;
+        gap: 2px;
+      }
+      .top-nav a {
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #4b5563;
+      }
+      .top-nav a:hover {
+        background: #f3f3f4;
+        color: #191a1b;
+      }
+      .top-nav a.active {
+        background: #fdecec;
+        color: #c62828;
+      }
+
+      /* ===== Navigasi bawah (mobile) ===== */
+      .bottom-nav {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 50;
+        display: flex;
+        background: #fff;
+        border-top: 1px solid #e7e7e9;
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+      .bottom-nav button {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        padding: 9px 2px 8px;
+        font-size: 10px;
+        font-weight: 600;
+        color: #667085;
+        border-top: 2px solid transparent;
+      }
+      .bottom-nav button .ic {
+        width: 20px;
+        height: 20px;
+      }
+      .bottom-nav button.active {
+        color: #d32f2f;
+        border-top-color: #d32f2f;
+      }
+      main.page {
+        padding-bottom: calc(78px + env(safe-area-inset-bottom));
+      }
+
+      /* ===== Halaman / seksi ===== */
+      .page-view {
+        display: none;
+        padding: clamp(24px, 4vw, 44px) 0 40px;
+      }
+      .page-view.active {
+        display: block;
+      }
+      .page-head {
+        margin-bottom: 24px;
+        max-width: 640px;
+      }
+      .page-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: clamp(1.35rem, 3.5vw, 1.7rem);
+        letter-spacing: -0.02em;
+        margin-bottom: 8px;
+      }
+      .page-title .ic {
+        width: 24px;
+        height: 24px;
+        color: #d32f2f;
+      }
+      .page-desc {
+        color: #4b5563;
+        font-size: 15px;
+      }
+
+      /* ===== Kartu & umum ===== */
+      .card {
+        background: #fff;
+        border: 1px solid #e7e7e9;
+        border-radius: 14px;
+        padding: clamp(16px, 3vw, 22px);
+        margin-bottom: 20px;
+      }
+      .card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+      }
+      .card-title {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 16px;
+        letter-spacing: -0.01em;
+      }
+      .card-title .ic {
+        color: #d32f2f;
+      }
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: #f3f3f4;
+        color: #4b5563;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .tag .ic {
+        width: 13px;
+        height: 13px;
+      }
+      .tag.hot {
+        background: #fdecec;
+        color: #c62828;
+      }
+      .hint {
+        font-size: 12.5px;
+        color: #8a93a0;
+        margin-top: 10px;
+        display: flex;
+        gap: 6px;
+        align-items: flex-start;
+      }
+      .hint .ic {
+        width: 14px;
+        height: 14px;
+        flex: none;
+        margin-top: 2px;
+      }
+      .hint-inline {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12.5px;
+        color: #8a93a0;
+      }
+      .hint-inline .ic {
+        width: 14px;
+        height: 14px;
+      }
+
+      /* ===== Tombol ===== */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 11px 18px;
+        border-radius: 10px;
+        font-size: 14.5px;
+        font-weight: 600;
+        border: 1px solid transparent;
+        transition:
+          background 0.15s,
+          border-color 0.15s,
+          color 0.15s;
+      }
+      .btn .ic {
+        width: 16px;
+        height: 16px;
+      }
+      .btn-primary {
+        background: #d32f2f;
+        color: #fff;
+      }
+      .btn-primary:hover {
+        background: #b02525;
+      }
+      .btn-outline {
+        border-color: #d6d7d9;
+        color: #191a1b;
+        background: #fff;
+      }
+      .btn-outline:hover {
+        border-color: #191a1b;
+      }
+      .btn-ghost {
+        color: #4b5563;
+        background: #f3f3f4;
+      }
+      .btn-ghost:hover {
+        background: #e9e9eb;
+      }
+      .btn-sm {
+        padding: 8px 13px;
+        font-size: 13.5px;
+        border-radius: 9px;
+      }
+      .btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      .link-more {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: #c62828;
+      }
+      .link-more .ic {
+        width: 15px;
+        height: 15px;
+      }
+      .link-tel {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 600;
+        color: #c62828;
+        font-size: 14px;
+      }
+      .link-tel .ic {
+        width: 14px;
+        height: 14px;
+      }
+
+      /* ===== Formulir ===== */
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .field label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #374151;
+      }
+      .field input,
+      .field select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #d6d7d9;
+        border-radius: 10px;
+        font: inherit;
+        font-size: 14.5px;
+        background: #fff;
+        color: #191a1b;
+      }
+      .field input:focus,
+      .field select:focus {
+        border-color: #d32f2f;
+        outline: 2px solid #d32f2f;
+        outline-offset: 0;
+      }
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 14px;
+        margin-top: 14px;
+      }
+      .form-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .filter-bar {
+        display: flex;
+        align-items: end;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+      }
+      .field-inline {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .field-inline label {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #374151;
+      }
+      .field-inline select,
+      .field-inline input {
+        padding: 9px 12px;
+        border: 1px solid #d6d7d9;
+        border-radius: 10px;
+        font: inherit;
+        font-size: 14px;
+        background: #fff;
+        min-width: 150px;
+      }
+      .filters {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 6px;
+      }
+      .chips {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .chip {
+        padding: 7px 15px;
+        border-radius: 999px;
+        border: 1px solid #d6d7d9;
+        background: #fff;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: #374151;
+      }
+      .chip:hover {
+        border-color: #191a1b;
+      }
+      .chip.active {
+        background: #d32f2f;
+        border-color: #d32f2f;
+        color: #fff;
+      }
+
+      /* ===== Tabel ===== */
+      .table-wrap {
+        overflow-x: auto;
+        margin-top: 12px;
+        border: 1px solid #ececef;
+        border-radius: 12px;
+      }
+      table.data {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 640px;
+        background: #fff;
+      }
+      table.data th {
+        text-align: left;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #667085;
+        padding: 11px 14px;
+        border-bottom: 1px solid #e7e7e9;
+        white-space: nowrap;
+      }
+      table.data td {
+        padding: 12px 14px;
+        border-bottom: 1px solid #f0f0f2;
+        font-size: 14.5px;
+        vertical-align: middle;
+      }
+      table.data tr:last-child td {
+        border-bottom: none;
+      }
+      table.data tbody tr:hover {
+        background: #fafafa;
+      }
+      .td-name {
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .empty-cell {
+        text-align: center;
+        color: #8a93a0;
+        padding: 26px 14px !important;
+      }
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12.5px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .status .ic {
+        width: 13px;
+        height: 13px;
+      }
+      .status.ok {
+        color: #1c7c43;
+      }
+      .status.wait {
+        color: #b45309;
+      }
+      .status.low {
+        color: #b45309;
+      }
+      .status.crit {
+        color: #b91c1c;
+      }
+      .status.muted {
+        color: #8a93a0;
+      }
+
+      /* ===== Lencana golongan darah ===== */
+      .bt-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 42px;
+        height: 42px;
+        padding: 0 8px;
+        border-radius: 12px;
+        background: #fdecec;
+        color: #c62828;
+        font-weight: 700;
+        font-size: 14.5px;
+        letter-spacing: 0.02em;
+      }
+      .bt-badge.bt-AB {
+        border-radius: 999px;
+      }
+
+      /* ===== Beranda: hero ===== */
+      .hero {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 26px;
+        align-items: center;
+        margin-bottom: 30px;
+      }
+      .hero-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 6px 13px;
+        border-radius: 999px;
+        background: #fdecec;
+        color: #c62828;
+        font-size: 12.5px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        margin-bottom: 16px;
+      }
+      .hero-chip .ic {
+        width: 14px;
+        height: 14px;
+      }
+      .hero-title {
+        font-size: clamp(1.9rem, 6vw, 2.9rem);
+        line-height: 1.12;
+        letter-spacing: -0.03em;
+        margin-bottom: 14px;
+      }
+      .hero-title .accent {
+        color: #d32f2f;
+      }
+      .hero-lead {
+        color: #4b5563;
+        font-size: clamp(0.95rem, 2.5vw, 1.05rem);
+        max-width: 52ch;
+        margin-bottom: 22px;
+      }
+      .hero-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+      }
+      .hero-note {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13.5px;
+        color: #4b5563;
+      }
+      .hero-note .ic {
+        width: 15px;
+        height: 15px;
+        color: #d32f2f;
+      }
+      .hero-art {
+        display: none;
+      }
+
+      /* ===== Statistik ===== */
+      .stat-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 14px;
+        margin-bottom: 30px;
+      }
+      .stat-card {
+        background: #fff;
+        border: 1px solid #e7e7e9;
+        border-radius: 14px;
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .stat-ic {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        background: #fdecec;
+        color: #c62828;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 8px;
+      }
+      .stat-ic .ic {
+        width: 17px;
+        height: 17px;
+      }
+      .stat-num {
+        font-size: 1.7rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+      }
+      .stat-label {
+        font-size: 13px;
+        color: #667085;
+      }
+      .home-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      /* ===== Stok darah ===== */
+      .stock-list {
+        display: flex;
+        flex-direction: column;
+        gap: 13px;
+      }
+      .stock-row {
+        display: grid;
+        grid-template-columns: 42px 1fr 58px 64px;
+        gap: 12px;
+        align-items: center;
+      }
+      .stock-row .bt-badge {
+        height: 34px;
+        min-width: 38px;
+        font-size: 13.5px;
+      }
+      .stock-bar {
+        height: 8px;
+        border-radius: 999px;
+        background: #f0f0f2;
+        overflow: hidden;
+      }
+      .stock-bar i {
+        display: block;
+        height: 100%;
+        border-radius: 999px;
+      }
+      .stock-bar i.ok {
+        background: #1c7c43;
+      }
+      .stock-bar i.low {
+        background: #d97706;
+      }
+      .stock-bar i.crit {
+        background: #b91c1c;
+      }
+      .stock-units {
+        font-size: 13px;
+        font-weight: 600;
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      /* ===== Pratinjau daftar ===== */
+      .preview-list {
+        display: flex;
+        flex-direction: column;
+      }
+      .preview-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 4px;
+        border-bottom: 1px solid #f0f0f2;
+        cursor: pointer;
+      }
+      .preview-row:last-child {
+        border-bottom: none;
+      }
+      .preview-row > div {
+        flex: 1;
+        min-width: 0;
+      }
+      .preview-row b {
+        display: block;
+        font-size: 14px;
+        letter-spacing: -0.01em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .preview-row small {
+        color: #667085;
+        font-size: 12.5px;
+      }
+      .preview-row > .ic {
+        color: #b9bec7;
+      }
+      /* ===== Kartu kegiatan (jadwal) ===== */
+      .event-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .event-card {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        background: #fff;
+        border: 1px solid #e7e7e9;
+        border-radius: 14px;
+        padding: 18px;
+      }
+      .date-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 58px;
+        height: 58px;
+        border: 1px solid #e7e7e9;
+        border-radius: 12px;
+        background: #fff;
+        flex: none;
+      }
+      .date-box .db-day {
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+      }
+      .date-box .db-mon {
+        font-size: 10.5px;
+        font-weight: 700;
+        color: #c62828;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .date-box.sm {
+        width: 44px;
+        height: 44px;
+        border: none;
+        background: #f7f7f8;
+      }
+      .date-box.sm .db-day {
+        font-size: 16px;
+      }
+      .date-box.sm .db-mon {
+        font-size: 9.5px;
+      }
+      .event-info {
+        flex: 1;
+        min-width: 230px;
+      }
+      .event-info h3 {
+        font-size: 16px;
+        letter-spacing: -0.01em;
+        margin-bottom: 6px;
+      }
+      .event-meta {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 13.5px;
+        color: #4b5563;
+        margin-bottom: 3px;
+      }
+      .event-meta .ic {
+        width: 14px;
+        height: 14px;
+        color: #98a0ab;
+      }
+      .event-side {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 9px;
+        min-width: 170px;
+      }
+      .quota-bar {
+        height: 7px;
+        border-radius: 999px;
+        background: #f0f0f2;
+        overflow: hidden;
+      }
+      .quota-bar i {
+        display: block;
+        height: 100%;
+        background: #d32f2f;
+        border-radius: 999px;
+      }
+      .quota small {
+        display: block;
+        font-size: 11.5px;
+        color: #8a93a0;
+        margin-top: 4px;
+      }
+
+      /* ===== Kartu darurat ===== */
+      .emerg-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .emerg-card {
+        background: #fff;
+        border: 1px solid #e7e7e9;
+        border-left: 4px solid #b91c1c;
+        border-radius: 14px;
+        padding: 18px;
+      }
+      .emerg-card.tinggi {
+        border-left-color: #d97706;
+      }
+      .emerg-card.sedang {
+        border-left-color: #98a0ab;
+      }
+      .emerg-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+      .emerg-head h3 {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 16px;
+        letter-spacing: -0.01em;
+        flex: 1;
+        min-width: 180px;
+      }
+      .emerg-head h3 .ic {
+        color: #c62828;
+      }
+      .level-badge {
+        padding: 3px 11px;
+        border-radius: 999px;
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .lv-kritis {
+        background: #b91c1c;
+        color: #fff;
+      }
+      .lv-tinggi {
+        background: #fdf3e3;
+        color: #b45309;
+      }
+      .lv-sedang {
+        background: #f0f1f3;
+        color: #4b5563;
+      }
+      .emerg-need {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 10px;
+      }
+      .blood-need {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        background: #d32f2f;
+        color: #fff;
+        font-size: 20px;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+      }
+      .emerg-need b {
+        display: block;
+        font-size: 15px;
+      }
+      .emerg-need small {
+        color: #667085;
+        font-size: 12.5px;
+      }
+      .emerg-note {
+        font-size: 14px;
+        color: #374151;
+        margin-bottom: 14px;
+      }
+      .emerg-foot {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      .emerg-time,
+      .resp-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12.5px;
+        color: #8a93a0;
+      }
+      .emerg-time .ic,
+      .resp-count .ic {
+        width: 13px;
+        height: 13px;
+      }
+
+      /* ===== Profil & sertifikat ===== */
+      .profile-card {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 999px;
+        background: #fdecec;
+        color: #c62828;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+      }
+      .profile-info {
+        flex: 1;
+        min-width: 220px;
+      }
+      .profile-info h3 {
+        font-size: 17px;
+        margin-bottom: 4px;
+      }
+      .profile-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        text-align: center;
+        padding: 26px 14px;
+        color: #4b5563;
+      }
+      .empty-state .ic {
+        width: 30px;
+        height: 30px;
+        color: #b9bec7;
+      }
+      .empty-state h3 {
+        font-size: 16px;
+        color: #191a1b;
+      }
+      .empty-state p {
+        font-size: 14px;
+        max-width: 46ch;
+      }
+      .elig {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        border: 1px solid #e7e7e9;
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 14px;
+      }
+      .elig .ic {
+        width: 20px;
+        height: 20px;
+        flex: none;
+        margin-top: 2px;
+      }
+      .elig b {
+        display: block;
+        font-size: 14.5px;
+      }
+      .elig span {
+        font-size: 13px;
+        color: #4b5563;
+      }
+      .elig.ok {
+        background: #f0f9f3;
+        border-color: #cde9d6;
+      }
+      .elig.ok .ic {
+        color: #1c7c43;
+      }
+      .elig.wait {
+        background: #fdf8ef;
+        border-color: #f0e0c2;
+      }
+      .elig.wait .ic {
+        color: #b45309;
+      }
+      .cert-card {
+        background: #fff;
+        border: 1px solid #e7e7e9;
+        border-radius: 16px;
+        padding: clamp(10px, 2.5vw, 18px);
+      }
+      .cert-frame {
+        border: 1px solid #e7e7e9;
+        border-radius: 10px;
+        padding: clamp(18px, 4vw, 34px);
+        text-align: center;
+      }
+      .cert-head {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+      .cert-head b {
+        font-size: 16px;
+        letter-spacing: -0.01em;
+        display: block;
+      }
+      .cert-head small {
+        display: block;
+        font-size: 11.5px;
+        color: #667085;
+      }
+      .cert-label {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.28em;
+        color: #c62828;
+        text-transform: uppercase;
+        margin-bottom: 14px;
+      }
+      .cert-to {
+        font-size: 14px;
+        color: #4b5563;
+        margin-bottom: 4px;
+      }
+      .cert-name {
+        font-size: clamp(1.4rem, 4.5vw, 1.9rem);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-bottom: 12px;
+      }
+      .cert-text {
+        font-size: 14.5px;
+        color: #374151;
+        max-width: 56ch;
+        margin: 0 auto 22px;
+      }
+      .cert-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1px;
+        background: #e7e7e9;
+        border: 1px solid #e7e7e9;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .cert-grid > div {
+        background: #fff;
+        padding: 12px 10px;
+      }
+      .cert-grid small {
+        display: block;
+        font-size: 10.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: #8a93a0;
+        margin-bottom: 3px;
+      }
+      .cert-grid b {
+        font-size: 14.5px;
+        word-break: break-word;
+      }
+      .cert-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        margin-top: 26px;
+        flex-wrap: wrap;
+      }
+      .seal {
+        width: 64px;
+        height: 64px;
+        flex: none;
+      }
+      .seal svg {
+        width: 100%;
+        height: 100%;
+      }
+      .sig {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        min-width: 200px;
+      }
+      .sig-line {
+        display: block;
+        width: 220px;
+        max-width: 60vw;
+        border-bottom: 1.5px solid #191a1b;
+        margin-bottom: 5px;
+        height: 8px;
+      }
+      .sig small {
+        font-size: 11.5px;
+        color: #667085;
+      }
+      .cert-actions {
+        display: flex;
+        justify-content: center;
+        margin-top: 14px;
+      }
+
+      /* ===== Peta ===== */
+      .map-card {
+        padding: 14px;
+      }
+      .map-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+        padding: 0 4px;
+      }
+      .map-tools-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .map-wrap {
+        border: 1px solid #e7e7e9;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #f2f2ef;
+      }
+      .map-wrap svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .map-label {
+        font-size: 11px;
+        fill: #9aa09a;
+        font-family: inherit;
+      }
+      .map-label.strong {
+        fill: #6f746f;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      .map-label.you {
+        fill: #191a1b;
+        font-weight: 700;
+      }
+      .mk {
+        cursor: pointer;
+      }
+      .mk.pmi path.pin {
+        fill: #d32f2f;
+      }
+      .mk.event rect {
+        fill: #fff;
+        stroke: #d32f2f;
+        stroke-width: 2;
+      }
+      .mk.sel {
+        filter: none;
+      }
+      .mk.sel .sel-ring {
+        display: block;
+      }
+      .sel-ring {
+        display: none;
+      }
+      .legend {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        padding: 12px 6px 2px;
+      }
+      .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 12.5px;
+        color: #4b5563;
+      }
+      .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 999px;
+        flex: none;
+      }
+      .dot-pmi {
+        background: #d32f2f;
+      }
+      .dot-ev {
+        background: #fff;
+        border: 2px solid #d32f2f;
+      }
+      .dot-you {
+        background: #191a1b;
+      }
+      .map-info {
+        min-height: 60px;
+      }
+      .map-info h4 {
+        font-size: 15px;
+        margin-bottom: 8px;
+      }
+      .map-info .btn {
+        margin-top: 10px;
+      }
+      .dist-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: #f3f3f4;
+        font-size: 12px;
+        font-weight: 700;
+        color: #374151;
+        margin-bottom: 10px;
+      }
+      .dist-chip .ic {
+        width: 12px;
+        height: 12px;
+      }
+      .dist-chip.near {
+        background: #fdecec;
+        color: #c62828;
+      }
+      .loc-list {
+        display: flex;
+        flex-direction: column;
+      }
+      .loc-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 4px;
+        border-bottom: 1px solid #f0f0f2;
+        cursor: pointer;
+        text-align: left;
+        width: 100%;
+      }
+      .loc-row:last-child {
+        border-bottom: none;
+      }
+      .loc-row:hover {
+        background: #fafafa;
+      }
+      .loc-ic {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+        background: #fdecec;
+        color: #c62828;
+      }
+      .loc-ic .ic {
+        width: 16px;
+        height: 16px;
+      }
+      .loc-row > div {
+        flex: 1;
+        min-width: 0;
+      }
+      .loc-row b {
+        display: block;
+        font-size: 14px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .loc-row small {
+        color: #667085;
+        font-size: 12.5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+      }
+      .loc-dist {
+        text-align: right;
+        flex: none;
+      }
+
+      /* ===== Footer & toast ===== */
+      .site-footer {
+        border-top: 1px solid #e7e7e9;
+        background: #fff;
+        padding: 34px 0 0;
+        margin-top: 10px;
+      }
+      .footer-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 26px;
+        padding-bottom: 26px;
+      }
+      .footer-grid p {
+        font-size: 13.5px;
+        color: #667085;
+        margin-top: 10px;
+        max-width: 38ch;
+      }
+      .footer-grid h4 {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #8a93a0;
+        margin-bottom: 10px;
+      }
+      .footer-grid nav {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+      }
+      .footer-grid nav a {
+        font-size: 14px;
+        color: #374151;
+      }
+      .footer-grid nav a:hover {
+        color: #c62828;
+      }
+      .footer-bottom {
+        border-top: 1px solid #f0f0f2;
+        padding: 14px 0;
+        color: #98a0ab;
+        font-size: 12.5px;
+      }
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: calc(88px + env(safe-area-inset-bottom));
+        transform: translate(-50%, 16px);
+        z-index: 60;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        background: #191a1b;
+        color: #fff;
+        padding: 12px 18px;
+        border-radius: 11px;
+        font-size: 14px;
+        max-width: min(92vw, 480px);
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity 0.25s,
+          transform 0.25s;
+      }
+      .toast .ic {
+        width: 16px;
+        height: 16px;
+        color: #7fd6a2;
+      }
+      .toast.err .ic {
+        color: #f3a1a1;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+
+      /* ===== Responsif ===== */
+      @media (min-width: 900px) {
+        .top-nav {
+          display: flex;
+        }
+        .bottom-nav {
+          display: none;
+        }
+        main.page {
+          padding-bottom: 40px;
+        }
+        .hero {
+          grid-template-columns: 1.15fr 0.85fr;
+          gap: 36px;
+        }
+        .hero-art {
+          display: block;
+        }
+        .home-grid {
+          grid-template-columns: 1fr 1fr 1fr;
+        }
+        .home-grid > .card:first-child {
+          grid-column: 1/-1;
+        }
+        .form-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .footer-grid {
+          grid-template-columns: 1.3fr 0.7fr 1fr;
+        }
+        .toast {
+          bottom: 28px;
+        }
+        .split {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      .split {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      .split > .card {
+        margin-bottom: 0;
+      }
+      .split {
+        margin-bottom: 20px;
+      }
+
+      /* ===== Cetak sertifikat ===== */
+      @media print {
+        @page {
+          margin: 14mm;
+        }
+        body {
+          background: #fff;
+        }
+        .topbar,
+        .bottom-nav,
+        .site-footer,
+        .toast,
+        .no-print,
+        .cert-actions {
+          display: none !important;
+        }
+        main.page {
+          padding: 0;
+        }
+        .page-view {
+          display: none !important;
+        }
+        #sertifikat.page-view {
+          display: block !important;
+        }
+        #sertifikat .container {
+          max-width: none;
+          padding: 0;
+        }
+        #profile-zone,
+        #history-zone {
+          display: none !important;
+        }
+        #cert-zone .card {
+          border: none;
+          margin: 0;
+        }
+        .cert-card {
+          border: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Langsung ke konten</a>
+
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <a class="brand" href="#beranda" data-nav="beranda">
+          <span class="brand-mark"
+            ><svg
+              class="ic"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path
+                d="M12 2.8c3.5 3.8 6.2 6.9 6.2 10a6.2 6.2 0 1 1-12.4 0c0-3.1 2.7-6.2 6.2-10z"
+              /></svg
+          ></span>
+          <span class="brand-text"
+            ><span class="brand-name">DonorKita</span
+            ><span class="brand-sub">Komunitas Donor Darah</span></span
+          >
+        </a>
+        <nav class="top-nav" aria-label="Navigasi utama">
+          <a href="#beranda" data-nav="beranda">Beranda</a>
+          <a href="#pendonor" data-nav="pendonor">Pendonor</a>
+          <a href="#jadwal" data-nav="jadwal">Jadwal</a>
+          <a href="#darurat" data-nav="darurat">Darurat</a>
+          <a href="#sertifikat" data-nav="sertifikat">Sertifikat</a>
+          <a href="#peta" data-nav="peta">Peta</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="page" id="main">
+      <!-- ================= BERANDA ================= -->
+      <section class="page-view active" id="beranda">
+        <div class="container">
+          <div class="hero">
+            <div class="hero-copy">
+              <span class="hero-chip"
+                ><span data-ic="droplet"></span>Donor darah menyelamatkan
+                nyawa</span
+              >
+              <h1 class="hero-title">
+                Setetes darah Anda, <span class="accent">nyawa</span> bagi orang
+                lain.
+              </h1>
+              <p class="hero-lead">
+                DonorKita menghubungkan pendonor sukarela dengan database
+                pendonor berbasis golongan darah dan lokasi, jadwal kegiatan
+                donor, permintaan darurat rumah sakit, hingga lokasi Palang
+                Merah terdekat.
+              </p>
+              <div class="hero-actions">
+                <a href="#pendonor" data-nav="pendonor" class="btn btn-primary"
+                  ><span data-ic="userPlus"></span>Daftar Jadi Pendonor</a
+                >
+                <a href="#darurat" data-nav="darurat" class="btn btn-outline"
+                  ><span data-ic="alert"></span>Permintaan Darurat</a
+                >
+              </div>
+              <p class="hero-note" id="hero-note">
+                <span data-ic="user"></span
+                ><span
+                  >Lengkapi profil donor Anda di bagian Sertifikat &amp;
+                  Riwayat.</span
+                >
+              </p>
+            </div>
+            <div class="hero-art" aria-hidden="true">
+              <svg
+                viewBox="0 0 260 260"
+                width="100%"
+                style="max-width: 320px; margin-inline: auto; display: block"
+              >
+                <circle cx="130" cy="130" r="118" fill="#fdecec" />
+                <circle
+                  cx="208"
+                  cy="52"
+                  r="10"
+                  fill="none"
+                  stroke="#d32f2f"
+                  stroke-width="2"
+                />
+                <circle cx="42" cy="196" r="6" fill="#d32f2f" />
+                <path
+                  d="M130 36c34 37 59 65 59 95a59 59 0 1 1-118 0c0-30 25-58 59-95z"
+                  fill="#fff"
+                  stroke="#d32f2f"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M62 138h38l12-30 16 58 14-38h26"
+                  fill="none"
+                  stroke="#191a1b"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+          </div>
+
+          <div class="stat-row">
+            <div class="stat-card">
+              <span class="stat-ic"><span data-ic="users"></span></span
+              ><span class="stat-num" id="stat-donors">–</span
+              ><span class="stat-label">Pendonor terdaftar</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-ic"><span data-ic="calendar"></span></span
+              ><span class="stat-num" id="stat-events">–</span
+              ><span class="stat-label">Kegiatan mendatang</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-ic"><span data-ic="alert"></span></span
+              ><span class="stat-num" id="stat-emerg">–</span
+              ><span class="stat-label">Permintaan darurat aktif</span>
+            </div>
+          </div>
+
+          <div class="home-grid">
+            <div class="card">
+              <div class="card-head">
+                <h3 class="card-title">
+                  <span data-ic="droplet"></span>Stok Darah Regional
+                </h3>
+                <span class="tag">Pembaruan hari ini</span>
+              </div>
+              <div id="stock-rows" class="stock-list"></div>
+              <p class="hint">
+                <span data-ic="info"></span>Stok gabungan Unit Donor Darah (UDD)
+                PMI di wilayah operasional DonorKita — data contoh.
+              </p>
+            </div>
+            <div class="card">
+              <div class="card-head">
+                <h3 class="card-title">
+                  <span data-ic="calendar"></span>Kegiatan Terdekat
+                </h3>
+                <a class="link-more" href="#jadwal" data-nav="jadwal"
+                  >Lihat semua<span data-ic="arrow"></span
+                ></a>
+              </div>
+              <div id="home-events" class="preview-list"></div>
+            </div>
+            <div class="card">
+              <div class="card-head">
+                <h3 class="card-title">
+                  <span data-ic="alert"></span>Permintaan Darurat Terbaru
+                </h3>
+                <a class="link-more" href="#darurat" data-nav="darurat"
+                  >Lihat semua<span data-ic="arrow"></span
+                ></a>
+              </div>
+              <div id="home-emerg" class="preview-list"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PENDONOR ================= -->
+      <section class="page-view" id="pendonor">
+        <div class="container">
+          <div class="page-head">
+            <h2 class="page-title">
+              <span data-ic="users"></span>Database Pendonor Sukarela
+            </h2>
+            <p class="page-desc">
+              Cari pendonor berdasarkan golongan darah dan lokasi, atau
+              daftarkan diri Anda sebagai pendonor sukarela komunitas.
+            </p>
+          </div>
+
+          <div class="split">
+            <div class="card">
+              <h3 class="card-title">
+                <span data-ic="userPlus"></span>Formulir Pendaftaran Pendonor
+              </h3>
+              <form id="donor-form" class="form-grid" novalidate>
+                <div class="field">
+                  <label for="dnama">Nama Lengkap</label
+                  ><input
+                    id="dnama"
+                    name="dnama"
+                    placeholder="Nama sesuai identitas"
+                  />
+                </div>
+                <div class="field">
+                  <label for="dtel">Nomor Telepon</label
+                  ><input
+                    id="dtel"
+                    name="dtel"
+                    type="tel"
+                    placeholder="08xx-xxxx-xxxx"
+                  />
+                </div>
+                <div class="field">
+                  <label for="dbt">Golongan Darah</label>
+                  <select id="dbt" name="dbt">
+                    <option value="">Pilih golongan</option>
+                    <option>A</option>
+                    <option>B</option>
+                    <option>AB</option>
+                    <option>O</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="drhesus">Rhesus</label>
+                  <select id="drhesus" name="drhesus">
+                    <option value="+">Positif (+)</option>
+                    <option value="-">Negatif (−)</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="dkota">Kota / Lokasi</label
+                  ><select id="dkota" name="dkota" class="city-select"></select>
+                </div>
+                <div class="field">
+                  <label for="dlast">Tanggal Donor Terakhir (opsional)</label
+                  ><input id="dlast" name="dlast" type="date" />
+                </div>
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary">
+                    <span data-ic="check"></span>Simpan ke Database
+                  </button>
+                </div>
+              </form>
+              <p class="hint">
+                <span data-ic="info"></span>Data tersimpan lokal di peramban
+                Anda (demo). Petugas PMI akan memverifikasi saat kegiatan donor.
+              </p>
+            </div>
+            <div class="card">
+              <h3 class="card-title">
+                <span data-ic="check"></span>Ketentuan Pendonor
+              </h3>
+              <ul
+                class="req-list"
+                style="
+                  list-style: none;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 12px;
+                  margin-top: 14px;
+                "
+              >
+                <li class="event-meta">
+                  <span data-ic="check" style="color: #1c7c43"></span
+                  ><span>Usia 17–60 tahun dan berat badan minimal 50 kg.</span>
+                </li>
+                <li class="event-meta">
+                  <span data-ic="check" style="color: #1c7c43"></span
+                  ><span>Tekanan darah normal dan dalam kondisi sehat.</span>
+                </li>
+                <li class="event-meta">
+                  <span data-ic="check" style="color: #1c7c43"></span
+                  ><span
+                    >Jeda donor minimal 3 bulan (pria) atau 4 bulan
+                    (wanita).</span
+                  >
+                </li>
+                <li class="event-meta">
+                  <span data-ic="check" style="color: #1c7c43"></span
+                  ><span
+                    >Tidak sedang dalam masa pemulihan penyakit atau
+                    pengobatan.</span
+                  >
+                </li>
+                <li class="event-meta">
+                  <span data-ic="check" style="color: #1c7c43"></span
+                  ><span
+                    >Membawa identitas diri saat mendaftar kegiatan donor.</span
+                  >
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h3 class="card-title">
+                <span data-ic="search"></span>Cari Pendonor
+              </h3>
+              <span class="tag" id="donor-count">–</span>
+            </div>
+            <div class="filters">
+              <div class="chips" id="donor-chips">
+                <button type="button" class="chip active" data-bt="ALL">
+                  Semua
+                </button>
+                <button type="button" class="chip" data-bt="A">A</button>
+                <button type="button" class="chip" data-bt="B">B</button>
+                <button type="button" class="chip" data-bt="AB">AB</button>
+                <button type="button" class="chip" data-bt="O">O</button>
+              </div>
+              <div class="field-inline">
+                <label for="donor-city">Kota</label
+                ><select id="donor-city" class="city-select"></select>
+              </div>
+              <div class="field-inline">
+                <label for="donor-search">Cari nama</label
+                ><input
+                  id="donor-search"
+                  type="search"
+                  placeholder="Nama pendonor"
+                />
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="data">
+                <thead>
+                  <tr>
+                    <th>Nama</th>
+                    <th>Gol. Darah</th>
+                    <th>Kota</th>
+                    <th>Donor Terakhir</th>
+                    <th>Status</th>
+                    <th>Kontak</th>
+                  </tr>
+                </thead>
+                <tbody id="donor-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= JADWAL ================= -->
+      <section class="page-view" id="jadwal">
+        <div class="container">
+          <div class="page-head">
+            <h2 class="page-title">
+              <span data-ic="calendar"></span>Jadwal &amp; Lokasi Kegiatan Donor
+            </h2>
+            <p class="page-desc">
+              Kegiatan donor darah terdekat dari komunitas dan PMI. Filter
+              sesuai kota Anda, lalu daftar langsung — gratis dan tanpa
+              pendaftaran panjang.
+            </p>
+          </div>
+          <div class="filter-bar">
+            <div class="field-inline">
+              <label for="event-city">Kota</label
+              ><select id="event-city" class="city-select"></select>
+            </div>
+            <span class="tag" id="event-count">–</span>
+          </div>
+          <div id="event-list" class="event-list"></div>
+        </div>
+      </section>
+
+      <!-- ================= DARURAT ================= -->
+      <section class="page-view" id="darurat">
+        <div class="container">
+          <div class="page-head">
+            <h2 class="page-title">
+              <span data-ic="alert"></span>Permintaan Darurat Rumah Sakit
+            </h2>
+            <p class="page-desc">
+              Permintaan darah yang disiarkan rumah sakit kepada pendonor
+              komunitas. Berrespons hanya jika Anda eligible dan golongan darah
+              Anda sesuai.
+            </p>
+          </div>
+          <div class="card">
+            <div class="card-head">
+              <h3 class="card-title">
+                <span data-ic="hospital"></span>Ajukan Permintaan Darurat
+              </h3>
+              <button
+                type="button"
+                class="btn btn-outline btn-sm"
+                id="emerg-toggle"
+              >
+                <span data-ic="plus"></span>Ajukan
+              </button>
+            </div>
+            <p class="hint" style="margin-top: 0">
+              <span data-ic="info"></span>Untuk petugas rumah sakit atau
+              keluarga pasien. Permintaan akan langsung tampil di daftar dan
+              beranda.
+            </p>
+            <form id="emerg-form" class="form-grid hidden" novalidate>
+              <div class="field">
+                <label for="mhosp">Nama Rumah Sakit</label
+                ><input id="mhosp" placeholder="cth: RSU Melati" />
+              </div>
+              <div class="field">
+                <label for="mkota">Kota</label
+                ><select id="mkota" class="city-select-one"></select>
+              </div>
+              <div class="field">
+                <label for="mbt">Golongan Darah Dibutuhkan</label>
+                <select id="mbt">
+                  <option>A</option>
+                  <option>B</option>
+                  <option>AB</option>
+                  <option selected>O</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="mrhesus">Rhesus</label>
+                <select id="mrhesus">
+                  <option value="+" selected>Positif (+)</option>
+                  <option value="-">Negatif (−)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="munits">Jumlah Kantong</label
+                ><input id="munits" type="number" min="1" max="20" value="2" />
+              </div>
+              <div class="field">
+                <label for="mlevel">Tingkat Urgensi</label>
+                <select id="mlevel">
+                  <option>Kritis</option>
+                  <option>Tinggi</option>
+                  <option selected>Sedang</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="mtel">Nomor Kontak IGD</label
+                ><input id="mtel" type="tel" placeholder="08xx-xxxx-xxxx" />
+              </div>
+              <div class="field">
+                <label for="mnote">Catatan Kebutuhan</label
+                ><input id="mnote" placeholder="cth: persalinan darurat" />
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                  <span data-ic="alert"></span>Siarkan Permintaan
+                </button>
+              </div>
+            </form>
+          </div>
+          <div id="emerg-list" class="emerg-list"></div>
+        </div>
+      </section>
+
+      <!-- ================= SERTIFIKAT ================= -->
+      <section class="page-view" id="sertifikat">
+        <div class="container">
+          <div class="page-head">
+            <h2 class="page-title">
+              <span data-ic="award"></span>Sertifikat Digital &amp; Riwayat
+              Donor
+            </h2>
+            <p class="page-desc">
+              Lengkapi profil, catat setiap pendonoran, dan dapatkan sertifikat
+              digital yang dapat dicetak. Riwayat mencatat tanggal donor
+              terakhir dan kapan Anda eligible kembali.
+            </p>
+          </div>
+          <div id="profile-zone"></div>
+          <div id="cert-zone"></div>
+          <div id="history-zone"></div>
+        </div>
+      </section>
+
+      <!-- ================= PETA ================= -->
+      <section class="page-view" id="peta">
+        <div class="container">
+          <div class="page-head">
+            <h2 class="page-title">
+              <span data-ic="map"></span>Peta PMI &amp; Titik Donor Terdekat
+            </h2>
+            <p class="page-desc">
+              Peta skematik layanan donor per kota: kantor Palang Merah / Unit
+              Donor Darah dan titik kegiatan donor terdekat. Klik peta untuk
+              menandai posisi Anda dan melihat jarak.
+            </p>
+          </div>
+          <div class="card map-card">
+            <div class="map-toolbar">
+              <div class="field-inline">
+                <label for="map-city">Wilayah</label
+                ><select id="map-city" class="city-select-one"></select>
+              </div>
+              <div class="map-tools-right">
+                <span class="hint-inline"
+                  ><span data-ic="info"></span>Klik peta untuk menandai posisi
+                  Anda</span
+                >
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-sm"
+                  id="map-reset"
+                >
+                  <span data-ic="history"></span>Atur Ulang
+                </button>
+              </div>
+            </div>
+            <div class="map-wrap" id="map-wrap"></div>
+            <div class="legend">
+              <span class="legend-item"
+                ><i class="dot dot-pmi"></i>PMI / Unit Donor</span
+              >
+              <span class="legend-item"
+                ><i class="dot dot-ev"></i>Kegiatan Donor</span
+              >
+              <span class="legend-item"
+                ><i class="dot dot-you"></i>Posisi Anda</span
+              >
+            </div>
+          </div>
+          <div class="split">
+            <div class="card">
+              <h3 class="card-title">
+                <span data-ic="info"></span>Detail Titik
+              </h3>
+              <div
+                id="map-info"
+                class="map-info"
+                style="margin-top: 12px"
+              ></div>
+            </div>
+            <div class="card">
+              <h3 class="card-title">
+                <span data-ic="pin"></span>Lokasi Terdekat
+              </h3>
+              <div id="map-list" class="loc-list" style="margin-top: 6px"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div>
+          <span class="brand">
+            <span class="brand-mark"
+              ><svg
+                class="ic"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path
+                  d="M12 2.8c3.5 3.8 6.2 6.9 6.2 10a6.2 6.2 0 1 1-12.4 0c0-3.1 2.7-6.2 6.2-10z"
+                /></svg
+            ></span>
+            <span class="brand-text"
+              ><span class="brand-name">DonorKita</span
+              ><span class="brand-sub">Komunitas Donor Darah</span></span
+            >
+          </span>
+          <p>
+            Menghubungkan pendonor sukarela, rumah sakit, dan Palang Merah
+            Indonesia agar setiap kantong darah sampai tepat waktu.
+          </p>
+        </div>
+        <div>
+          <h4>Navigasi</h4>
+          <nav>
+            <a href="#beranda" data-nav="beranda">Beranda</a>
+            <a href="#pendonor" data-nav="pendonor">Database Pendonor</a>
+            <a href="#jadwal" data-nav="jadwal">Jadwal Kegiatan</a>
+            <a href="#darurat" data-nav="darurat">Permintaan Darurat</a>
+            <a href="#sertifikat" data-nav="sertifikat"
+              >Sertifikat &amp; Riwayat</a
+            >
+            <a href="#peta" data-nav="peta">Peta Lokasi</a>
+          </nav>
+        </div>
+        <div>
+          <h4>Catatan</h4>
+          <p>
+            Situs demo komunitas. Seluruh data adalah data contoh untuk
+            keperluan demonstrasi dan tersimpan lokal di peramban Anda — tidak
+            dikirim ke server mana pun.
+          </p>
+        </div>
+      </div>
+      <div class="container footer-bottom">
+        <small>© 2026 DonorKita — Aplikasi Donor Darah Komunitas</small>
+      </div>
+    </footer>
+
+    <nav class="bottom-nav" aria-label="Navigasi utama">
+      <button type="button" data-nav="beranda">
+        <span data-ic="droplet"></span>Beranda
+      </button>
+      <button type="button" data-nav="pendonor">
+        <span data-ic="users"></span>Pendonor
+      </button>
+      <button type="button" data-nav="jadwal">
+        <span data-ic="calendar"></span>Jadwal
+      </button>
+      <button type="button" data-nav="darurat">
+        <span data-ic="alert"></span>Darurat
+      </button>
+      <button type="button" data-nav="sertifikat">
+        <span data-ic="award"></span>Sertifikat
+      </button>
+      <button type="button" data-nav="peta">
+        <span data-ic="map"></span>Peta
+      </button>
+    </nav>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      (function () {
+        "use strict";
+        /* ======================= UTIL ======================= */
+        var $ = function (s, el) {
+          return (el || document).querySelector(s);
+        };
+        var $$ = function (s, el) {
+          return Array.prototype.slice.call(
+            (el || document).querySelectorAll(s),
+          );
+        };
+        var esc = function (s) {
+          return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+            return {
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            }[c];
+          });
+        };
+        var MONTHS = [
+          "Januari",
+          "Februari",
+          "Maret",
+          "April",
+          "Mei",
+          "Juni",
+          "Juli",
+          "Agustus",
+          "September",
+          "Oktober",
+          "November",
+          "Desember",
+        ];
+        var MON3 = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "Mei",
+          "Jun",
+          "Jul",
+          "Agu",
+          "Sep",
+          "Okt",
+          "Nov",
+          "Des",
+        ];
+        function pad(n) {
+          return (n < 10 ? "0" : "") + n;
+        }
+        function isoDate(d) {
+          return (
+            d.getFullYear() +
+            "-" +
+            pad(d.getMonth() + 1) +
+            "-" +
+            pad(d.getDate())
+          );
+        }
+        var TODAY = isoDate(new Date());
+        function fmt(iso) {
+          if (!iso) return "—";
+          var d = new Date(iso + "T00:00:00");
+          return d.getDate() + " " + MON3[d.getMonth()] + " " + d.getFullYear();
+        }
+        function fmtLong(iso) {
+          if (!iso) return "—";
+          var d = new Date(iso + "T00:00:00");
+          return (
+            d.getDate() + " " + MONTHS[d.getMonth()] + " " + d.getFullYear()
+          );
+        }
+        function diffDays(a, b) {
+          return Math.round(
+            (new Date(b + "T00:00:00") - new Date(a + "T00:00:00")) / 864e5,
+          );
+        }
+        function addDays(iso, n) {
+          var d = new Date(iso + "T00:00:00");
+          d.setDate(d.getDate() + n);
+          return isoDate(d);
+        }
+        function numID(x) {
+          return x.toFixed(1).replace(".", ",");
+        }
+
+        /* ======================= IKON SVG ======================= */
+        var P = {
+          droplet:
+            '<path d="M12 2.8c3.5 3.8 6.2 6.9 6.2 10a6.2 6.2 0 1 1-12.4 0c0-3.1 2.7-6.2 6.2-10z"/>',
+          calendar:
+            '<rect x="3.5" y="5" width="17" height="16" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+          pin: '<path d="M12 21.5s-7-5.4-7-11.3C5 6.2 8.1 3 12 3s7 3.2 7 7.2c0 5.9-7 11.3-7 11.3z"/><circle cx="12" cy="10.2" r="2.6"/>',
+          alert:
+            '<path d="M12 3.5 2.8 19.5h18.4L12 3.5z"/><path d="M12 10v4.2M12 17.4h.01"/>',
+          award:
+            '<circle cx="12" cy="9" r="5.2"/><path d="M8.7 13.4 7 21l5-2.6L17 21l-1.7-7.6"/>',
+          search:
+            '<circle cx="11" cy="11" r="7"/><path d="m20.5 20.5-4.2-4.2"/>',
+          phone:
+            '<path d="M5.5 3h3l1.7 4.2-2 1.6a12.5 12.5 0 0 0 6 6l1.6-2 4.2 1.7v3A2.5 2.5 0 0 1 17.4 20 14.9 14.9 0 0 1 4 6.6 2.5 2.5 0 0 1 5.5 3z"/>',
+          user: '<circle cx="12" cy="8" r="4"/><path d="M4.5 21c.6-4 3.7-6.2 7.5-6.2s6.9 2.2 7.5 6.2"/>',
+          userPlus:
+            '<circle cx="10" cy="8" r="4"/><path d="M4 21c.5-3.6 3-5.7 6-5.7 1.4 0 2.7.4 3.8 1.1M18 8v6M15 11h6"/>',
+          clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+          hospital:
+            '<path d="M4 21V7l8-4 8 4v14"/><path d="M12 9v6M9 12h6"/><path d="M9 21v-4h6v4"/>',
+          plus: '<path d="M12 5v14M5 12h14"/>',
+          check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+          map: '<path d="m9 4-6 2v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/>',
+          users:
+            '<circle cx="9" cy="8.5" r="3.5"/><path d="M2.8 20c.5-3.4 3-5.3 6.2-5.3s5.7 1.9 6.2 5.3"/><path d="M16 5.6a3.5 3.5 0 0 1 0 6.4M17.8 14.9c2.1.7 3.3 2.4 3.4 5.1"/>',
+          print:
+            '<path d="M7 8V3.5h10V8"/><rect x="4" y="8" width="16" height="8.5" rx="2"/><path d="M7 13.5h10V21H7z"/>',
+          arrow: '<path d="M5 12h13M13 6.5 18.5 12 13 17.5"/>',
+          info: '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 7.8h.01"/>',
+          history:
+            '<path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1L3.5 8.3"/><path d="M3.5 3.5v4.8h4.8"/><path d="M12 7.5V12l3 2"/>',
+          edit: '<path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17z"/><path d="m13.5 8.5 3 3"/>',
+        };
+        function ic(n) {
+          return (
+            '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+            (P[n] || "") +
+            "</svg>"
+          );
+        }
+
+        /* ======================= DATA CONTOH ======================= */
+        var CITIES = [
+          "Jakarta",
+          "Bandung",
+          "Surabaya",
+          "Yogyakarta",
+          "Semarang",
+          "Medan",
+        ];
+        var seedDonors = [
+          {
+            n: "Andi Prasetyo",
+            bt: "O",
+            rh: "+",
+            city: "Jakarta",
+            last: "2026-10-12",
+            tel: "0812-1111-2001",
+          },
+          {
+            n: "Siti Rahmawati",
+            bt: "A",
+            rh: "+",
+            city: "Bandung",
+            last: "2026-09-30",
+            tel: "0813-2222-2002",
+          },
+          {
+            n: "Budi Santoso",
+            bt: "B",
+            rh: "+",
+            city: "Surabaya",
+            last: "2026-08-15",
+            tel: "0814-3333-2003",
+          },
+          {
+            n: "Dewi Lestari",
+            bt: "AB",
+            rh: "+",
+            city: "Yogyakarta",
+            last: "2026-07-22",
+            tel: "0815-4444-2004",
+          },
+          {
+            n: "Rizky Hidayat",
+            bt: "O",
+            rh: "-",
+            city: "Jakarta",
+            last: "2026-06-18",
+            tel: "0816-5555-2005",
+          },
+          {
+            n: "Maya Kusuma",
+            bt: "A",
+            rh: "-",
+            city: "Semarang",
+            last: "2026-10-02",
+            tel: "0817-6666-2006",
+          },
+          {
+            n: "Fajar Nugroho",
+            bt: "B",
+            rh: "-",
+            city: "Medan",
+            last: "2026-05-30",
+            tel: "0818-7777-2007",
+          },
+          {
+            n: "Intan Permata",
+            bt: "O",
+            rh: "+",
+            city: "Bandung",
+            last: "2026-09-14",
+            tel: "0819-8888-2008",
+          },
+          {
+            n: "Agus Wijaya",
+            bt: "A",
+            rh: "+",
+            city: "Jakarta",
+            last: "2026-04-28",
+            tel: "0811-9999-2009",
+          },
+          {
+            n: "Ratna Sari",
+            bt: "AB",
+            rh: "-",
+            city: "Surabaya",
+            last: "2026-08-09",
+            tel: "0812-1212-2010",
+          },
+          {
+            n: "Hendra Gunawan",
+            bt: "O",
+            rh: "+",
+            city: "Yogyakarta",
+            last: "2026-10-25",
+            tel: "0813-1313-2011",
+          },
+          {
+            n: "Lina Marlina",
+            bt: "B",
+            rh: "+",
+            city: "Jakarta",
+            last: "2026-09-05",
+            tel: "0814-1414-2012",
+          },
+          {
+            n: "Yusuf Abdullah",
+            bt: "A",
+            rh: "+",
+            city: "Medan",
+            last: "2026-07-11",
+            tel: "0815-1515-2013",
+          },
+          {
+            n: "Putri Anggraini",
+            bt: "O",
+            rh: "+",
+            city: "Semarang",
+            last: "2026-06-25",
+            tel: "0816-1616-2014",
+          },
+        ];
+        var seedEvents = [
+          {
+            id: "e1",
+            title: "Donor Darah Massal – Balai Kota",
+            date: "2026-11-21",
+            time: "08.00–13.00 WIB",
+            place: "Balai Kota, Lapangan Utara",
+            city: "Jakarta",
+            org: "UDD PMI Jakarta Pusat",
+            quota: 150,
+            reg: 86,
+            x: 330,
+            y: 300,
+          },
+          {
+            id: "e2",
+            title: "Mobile Unit Donor – Kelapa Gading",
+            date: "2026-11-23",
+            time: "09.00–14.00 WIB",
+            place: "Atrium Mall Kelapa Gading",
+            city: "Jakarta",
+            org: "PMI Jakarta Utara",
+            quota: 100,
+            reg: 41,
+            x: 520,
+            y: 110,
+          },
+          {
+            id: "e3",
+            title: "Donor Darah Warga Bandung",
+            date: "2026-11-28",
+            time: "08.00–12.00 WIB",
+            place: "Lapangan Gasibu",
+            city: "Bandung",
+            org: "UDD PMI Kota Bandung",
+            quota: 200,
+            reg: 124,
+            x: 350,
+            y: 300,
+          },
+          {
+            id: "e4",
+            title: "Blood Drive Surabaya",
+            date: "2026-11-30",
+            time: "07.30–12.00 WIB",
+            place: "Atrium Tunjungan Plaza 1",
+            city: "Surabaya",
+            org: "UDD PMI Kota Surabaya",
+            quota: 150,
+            reg: 57,
+            x: 500,
+            y: 300,
+          },
+          {
+            id: "e5",
+            title: "Donor Darah Kampus UGM",
+            date: "2026-12-05",
+            time: "08.00–15.00 WIB",
+            place: "Balai Alumni UGM",
+            city: "Yogyakarta",
+            org: "PMI DIY dan KSR UGM",
+            quota: 300,
+            reg: 168,
+            x: 330,
+            y: 90,
+          },
+          {
+            id: "e6",
+            title: "Donor Darah Peduli Semarang",
+            date: "2026-12-06",
+            time: "08.00–12.30 WIB",
+            place: "Area Simpang Lima",
+            city: "Semarang",
+            org: "UDD PMI Kota Semarang",
+            quota: 120,
+            reg: 33,
+            x: 300,
+            y: 320,
+          },
+          {
+            id: "e7",
+            title: "Layanan Donor Keliling Medan",
+            date: "2026-12-12",
+            time: "09.00–14.00 WIB",
+            place: "Plaza Medan Fair, Lantai Dasar",
+            city: "Medan",
+            org: "UDD PMI Kota Medan",
+            quota: 100,
+            reg: 12,
+            x: 120,
+            y: 90,
+          },
+          {
+            id: "e8",
+            title: "Donor Darah Tutup Tahun",
+            date: "2026-12-19",
+            time: "08.00–13.00 WIB",
+            place: "Area Taman Suropati",
+            city: "Jakarta",
+            org: "PMI DKI Jakarta",
+            quota: 250,
+            reg: 45,
+            x: 150,
+            y: 320,
+          },
+        ];
+        var seedEmerg = [
+          {
+            id: "m1",
+            hosp: "RSU Melati",
+            city: "Jakarta",
+            bt: "O",
+            rh: "-",
+            units: 4,
+            level: "Kritis",
+            note: "Pasien operasi jantung, dibutuhkan hari ini.",
+            time: "2 jam lalu",
+            tel: "0811-1000-101",
+            resp: 2,
+          },
+          {
+            id: "m2",
+            hosp: "RSUD Kota Bandung",
+            city: "Bandung",
+            bt: "A",
+            rh: "+",
+            units: 6,
+            level: "Tinggi",
+            note: "Persalinan kembar, stok golongan A positif menipis.",
+            time: "5 jam lalu",
+            tel: "0822-2000-202",
+            resp: 1,
+          },
+          {
+            id: "m3",
+            hosp: "RS Cahaya Medika",
+            city: "Surabaya",
+            bt: "B",
+            rh: "+",
+            units: 3,
+            level: "Tinggi",
+            note: "Pasien DBD memerlukan transfusi rutin.",
+            time: "Kemarin",
+            tel: "0833-3000-303",
+            resp: 0,
+          },
+          {
+            id: "m4",
+            hosp: "RS Ibu dan Anak Kasih Ibu",
+            city: "Yogyakarta",
+            bt: "AB",
+            rh: "+",
+            units: 2,
+            level: "Sedang",
+            note: "Persiapan operasi elektif minggu depan.",
+            time: "Kemarin",
+            tel: "0844-4000-404",
+            resp: 1,
+          },
+          {
+            id: "m5",
+            hosp: "RS Medika Grand",
+            city: "Semarang",
+            bt: "O",
+            rh: "+",
+            units: 5,
+            level: "Tinggi",
+            note: "Korban kecelakaan lalu lintas, butuh O positif secepatnya.",
+            time: "3 jam lalu",
+            tel: "0855-5000-505",
+            resp: 3,
+          },
+        ];
+        var PMI = {
+          Jakarta: [
+            {
+              name: "UDD PMI DKI Jakarta",
+              addr: "Jl. Kramat Raya No. 47, Jakarta Pusat",
+              tel: "021-2145-1201",
+              hours: "Senin–Sabtu, 08.00–16.00",
+              x: 150,
+              y: 120,
+            },
+            {
+              name: "Unit Donor PMI Jakarta Selatan",
+              addr: "Jl. Hang Lekir Raya No. 39, Jakarta Selatan",
+              tel: "021-7229-0045",
+              hours: "Senin–Jumat, 08.00–15.00",
+              x: 460,
+              y: 250,
+            },
+          ],
+          Bandung: [
+            {
+              name: "UDD PMI Kota Bandung",
+              addr: "Jl. Wastukancana No. 2, Bandung",
+              tel: "022-4210-636",
+              hours: "Senin–Sabtu, 07.30–15.30",
+              x: 200,
+              y: 140,
+            },
+            {
+              name: "Unit Donor PMI Bandung Barat",
+              addr: "Jl. Raya Cihampelas No. 88, Bandung",
+              tel: "022-5512-019",
+              hours: "Senin–Jumat, 08.00–15.00",
+              x: 430,
+              y: 260,
+            },
+          ],
+          Surabaya: [
+            {
+              name: "UDD PMI Kota Surabaya",
+              addr: "Jl. Embong Trema No. 1-3, Surabaya",
+              tel: "031-5342-151",
+              hours: "Senin–Sabtu, 07.30–15.00",
+              x: 180,
+              y: 130,
+            },
+            {
+              name: "Unit Donor PMI Rungkut",
+              addr: "Jl. Kali Rungkut No. 21, Surabaya",
+              tel: "031-8280-447",
+              hours: "Senin–Jumat, 08.00–14.30",
+              x: 450,
+              y: 255,
+            },
+          ],
+          Yogyakarta: [
+            {
+              name: "UDD PMI DIY",
+              addr: "Jl. Kesehatan No. 5, Yogyakarta",
+              tel: "0274-512-636",
+              hours: "Senin–Sabtu, 08.00–15.00",
+              x: 170,
+              y: 150,
+            },
+            {
+              name: "Unit Donor PMI Bantul",
+              addr: "Jl. Parangtritis km 5, Bantul",
+              tel: "0274-367-336",
+              hours: "Senin–Jumat, 08.00–14.00",
+              x: 440,
+              y: 270,
+            },
+          ],
+          Semarang: [
+            {
+              name: "UDD PMI Kota Semarang",
+              addr: "Jl. Pandanaran No. 55, Semarang",
+              tel: "024-3542-299",
+              hours: "Senin–Sabtu, 07.30–15.00",
+              x: 190,
+              y: 140,
+            },
+            {
+              name: "Unit Donor PMI Balaikota",
+              addr: "Jl. Pemuda No. 148, Semarang",
+              tel: "024-3533-704",
+              hours: "Senin–Jumat, 08.00–14.00",
+              x: 450,
+              y: 250,
+            },
+          ],
+          Medan: [
+            {
+              name: "UDD PMI Kota Medan",
+              addr: "Jl. Selat Malaka No. 2, Medan",
+              tel: "061-4534-566",
+              hours: "Senin–Sabtu, 08.00–15.00",
+              x: 200,
+              y: 130,
+            },
+            {
+              name: "Unit Donor PMI Medan Baru",
+              addr: "Jl. Gajah Mada No. 55, Medan",
+              tel: "061-7366-991",
+              hours: "Senin–Jumat, 08.00–14.00",
+              x: 440,
+              y: 260,
+            },
+          ],
+        };
+        var STOCK = [
+          { bt: "A", units: 48, min: 40 },
+          { bt: "B", units: 35, min: 40 },
+          { bt: "AB", units: 8, min: 20 },
+          { bt: "O", units: 57, min: 45 },
+        ];
+
+        /* ======================= STATE ======================= */
+        var store = {
+          get: function (k, f) {
+            try {
+              var v = localStorage.getItem("dk1_" + k);
+              return v ? JSON.parse(v) : f;
+            } catch (e) {
+              return f;
+            }
+          },
+          set: function (k, v) {
+            try {
+              localStorage.setItem("dk1_" + k, JSON.stringify(v));
+            } catch (e) {}
+          },
+        };
+        var state = {
+          donors: store.get("extraDonors", []),
+          regs: store.get("regs", []),
+          resp: store.get("resp", []),
+          emerg: store.get("extraEmerg", []),
+          profile: store.get("profile", null),
+          donations: store.get("donations", []),
+        };
+        function allDonors() {
+          return state.donors.concat(seedDonors);
+        }
+        function allEmerg() {
+          return state.emerg.concat(seedEmerg);
+        }
+        function upcomingEvents() {
+          return seedEvents
+            .filter(function (e) {
+              return e.date >= TODAY;
+            })
+            .sort(function (a, b) {
+              return a.date < b.date ? -1 : 1;
+            });
+        }
+
+        /* ======================= TOAST ======================= */
+        var toastTimer = null;
+        function toast(msg, type) {
+          var t = $("#toast");
+          t.innerHTML =
+            (type === "err" ? ic("alert") : ic("check")) +
+            "<span>" +
+            esc(msg) +
+            "</span>";
+          t.classList.toggle("err", type === "err");
+          t.classList.add("show");
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(function () {
+            t.classList.remove("show");
+          }, 3200);
+        }
+
+        /* ======================= BERANDA ======================= */
+        function renderHome() {
+          $("#stat-donors").textContent = allDonors().length;
+          var up = upcomingEvents();
+          $("#stat-events").textContent = up.length;
+          $("#stat-emerg").textContent = allEmerg().length;
+          $("#stock-rows").innerHTML = STOCK.map(function (s) {
+            var st =
+              s.units < s.min * 0.5 ? "crit" : s.units < s.min ? "low" : "ok";
+            var stTxt =
+              st === "crit" ? "Kritis" : st === "low" ? "Rendah" : "Cukup";
+            var pct = Math.max(
+              6,
+              Math.min(100, Math.round((s.units / (s.min * 2)) * 100)),
+            );
+            return (
+              '<div class="stock-row"><span class="bt-badge bt-' +
+              s.bt +
+              '">' +
+              s.bt +
+              "</span>" +
+              '<div class="stock-bar"><i class="' +
+              st +
+              '" style="width:' +
+              pct +
+              '%"></i></div>' +
+              '<span class="stock-units">' +
+              s.units +
+              " unit</span>" +
+              '<span class="status ' +
+              st +
+              '">' +
+              stTxt +
+              "</span></div>"
+            );
+          }).join("");
+          $("#home-events").innerHTML = up
+            .slice(0, 3)
+            .map(function (ev) {
+              var d = new Date(ev.date + "T00:00:00");
+              var dl = diffDays(TODAY, ev.date);
+              return (
+                '<a class="preview-row" href="#jadwal" data-nav="jadwal">' +
+                '<span class="date-box sm"><span class="db-day">' +
+                d.getDate() +
+                '</span><span class="db-mon">' +
+                MON3[d.getMonth()] +
+                "</span></span>" +
+                '<span style="flex:1;min-width:0"><b>' +
+                esc(ev.title) +
+                "</b><small>" +
+                esc(ev.city) +
+                " · " +
+                (dl <= 0 ? "Hari ini" : dl + " hari lagi") +
+                "</small></span>" +
+                ic("arrow") +
+                "</a>"
+              );
+            })
+            .join("");
+          $("#home-emerg").innerHTML = allEmerg()
+            .sort(function (a, b) {
+              return a.level === b.level
+                ? 0
+                : a.level === "Kritis"
+                  ? -1
+                  : b.level === "Kritis"
+                    ? 1
+                    : 0;
+            })
+            .slice(0, 2)
+            .map(function (m) {
+              return (
+                '<a class="preview-row" href="#darurat" data-nav="darurat">' +
+                '<span class="loc-ic"><b style="font-size:13px;color:#c62828">' +
+                m.bt +
+                m.rh +
+                "</b></span>" +
+                '<span style="flex:1;min-width:0"><b>' +
+                esc(m.hosp) +
+                "</b><small>" +
+                esc(m.city) +
+                " · butuh " +
+                m.units +
+                " kantong · " +
+                esc(m.level) +
+                "</small></span>" +
+                ic("arrow") +
+                "</a>"
+              );
+            })
+            .join("");
+          var hn = $("#hero-note");
+          if (state.profile) {
+            var el = eligibility();
+            hn.innerHTML =
+              (el.ok ? ic("check") : ic("clock")) +
+              "<span>" +
+              esc(state.profile.name.split(" ")[0]) +
+              ", " +
+              esc(el.short) +
+              "</span>";
+          } else {
+            hn.innerHTML =
+              ic("user") +
+              "<span>Lengkapi profil donor Anda di bagian Sertifikat &amp; Riwayat.</span>";
+          }
+        }
+
+        /* ======================= PENDONOR ======================= */
+        var dFilter = { bt: "ALL", city: "ALL", q: "" };
+        function donorStatus(d) {
+          if (!d.last) return { txt: "Belum pernah donor", cls: "muted" };
+          var dd = diffDays(d.last, TODAY);
+          if (dd >= 90) return { txt: "Siap donor", cls: "ok" };
+          return { txt: "Eligible " + (90 - dd) + " hari lagi", cls: "wait" };
+        }
+        function renderDonors() {
+          var rows = allDonors().filter(function (d) {
+            return (
+              (dFilter.bt === "ALL" || d.bt === dFilter.bt) &&
+              (dFilter.city === "ALL" || d.city === dFilter.city) &&
+              (!dFilter.q ||
+                d.n.toLowerCase().indexOf(dFilter.q.toLowerCase()) > -1)
+            );
+          });
+          $("#donor-count").textContent = rows.length + " pendonor ditemukan";
+          $("#donor-tbody").innerHTML =
+            rows
+              .map(function (d) {
+                var st = donorStatus(d);
+                return (
+                  '<tr><td class="td-name">' +
+                  esc(d.n) +
+                  "</td>" +
+                  '<td><span class="bt-badge bt-' +
+                  d.bt +
+                  '">' +
+                  d.bt +
+                  d.rh +
+                  "</span></td>" +
+                  "<td>" +
+                  esc(d.city) +
+                  "</td><td>" +
+                  fmt(d.last) +
+                  "</td>" +
+                  '<td><span class="status ' +
+                  st.cls +
+                  '">' +
+                  esc(st.txt) +
+                  "</span></td>" +
+                  '<td><a class="link-tel" href="tel:' +
+                  esc(d.tel.replace(/[^0-9+]/g, "")) +
+                  '">' +
+                  ic("phone") +
+                  esc(d.tel) +
+                  "</a></td></tr>"
+                );
+              })
+              .join("") ||
+            '<tr><td colspan="6" class="empty-cell">Tidak ada pendonor yang cocok dengan filter.</td></tr>';
+        }
+
+        /* ======================= JADWAL ======================= */
+        function renderEvents() {
+          var city = $("#event-city").value;
+          var list = upcomingEvents().filter(function (ev) {
+            return city === "ALL" || ev.city === city;
+          });
+          $("#event-count").textContent = list.length + " kegiatan mendatang";
+          $("#event-list").innerHTML =
+            list
+              .map(function (ev) {
+                var mine = state.regs.indexOf(ev.id) > -1;
+                var reg = ev.reg + (mine ? 1 : 0);
+                var full = reg >= ev.quota;
+                var dl = diffDays(TODAY, ev.date);
+                var when = dl <= 0 ? "Hari ini" : dl + " hari lagi";
+                var d = new Date(ev.date + "T00:00:00");
+                return (
+                  '<article class="event-card">' +
+                  '<div class="date-box"><span class="db-day">' +
+                  d.getDate() +
+                  '</span><span class="db-mon">' +
+                  MON3[d.getMonth()] +
+                  " " +
+                  String(d.getFullYear()).slice(2) +
+                  "</span></div>" +
+                  '<div class="event-info"><h3>' +
+                  esc(ev.title) +
+                  "</h3>" +
+                  '<p class="event-meta">' +
+                  ic("pin") +
+                  "<span>" +
+                  esc(ev.place) +
+                  ", " +
+                  esc(ev.city) +
+                  "</span></p>" +
+                  '<p class="event-meta">' +
+                  ic("clock") +
+                  "<span>" +
+                  esc(ev.time) +
+                  "</span></p>" +
+                  '<p class="event-meta">' +
+                  ic("users") +
+                  "<span>" +
+                  esc(ev.org) +
+                  "</span></p></div>" +
+                  '<div class="event-side"><span class="tag' +
+                  (dl <= 3 ? " hot" : "") +
+                  '">' +
+                  ic("calendar") +
+                  esc(when) +
+                  "</span>" +
+                  '<div class="quota"><div class="quota-bar"><i style="width:' +
+                  Math.min(100, Math.round((reg / ev.quota) * 100)) +
+                  '%"></i></div><small>' +
+                  reg +
+                  " / " +
+                  ev.quota +
+                  " kuota terisi</small></div>" +
+                  (mine
+                    ? '<button class="btn btn-ghost btn-sm" disabled>' +
+                      ic("check") +
+                      "Terdaftar</button>"
+                    : full
+                      ? '<button class="btn btn-outline btn-sm" disabled>Kuota penuh</button>'
+                      : '<button type="button" class="btn btn-primary btn-sm" data-reg="' +
+                        ev.id +
+                        '">Daftar</button>') +
+                  "</div></article>"
+                );
+              })
+              .join("") ||
+            '<div class="card"><div class="empty-state">' +
+              ic("calendar") +
+              "<h3>Belum ada kegiatan</h3><p>Belum ada kegiatan donor untuk kota ini. Coba pilih kota lain.</p></div></div>";
+        }
+
+        /* ======================= DARURAT ======================= */
+        var LEVELS = { Kritis: 0, Tinggi: 1, Sedang: 2 };
+        function renderEmerg() {
+          $("#emerg-list").innerHTML = allEmerg()
+            .slice()
+            .sort(function (a, b) {
+              return LEVELS[a.level] - LEVELS[b.level];
+            })
+            .map(function (m) {
+              var mine = state.resp.indexOf(m.id) > -1;
+              var total = m.resp + (mine ? 1 : 0);
+              var lv = m.level.toLowerCase();
+              return (
+                '<article class="emerg-card ' +
+                lv +
+                '">' +
+                '<div class="emerg-head"><span class="level-badge lv-' +
+                lv +
+                '">' +
+                esc(m.level) +
+                "</span>" +
+                "<h3>" +
+                ic("hospital") +
+                esc(m.hosp) +
+                '</h3><span class="tag">' +
+                esc(m.city) +
+                "</span></div>" +
+                '<div class="emerg-need"><span class="blood-need">' +
+                m.bt +
+                m.rh +
+                "</span>" +
+                "<span><b>" +
+                m.units +
+                " kantong darah</b><small>dibutuhkan sesegera mungkin</small></span></div>" +
+                '<p class="emerg-note">' +
+                esc(m.note) +
+                "</p>" +
+                '<div class="emerg-foot"><span class="emerg-time">' +
+                ic("clock") +
+                esc(m.time) +
+                "</span>" +
+                '<span class="resp-count">' +
+                ic("users") +
+                total +
+                " pendonor merespons</span>" +
+                '<a class="btn btn-outline btn-sm" href="tel:' +
+                esc(m.tel.replace(/[^0-9+]/g, "")) +
+                '">' +
+                ic("phone") +
+                "Hubungi RS</a>" +
+                (mine
+                  ? '<button class="btn btn-ghost btn-sm" disabled>' +
+                    ic("check") +
+                    "Anda sudah merespons</button>"
+                  : '<button type="button" class="btn btn-primary btn-sm" data-resp="' +
+                    m.id +
+                    '">Saya Bisa Donor</button>') +
+                "</div></article>"
+              );
+            })
+            .join("");
+        }
+
+        /* ======================= SERTIFIKAT & RIWAYAT ======================= */
+        function gapDays() {
+          return state.profile && state.profile.gender === "Perempuan"
+            ? 120
+            : 90;
+        }
+        function lastDonation() {
+          return state.donations.length
+            ? state.donations
+                .map(function (d) {
+                  return d.date;
+                })
+                .sort()
+                .pop()
+            : null;
+        }
+        function eligibility() {
+          var last = lastDonation();
+          if (!last)
+            return {
+              ok: true,
+              daysLeft: 0,
+              txt: "Belum ada riwayat donor — Anda tercatat siap mendonor.",
+              short: "Anda tercatat siap mendonor.",
+            };
+          var since = diffDays(last, TODAY),
+            gap = gapDays(),
+            on = addDays(last, gap),
+            left = gap - since;
+          if (left <= 0)
+            return {
+              ok: true,
+              daysLeft: 0,
+              txt: "Anda eligible mendonor sejak " + fmtLong(on) + ".",
+              short: "Anda sudah eligible donor hari ini.",
+            };
+          return {
+            ok: false,
+            daysLeft: left,
+            txt:
+              "Anda eligible mendonor kembali pada " +
+              fmtLong(on) +
+              " (" +
+              left +
+              " hari lagi).",
+            short:
+              "donor berikutnya: " + fmtLong(on) + " (" + left + " hari lagi).",
+          };
+        }
+        function cityOptions(sel) {
+          return CITIES.map(function (c) {
+            return (
+              '<option value="' +
+              c +
+              '"' +
+              (c === sel ? " selected" : "") +
+              ">" +
+              c +
+              "</option>"
+            );
+          }).join("");
+        }
+        function profileFields(p) {
+          return (
+            '<div class="field"><label for="pname">Nama Lengkap</label><input id="pname" name="pname" value="' +
+            esc(p ? p.name : "") +
+            '" placeholder="Nama sesuai identitas"></div>' +
+            '<div class="field"><label for="pgender">Jenis Kelamin</label><select id="pgender" name="pgender">' +
+            "<option" +
+            (p && p.gender === "Pria" ? " selected" : "") +
+            ">Pria</option><option" +
+            (p && p.gender === "Perempuan" ? " selected" : "") +
+            ">Perempuan</option></select></div>" +
+            '<div class="field"><label for="pbt">Golongan Darah</label><select id="pbt" name="pbt">' +
+            ["A", "B", "AB", "O"]
+              .map(function (b) {
+                return (
+                  "<option" +
+                  (p && p.bt === b ? " selected" : "") +
+                  ">" +
+                  b +
+                  "</option>"
+                );
+              })
+              .join("") +
+            "</select></div>" +
+            '<div class="field"><label for="prh">Rhesus</label><select id="prh" name="prh">' +
+            '<option value="+"' +
+            (p && p.rh === "+" ? " selected" : "") +
+            '>Positif (+)</option><option value="-"' +
+            (p && p.rh === "-" ? " selected" : "") +
+            ">Negatif (−)</option></select></div>" +
+            '<div class="field"><label for="pcity">Kota</label><select id="pcity" name="pcity">' +
+            cityOptions(p ? p.city : "Jakarta") +
+            "</select></div>" +
+            '<div class="field"><label for="ptel">Nomor Telepon</label><input id="ptel" name="ptel" type="tel" value="' +
+            esc(p ? p.tel : "") +
+            '" placeholder="08xx-xxxx-xxxx"></div>'
+          );
+        }
+        function renderProfile() {
+          var z = $("#profile-zone");
+          if (!state.profile) {
+            z.innerHTML =
+              '<div class="card"><div class="empty-state">' +
+              ic("user") +
+              "<h3>Belum Ada Profil Donor</h3><p>Lengkapi profil untuk mendaftar kegiatan, merespons permintaan darurat, dan mendapatkan sertifikat digital.</p></div>" +
+              '<form id="profile-form" class="form-grid" novalidate>' +
+              profileFields(null) +
+              '<div class="form-actions"><button type="submit" class="btn btn-primary">' +
+              ic("userPlus") +
+              "Simpan Profil</button></div></form></div>";
+          } else {
+            var p = state.profile;
+            z.innerHTML =
+              '<div class="card profile-card no-print">' +
+              '<span class="avatar">' +
+              ic("user") +
+              "</span>" +
+              '<div class="profile-info"><h3>' +
+              esc(p.name) +
+              "</h3>" +
+              '<p class="event-meta">' +
+              ic("droplet") +
+              "<span>Golongan " +
+              p.bt +
+              p.rh +
+              " · " +
+              esc(p.gender) +
+              " · " +
+              esc(p.city) +
+              "</span></p>" +
+              '<p class="event-meta">' +
+              ic("phone") +
+              "<span>" +
+              esc(p.tel) +
+              "</span></p></div>" +
+              '<div class="profile-actions"><button type="button" class="btn btn-outline btn-sm" id="edit-profile">' +
+              ic("edit") +
+              "Ubah Profil</button></div>" +
+              "</div>" +
+              '<div class="card no-print"><h3 class="card-title">' +
+              ic("plus") +
+              "Catat Donor Darah</h3>" +
+              '<form id="donation-form" class="form-grid" novalidate>' +
+              '<div class="field"><label for="ddate">Tanggal Donor</label><input id="ddate" name="ddate" type="date" value="' +
+              TODAY +
+              '" max="' +
+              TODAY +
+              '"></div>' +
+              '<div class="field"><label for="dplace">Lokasi Donor</label><input id="dplace" name="dplace" placeholder="cth: UDD PMI DKI Jakarta"></div>' +
+              '<div class="form-actions"><button type="submit" class="btn btn-primary">' +
+              ic("check") +
+              "Simpan Riwayat</button></div>" +
+              "</form></div>";
+          }
+        }
+        function certNo(p, total) {
+          var h =
+            (Array.prototype.reduce.call(
+              p.name,
+              function (a, c) {
+                return a + c.charCodeAt(0);
+              },
+              0,
+            ) %
+              9000) +
+            1000;
+          return (
+            "DD-" +
+            new Date().getFullYear() +
+            "-" +
+            (total < 100 ? "0" + (total < 10 ? "0" : "") : "") +
+            total +
+            "-" +
+            h
+          );
+        }
+        function renderCert() {
+          renderProfile();
+          var cz = $("#cert-zone"),
+            hz = $("#history-zone");
+          if (!state.profile) {
+            cz.innerHTML = "";
+            hz.innerHTML = "";
+            return;
+          }
+          var p = state.profile,
+            total = state.donations.length,
+            last = lastDonation(),
+            el = eligibility();
+          if (total > 0) {
+            cz.innerHTML =
+              '<div class="cert-card" id="certificate-card"><div class="cert-frame">' +
+              '<div class="cert-head"><span class="brand-mark sm">' +
+              ic("droplet") +
+              "</span>" +
+              '<div style="text-align:left"><b>DonorKita</b><small>Komunitas Donor Darah Sukarela</small></div></div>' +
+              '<div class="cert-body"><p class="cert-label">Sertifikat Donor Darah</p>' +
+              '<p class="cert-to">Diberikan dengan apresiasi kepada</p>' +
+              '<p class="cert-name">' +
+              esc(p.name) +
+              "</p>" +
+              '<p class="cert-text">atas kontribusi sebagai <b>pendonor darah sukarela</b> dengan total <b>' +
+              total +
+              " kali</b> pendonoran. Donor terakhir dilakukan pada <b>" +
+              fmtLong(last) +
+              "</b> di wilayah " +
+              esc(p.city) +
+              ".</p>" +
+              '<div class="cert-grid">' +
+              "<div><small>Golongan Darah</small><b>" +
+              p.bt +
+              p.rh +
+              "</b></div>" +
+              "<div><small>Total Donor</small><b>" +
+              total +
+              " kali</b></div>" +
+              "<div><small>Donor Terakhir</small><b>" +
+              fmtLong(last) +
+              "</b></div>" +
+              "<div><small>No. Sertifikat</small><b>" +
+              certNo(p, total) +
+              "</b></div>" +
+              "</div></div>" +
+              '<div class="cert-foot">' +
+              '<span class="seal"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="none" stroke="#d32f2f" stroke-width="2"/><circle cx="32" cy="32" r="23" fill="none" stroke="#d32f2f" stroke-width="1" stroke-dasharray="3 3"/><path d="M32 16c7 8 12 13.5 12 19.5A12 12 0 1 1 20 35.5C20 29.5 25 24 32 16z" fill="#d32f2f"/></svg></span>' +
+              '<div class="sig"><span class="sig-line"></span><small>' +
+              esc(p.city) +
+              ", " +
+              fmtLong(TODAY) +
+              "</small><small>Ketua Komunitas DonorKita</small></div>" +
+              "</div></div>" +
+              '<div class="cert-actions"><button type="button" class="btn btn-outline btn-sm" id="print-cert">' +
+              ic("print") +
+              "Cetak / Simpan PDF</button></div>" +
+              "</div>";
+          } else {
+            cz.innerHTML =
+              '<div class="card"><div class="empty-state">' +
+              ic("award") +
+              "<h3>Sertifikat Belum Tersedia</h3><p>Catat donor darah pertama Anda atau daftar kegiatan donor terdekat untuk mendapatkan sertifikat digital yang dapat dicetak.</p>" +
+              '<a class="btn btn-primary btn-sm" href="#jadwal" data-nav="jadwal">' +
+              ic("calendar") +
+              "Lihat Jadwal Donor</a></div></div>";
+          }
+          var rows = state.donations
+            .slice()
+            .sort(function (a, b) {
+              return a.date < b.date ? 1 : -1;
+            })
+            .map(function (d) {
+              return (
+                "<tr><td>" +
+                fmtLong(d.date) +
+                "</td><td>" +
+                esc(d.place) +
+                '</td><td><span class="status ok">' +
+                ic("check") +
+                "Tercatat</span></td></tr>"
+              );
+            })
+            .join("");
+          hz.innerHTML =
+            '<div class="card no-print"><div class="card-head"><h3 class="card-title">' +
+            ic("history") +
+            'Riwayat Donor Darah</h3><span class="tag">' +
+            total +
+            " kali donor</span></div>" +
+            '<div class="elig ' +
+            (el.ok ? "ok" : "wait") +
+            '">' +
+            (el.ok ? ic("check") : ic("clock")) +
+            "<div><b>" +
+            (last
+              ? "Donor terakhir: " + fmtLong(last)
+              : "Belum ada riwayat donor") +
+            "</b><span>" +
+            esc(el.txt) +
+            "</span></div></div>" +
+            (total
+              ? '<div class="table-wrap"><table class="data"><thead><tr><th>Tanggal</th><th>Lokasi</th><th>Status</th></tr></thead><tbody>' +
+                rows +
+                "</tbody></table></div>"
+              : '<p class="hint">' +
+                ic("info") +
+                'Belum ada catatan donor. Gunakan formulir "Catat Donor Darah" di atas setelah Anda mendonor.</p>') +
+            '<p class="hint">' +
+            ic("info") +
+            "Jeda donor minimal 90 hari (pria) atau 120 hari (wanita) sesuai standar Palang Merah Indonesia.</p></div>";
+        }
+
+        /* ======================= PETA ======================= */
+        var mapCity = store.get("mapCity", "Jakarta");
+        var you = null,
+          selId = null;
+        function mapPoints() {
+          var pts = [];
+          PMI[mapCity].forEach(function (p) {
+            pts.push({
+              kind: "pmi",
+              id: "pmi-" + p.name,
+              name: p.name,
+              addr: p.addr,
+              tel: p.tel,
+              hours: p.hours,
+              x: p.x,
+              y: p.y,
+            });
+          });
+          upcomingEvents()
+            .filter(function (e) {
+              return e.city === mapCity;
+            })
+            .forEach(function (e) {
+              pts.push({
+                kind: "event",
+                id: e.id,
+                name: e.title,
+                addr: e.place + ", " + e.city,
+                date: e.date,
+                time: e.time,
+                x: e.x,
+                y: e.y,
+              });
+            });
+          return pts;
+        }
+        function distOf(pt, ref) {
+          return Math.hypot(pt.x - ref.x, pt.y - ref.y) / 40;
+        }
+        function renderMap() {
+          var sel = $("#map-city");
+          if (sel.value !== mapCity) sel.value = mapCity;
+          var pts = mapPoints();
+          var ref = you || { x: 320, y: 200 };
+          var sorted = pts.slice().sort(function (a, b) {
+            return distOf(a, ref) - distOf(b, ref);
+          });
+          var nearId = sorted.length ? sorted[0].id : null;
+          var s =
+            '<svg id="citymap" viewBox="0 0 640 400" role="img" aria-label="Peta skematik wilayah ' +
+            esc(mapCity) +
+            '">';
+          s +=
+            '<rect class="map-bg" width="640" height="400" rx="12" fill="#f2f2ef"/>';
+          s +=
+            '<rect x="40" y="40" width="120" height="80" rx="10" fill="#e2ece2"/>';
+          s +=
+            '<rect x="470" y="290" width="130" height="80" rx="10" fill="#e2ece2"/>';
+          s +=
+            '<path d="M-20 330 C 120 310 180 250 320 258 S 540 300 660 276" fill="none" stroke="#c3d7e0" stroke-width="12" stroke-linecap="round"/>';
+          var roads = [
+            [0, 140, 640, 140],
+            [0, 290, 640, 290],
+            [160, 0, 160, 400],
+            [480, 0, 480, 400],
+            [320, 0, 320, 400],
+          ];
+          roads.forEach(function (r) {
+            s +=
+              '<line x1="' +
+              r[0] +
+              '" y1="' +
+              r[1] +
+              '" x2="' +
+              r[2] +
+              '" y2="' +
+              r[3] +
+              '" stroke="#dcdcd8" stroke-width="13"/>';
+          });
+          roads.forEach(function (r) {
+            s +=
+              '<line x1="' +
+              r[0] +
+              '" y1="' +
+              r[1] +
+              '" x2="' +
+              r[2] +
+              '" y2="' +
+              r[3] +
+              '" stroke="#ffffff" stroke-width="9"/>';
+          });
+          s += '<text x="100" y="86" class="map-label">Taman Kota</text>';
+          s += '<text x="535" y="336" class="map-label">Taman Selatan</text>';
+          s +=
+            '<text x="328" y="212" class="map-label strong">PUSAT KOTA</text>';
+          s += '<circle cx="320" cy="200" r="4" fill="#6f746f"/>';
+          s +=
+            '<rect class="hit" width="640" height="400" fill="transparent"/>';
+          if (you)
+            s +=
+              '<g transform="translate(' +
+              Math.round(you.x) +
+              "," +
+              Math.round(you.y) +
+              ')"><circle r="11" fill="none" stroke="#191a1b" stroke-width="1.5" stroke-dasharray="3 3"/><circle r="5" fill="#191a1b" stroke="#fff" stroke-width="2"/><text y="-17" text-anchor="middle" class="map-label you">Posisi Anda</text></g>';
+          pts.forEach(function (p) {
+            var near = p.id === nearId,
+              selm = p.id === selId;
+            s +=
+              '<g class="mk ' +
+              p.kind +
+              (selm ? " sel" : "") +
+              '" data-kind="' +
+              p.kind +
+              '" data-id="' +
+              esc(p.id) +
+              '" transform="translate(' +
+              p.x +
+              "," +
+              p.y +
+              ')"><title>' +
+              esc(p.name) +
+              "</title>";
+            if (near)
+              s +=
+                '<circle r="18" fill="none" stroke="#191a1b" stroke-width="1.5" stroke-dasharray="4 3"/>';
+            if (selm)
+              s +=
+                '<circle class="sel-ring" r="22" fill="none" stroke="#191a1b" stroke-width="1.5"/>';
+            if (p.kind === "pmi") {
+              s +=
+                '<path class="pin" d="M0 18C-7 8-13 2-13-6A13 13 0 1 1 13-6c0 8-6 14-13 24z" fill="#d32f2f"/><circle cx="0" cy="-6" r="4.5" fill="#fff"/>';
+            } else {
+              s +=
+                '<rect x="-11" y="-11" width="22" height="22" rx="6" fill="#fff" stroke="#d32f2f" stroke-width="2"/><path d="M0 -5.5c3 3.4 5 5.8 5 8a5 5 0 1 1-10 0c0-2.2 2-4.6 5-8z" fill="#d32f2f"/>';
+            }
+            s += "</g>";
+          });
+          s += "</svg>";
+          $("#map-wrap").innerHTML = s;
+          renderMapInfo(sorted, ref);
+          renderMapList(sorted, ref);
+        }
+        function locCard(pt, d) {
+          var head =
+            '<span class="dist-chip">' +
+            ic("pin") +
+            "± " +
+            numID(d) +
+            " km dari " +
+            (you ? "posisi Anda" : "pusat kota") +
+            "</span>";
+          if (pt.kind === "pmi") {
+            return (
+              head +
+              "<h4>" +
+              esc(pt.name) +
+              "</h4>" +
+              '<p class="event-meta">' +
+              ic("pin") +
+              "<span>" +
+              esc(pt.addr) +
+              "</span></p>" +
+              '<p class="event-meta">' +
+              ic("clock") +
+              "<span>" +
+              esc(pt.hours) +
+              "</span></p>" +
+              '<p class="event-meta">' +
+              ic("phone") +
+              '<a class="link-tel" href="tel:' +
+              esc(pt.tel.replace(/[^0-9+]/g, "")) +
+              '">' +
+              esc(pt.tel) +
+              "</a></p>"
+            );
+          }
+          return (
+            head +
+            "<h4>" +
+            esc(pt.name) +
+            "</h4>" +
+            '<p class="event-meta">' +
+            ic("calendar") +
+            "<span>" +
+            fmtLong(pt.date) +
+            " · " +
+            esc(pt.time) +
+            "</span></p>" +
+            '<p class="event-meta">' +
+            ic("pin") +
+            "<span>" +
+            esc(pt.addr) +
+            "</span></p>" +
+            '<a class="btn btn-primary btn-sm" href="#jadwal" data-nav="jadwal">' +
+            ic("arrow") +
+            "Lihat &amp; Daftar</a>"
+          );
+        }
+        function renderMapInfo(sorted, ref) {
+          var z = $("#map-info");
+          if (!selId) {
+            z.innerHTML =
+              '<p class="hint" style="margin:0">' +
+              ic("info") +
+              "Klik salah satu titik pada peta untuk melihat detail lokasi, jam layanan, dan kontak.</p>";
+            return;
+          }
+          var pt = null;
+          sorted.forEach(function (p) {
+            if (p.id === selId) pt = p;
+          });
+          z.innerHTML = pt ? locCard(pt, distOf(pt, ref)) : "";
+        }
+        function renderMapList(sorted, ref) {
+          $("#map-list").innerHTML =
+            sorted
+              .map(function (p, i) {
+                var d = distOf(p, ref);
+                return (
+                  '<button type="button" class="loc-row" data-sel="' +
+                  esc(p.id) +
+                  '">' +
+                  '<span class="loc-ic">' +
+                  ic(p.kind === "pmi" ? "droplet" : "calendar") +
+                  "</span>" +
+                  "<span><b>" +
+                  esc(p.name) +
+                  "</b><small>" +
+                  (p.kind === "pmi"
+                    ? esc(p.addr)
+                    : fmt(p.date) + " · " + esc(p.addr)) +
+                  "</small></span>" +
+                  '<span class="loc-dist"><span class="dist-chip' +
+                  (i === 0 ? " near" : "") +
+                  '">' +
+                  (i === 0 ? "Terdekat · " : "") +
+                  "± " +
+                  numID(d) +
+                  " km</span></span>" +
+                  "</button>"
+                );
+              })
+              .join("") ||
+            '<p class="hint" style="margin:0">' +
+              ic("info") +
+              "Tidak ada titik pada wilayah ini.</p>";
+        }
+
+        /* ======================= NAVIGASI ======================= */
+        var PAGES = [
+          "beranda",
+          "pendonor",
+          "jadwal",
+          "darurat",
+          "sertifikat",
+          "peta",
+        ];
+        function go(p) {
+          if (PAGES.indexOf(p) < 0) p = "beranda";
+          $$(".page-view").forEach(function (s) {
+            s.classList.toggle("active", s.id === p);
+          });
+          $$("[data-nav]").forEach(function (a) {
+            a.classList.toggle("active", a.getAttribute("data-nav") === p);
+          });
+          if (history.replaceState) history.replaceState(null, "", "#" + p);
+          window.scrollTo(0, 0);
+        }
+
+        /* ======================= INIT & EVENT ======================= */
+        function init() {
+          // pasang ikon svg pada placeholder statis
+          $$("[data-ic]").forEach(function (el) {
+            el.outerHTML = ic(el.getAttribute("data-ic"));
+          });
+          // isi pilihan kota
+          var optsAll =
+            '<option value="ALL">Semua Kota</option>' +
+            CITIES.map(function (c) {
+              return '<option value="' + c + '">' + c + "</option>";
+            }).join("");
+          $("#donor-city").innerHTML = optsAll;
+          $("#event-city").innerHTML = optsAll;
+          var optsOne = CITIES.map(function (c) {
+            return '<option value="' + c + '">' + c + "</option>";
+          }).join("");
+          $("#dkota").innerHTML = optsOne;
+          $("#mkota").innerHTML = optsOne;
+          $("#map-city").innerHTML = optsOne;
+
+          // navigasi
+          document.addEventListener("click", function (e) {
+            var a = e.target.closest("[data-nav]");
+            if (a) {
+              e.preventDefault();
+              go(a.getAttribute("data-nav"));
+              return;
+            }
+          });
+
+          // ---- pendonor
+          $("#donor-chips").addEventListener("click", function (e) {
+            var c = e.target.closest(".chip");
+            if (!c) return;
+            dFilter.bt = c.getAttribute("data-bt");
+            $$("#donor-chips .chip").forEach(function (x) {
+              x.classList.toggle("active", x === c);
+            });
+            renderDonors();
+          });
+          $("#donor-city").addEventListener("change", function (e) {
+            dFilter.city = e.target.value;
+            renderDonors();
+          });
+          $("#donor-search").addEventListener("input", function (e) {
+            dFilter.q = e.target.value.trim();
+            renderDonors();
+          });
+          $("#donor-form").addEventListener("submit", function (e) {
+            e.preventDefault();
+            var f = e.target;
+            var d = {
+              n: f.dnama.value.trim(),
+              bt: f.dbt.value,
+              rh: f.drhesus.value,
+              city: f.dkota.value,
+              tel: f.dtel.value.trim(),
+              last: f.dlast.value || "",
+            };
+            if (!d.n || !d.bt || !d.city || !d.tel) {
+              toast(
+                "Lengkapi nama, golongan darah, kota, dan nomor telepon.",
+                "err",
+              );
+              return;
+            }
+            state.donors.unshift(d);
+            store.set("extraDonors", state.donors);
+            f.reset();
+            renderDonors();
+            renderHome();
+            toast(
+              "Terima kasih, " +
+                esc(d.n.split(" ")[0]) +
+                "! Anda terdaftar sebagai pendonor " +
+                d.bt +
+                d.rh +
+                " di " +
+                d.city +
+                ".",
+            );
+          });
+
+          // ---- jadwal
+          $("#event-city").addEventListener("change", renderEvents);
+          $("#event-list").addEventListener("click", function (e) {
+            var b = e.target.closest("[data-reg]");
+            if (!b) return;
+            if (!state.profile) {
+              toast("Lengkapi profil donor Anda terlebih dahulu.", "err");
+              go("sertifikat");
+              return;
+            }
+            var ev = seedEvents.filter(function (x) {
+              return x.id === b.getAttribute("data-reg");
+            })[0];
+            if (!ev) return;
+            state.regs.push(ev.id);
+            store.set("regs", state.regs);
+            renderEvents();
+            renderHome();
+            toast(
+              "Pendaftaran berhasil: " +
+                ev.title +
+                ". Sampai jumpa " +
+                fmtLong(ev.date) +
+                "!",
+            );
+          });
+
+          // ---- darurat
+          $("#emerg-toggle").addEventListener("click", function () {
+            $("#emerg-form").classList.toggle("hidden");
+          });
+          $("#emerg-form").addEventListener("submit", function (e) {
+            e.preventDefault();
+            var f = e.target;
+            var m = {
+              id: "u" + Date.now(),
+              hosp: f.mhosp.value.trim(),
+              city: f.mkota.value,
+              bt: f.mbt.value,
+              rh: f.mrhesus.value,
+              units: parseInt(f.munits.value, 10) || 1,
+              level: f.mlevel.value,
+              note:
+                f.mnote.value.trim() || "Permintaan darah dari rumah sakit.",
+              time: "Baru saja",
+              tel: f.mtel.value.trim(),
+              resp: 0,
+            };
+            if (!m.hosp || !m.tel) {
+              toast("Nama rumah sakit dan nomor kontak wajib diisi.", "err");
+              return;
+            }
+            state.emerg.unshift(m);
+            store.set("extraEmerg", state.emerg);
+            f.reset();
+            f.classList.add("hidden");
+            renderEmerg();
+            renderHome();
+            toast(
+              "Permintaan darurat " +
+                m.bt +
+                m.rh +
+                " dari " +
+                m.hosp +
+                " disiarkan ke pendonor.",
+            );
+          });
+          $("#emerg-list").addEventListener("click", function (e) {
+            var b = e.target.closest("[data-resp]");
+            if (!b) return;
+            var m = allEmerg().filter(function (x) {
+              return x.id === b.getAttribute("data-resp");
+            })[0];
+            if (!m) return;
+            if (!state.profile) {
+              toast(
+                "Lengkapi profil donor terlebih dahulu agar RS dapat menghubungi Anda.",
+                "err",
+              );
+              go("sertifikat");
+              return;
+            }
+            if (state.profile.bt !== m.bt || state.profile.rh !== m.rh) {
+              toast(
+                "Golongan darah Anda (" +
+                  state.profile.bt +
+                  state.profile.rh +
+                  ") tidak sesuai kebutuhan (" +
+                  m.bt +
+                  m.rh +
+                  ").",
+                "err",
+              );
+              return;
+            }
+            var el = eligibility();
+            if (!el.ok) {
+              toast(
+                "Anda belum eligible donor — " + el.daysLeft + " hari lagi.",
+                "err",
+              );
+              return;
+            }
+            state.resp.push(m.id);
+            store.set("resp", state.resp);
+            renderEmerg();
+            renderHome();
+            toast("Terima kasih! Tim " + m.hosp + " akan menghubungi Anda.");
+          });
+
+          // ---- sertifikat (profil, riwayat, cetak)
+          $("#profile-zone").addEventListener("submit", function (e) {
+            var f = e.target;
+            if (f.id === "profile-form") {
+              e.preventDefault();
+              state.profile = {
+                name: f.pname.value.trim(),
+                gender: f.pgender.value,
+                bt: f.pbt.value,
+                rh: f.prh.value,
+                city: f.pcity.value,
+                tel: f.ptel.value.trim(),
+              };
+              if (!state.profile.name || !state.profile.tel) {
+                toast("Nama dan nomor telepon wajib diisi.", "err");
+                return;
+              }
+              store.set("profile", state.profile);
+              renderCert();
+              renderHome();
+              toast(
+                "Profil donor tersimpan. Selamat bergabung, " +
+                  esc(state.profile.name.split(" ")[0]) +
+                  "!",
+              );
+            }
+            if (f.id === "donation-form") {
+              e.preventDefault();
+              var date = f.ddate.value || TODAY,
+                place = f.dplace.value.trim() || "Lokasi tidak dicatat";
+              state.donations.push({ date: date, place: place });
+              store.set("donations", state.donations);
+              renderCert();
+              renderHome();
+              toast("Riwayat donor " + fmtLong(date) + " tersimpan.");
+            }
+          });
+          $("#profile-zone").addEventListener("click", function (e) {
+            if (e.target.closest("#edit-profile")) {
+              $("#profile-zone").innerHTML =
+                '<div class="card no-print"><h3 class="card-title">' +
+                ic("edit") +
+                "Ubah Profil Donor</h3>" +
+                '<form id="profile-form" class="form-grid" novalidate>' +
+                profileFields(state.profile) +
+                '<div class="form-actions"><button type="submit" class="btn btn-primary">' +
+                ic("check") +
+                "Simpan Perubahan</button>" +
+                '<button type="button" class="btn btn-ghost" id="cancel-edit">Batal</button></div></form></div>';
+            }
+            if (e.target.closest("#cancel-edit")) {
+              renderCert();
+            }
+          });
+          $("#cert-zone").addEventListener("click", function (e) {
+            if (e.target.closest("#print-cert")) window.print();
+          });
+
+          // ---- peta
+          $("#map-city").addEventListener("change", function (e) {
+            mapCity = e.target.value;
+            you = null;
+            selId = null;
+            store.set("mapCity", mapCity);
+            renderMap();
+          });
+          $("#map-reset").addEventListener("click", function () {
+            you = null;
+            selId = null;
+            renderMap();
+            toast("Peta diatur ulang.");
+          });
+          $("#map-wrap").addEventListener("click", function (e) {
+            var mk = e.target.closest(".mk");
+            if (mk) {
+              selId = mk.getAttribute("data-id");
+              renderMap();
+              return;
+            }
+            if (e.target.classList.contains("hit")) {
+              var svg = $("#citymap"),
+                r = svg.getBoundingClientRect();
+              you = {
+                x: ((e.clientX - r.left) / r.width) * 640,
+                y: ((e.clientY - r.top) / r.height) * 400,
+              };
+              renderMap();
+              toast(
+                "Posisi Anda ditandai. Daftar lokasi diurutkan berdasarkan jarak.",
+              );
+            }
+          });
+          $("#map-list").addEventListener("click", function (e) {
+            var b = e.target.closest("[data-sel]");
+            if (!b) return;
+            selId = b.getAttribute("data-sel");
+            renderMap();
+            $("#map-info").scrollIntoView({
+              behavior: "smooth",
+              block: "nearest",
+            });
+          });
+
+          // render awal + rute dari hash
+          var h = (location.hash || "").replace("#", "");
+          go(PAGES.indexOf(h) > -1 ? h : "beranda");
+          renderDonors();
+          renderEvents();
+          renderEmerg();
+          renderCert();
+          renderMap();
+          renderHome();
+        }
+        init();
+      })();
+    </script>
+  </body>
+</html>

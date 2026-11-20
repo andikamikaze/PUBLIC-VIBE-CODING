@@ -1,0 +1,3486 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f8fafd" />
+    <title>Google One — Clone UI (Desktop + Mobile)</title>
+    <style>
+      :root {
+        --bg: #f8fafd;
+        --surface: #ffffff;
+        --surface-soft: #f1f5f9;
+        --surface-blue: #e8f0fe;
+        --text: #202124;
+        --muted: #5f6368;
+        --subtle: #80868b;
+        --line: #e4e8ef;
+        --blue: #1a73e8;
+        --blue-dark: #1765cc;
+        --blue-soft: #d2e3fc;
+        --green: #188038;
+        --yellow: #f9ab00;
+        --red: #d93025;
+        --shadow:
+          0 1px 2px rgba(60, 64, 67, 0.08), 0 2px 6px rgba(60, 64, 67, 0.05);
+        --shadow-lg: 0 8px 28px rgba(60, 64, 67, 0.16);
+        --radius: 24px;
+        --radius-sm: 16px;
+        --sidebar-width: 248px;
+        font-family: "Google Sans", "Product Sans", Roboto, Arial, sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:focus-visible,
+      input:focus-visible {
+        outline: 3px solid rgba(26, 115, 232, 0.25);
+        outline-offset: 2px;
+      }
+      .app {
+        min-height: 100vh;
+      }
+
+      /* ===== DEVICE SWITCHER (Floating) ===== */
+      .device-switcher {
+        position: fixed;
+        right: 22px;
+        bottom: 22px;
+        z-index: 200;
+        display: inline-flex;
+        padding: 6px;
+        background: #fff;
+        border: 1px solid #e4e8ef;
+        border-radius: 999px;
+        box-shadow: 0 8px 30px rgba(32, 33, 36, 0.14);
+        gap: 4px;
+      }
+      .device-switcher button {
+        min-width: 44px;
+        height: 40px;
+        padding: 0 14px;
+        border: 0;
+        background: transparent;
+        border-radius: 999px;
+        color: #5f6368;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: 0.18s;
+      }
+      .device-switcher button.active {
+        background: var(--blue);
+        color: #fff;
+      }
+      .device-switcher button svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      /* ===== DESKTOP (default) ===== */
+      .desktop-view {
+        display: block;
+      }
+      .mobile-view {
+        display: none;
+      }
+
+      body.mobile-mode .desktop-view {
+        display: none;
+      }
+      body.mobile-mode .mobile-view {
+        display: block;
+      }
+      body.mobile-mode {
+        background:
+          radial-gradient(circle at 20% 10%, #e8f0fe 0%, transparent 55%),
+          radial-gradient(circle at 85% 85%, #fde7e3 0%, transparent 55%),
+          #f1f5f9;
+      }
+
+      /* ===== MOBILE VIEW WRAPPER ===== */
+      .mobile-stage {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 48px 24px;
+      }
+      .mobile-stage-inner {
+        display: flex;
+        align-items: center;
+        gap: 56px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .stage-caption {
+        max-width: 340px;
+        color: #3c4043;
+      }
+      .stage-caption .eyebrow {
+        color: var(--blue);
+        margin-bottom: 10px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+      .stage-caption h2 {
+        font-size: clamp(24px, 3vw, 32px);
+        font-weight: 500;
+        margin: 0 0 14px;
+        letter-spacing: -0.5px;
+        line-height: 1.25;
+      }
+      .stage-caption p {
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.6;
+        margin: 0 0 18px;
+      }
+      .stage-caption ul {
+        margin: 0 0 18px;
+        padding: 0;
+        list-style: none;
+      }
+      .stage-caption li {
+        padding: 7px 0;
+        color: #3c4043;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .stage-caption li::before {
+        content: "✓";
+        color: var(--green);
+        font-weight: 700;
+      }
+
+      /* ===== PIXEL PHONE FRAME ===== */
+      .pixel-phone {
+        --phone-w: 376px;
+        --phone-h: 780px;
+        width: var(--phone-w);
+        height: var(--phone-h);
+        background: #1a1a1c;
+        border-radius: 54px;
+        padding: 14px;
+        position: relative;
+        box-shadow:
+          0 0 0 2px #2a2a2d,
+          0 30px 70px rgba(32, 33, 36, 0.35),
+          0 15px 30px rgba(32, 33, 36, 0.18),
+          inset 0 0 2px rgba(255, 255, 255, 0.05);
+        flex: 0 0 auto;
+      }
+      /* Side buttons (volume & power) */
+      .pixel-phone::before {
+        content: "";
+        position: absolute;
+        right: -3px;
+        top: 130px;
+        width: 3px;
+        height: 64px;
+        background: linear-gradient(180deg, #2a2a2d, #1a1a1c);
+        border-radius: 0 2px 2px 0;
+      }
+      .pixel-phone::after {
+        content: "";
+        position: absolute;
+        left: -3px;
+        top: 110px;
+        width: 3px;
+        height: 38px;
+        background: linear-gradient(180deg, #2a2a2d, #1a1a1c);
+        border-radius: 2px 0 0 2px;
+        box-shadow: 0 50px 0 -1px #2a2a2d;
+      }
+      .pixel-screen {
+        width: 100%;
+        height: 100%;
+        background: #f8fafd;
+        border-radius: 42px;
+        overflow: hidden;
+        position: relative;
+      }
+      /* Dynamic Island / Punch-hole camera */
+      .pixel-camera {
+        position: absolute;
+        top: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 92px;
+        height: 26px;
+        background: #000;
+        border-radius: 999px;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+      .pixel-camera::before {
+        content: "";
+        width: 10px;
+        height: 10px;
+        background: #0a0a0a;
+        border-radius: 50%;
+        box-shadow: inset 0 0 2px rgba(255, 255, 255, 0.2);
+      }
+      .pixel-camera::after {
+        content: "";
+        width: 5px;
+        height: 5px;
+        background: #1a3a6e;
+        border-radius: 50%;
+        box-shadow: inset 0 0 1px rgba(255, 255, 255, 0.3);
+      }
+
+      /* ===== MOBILE APP UI (inside Pixel frame) ===== */
+      .m-app {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        background: #f8fafd;
+        font-family: "Google Sans", Roboto, Arial, sans-serif;
+        color: #202124;
+        position: relative;
+      }
+      /* Status bar */
+      .m-statusbar {
+        height: 44px;
+        padding: 14px 28px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
+        font-weight: 600;
+        color: #202124;
+        position: relative;
+        z-index: 9;
+      }
+      .m-statusbar .sb-right {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .m-statusbar svg {
+        width: 14px;
+        height: 14px;
+      }
+      .m-battery {
+        width: 22px;
+        height: 11px;
+        border: 1.3px solid #202124;
+        border-radius: 3px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        padding: 1px;
+      }
+      .m-battery::after {
+        content: "";
+        position: absolute;
+        right: -3px;
+        width: 2px;
+        height: 5px;
+        background: #202124;
+        border-radius: 0 2px 2px 0;
+      }
+      .m-battery span {
+        display: block;
+        width: 82%;
+        height: 100%;
+        background: #202124;
+        border-radius: 1px;
+      }
+
+      /* Top app bar */
+      .m-topbar {
+        padding: 8px 20px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+      }
+      .m-greeting {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .m-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(145deg, #4285f4, #8ab4f8);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .m-greeting-text .hi {
+        font-size: 13px;
+        color: #5f6368;
+        line-height: 1.2;
+      }
+      .m-greeting-text .name {
+        font-size: 16px;
+        font-weight: 500;
+        letter-spacing: -0.2px;
+      }
+      .m-top-icons {
+        display: flex;
+        gap: 4px;
+      }
+      .m-icon-btn {
+        width: 40px;
+        height: 40px;
+        border: 0;
+        background: transparent;
+        color: #5f6368;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+      .m-icon-btn:hover {
+        background: #edf1f7;
+      }
+      .m-icon-btn svg {
+        width: 20px;
+        height: 20px;
+      }
+      .m-dot {
+        position: absolute;
+        top: 9px;
+        right: 9px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--blue);
+        border: 1.5px solid #fff;
+      }
+
+      /* Search chip */
+      .m-search {
+        margin: 0 20px 14px;
+        height: 46px;
+        background: #edf2fa;
+        border-radius: 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 16px;
+        color: #5f6368;
+        font-size: 13px;
+      }
+      .m-search svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      /* Scrollable content */
+      .m-scroll {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 6px 20px 96px;
+      }
+      .m-scroll::-webkit-scrollbar {
+        width: 0;
+      }
+
+      /* Storage card */
+      .m-storage {
+        background: #fff;
+        border-radius: 24px;
+        padding: 20px;
+        box-shadow: 0 1px 3px rgba(60, 64, 67, 0.08);
+        margin-bottom: 14px;
+      }
+      .m-storage-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+      }
+      .m-storage-head h3 {
+        font-size: 15px;
+        font-weight: 500;
+        margin: 0;
+      }
+      .m-storage-head .chip {
+        font-size: 10px;
+        font-weight: 600;
+        background: #f1f3f4;
+        color: #5f6368;
+        padding: 5px 10px;
+        border-radius: 20px;
+      }
+      .m-storage-body {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
+      .m-ring {
+        width: 88px;
+        height: 88px;
+        border-radius: 50%;
+        background: conic-gradient(
+          #4285f4 0deg 105deg,
+          #34a853 105deg 186deg,
+          #fbbc04 186deg 209deg,
+          #e8eaed 209deg 360deg
+        );
+        transform: rotate(-90deg);
+        position: relative;
+        flex: 0 0 88px;
+      }
+      .m-ring::after {
+        content: "";
+        position: absolute;
+        inset: 8px;
+        border-radius: 50%;
+        background: #fff;
+      }
+      .m-ring-center {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        z-index: 1;
+        text-align: center;
+      }
+      .m-ring-number {
+        font-size: 18px;
+        font-weight: 500;
+        letter-spacing: -0.5px;
+        line-height: 1;
+      }
+      .m-ring-unit {
+        font-size: 9px;
+        color: #747a82;
+        margin-top: 2px;
+      }
+      .m-storage-text .big {
+        font-size: 22px;
+        font-weight: 500;
+        letter-spacing: -0.5px;
+        line-height: 1.2;
+      }
+      .m-storage-text .big span {
+        color: #6b7178;
+        font-size: 14px;
+        font-weight: 400;
+      }
+      .m-storage-text p {
+        font-size: 12px;
+        color: #5f6368;
+        margin: 6px 0 10px;
+        line-height: 1.45;
+      }
+      .m-mini-meter {
+        height: 5px;
+        background: #edf0f4;
+        border-radius: 10px;
+        overflow: hidden;
+        display: flex;
+      }
+      .m-mini-meter span:nth-child(1) {
+        width: 28%;
+        background: #4285f4;
+      }
+      .m-mini-meter span:nth-child(2) {
+        width: 24%;
+        background: #34a853;
+      }
+      .m-mini-meter span:nth-child(3) {
+        width: 6%;
+        background: #fbbc04;
+      }
+      .m-mini-meter span:nth-child(4) {
+        flex: 1;
+      }
+
+      /* Quick actions */
+      .m-quick {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+      .m-quick-btn {
+        background: #fff;
+        border: 0;
+        border-radius: 18px;
+        padding: 14px 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        color: #3c4043;
+        box-shadow: 0 1px 2px rgba(60, 64, 67, 0.06);
+      }
+      .m-quick-btn .q-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+      }
+      .m-quick-btn .q-icon svg {
+        width: 18px;
+        height: 18px;
+      }
+      .m-quick-btn span {
+        font-size: 10.5px;
+        font-weight: 500;
+        line-height: 1.25;
+        text-align: center;
+      }
+      .m-quick-btn.drive .q-icon {
+        background: #e8f0fe;
+        color: #4285f4;
+      }
+      .m-quick-btn.family .q-icon {
+        background: #e6f4ea;
+        color: #188038;
+      }
+      .m-quick-btn.spark .q-icon {
+        background: #fef7e0;
+        color: #b06000;
+      }
+      .m-quick-btn.clean .q-icon {
+        background: #fce8e6;
+        color: #d93025;
+      }
+
+      /* Section heading */
+      .m-section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 6px 0 10px;
+      }
+      .m-section-head h4 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: -0.2px;
+      }
+      .m-section-head a {
+        font-size: 12px;
+        color: var(--blue);
+        font-weight: 600;
+        text-decoration: none;
+      }
+
+      /* Service usage list */
+      .m-usage-list {
+        background: #fff;
+        border-radius: 20px;
+        padding: 6px 0;
+        margin-bottom: 14px;
+        box-shadow: 0 1px 2px rgba(60, 64, 67, 0.06);
+      }
+      .m-usage-item {
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .m-usage-item + .m-usage-item {
+        border-top: 1px solid #f1f3f4;
+      }
+      .m-usage-item .s-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+      }
+      .m-usage-item .s-icon svg {
+        width: 18px;
+        height: 18px;
+      }
+      .m-usage-item .s-icon.drive {
+        background: #e8f0fe;
+        color: #4285f4;
+      }
+      .m-usage-item .s-icon.photos {
+        background: #fce8e6;
+        color: #ea4335;
+      }
+      .m-usage-item .s-icon.gmail {
+        background: #fef7e0;
+        color: #d99b00;
+      }
+      .m-usage-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .m-usage-info .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 5px;
+      }
+      .m-usage-info .name {
+        font-size: 12.5px;
+        font-weight: 600;
+      }
+      .m-usage-info .amt {
+        font-size: 11px;
+        color: #5f6368;
+      }
+      .m-usage-bar {
+        height: 4px;
+        background: #edf0f4;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .m-usage-bar span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+      }
+
+      /* Benefits horizontal cards */
+      .m-benefit {
+        background: #fff;
+        border-radius: 20px;
+        padding: 14px;
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        margin-bottom: 10px;
+        box-shadow: 0 1px 2px rgba(60, 64, 67, 0.06);
+      }
+      .m-benefit .b-ic {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+      }
+      .m-benefit .b-ic svg {
+        width: 20px;
+        height: 20px;
+      }
+      .m-benefit .b-txt h5 {
+        margin: 0 0 3px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .m-benefit .b-txt p {
+        margin: 0;
+        font-size: 11.5px;
+        color: #5f6368;
+        line-height: 1.45;
+      }
+
+      /* Upgrade banner (mobile) */
+      .m-upgrade {
+        background: linear-gradient(105deg, #eaf2ff, #f5f8ff 65%, #eff6ff);
+        border-radius: 20px;
+        padding: 16px;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .m-upgrade .u-ic {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: #d8e7ff;
+        color: var(--blue);
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+      }
+      .m-upgrade .u-ic svg {
+        width: 20px;
+        height: 20px;
+      }
+      .m-upgrade .u-txt {
+        flex: 1;
+      }
+      .m-upgrade .u-txt h5 {
+        margin: 0 0 3px;
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .m-upgrade .u-txt p {
+        margin: 0;
+        font-size: 11px;
+        color: #5f6368;
+        line-height: 1.45;
+      }
+
+      /* Bottom navigation */
+      .m-bottomnav {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 86px;
+        background: #fff;
+        border-top: 1px solid #edf0f3;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        align-items: flex-start;
+        padding-top: 10px;
+        z-index: 5;
+      }
+      .m-nav-btn {
+        border: 0;
+        background: transparent;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        color: #5f6368;
+        padding: 0;
+        font-size: 10.5px;
+        font-weight: 500;
+        position: relative;
+      }
+      .m-nav-btn .nav-pill {
+        width: 56px;
+        height: 28px;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        background: transparent;
+        transition: 0.18s;
+      }
+      .m-nav-btn svg {
+        width: 20px;
+        height: 20px;
+      }
+      .m-nav-btn.active {
+        color: var(--blue);
+      }
+      .m-nav-btn.active .nav-pill {
+        background: #d3e3fd;
+        color: #1a73e8;
+      }
+      .m-gesture {
+        position: absolute;
+        bottom: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 110px;
+        height: 4px;
+        background: #3c4043;
+        border-radius: 999px;
+        opacity: 0.65;
+      }
+
+      /* ===== DESKTOP TOPBAR ===== */
+      .topbar {
+        height: 76px;
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        padding: 0 34px;
+        background: rgba(248, 250, 253, 0.94);
+        backdrop-filter: blur(16px);
+        border-bottom: 1px solid rgba(218, 220, 224, 0.72);
+      }
+      .brand-wrap {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 214px;
+        flex: 0 0 214px;
+      }
+      .menu-toggle {
+        display: none;
+        width: 40px;
+        height: 40px;
+        border: 0;
+        background: transparent;
+        color: #5f6368;
+        border-radius: 50%;
+        align-items: center;
+        justify-content: center;
+      }
+      .menu-toggle:hover,
+      .icon-button:hover {
+        background: #edf1f7;
+      }
+      .brand {
+        display: inline-flex;
+        gap: 7px;
+        align-items: center;
+        color: #5f6368;
+        text-decoration: none;
+        letter-spacing: -0.5px;
+        font-size: 21px;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+      .brand strong {
+        color: #5f6368;
+        font-weight: 500;
+      }
+      .google-g {
+        width: 27px;
+        height: 27px;
+        display: block;
+      }
+      .top-search {
+        max-width: 610px;
+        width: min(48vw, 610px);
+        height: 46px;
+        border-radius: 28px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #edf2fa;
+        padding: 0 17px;
+        color: #5f6368;
+        transition:
+          background 0.2s,
+          box-shadow 0.2s;
+      }
+      .top-search:focus-within {
+        background: #fff;
+        box-shadow: 0 1px 5px rgba(60, 64, 67, 0.2);
+      }
+      .top-search input {
+        flex: 1;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        min-width: 0;
+        color: var(--text);
+        font-size: 14px;
+      }
+      .top-search input::placeholder {
+        color: #747980;
+      }
+      .top-actions {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .icon-button {
+        width: 42px;
+        height: 42px;
+        border: 0;
+        background: transparent;
+        color: #5f6368;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+      .avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        margin-left: 9px;
+        display: grid;
+        place-items: center;
+        font-size: 13px;
+        font-weight: 600;
+        color: #fff;
+        background: linear-gradient(145deg, #4285f4, #8ab4f8);
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 1px #dadce0;
+      }
+      .dot {
+        position: absolute;
+        right: 8px;
+        top: 8px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--blue);
+        border: 1px solid #fff;
+      }
+
+      /* ===== DESKTOP LAYOUT ===== */
+      .layout {
+        display: flex;
+        min-height: calc(100vh - 76px);
+      }
+      .sidebar {
+        width: var(--sidebar-width);
+        flex: 0 0 var(--sidebar-width);
+        padding: 25px 14px 26px 17px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .nav-label {
+        padding: 9px 16px 7px;
+        color: var(--subtle);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+      }
+      .nav-item {
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        gap: 17px;
+        padding: 0 17px;
+        border-radius: 0 28px 28px 0;
+        border: 0;
+        background: transparent;
+        color: #44484d;
+        font-size: 14px;
+        font-weight: 500;
+        text-align: left;
+        transition:
+          background 0.18s,
+          color 0.18s;
+      }
+      .nav-item svg {
+        color: #697078;
+        flex: 0 0 auto;
+      }
+      .nav-item:hover {
+        background: #edf2fa;
+      }
+      .nav-item.active {
+        background: #dce9fb;
+        color: #174ea6;
+      }
+      .nav-item.active svg {
+        color: #1a73e8;
+      }
+      .sidebar-spacer {
+        flex: 1;
+        min-height: 36px;
+      }
+      .side-plan {
+        margin: 12px 5px 0 8px;
+        padding: 18px 17px;
+        border-radius: 18px;
+        background: #eef4ff;
+      }
+      .side-plan .small-cap {
+        color: #5f6368;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        font-weight: 700;
+      }
+      .side-plan p {
+        font-size: 13px;
+        line-height: 1.5;
+        margin: 8px 0 14px;
+        color: #3c4043;
+      }
+      .text-link {
+        color: var(--blue);
+        border: 0;
+        padding: 0;
+        background: transparent;
+        font-weight: 600;
+        font-size: 13px;
+      }
+      .sidebar-footer {
+        padding: 15px 17px 0;
+        color: #8a9097;
+        font-size: 11px;
+        line-height: 1.7;
+      }
+
+      /* Main content */
+      main {
+        flex: 1;
+        min-width: 0;
+        padding: 37px clamp(24px, 4vw, 64px) 64px 28px;
+      }
+      .page-wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+      }
+      .page-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 20px;
+        margin-bottom: 28px;
+      }
+      .eyebrow {
+        color: #6f7780;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+      }
+      h1 {
+        font-size: clamp(26px, 2.5vw, 34px);
+        line-height: 1.2;
+        letter-spacing: -0.8px;
+        font-weight: 500;
+        margin: 0;
+      }
+      .page-subtitle {
+        margin: 9px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.55;
+      }
+      .page-head-action {
+        flex: 0 0 auto;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        min-height: 42px;
+        border-radius: 22px;
+        border: 1px solid transparent;
+        padding: 0 20px;
+        font-size: 13px;
+        font-weight: 600;
+        transition: 0.18s ease;
+        white-space: nowrap;
+      }
+      .btn-primary {
+        background: var(--blue);
+        color: #fff;
+        box-shadow: 0 1px 2px rgba(26, 115, 232, 0.22);
+      }
+      .btn-primary:hover {
+        background: var(--blue-dark);
+        box-shadow: 0 2px 5px rgba(26, 115, 232, 0.25);
+      }
+      .btn-outline {
+        color: var(--blue);
+        border-color: #c9d7ed;
+        background: #fff;
+      }
+      .btn-outline:hover {
+        background: #f4f8ff;
+        border-color: #9ab8e5;
+      }
+      .btn-quiet {
+        color: #3c4043;
+        background: transparent;
+        padding: 0 12px;
+      }
+      .btn-quiet:hover {
+        background: #f0f3f7;
+      }
+      .grid {
+        display: grid;
+        gap: 20px;
+      }
+      .home-top-grid {
+        grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.85fr);
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid #e7ebf0;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+      }
+      .card-pad {
+        padding: 25px 27px;
+      }
+      .card-title {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 500;
+        letter-spacing: -0.2px;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .tiny {
+        color: var(--subtle);
+        font-size: 12px;
+      }
+
+      /* Storage overview card */
+      .storage-card {
+        min-height: 280px;
+        position: relative;
+        overflow: hidden;
+      }
+      .storage-card:before {
+        content: "";
+        position: absolute;
+        width: 310px;
+        height: 310px;
+        border-radius: 50%;
+        right: -128px;
+        top: -155px;
+        background: radial-gradient(
+          circle,
+          rgba(232, 240, 254, 0.88),
+          rgba(232, 240, 254, 0) 70%
+        );
+        pointer-events: none;
+      }
+      .storage-card-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: center;
+        position: relative;
+      }
+      .plan-chip {
+        border-radius: 20px;
+        background: #f1f3f4;
+        padding: 7px 12px;
+        color: #5f6368;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .storage-main {
+        display: flex;
+        align-items: center;
+        gap: clamp(22px, 4vw, 52px);
+        margin-top: 28px;
+        position: relative;
+      }
+      .ring-wrap {
+        width: 148px;
+        height: 148px;
+        flex: 0 0 148px;
+        position: relative;
+        display: grid;
+        place-items: center;
+      }
+      .storage-ring {
+        width: 148px;
+        height: 148px;
+        border-radius: 50%;
+        background: conic-gradient(
+          #4285f4 0deg 105deg,
+          #34a853 105deg 186deg,
+          #fbbc04 186deg 209deg,
+          #e8eaed 209deg 360deg
+        );
+        position: relative;
+        transform: rotate(-90deg);
+      }
+      .storage-ring:after {
+        content: "";
+        position: absolute;
+        inset: 12px;
+        border-radius: 50%;
+        background: #fff;
+      }
+      .ring-center {
+        position: absolute;
+        z-index: 1;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .ring-number {
+        font-size: 27px;
+        letter-spacing: -1px;
+        font-weight: 500;
+      }
+      .ring-unit {
+        color: #747a82;
+        font-size: 11px;
+      }
+      .storage-copy {
+        min-width: 0;
+      }
+      .storage-big {
+        font-size: clamp(28px, 3vw, 38px);
+        font-weight: 500;
+        letter-spacing: -1.5px;
+        line-height: 1.15;
+      }
+      .storage-big span {
+        color: #6b7178;
+        font-size: 21px;
+        letter-spacing: -0.5px;
+        font-weight: 400;
+      }
+      .storage-copy p {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.55;
+        margin: 10px 0 19px;
+        max-width: 365px;
+      }
+      .storage-note {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: #188038;
+        font-size: 12px;
+        font-weight: 500;
+        margin-top: 13px;
+      }
+      .storage-note svg {
+        width: 15px;
+        height: 15px;
+      }
+      .mini-meter {
+        height: 6px;
+        width: min(100%, 350px);
+        background: #edf0f4;
+        border-radius: 10px;
+        overflow: hidden;
+        display: flex;
+      }
+      .mini-meter span:nth-child(1) {
+        width: 28%;
+        background: #4285f4;
+      }
+      .mini-meter span:nth-child(2) {
+        width: 24%;
+        background: #34a853;
+      }
+      .mini-meter span:nth-child(3) {
+        width: 6%;
+        background: #fbbc04;
+      }
+      .mini-meter span:nth-child(4) {
+        flex: 1;
+      }
+
+      /* Membership card */
+      .member-card {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 280px;
+        overflow: hidden;
+        position: relative;
+        background: linear-gradient(
+          145deg,
+          #f6f9ff 0%,
+          #edf4ff 54%,
+          #e5efff 100%
+        );
+        border-color: #dce7f7;
+      }
+      .member-card:after {
+        content: "";
+        width: 210px;
+        height: 210px;
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.38);
+        right: -84px;
+        bottom: -110px;
+        box-shadow:
+          0 0 0 25px rgba(255, 255, 255, 0.18),
+          0 0 0 52px rgba(255, 255, 255, 0.13);
+      }
+      .member-card .card-title {
+        font-size: 18px;
+        max-width: 230px;
+        line-height: 1.4;
+      }
+      .member-card p {
+        font-size: 13px;
+        line-height: 1.55;
+        color: #5f6368;
+        max-width: 250px;
+        margin: 10px 0 19px;
+      }
+      .member-art {
+        position: absolute;
+        right: 19px;
+        top: 28px;
+        width: 116px;
+        height: 115px;
+        opacity: 0.95;
+      }
+      .member-card .btn {
+        position: relative;
+        z-index: 2;
+        align-self: flex-start;
+      }
+
+      /* Service breakdown */
+      .section {
+        margin-top: 27px;
+      }
+      .section-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin: 0 0 14px;
+      }
+      .section-heading h2 {
+        font-weight: 500;
+        font-size: 18px;
+        margin: 0;
+        letter-spacing: -0.3px;
+      }
+      .section-heading p {
+        margin: 5px 0 0;
+        font-size: 12px;
+        color: #737981;
+      }
+      .usage-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .usage-card {
+        padding: 19px 21px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        min-height: 105px;
+      }
+      .service-icon {
+        width: 43px;
+        height: 43px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+      }
+      .service-icon svg {
+        width: 22px;
+        height: 22px;
+      }
+      .service-icon.drive {
+        background: #e8f0fe;
+        color: #4285f4;
+      }
+      .service-icon.photos {
+        background: #fce8e6;
+        color: #ea4335;
+      }
+      .service-icon.gmail {
+        background: #fef7e0;
+        color: #d99b00;
+      }
+      .usage-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .usage-name {
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 7px;
+      }
+      .usage-value {
+        color: #5f6368;
+        font-size: 12px;
+      }
+      .usage-bar {
+        height: 4px;
+        border-radius: 8px;
+        background: #edf0f4;
+        overflow: hidden;
+        margin-top: 9px;
+      }
+      .usage-bar span {
+        height: 100%;
+        display: block;
+        border-radius: inherit;
+      }
+
+      /* Benefits and upgrade */
+      .benefit-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .benefit-card {
+        min-height: 188px;
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .benefit-visual {
+        height: 45px;
+        width: 45px;
+        border-radius: 15px;
+        display: grid;
+        place-items: center;
+        margin-bottom: 17px;
+      }
+      .benefit-visual svg {
+        width: 24px;
+        height: 24px;
+      }
+      .benefit-card h3 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .benefit-card p {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.55;
+        margin: 7px 0 12px;
+        flex: 1;
+      }
+      .benefit-card .text-link {
+        margin-top: auto;
+      }
+      .upgrade-banner {
+        padding: 23px 27px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        justify-content: space-between;
+        background: linear-gradient(105deg, #eaf2ff, #f5f8ff 65%, #eff6ff);
+        border: 1px solid #dce8fa;
+      }
+      .upgrade-banner h3 {
+        margin: 0 0 6px;
+        font-size: 16px;
+        font-weight: 500;
+      }
+      .upgrade-banner p {
+        margin: 0;
+        color: #5f6368;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+      .upgrade-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
+        background: #d8e7ff;
+        color: #1a73e8;
+        flex: 0 0 auto;
+        display: grid;
+        place-items: center;
+      }
+      .upgrade-copy {
+        flex: 1;
+      }
+
+      /* Storage subpage */
+      .storage-summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 28px;
+      }
+      .summary-left {
+        display: flex;
+        align-items: center;
+        gap: 26px;
+      }
+      .summary-left .ring-wrap,
+      .summary-left .storage-ring {
+        width: 122px;
+        height: 122px;
+        flex-basis: 122px;
+      }
+      .summary-left .ring-center .ring-number {
+        font-size: 23px;
+      }
+      .summary-left .storage-ring:after {
+        inset: 10px;
+      }
+      .summary-text h2 {
+        font-size: 22px;
+        font-weight: 500;
+        letter-spacing: -0.5px;
+        margin: 0 0 8px;
+      }
+      .summary-text p {
+        font-size: 13px;
+        color: var(--muted);
+        margin: 0;
+        line-height: 1.6;
+      }
+      .storage-table {
+        overflow: hidden;
+      }
+      .storage-row {
+        display: grid;
+        grid-template-columns:
+          minmax(180px, 1.3fr) minmax(180px, 2fr)
+          100px 105px;
+        gap: 20px;
+        align-items: center;
+        padding: 19px 24px;
+        border-top: 1px solid #edf0f3;
+      }
+      .storage-row.header {
+        background: #fafbfd;
+        color: #747a82;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        border-top: 0;
+      }
+      .storage-row:not(.header):hover {
+        background: #fbfcff;
+      }
+      .service-name {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .service-name .service-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+      }
+      .bar-track {
+        height: 7px;
+        background: #edf0f4;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .bar-track span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+      }
+      .storage-row .amount {
+        font-size: 12px;
+        color: #4f555c;
+      }
+      .storage-row .manage {
+        text-align: right;
+      }
+      .cleanup-card {
+        padding: 24px;
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        background: #fff;
+      }
+      .cleanup-card .benefit-visual {
+        flex: 0 0 48px;
+        margin: 0;
+        background: #e8f0fe;
+        color: #1a73e8;
+      }
+      .cleanup-card h3 {
+        font-size: 15px;
+        font-weight: 600;
+        margin: 0 0 6px;
+      }
+      .cleanup-card p {
+        margin: 0;
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      .cleanup-card .btn {
+        margin-left: auto;
+      }
+
+      /* Benefits page */
+      .benefit-hero {
+        display: flex;
+        gap: 24px;
+        align-items: center;
+        padding: 28px 32px;
+        min-height: 190px;
+        background: linear-gradient(110deg, #eaf2ff, #f7faff);
+        border-color: #dce8fa;
+        overflow: hidden;
+        position: relative;
+      }
+      .benefit-hero h2 {
+        font-size: 22px;
+        font-weight: 500;
+        margin: 0 0 9px;
+      }
+      .benefit-hero p {
+        color: #5f6368;
+        font-size: 13px;
+        line-height: 1.6;
+        margin: 0 0 16px;
+        max-width: 500px;
+      }
+      .benefit-hero-art {
+        margin-left: auto;
+        width: 190px;
+        height: 138px;
+        flex: 0 0 190px;
+      }
+      .benefit-list-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .benefit-wide {
+        min-height: 150px;
+        display: flex;
+        align-items: flex-start;
+        gap: 18px;
+        padding: 23px;
+      }
+      .benefit-wide .benefit-visual {
+        flex: 0 0 48px;
+        margin: 0;
+      }
+      .benefit-wide h3 {
+        margin: 2px 0 7px;
+        font-size: 15px;
+      }
+      .benefit-wide p {
+        margin: 0 0 12px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      /* Support + settings */
+      .support-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .support-card {
+        padding: 24px;
+        min-height: 155px;
+      }
+      .support-card h3 {
+        margin: 15px 0 7px;
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .support-card p {
+        margin: 0 0 14px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.55;
+      }
+      .settings-card {
+        overflow: hidden;
+      }
+      .setting-row {
+        padding: 21px 25px;
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        align-items: center;
+        border-bottom: 1px solid #edf0f3;
+      }
+      .setting-row:last-child {
+        border-bottom: 0;
+      }
+      .setting-row h3 {
+        font-size: 14px;
+        margin: 0 0 5px;
+        font-weight: 600;
+      }
+      .setting-row p {
+        color: var(--muted);
+        font-size: 12px;
+        margin: 0;
+        line-height: 1.5;
+      }
+      .toggle {
+        width: 42px;
+        height: 24px;
+        border: 0;
+        border-radius: 20px;
+        background: #c5cbd3;
+        position: relative;
+        flex: 0 0 auto;
+        transition: background 0.2s;
+      }
+      .toggle:after {
+        content: "";
+        position: absolute;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: white;
+        top: 3px;
+        left: 3px;
+        box-shadow: 0 1px 2px #0002;
+        transition: transform 0.2s;
+      }
+      .toggle.on {
+        background: #8ab4f8;
+      }
+      .toggle.on:after {
+        transform: translateX(18px);
+        background: #1a73e8;
+      }
+
+      /* Menus and modal */
+      .popover {
+        position: absolute;
+        z-index: 40;
+        right: 0;
+        top: calc(100% + 10px);
+        width: 280px;
+        padding: 9px;
+        background: #fff;
+        border: 1px solid #e5e8ed;
+        border-radius: 17px;
+        box-shadow: var(--shadow-lg);
+        display: none;
+      }
+      .popover.show {
+        display: block;
+        animation: pop 0.16s ease-out;
+      }
+      @keyframes pop {
+        from {
+          opacity: 0;
+          transform: translateY(-5px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .popover-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: #5f6368;
+        padding: 10px 12px;
+      }
+      .popover-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        padding: 12px;
+        border: 0;
+        background: transparent;
+        text-align: left;
+        border-radius: 11px;
+        font-size: 13px;
+        color: #3c4043;
+      }
+      .popover-item:hover {
+        background: #f4f7fb;
+      }
+      .popover-item svg {
+        color: #6f7780;
+      }
+      .account-card {
+        padding: 14px;
+        text-align: center;
+      }
+      .account-card .avatar {
+        margin: 4px auto 10px;
+        width: 44px;
+        height: 44px;
+        font-size: 15px;
+      }
+      .account-card strong {
+        display: block;
+        font-size: 13px;
+      }
+      .account-card small {
+        display: block;
+        color: #737981;
+        font-size: 11px;
+        margin-top: 4px;
+      }
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 70;
+        background: rgba(32, 33, 36, 0.38);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .modal-backdrop.show {
+        display: flex;
+      }
+      .modal {
+        width: min(100%, 540px);
+        max-height: min(88vh, 720px);
+        overflow: auto;
+        background: #fff;
+        border-radius: 26px;
+        box-shadow: 0 16px 60px rgba(32, 33, 36, 0.25);
+        padding: 27px;
+        animation: modalIn 0.2s ease-out;
+      }
+      @keyframes modalIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px) scale(0.985);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+      .modal-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 15px;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+      .modal h2 {
+        font-size: 22px;
+        font-weight: 500;
+        margin: 0;
+        letter-spacing: -0.5px;
+      }
+      .modal-copy {
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--muted);
+        margin: 0 0 19px;
+      }
+      .plan-option {
+        padding: 16px;
+        border: 1px solid #e2e7ef;
+        border-radius: 17px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 10px 0;
+        cursor: pointer;
+        transition: 0.15s;
+      }
+      .plan-option:hover,
+      .plan-option.selected {
+        background: #f5f9ff;
+        border-color: #8ab4f8;
+      }
+      .plan-radio {
+        height: 18px;
+        width: 18px;
+        border: 2px solid #9aa0a6;
+        border-radius: 50%;
+        flex: 0 0 auto;
+        display: grid;
+        place-items: center;
+      }
+      .plan-option.selected .plan-radio {
+        border-color: var(--blue);
+      }
+      .plan-option.selected .plan-radio:after {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--blue);
+      }
+      .plan-detail {
+        flex: 1;
+      }
+      .plan-detail strong {
+        font-size: 14px;
+        display: block;
+      }
+      .plan-detail small {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+        margin-top: 4px;
+      }
+      .plan-price {
+        text-align: right;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .plan-price small {
+        display: block;
+        font-size: 10px;
+        color: #777;
+        font-weight: 400;
+        margin-top: 3px;
+      }
+      .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 22px;
+      }
+      .toast {
+        position: fixed;
+        z-index: 100;
+        bottom: 92px;
+        left: 50%;
+        transform: translate(-50%, 20px);
+        opacity: 0;
+        pointer-events: none;
+        background: #303134;
+        color: white;
+        border-radius: 8px;
+        padding: 12px 17px;
+        box-shadow: var(--shadow-lg);
+        font-size: 13px;
+        transition: 0.22s ease;
+        max-width: calc(100vw - 30px);
+        text-align: center;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      .mobile-overlay {
+        display: none;
+      }
+
+      @media (max-width: 1100px) {
+        :root {
+          --sidebar-width: 218px;
+        }
+        .brand-wrap {
+          width: 190px;
+          flex-basis: 190px;
+        }
+        .topbar {
+          padding: 0 23px;
+          gap: 18px;
+        }
+        main {
+          padding-left: 22px;
+          padding-right: 25px;
+        }
+        .home-top-grid {
+          grid-template-columns: minmax(0, 1.1fr) minmax(250px, 0.8fr);
+        }
+        .storage-main {
+          gap: 24px;
+        }
+        .ring-wrap,
+        .storage-ring {
+          width: 126px;
+          height: 126px;
+          flex-basis: 126px;
+        }
+        .storage-ring:after {
+          inset: 10px;
+        }
+      }
+      @media (max-width: 850px) {
+        .menu-toggle {
+          display: inline-flex;
+        }
+        .brand-wrap {
+          width: auto;
+          flex: 0 0 auto;
+          gap: 8px;
+        }
+        .topbar {
+          height: 68px;
+          padding: 0 17px;
+          gap: 14px;
+        }
+        .top-search {
+          width: auto;
+          flex: 1;
+          max-width: none;
+        }
+        .layout {
+          min-height: calc(100vh - 68px);
+        }
+        .sidebar {
+          position: fixed;
+          z-index: 55;
+          left: 0;
+          top: 68px;
+          bottom: 0;
+          background: var(--bg);
+          width: 270px;
+          box-shadow: 9px 0 30px rgba(32, 33, 36, 0.12);
+          transform: translateX(-110%);
+          transition: transform 0.24s ease;
+          overflow-y: auto;
+        }
+        .sidebar.open {
+          transform: translateX(0);
+        }
+        .mobile-overlay.show {
+          display: block;
+          position: fixed;
+          inset: 68px 0 0;
+          z-index: 50;
+          background: rgba(32, 33, 36, 0.24);
+        }
+        main {
+          padding: 29px 22px 52px;
+        }
+      }
+      @media (max-width: 680px) {
+        .topbar {
+          gap: 8px;
+          padding: 0 12px;
+        }
+        .brand {
+          font-size: 18px;
+        }
+        .google-g {
+          width: 24px;
+          height: 24px;
+        }
+        .brand-wrap {
+          gap: 5px;
+        }
+        .top-search {
+          height: 41px;
+          padding: 0 12px;
+          gap: 8px;
+        }
+        .top-search input {
+          font-size: 12px;
+        }
+        .top-actions {
+          gap: 0;
+        }
+        .top-actions .icon-button:first-child {
+          display: none;
+        }
+        .icon-button {
+          width: 37px;
+          height: 37px;
+        }
+        .avatar {
+          width: 31px;
+          height: 31px;
+          margin-left: 5px;
+        }
+        main {
+          padding: 25px 15px 42px;
+        }
+        .page-heading {
+          display: block;
+          margin-bottom: 22px;
+        }
+        .page-head-action {
+          margin-top: 15px;
+        }
+        .home-top-grid,
+        .usage-grid,
+        .benefit-grid,
+        .benefit-list-grid,
+        .support-grid {
+          grid-template-columns: 1fr;
+        }
+        .storage-card,
+        .member-card {
+          min-height: auto;
+        }
+        .storage-card {
+          padding: 21px;
+        }
+        .storage-main {
+          margin-top: 23px;
+          gap: 20px;
+        }
+        .ring-wrap,
+        .storage-ring {
+          width: 112px;
+          height: 112px;
+          flex-basis: 112px;
+        }
+        .storage-ring:after {
+          inset: 9px;
+        }
+        .ring-number {
+          font-size: 22px;
+        }
+        .storage-big {
+          font-size: 28px;
+        }
+        .storage-big span {
+          font-size: 17px;
+        }
+        .storage-copy p {
+          font-size: 12px;
+          margin: 7px 0 13px;
+        }
+        .member-card {
+          min-height: 220px;
+        }
+        .member-art {
+          right: 9px;
+          top: 24px;
+          transform: scale(0.85);
+          transform-origin: top right;
+        }
+        .member-card .card-title,
+        .member-card p {
+          max-width: 215px;
+        }
+        .usage-card {
+          min-height: 91px;
+        }
+        .benefit-card {
+          min-height: 165px;
+        }
+        .upgrade-banner {
+          align-items: flex-start;
+          flex-wrap: wrap;
+          padding: 21px;
+        }
+        .upgrade-banner .btn {
+          margin-left: 67px;
+        }
+        .storage-summary {
+          display: block;
+          padding: 21px;
+        }
+        .summary-left {
+          gap: 16px;
+        }
+        .summary-left .ring-wrap,
+        .summary-left .storage-ring {
+          width: 94px;
+          height: 94px;
+          flex-basis: 94px;
+        }
+        .summary-left .storage-ring:after {
+          inset: 8px;
+        }
+        .summary-left .ring-center .ring-number {
+          font-size: 19px;
+        }
+        .summary-text h2 {
+          font-size: 18px;
+        }
+        .storage-summary > .btn {
+          margin: 18px 0 0 110px;
+        }
+        .storage-row {
+          grid-template-columns: minmax(0, 1fr) 75px;
+          gap: 12px;
+          padding: 16px;
+        }
+        .storage-row.header {
+          display: none;
+        }
+        .storage-row .bar-track {
+          grid-column: 1 / -1;
+          grid-row: 2;
+        }
+        .storage-row .amount {
+          grid-column: 2;
+          grid-row: 1;
+          text-align: right;
+        }
+        .storage-row .manage {
+          display: none;
+        }
+        .cleanup-card {
+          flex-wrap: wrap;
+          padding: 20px;
+        }
+        .cleanup-card .btn {
+          margin-left: 66px;
+        }
+        .benefit-hero {
+          padding: 23px;
+        }
+        .benefit-hero-art {
+          display: none;
+        }
+        .benefit-wide {
+          padding: 20px;
+        }
+        .setting-row {
+          padding: 18px;
+        }
+        .device-switcher {
+          right: 12px;
+          bottom: 12px;
+          padding: 4px;
+        }
+        .device-switcher button {
+          padding: 0 10px;
+          min-width: 38px;
+          height: 36px;
+          font-size: 11px;
+        }
+      }
+      @media (max-width: 400px) {
+        .brand {
+          font-size: 16px;
+        }
+        .top-actions .avatar {
+          display: none;
+        }
+        .storage-main {
+          align-items: flex-start;
+        }
+        .ring-wrap,
+        .storage-ring {
+          width: 96px;
+          height: 96px;
+          flex-basis: 96px;
+        }
+        .storage-ring:after {
+          inset: 8px;
+        }
+        .ring-number {
+          font-size: 20px;
+        }
+        .storage-big {
+          font-size: 24px;
+        }
+        .storage-big span {
+          font-size: 15px;
+        }
+        .storage-note {
+          font-size: 10px;
+        }
+        .device-switcher button .label {
+          display: none;
+        }
+      }
+
+      /* Pixel phone responsive */
+      @media (max-width: 900px) {
+        .pixel-phone {
+          --phone-w: 320px;
+          --phone-h: 670px;
+          border-radius: 46px;
+          padding: 12px;
+        }
+        .pixel-screen {
+          border-radius: 36px;
+        }
+        .pixel-camera {
+          width: 78px;
+          height: 22px;
+          top: 12px;
+        }
+      }
+      @media (max-width: 420px) {
+        .pixel-phone {
+          --phone-w: 290px;
+          --phone-h: 608px;
+          border-radius: 42px;
+        }
+        .pixel-screen {
+          border-radius: 32px;
+        }
+        .pixel-camera {
+          width: 70px;
+          height: 20px;
+        }
+        .m-statusbar {
+          font-size: 11px;
+          padding: 12px 22px 0;
+        }
+        .m-scroll {
+          padding: 4px 16px 86px;
+        }
+        .m-topbar {
+          padding: 6px 16px 12px;
+        }
+        .m-search {
+          margin: 0 16px 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- DESKTOP VIEW -->
+    <div class="app desktop-view">
+      <header class="topbar">
+        <div class="brand-wrap">
+          <button
+            class="menu-toggle"
+            id="menuToggle"
+            aria-label="Buka navigasi"
+          >
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+            >
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <a class="brand" href="#home" aria-label="Google One beranda">
+            <svg class="google-g" viewBox="0 0 48 48" aria-hidden="true">
+              <path
+                fill="#4285F4"
+                d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.1v5.1h6.6c3.9-3.6 6.1-8.8 6.1-14.9z"
+              />
+              <path
+                fill="#34A853"
+                d="M24 44c5.5 0 10.1-1.8 13.5-4.8l-6.6-5.1c-1.8 1.2-4.1 2-6.9 2-5.3 0-9.8-3.6-11.4-8.5H5.8v5.3A20 20 0 0 0 24 44z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M12.6 27.6a12 12 0 0 1 0-7.2v-5.3H5.8a20 20 0 0 0 0 17.8l6.8-5.3z"
+              />
+              <path
+                fill="#EA4335"
+                d="M24 11.9c3 0 5.7 1 7.8 3.1l5.8-5.8C34.1 5.8 29.5 4 24 4A20 20 0 0 0 5.8 15.1l6.8 5.3C14.2 15.5 18.7 11.9 24 11.9z"
+              />
+            </svg>
+            <span><strong>Google</strong> One</span>
+          </a>
+        </div>
+        <label class="top-search" aria-label="Telusuri Google One">
+          <svg
+            width="19"
+            height="19"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          >
+            <circle cx="10.8" cy="10.8" r="6.8" />
+            <path d="m16 16 4.2 4.2" />
+          </svg>
+          <input
+            id="globalSearch"
+            type="search"
+            placeholder="Telusuri penyimpanan, manfaat, dan lainnya"
+          />
+          <span class="tiny" style="font-size: 11px">⌘ K</span>
+        </label>
+        <div class="top-actions">
+          <button
+            class="icon-button"
+            id="helpButton"
+            aria-label="Bantuan"
+            title="Bantuan"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path
+                d="M9.7 9a2.4 2.4 0 1 1 4.1 1.7c-1.1 1-1.8 1.4-1.8 3M12 17.2v.1"
+              />
+            </svg>
+          </button>
+          <div style="position: relative">
+            <button
+              class="icon-button"
+              id="notificationButton"
+              aria-label="Notifikasi"
+              title="Notifikasi"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"
+                /></svg
+              ><i class="dot"></i>
+            </button>
+            <div class="popover" id="notificationPopover">
+              <div class="popover-title">Notifikasi</div>
+              <div class="popover-item" style="align-items: flex-start">
+                <span style="color: #1a73e8; margin-top: 2px">●</span
+                ><span
+                  ><strong style="font-size: 12px">Penyimpanan Anda aman</strong
+                  ><br /><small class="muted"
+                    >Tidak ada tindakan yang perlu dilakukan saat ini.</small
+                  ></span
+                >
+              </div>
+              <div class="popover-item" style="font-size: 11px; color: #7b8188">
+                Diperbarui baru saja
+              </div>
+            </div>
+          </div>
+          <div style="position: relative">
+            <button
+              class="icon-button"
+              id="accountButton"
+              aria-label="Akun Google"
+            >
+              <span class="avatar">A</span>
+            </button>
+            <div class="popover" id="accountPopover">
+              <div class="account-card">
+                <span class="avatar">A</span><strong>Alex Pratama</strong
+                ><small>alex.pratama@gmail.com</small>
+                <button
+                  class="btn btn-outline"
+                  style="margin-top: 13px; min-height: 34px; font-size: 11px"
+                  data-action="toast"
+                  data-message="Pengelolaan akun hanya simulasi UI."
+                >
+                  Kelola Akun Google
+                </button>
+              </div>
+              <div
+                class="popover-item"
+                data-action="toast"
+                data-message="Fitur ganti akun hanya simulasi UI."
+              >
+                <span>↔</span> Tambahkan akun lain
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="mobile-overlay" id="mobileOverlay"></div>
+      <div class="layout">
+        <aside class="sidebar" id="sidebar">
+          <div class="nav-label">Menu utama</div>
+          <button class="nav-item active" data-view="home">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="m3.5 10 8.5-7 8.5 7v10a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1z"
+              />
+              <path d="M9 21v-7h6v7" /></svg
+            >Home
+          </button>
+          <button class="nav-item" data-view="storage">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <ellipse cx="12" cy="5" rx="8.5" ry="3" />
+              <path
+                d="M3.5 5v7c0 1.7 3.8 3 8.5 3s8.5-1.3 8.5-3V5M3.5 12v7c0 1.7 3.8 3 8.5 3s8.5-1.3 8.5-3v-7"
+              /></svg
+            >Storage
+          </button>
+          <button class="nav-item" data-view="benefits">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="m12 2 2.2 6.8L21 11l-6.8 2.2L12 20l-2.2-6.8L3 11l6.8-2.2L12 2z"
+              />
+              <path
+                d="m19 15 1.1 2.9L23 19l-2.9 1.1L19 23l-1.1-2.9L15 19l2.9-1.1L19 15z"
+              /></svg
+            >Benefits
+          </button>
+          <button class="nav-item" data-view="support">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M4 13v-2a8 8 0 0 1 16 0v2" />
+              <path
+                d="M4 13h2.5A1.5 1.5 0 0 1 8 14.5v3A1.5 1.5 0 0 1 6.5 19H6a2 2 0 0 1-2-2v-4zM20 13h-2.5a1.5 1.5 0 0 0-1.5 1.5v3a1.5 1.5 0 0 0 1.5 1.5h.5a2 2 0 0 0 2-2v-4zM12 21h2"
+              /></svg
+            >Support
+          </button>
+          <div class="nav-label" style="margin-top: 14px">Preferensi</div>
+          <button class="nav-item" data-view="settings">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.7a8 8 0 0 1-1.7 1l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.7-1l-1.7.7-1.4-2.4 1.4-1.1a7 7 0 0 1 0-2l-1.4-1.1 1.4-2.4 1.7.7a8 8 0 0 1 1.7-1l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.7 1l1.7-.7 1.4 2.4-1.4 1.1a7 7 0 0 1 0 2z"
+                transform="translate(-1 -1) scale(1.08)"
+              /></svg
+            >Settings
+          </button>
+          <div class="sidebar-spacer"></div>
+          <div class="side-plan">
+            <div class="small-cap">Google One</div>
+            <p>Dapatkan lebih banyak ruang untuk hal-hal yang penting.</p>
+            <button class="text-link" data-action="plans">
+              Lihat paket <span aria-hidden="true">→</span>
+            </button>
+          </div>
+          <div class="sidebar-footer">
+            Privasi · Persyaratan · Bantuan<br />© 2026 Google
+          </div>
+        </aside>
+
+        <main>
+          <div class="page-wrap" id="pageContent"></div>
+        </main>
+      </div>
+    </div>
+
+    <!-- MOBILE VIEW (Pixel Phone preview) -->
+    <div class="mobile-view">
+      <div class="mobile-stage">
+        <div class="mobile-stage-inner">
+          <div class="stage-caption">
+            <div class="eyebrow">MOBILE PREVIEW</div>
+            <h2>Google One di saku Anda</h2>
+            <p>
+              Pengalaman aplikasi Google One yang dirancang untuk Pixel, dengan
+              tampilan dan nuansa Material You yang mulus.
+            </p>
+            <ul>
+              <li>Penyimpanan terpadu Drive, Foto & Gmail</li>
+              <li>Pencadangan otomatis perangkat</li>
+              <li>Dukungan ahli Google 24/7</li>
+              <li>Manfaat AI premium</li>
+            </ul>
+            <button class="btn btn-primary" data-action="plans">
+              Dapatkan Google One
+            </button>
+          </div>
+
+          <div class="pixel-phone" aria-label="Pixel phone preview">
+            <div class="pixel-screen">
+              <div class="pixel-camera"></div>
+              <div class="m-app">
+                <!-- Status bar -->
+                <div class="m-statusbar">
+                  <span id="pixelTime">9:41</span>
+                  <div class="sb-right">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M2 22h20v-2H2v2ZM4 10h2v8H4v-8Zm4-4h2v12H8V6Zm4-4h2v16h-2V2Zm4 4h2v12h-2V6Z"
+                      />
+                    </svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M12 3a13 13 0 0 1 9.2 3.8l-1.4 1.4A11 11 0 0 0 12 5a11 11 0 0 0-7.8 3.2L2.8 6.8A13 13 0 0 1 12 3Zm0 5a8 8 0 0 1 5.7 2.3l-1.4 1.4a6 6 0 0 0-8.6 0L6.3 10.3A8 8 0 0 1 12 8Zm0 5a3 3 0 0 1 2.1.9L12 16l-2.1-2.1A3 3 0 0 1 12 13Z"
+                      />
+                    </svg>
+                    <div class="m-battery"><span></span></div>
+                  </div>
+                </div>
+
+                <!-- Top bar -->
+                <div class="m-topbar">
+                  <div class="m-greeting">
+                    <div class="m-avatar">A</div>
+                    <div class="m-greeting-text">
+                      <div class="hi">Selamat pagi 👋</div>
+                      <div class="name">Alex</div>
+                    </div>
+                  </div>
+                  <div class="m-top-icons">
+                    <button class="m-icon-btn" aria-label="Search">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                      >
+                        <circle cx="10.8" cy="10.8" r="6.8" />
+                        <path d="m16 16 4.2 4.2" />
+                      </svg>
+                    </button>
+                    <button class="m-icon-btn" aria-label="Notifications">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path
+                          d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"
+                        />
+                      </svg>
+                      <span class="m-dot"></span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Search chip -->
+                <div class="m-search">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                  >
+                    <circle cx="10.8" cy="10.8" r="6.8" />
+                    <path d="m16 16 4.2 4.2" />
+                  </svg>
+                  <span>Telusuri penyimpanan & manfaat</span>
+                </div>
+
+                <!-- Scrollable content -->
+                <div class="m-scroll">
+                  <!-- Storage card -->
+                  <div class="m-storage">
+                    <div class="m-storage-head">
+                      <h3>Penyimpanan</h3>
+                      <span class="chip">Gratis</span>
+                    </div>
+                    <div class="m-storage-body">
+                      <div class="m-ring">
+                        <div class="m-ring-center">
+                          <div class="m-ring-number">8.6</div>
+                          <div class="m-ring-unit">GB</div>
+                        </div>
+                      </div>
+                      <div class="m-storage-text">
+                        <div class="big">8.6 <span>dari 15 GB</span></div>
+                        <p>Masih ada ruang untuk 6.4 GB lagi</p>
+                        <div class="m-mini-meter">
+                          <span></span><span></span><span></span><span></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Quick actions -->
+                  <div class="m-quick">
+                    <button class="m-quick-btn clean">
+                      <div class="q-icon">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path
+                            d="M4 7h16M10 11v6M14 11v6M6 7l1 14h10l1-14M9 7V4h6v3"
+                          />
+                        </svg>
+                      </div>
+                      <span>Kosongkan</span>
+                    </button>
+                    <button class="m-quick-btn family">
+                      <div class="q-icon">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <circle cx="9" cy="8" r="3" />
+                          <path
+                            d="M3 20v-1.5A4.5 4.5 0 0 1 7.5 14h3a4.5 4.5 0 0 1 4.5 4.5V20H3Z"
+                          />
+                          <path d="M16 5.3a3 3 0 0 1 0 5.8" />
+                        </svg>
+                      </div>
+                      <span>Keluarga</span>
+                    </button>
+                    <button class="m-quick-btn drive">
+                      <div class="q-icon">
+                        <svg viewBox="0 0 24 24" fill="none">
+                          <path
+                            d="M8.2 3h7.5l7 12.1h-7.5L8.2 3Z"
+                            fill="#188038"
+                          />
+                          <path
+                            d="M8.2 3 1.3 15.1l3.8 6.5L12 9.5 8.2 3Z"
+                            fill="#4285F4"
+                          />
+                          <path
+                            d="M5.1 21.6h13.8l3.8-6.5H8.8l-3.7 6.5Z"
+                            fill="#FABB05"
+                          />
+                        </svg>
+                      </div>
+                      <span>Drive</span>
+                    </button>
+                    <button class="m-quick-btn spark">
+                      <div class="q-icon">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path
+                            d="m12 2 2.1 6.8L21 11l-6.9 2.2L12 20l-2.1-6.8L3 11l6.9-2.2L12 2Z"
+                          />
+                        </svg>
+                      </div>
+                      <span>AI</span>
+                    </button>
+                  </div>
+
+                  <!-- Usage -->
+                  <div class="m-section-head">
+                    <h4>Penggunaan penyimpanan</h4>
+                    <a href="#">Lihat semua</a>
+                  </div>
+                  <div class="m-usage-list">
+                    <div class="m-usage-item">
+                      <div class="s-icon drive">
+                        <svg viewBox="0 0 24 24" fill="none">
+                          <path
+                            d="M8.2 3h7.5l7 12.1h-7.5L8.2 3Z"
+                            fill="#188038"
+                          />
+                          <path
+                            d="M8.2 3 1.3 15.1l3.8 6.5L12 9.5 8.2 3Z"
+                            fill="#4285F4"
+                          />
+                          <path
+                            d="M5.1 21.6h13.8l3.8-6.5H8.8l-3.7 6.5Z"
+                            fill="#FABB05"
+                          />
+                        </svg>
+                      </div>
+                      <div class="m-usage-info">
+                        <div class="row">
+                          <span class="name">Google Drive</span
+                          ><span class="amt">2.1 GB</span>
+                        </div>
+                        <div class="m-usage-bar">
+                          <span style="width: 42%; background: #4285f4"></span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="m-usage-item">
+                      <div class="s-icon photos">
+                        <svg viewBox="0 0 24 24" fill="none">
+                          <path
+                            d="M12 12c0-3.7 2.1-7.1 4.6-7.1 2.1 0 3.6 2 3.6 4.3 0 2.8-2.7 3.8-8.2 2.8Z"
+                            fill="#EA4335"
+                          />
+                          <path
+                            d="M12 12c3.7 0 7.1 2.1 7.1 4.6 0 2.1-2 3.6-4.3 3.6-2.8 0-3.8-2.7-2.8-8.2Z"
+                            fill="#34A853"
+                          />
+                          <path
+                            d="M12 12c0 3.7-2.1 7.1-4.6 7.1-2.1 0-3.6-2-3.6-4.3 0-2.8 2.7-3.8 8.2-2.8Z"
+                            fill="#4285F4"
+                          />
+                          <path
+                            d="M12 12c-3.7 0-7.1-2.1-7.1-4.6 0-2.1 2-3.6 4.3-3.6 2.8 0 3.8 2.7 2.8 8.2Z"
+                            fill="#FBBC04"
+                          />
+                        </svg>
+                      </div>
+                      <div class="m-usage-info">
+                        <div class="row">
+                          <span class="name">Google Foto</span
+                          ><span class="amt">4.8 GB</span>
+                        </div>
+                        <div class="m-usage-bar">
+                          <span style="width: 96%; background: #34a853"></span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="m-usage-item">
+                      <div class="s-icon gmail">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path
+                            d="M3 19V6.2c0-1.5 1.7-2.3 2.9-1.4L12 9.5l6.1-4.7C19.3 3.9 21 4.7 21 6.2V19"
+                          />
+                          <path d="M3 7v12M21 7v12" />
+                        </svg>
+                      </div>
+                      <div class="m-usage-info">
+                        <div class="row">
+                          <span class="name">Gmail</span
+                          ><span class="amt">1.7 GB</span>
+                        </div>
+                        <div class="m-usage-bar">
+                          <span style="width: 34%; background: #fbbc04"></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Benefits preview -->
+                  <div class="m-section-head">
+                    <h4>Manfaat Anda</h4>
+                    <a href="#">Semua</a>
+                  </div>
+                  <div class="m-benefit">
+                    <div
+                      class="b-ic"
+                      style="background: #e8f0fe; color: #1a73e8"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path
+                          d="m12 2 2.1 6.8L21 11l-6.9 2.2L12 20l-2.1-6.8L3 11l6.9-2.2L12 2Z"
+                        />
+                      </svg>
+                    </div>
+                    <div class="b-txt">
+                      <h5>Fitur AI Google</h5>
+                      <p>
+                        Jelajahi kemampuan AI untuk membantu Anda berkreasi.
+                      </p>
+                    </div>
+                  </div>
+                  <div class="m-benefit">
+                    <div
+                      class="b-ic"
+                      style="background: #e6f4ea; color: #188038"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <circle cx="9" cy="8" r="3" />
+                        <path
+                          d="M3 20v-1.5A4.5 4.5 0 0 1 7.5 14h3a4.5 4.5 0 0 1 4.5 4.5V20H3Z"
+                        />
+                        <path
+                          d="M16 5.3a3 3 0 0 1 0 5.8M17 14.2a4.5 4.5 0 0 1 4 4.5V20h-3"
+                        />
+                      </svg>
+                    </div>
+                    <div class="b-txt">
+                      <h5>Berbagi dengan keluarga</h5>
+                      <p>Bagikan paket dengan hingga 5 anggota keluarga.</p>
+                    </div>
+                  </div>
+                  <div class="m-upgrade">
+                    <div class="u-ic">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path
+                          d="m12 2 2.1 6.8L21 11l-6.9 2.2L12 20l-2.1-6.8L3 11l6.9-2.2L12 2Z"
+                        />
+                      </svg>
+                    </div>
+                    <div class="u-txt">
+                      <h5>Siap mendapatkan lebih?</h5>
+                      <p>Upgrade untuk penyimpanan ekstra & fitur AI premium</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Bottom navigation -->
+                <div class="m-bottomnav">
+                  <button class="m-nav-btn active">
+                    <div class="nav-pill">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path
+                          d="m3.5 10 8.5-7 8.5 7v10a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1z"
+                        />
+                        <path d="M9 21v-7h6v7" />
+                      </svg>
+                    </div>
+                    <span>Beranda</span>
+                  </button>
+                  <button class="m-nav-btn">
+                    <div class="nav-pill">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <ellipse cx="12" cy="5" rx="8.5" ry="3" />
+                        <path
+                          d="M3.5 5v7c0 1.7 3.8 3 8.5 3s8.5-1.3 8.5-3V5M3.5 12v7c0 1.7 3.8 3 8.5 3s8.5-1.3 8.5-3v-7"
+                        />
+                      </svg>
+                    </div>
+                    <span>Storage</span>
+                  </button>
+                  <button class="m-nav-btn">
+                    <div class="nav-pill">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path
+                          d="m12 2 2.2 6.8L21 11l-6.8 2.2L12 20l-2.2-6.8L3 11l6.8-2.2L12 2z"
+                        />
+                      </svg>
+                    </div>
+                    <span>Manfaat</span>
+                  </button>
+                  <button class="m-nav-btn">
+                    <div class="nav-pill">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <circle cx="12" cy="12" r="3" />
+                        <path
+                          d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.7a8 8 0 0 1-1.7 1l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.7-1l-1.7.7-1.4-2.4 1.4-1.1a7 7 0 0 1 0-2l-1.4-1.1 1.4-2.4 1.7.7a8 8 0 0 1 1.7-1l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.7 1l1.7-.7 1.4 2.4-1.4 1.1a7 7 0 0 1 0 2z"
+                          transform="translate(-1 -1) scale(1.08)"
+                        />
+                      </svg>
+                    </div>
+                    <span>Setelan</span>
+                  </button>
+                  <div class="m-gesture"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DEVICE SWITCHER (floating) -->
+    <div
+      class="device-switcher"
+      role="tablist"
+      aria-label="Pilih mode tampilan"
+    >
+      <button
+        id="switchDesktop"
+        class="active"
+        role="tab"
+        aria-selected="true"
+        aria-label="Tampilan desktop"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="3" y="4" width="18" height="12" rx="2" />
+          <path d="M8 20h8M12 16v4" />
+        </svg>
+        <span class="label">Desktop</span>
+      </button>
+      <button
+        id="switchMobile"
+        role="tab"
+        aria-selected="false"
+        aria-label="Tampilan mobile"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="7" y="2" width="10" height="20" rx="2" />
+          <path d="M11 18h2" />
+        </svg>
+        <span class="label">Mobile</span>
+      </button>
+    </div>
+
+    <!-- MODAL -->
+    <div class="modal-backdrop" id="modalBackdrop" role="presentation">
+      <section
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modalTitle"
+      >
+        <div class="modal-head">
+          <h2 id="modalTitle">Pilih paket Google One</h2>
+          <button class="icon-button" id="closeModal" aria-label="Tutup">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+            >
+              <path d="m6 6 12 12M18 6 6 18" />
+            </svg>
+          </button>
+        </div>
+        <p class="modal-copy">
+          Pilih ruang penyimpanan yang sesuai dengan kebutuhan Anda. Ini hanya
+          contoh tampilan; tidak ada transaksi yang akan diproses.
+        </p>
+        <div id="planOptions">
+          <div class="plan-option" data-plan="Basic">
+            <span class="plan-radio"></span>
+            <span class="plan-detail"
+              ><strong>Basic · 100 GB</strong
+              ><small
+                >Penyimpanan ekstra untuk foto, file, dan email</small
+              ></span
+            >
+            <span class="plan-price">Rp 26.900<small>/ bulan</small></span>
+          </div>
+          <div class="plan-option selected" data-plan="Standard">
+            <span class="plan-radio"></span>
+            <span class="plan-detail"
+              ><strong>Standard · 200 GB</strong
+              ><small>Berbagi penyimpanan dengan keluarga</small></span
+            >
+            <span class="plan-price">Rp 43.900<small>/ bulan</small></span>
+          </div>
+          <div class="plan-option" data-plan="Google AI Pro">
+            <span class="plan-radio"></span>
+            <span class="plan-detail"
+              ><strong>Google AI Pro · 5 TB</strong
+              ><small>Penyimpanan lebih besar dan fitur AI premium</small></span
+            >
+            <span class="plan-price">Rp 309.000<small>/ bulan</small></span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-quiet" id="cancelModal">Nanti saja</button>
+          <button class="btn btn-primary" id="choosePlan">Lanjutkan</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      const icons = {
+        drive:
+          '<svg viewBox="0 0 24 24" fill="none"><path d="M8.2 3h7.5l7 12.1h-7.5L8.2 3Z" fill="#188038"/><path d="M8.2 3 1.3 15.1l3.8 6.5L12 9.5 8.2 3Z" fill="#4285F4"/><path d="M5.1 21.6h13.8l3.8-6.5H8.8l-3.7 6.5Z" fill="#FABB05"/></svg>',
+        photos:
+          '<svg viewBox="0 0 24 24" fill="none"><path d="M12 12c0-3.7 2.1-7.1 4.6-7.1 2.1 0 3.6 2 3.6 4.3 0 2.8-2.7 3.8-8.2 2.8Z" fill="#EA4335"/><path d="M12 12c3.7 0 7.1 2.1 7.1 4.6 0 2.1-2 3.6-4.3 3.6-2.8 0-3.8-2.7-2.8-8.2Z" fill="#34A853"/><path d="M12 12c0 3.7-2.1 7.1-4.6 7.1-2.1 0-3.6-2-3.6-4.3 0-2.8 2.7-3.8 8.2-2.8Z" fill="#4285F4"/><path d="M12 12c-3.7 0-7.1-2.1-7.1-4.6 0-2.1 2-3.6 4.3-3.6 2.8 0 3.8 2.7 2.8 8.2Z" fill="#FBBC04"/></svg>',
+        gmail:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19V6.2c0-1.5 1.7-2.3 2.9-1.4L12 9.5l6.1-4.7C19.3 3.9 21 4.7 21 6.2V19"/><path d="M3 7v12M21 7v12"/></svg>',
+        spark:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 2.1 6.8L21 11l-6.9 2.2L12 20l-2.1-6.8L3 11l6.9-2.2L12 2Z"/><path d="m19 15 .9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15Z"/></svg>',
+        family:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20v-1.5A4.5 4.5 0 0 1 7.5 14h3a4.5 4.5 0 0 1 4.5 4.5V20H3Z"/><path d="M16 5.3a3 3 0 0 1 0 5.8M17 14.2a4.5 4.5 0 0 1 4 4.5V20h-3"/></svg>',
+        shield:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg>',
+        phone:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="6" y="2" width="12" height="20" rx="2.2"/><path d="M10 18.5h4"/></svg>',
+        clean:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 14h10l1-14M9 7V4h6v3"/><path d="m18 3 .5 1.5L20 5l-1.5.5L18 7l-.5-1.5L16 5l1.5-.5L18 3Z"/></svg>',
+      };
+
+      const pageContent = document.getElementById("pageContent");
+      const sidebar = document.getElementById("sidebar");
+      const mobileOverlay = document.getElementById("mobileOverlay");
+      const toastEl = document.getElementById("toast");
+      let toastTimer;
+      let currentView = "home";
+      let selectedPlan = "Standard";
+
+      const usage = [
+        {
+          name: "Google Drive",
+          type: "drive",
+          amount: "2,1 GB",
+          width: "42%",
+          color: "#4285f4",
+          desc: "Dokumen, spreadsheet, dan file",
+        },
+        {
+          name: "Google Foto",
+          type: "photos",
+          amount: "4,8 GB",
+          width: "96%",
+          color: "#34a853",
+          desc: "Foto dan video yang dicadangkan",
+        },
+        {
+          name: "Gmail",
+          type: "gmail",
+          amount: "1,7 GB",
+          width: "34%",
+          color: "#fbbc04",
+          desc: "Email dan lampiran",
+        },
+      ];
+
+      function heading(eyebrow, title, subtitle, action = "") {
+        return `<div class="page-heading"><div><div class="eyebrow">${eyebrow}</div><h1>${title}</h1><p class="page-subtitle">${subtitle}</p></div>${action ? `<div class="page-head-action">${action}</div>` : ""}</div>`;
+      }
+      function storageRing() {
+        return `<div class="ring-wrap"><div class="storage-ring"></div><div class="ring-center"><span class="ring-number">8,6</span><span class="ring-unit">GB digunakan</span></div></div>`;
+      }
+      function serviceCard(item) {
+        const colorClass = item.type;
+        return `<div class="card usage-card" data-search="${item.name.toLowerCase()}"><div class="service-icon ${colorClass}">${icons[item.type]}</div><div class="usage-info"><div class="usage-name">${item.name}</div><div class="usage-value">${item.amount} digunakan</div><div class="usage-bar"><span style="width:${item.width};background:${item.color}"></span></div></div></div>`;
+      }
+      function benefitCard(icon, bg, title, desc, link, action) {
+        return `<article class="card benefit-card" data-search="${title.toLowerCase()} ${desc.toLowerCase()}"><div class="benefit-visual" style="background:${bg};color:#1a73e8">${icons[icon]}</div><h3>${title}</h3><p>${desc}</p><button class="text-link" data-action="${action}">${link} →</button></article>`;
+      }
+
+      function renderHome() {
+        pageContent.innerHTML = `
+        ${heading("GOOGLE ONE", "Selamat datang, Alex", "Semua yang penting, tersimpan dengan aman di satu tempat.", '<button class="btn btn-outline" data-view="storage">Kelola penyimpanan <span>→</span></button>')}
+        <div class="grid home-top-grid">
+          <section class="card card-pad storage-card">
+            <div class="storage-card-head"><h2 class="card-title">Penyimpanan Anda</h2><span class="plan-chip">Paket gratis</span></div>
+            <div class="storage-main">${storageRing()}<div class="storage-copy"><div class="storage-big">8,6 <span>GB dari 15 GB</span></div><p>Anda menggunakan 57% dari total penyimpanan Google Account.</p><div class="mini-meter"><span></span><span></span><span></span><span></span></div><div class="storage-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4L19 6"/></svg> Penyimpanan Anda berfungsi dengan baik</div></div></div>
+          </section>
+          <section class="card card-pad member-card">
+            <svg class="member-art" viewBox="0 0 140 135" fill="none" aria-hidden="true"><circle cx="74" cy="67" r="51" fill="#D2E3FC"/><path d="M40 86c0-4 3-7 7-7h52c4 0 7 3 7 7v20H40V86Z" fill="#4285F4"/><rect x="51" y="32" width="48" height="57" rx="9" fill="white" stroke="#AECBFA" stroke-width="2"/><path d="M62 49h26M62 59h19M62 69h22" stroke="#8AB4F8" stroke-width="3" stroke-linecap="round"/><circle cx="101" cy="33" r="16" fill="#FBBC04"/><path d="m101 23 2.2 7.8 7.8 2.2-7.8 2.2-2.2 7.8-2.2-7.8L91 33l7.8-2.2L101 23Z" fill="white"/><path d="M25 51 28 60l9 3-9 3-3 9-3-9-9-3 9-3 3-9Z" fill="#34A853"/></svg>
+            <div><h2 class="card-title">Lebih banyak ruang untuk hal yang Anda sukai</h2><p>Tingkatkan ke Google One untuk mendapatkan penyimpanan ekstra dan manfaat eksklusif.</p></div>
+            <button class="btn btn-primary" data-action="plans">Lihat paket Google One</button>
+          </section>
+        </div>
+        <section class="section">
+          <div class="section-heading"><div><h2>Penggunaan penyimpanan</h2><p>Ruang yang digunakan oleh layanan Google Anda</p></div><button class="text-link" data-view="storage">Lihat detail →</button></div>
+          <div class="grid usage-grid">${usage.map(serviceCard).join("")}</div>
+        </section>
+        <section class="section">
+          <div class="section-heading"><div><h2>Temukan manfaat Google One</h2><p>Lebih banyak fitur untuk membantu aktivitas sehari-hari</p></div><button class="text-link" data-view="benefits">Semua manfaat →</button></div>
+          <div class="grid benefit-grid">
+            ${benefitCard("spark", "#e8f0fe", "Fitur AI Google", "Jelajahi kemampuan AI untuk membantu Anda berkreasi dan menyelesaikan lebih banyak hal.", "Jelajahi", "benefits")}
+            ${benefitCard("family", "#e6f4ea", "Berbagi dengan keluarga", "Bagikan paket Google One dengan hingga lima anggota keluarga.", "Pelajari", "benefits")}
+            ${benefitCard("shield", "#fce8e6", "Keamanan dan dukungan", "Dapatkan fitur keamanan tambahan dan bantuan dari para ahli Google.", "Pelajari", "benefits")}
+          </div>
+        </section>
+        <section class="section card upgrade-banner"><div class="upgrade-icon">${icons.spark}</div><div class="upgrade-copy"><h3>Siap mendapatkan lebih banyak dari Google?</h3><p>Pilih paket yang sesuai dan nikmati ruang ekstra untuk Drive, Gmail, dan Google Foto.</p></div><button class="btn btn-primary" data-action="plans">Lihat paket</button></section>
+      `;
+      }
+
+      function renderStorage() {
+        pageContent.innerHTML = `
+        ${heading("GOOGLE ONE  /  STORAGE", "Penyimpanan", "Kelola ruang penyimpanan yang digunakan di seluruh layanan Google.", '<button class="btn btn-primary" data-action="plans">Dapatkan lebih banyak ruang</button>')}
+        <section class="card storage-summary"><div class="summary-left">${storageRing()}<div class="summary-text"><h2>8,6 GB dari 15 GB digunakan</h2><p>Ruang penyimpanan digunakan bersama oleh Google Drive, Google Foto, dan Gmail.<br><span style="color:#188038;font-weight:500">● Penyimpanan tersedia: 6,4 GB</span></p></div></div><button class="btn btn-outline" data-action="toast" data-message="Pengelola penyimpanan sedang dalam mode demo.">Buka pengelola</button></section>
+        <section class="section"><div class="section-heading"><div><h2>Penggunaan berdasarkan layanan</h2><p>Rincian ruang penyimpanan akun Anda</p></div></div>
+          <div class="card storage-table"><div class="storage-row header"><span>Layanan</span><span>Penggunaan</span><span>Terpakai</span><span></span></div>
+            ${usage.map((item) => `<div class="storage-row" data-search="${item.name.toLowerCase()}"><div class="service-name"><span class="service-icon ${item.type}">${icons[item.type]}</span>${item.name}</div><div class="bar-track"><span style="width:${item.width};background:${item.color}"></span></div><div class="amount">${item.amount}</div><div class="manage"><button class="text-link" data-action="toast" data-message="Membuka ${item.name} dalam mode demo.">Kelola →</button></div></div>`).join("")}
+          </div>
+        </section>
+        <section class="section card cleanup-card"><div class="benefit-visual">${icons.clean}</div><div><h3>Kosongkan ruang dengan mudah</h3><p>Temukan file berukuran besar, email dengan lampiran, dan item lain yang mungkin tidak Anda perlukan.</p></div><button class="btn btn-outline" data-action="toast" data-message="Pemindaian penyimpanan contoh selesai. Tidak ada file yang dihapus.">Tinjau ruang</button></section>
+      `;
+      }
+
+      function renderBenefits() {
+        pageContent.innerHTML = `
+        ${heading("GOOGLE ONE  /  BENEFITS", "Manfaat keanggotaan", "Temukan fitur dan layanan tambahan yang tersedia dengan Google One.")}
+        <section class="card benefit-hero"><div><div class="eyebrow" style="color:#1a73e8">GOOGLE ONE</div><h2>Lebih banyak dari yang Anda sukai</h2><p>Google One menyatukan penyimpanan ekstra dan berbagai manfaat untuk membantu Anda mendapatkan lebih banyak dari aplikasi Google.</p><button class="btn btn-primary" data-action="plans">Jelajahi paket</button></div><svg class="benefit-hero-art" viewBox="0 0 200 145" fill="none" aria-hidden="true"><circle cx="112" cy="74" r="57" fill="#D2E3FC"/><rect x="59" y="34" width="80" height="84" rx="12" fill="white" stroke="#AECBFA" stroke-width="2"/><rect x="72" y="49" width="54" height="10" rx="5" fill="#E8F0FE"/><rect x="72" y="68" width="37" height="7" rx="3.5" fill="#D2E3FC"/><rect x="72" y="82" width="47" height="7" rx="3.5" fill="#D2E3FC"/><circle cx="143" cy="41" r="21" fill="#FBBC04"/><path d="m143 27 3.2 10.8L157 41l-10.8 3.2L143 55l-3.2-10.8L129 41l10.8-3.2L143 27Z" fill="white"/><circle cx="47" cy="98" r="14" fill="#34A853"/><path d="m47 89 2.2 6.8L56 98l-6.8 2.2L47 107l-2.2-6.8L38 98l6.8-2.2L47 89Z" fill="white"/></svg></section>
+        <section class="section"><div class="section-heading"><div><h2>Jelajahi manfaat</h2><p>Fitur yang dirancang untuk kebutuhan Anda</p></div></div><div class="grid benefit-list-grid">
+          <article class="card benefit-wide"><div class="benefit-visual" style="background:#e8f0fe;color:#1a73e8">${icons.spark}</div><div><h3>Google AI</h3><p>Akses fitur AI Google untuk membantu menulis, merencanakan, belajar, dan berkreasi.</p><button class="text-link" data-action="plans">Lihat paket AI →</button></div></article>
+          <article class="card benefit-wide"><div class="benefit-visual" style="background:#e6f4ea;color:#188038">${icons.family}</div><div><h3>Berbagi dengan keluarga</h3><p>Bagikan paket penyimpanan dengan maksimal lima anggota keluarga lainnya.</p><button class="text-link" data-action="toast" data-message="Pengaturan keluarga hanya simulasi UI.">Kelola keluarga →</button></div></article>
+          <article class="card benefit-wide"><div class="benefit-visual" style="background:#fce8e6;color:#d93025">${icons.shield}</div><div><h3>Fitur keamanan tambahan</h3><p>Jelajahi fitur keamanan dan privasi yang tersedia di paket Google One tertentu.</p><button class="text-link" data-action="toast" data-message="Detail fitur keamanan ditampilkan sebagai contoh.">Pelajari →</button></div></article>
+          <article class="card benefit-wide"><div class="benefit-visual" style="background:#fef7e0;color:#b06000">${icons.phone}</div><div><h3>Pencadangan perangkat</h3><p>Cadangkan data perangkat Anda agar informasi penting tetap aman.</p><button class="text-link" data-action="toast" data-message="Pencadangan perangkat hanya simulasi UI.">Lihat perangkat →</button></div></article>
+        </div></section>
+      `;
+      }
+
+      function renderSupport() {
+        pageContent.innerHTML = `
+        ${heading("GOOGLE ONE  /  SUPPORT", "Bagaimana kami dapat membantu?", "Temukan jawaban atau hubungi dukungan Google One.")}
+        <div class="card card-pad" style="margin-bottom:20px;background:#f0f6ff;border-color:#e0ebfb"><div style="display:flex;align-items:center;gap:14px"><div class="upgrade-icon">${icons.spark}</div><div><h2 class="card-title">Pusat bantuan Google One</h2><p class="page-subtitle" style="margin-top:5px">Telusuri panduan untuk penyimpanan, pencadangan, paket, dan lainnya.</p></div></div><div style="margin-top:18px;display:flex;gap:10px"><input id="supportSearch" placeholder="Cari topik bantuan" style="height:43px;flex:1;min-width:0;border:1px solid #d7e0ed;border-radius:22px;padding:0 16px;background:#fff;font-size:13px"><button class="btn btn-primary" data-action="supportSearch">Cari</button></div></div>
+        <div class="grid support-grid">
+          <article class="card support-card"><div class="service-icon drive">${icons.drive}</div><h3>Mengelola penyimpanan</h3><p>Pelajari cara melihat dan mengosongkan penyimpanan Google Account.</p><button class="text-link" data-view="storage">Lihat penyimpanan →</button></article>
+          <article class="card support-card"><div class="service-icon photos">${icons.photos}</div><h3>Pencadangan dan pemulihan</h3><p>Temukan jawaban seputar pencadangan foto, video, dan perangkat.</p><button class="text-link" data-action="toast" data-message="Artikel bantuan hanya simulasi UI.">Baca panduan →</button></article>
+          <article class="card support-card"><div class="service-icon gmail">${icons.gmail}</div><h3>Paket dan pembayaran</h3><p>Pelajari paket, langganan, dan metode pembayaran Google One.</p><button class="text-link" data-action="plans">Lihat paket →</button></article>
+          <article class="card support-card"><div class="service-icon" style="background:#e6f4ea;color:#188038">${icons.family}</div><h3>Berbagi dengan keluarga</h3><p>Ketahui cara berbagi manfaat dengan grup keluarga Google.</p><button class="text-link" data-action="toast" data-message="Panduan keluarga hanya simulasi UI.">Pelajari →</button></article>
+        </div>
+      `;
+      }
+
+      function renderSettings() {
+        pageContent.innerHTML = `
+        ${heading("GOOGLE ONE  /  SETTINGS", "Settings", "Atur preferensi dan pengalaman Google One Anda.")}
+        <section class="card settings-card">
+          <div class="setting-row"><div><h3>Preferensi email</h3><p>Dapatkan tips, pembaruan produk, dan informasi tentang manfaat Google One.</p></div><button class="toggle on" aria-label="Preferensi email" data-toggle></button></div>
+          <div class="setting-row"><div><h3>Notifikasi penyimpanan</h3><p>Dapatkan pemberitahuan saat ruang penyimpanan hampir penuh.</p></div><button class="toggle on" aria-label="Notifikasi penyimpanan" data-toggle></button></div>
+          <div class="setting-row"><div><h3>Berbagi dengan keluarga</h3><p>Kelola preferensi berbagi paket dengan grup keluarga Anda.</p></div><button class="btn btn-outline" data-action="toast" data-message="Pengaturan keluarga hanya simulasi UI.">Kelola</button></div>
+          <div class="setting-row"><div><h3>Bahasa</h3><p>Bahasa yang digunakan di Google One.</p></div><button class="btn btn-quiet" data-action="toast" data-message="Bahasa saat ini: Indonesia.">Indonesia <span>⌄</span></button></div>
+          <div class="setting-row"><div><h3>Persyaratan layanan</h3><p>Baca persyaratan dan kebijakan privasi Google One.</p></div><button class="text-link" data-action="toast" data-message="Tautan persyaratan tidak diaktifkan pada demo ini.">Lihat →</button></div>
+        </section>
+      `;
+      }
+
+      const renderers = {
+        home: renderHome,
+        storage: renderStorage,
+        benefits: renderBenefits,
+        support: renderSupport,
+        settings: renderSettings,
+      };
+      function setView(view) {
+        if (!renderers[view]) return;
+        currentView = view;
+        renderers[view]();
+        document
+          .querySelectorAll(".nav-item")
+          .forEach((item) =>
+            item.classList.toggle("active", item.dataset.view === view),
+          );
+        closeMobileNav();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      function showToast(message) {
+        toastEl.textContent = message || "Aksi berhasil dilakukan.";
+        toastEl.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2800);
+      }
+      function openModal() {
+        document.getElementById("modalBackdrop").classList.add("show");
+      }
+      function closeModal() {
+        document.getElementById("modalBackdrop").classList.remove("show");
+      }
+      function closePopovers() {
+        document
+          .querySelectorAll(".popover")
+          .forEach((p) => p.classList.remove("show"));
+      }
+      function togglePopover(id) {
+        const target = document.getElementById(id);
+        const wasOpen = target.classList.contains("show");
+        closePopovers();
+        if (!wasOpen) target.classList.add("show");
+      }
+      function closeMobileNav() {
+        sidebar.classList.remove("open");
+        mobileOverlay.classList.remove("show");
+      }
+
+      document.addEventListener("click", (event) => {
+        const viewButton = event.target.closest("[data-view]");
+        const actionButton = event.target.closest("[data-action]");
+        if (viewButton) {
+          setView(viewButton.dataset.view);
+          return;
+        }
+        if (actionButton) {
+          const action = actionButton.dataset.action;
+          if (action === "plans") openModal();
+          else if (action === "toast") showToast(actionButton.dataset.message);
+          else if (action === "benefits") setView("benefits");
+          else if (action === "supportSearch") {
+            const val = document.getElementById("supportSearch")?.value.trim();
+            showToast(
+              val
+                ? `Pencarian bantuan: “${val}” (demo)`
+                : "Masukkan topik yang ingin dicari.",
+            );
+          }
+          return;
+        }
+        if (
+          !event.target.closest(".popover") &&
+          !event.target.closest("#notificationButton") &&
+          !event.target.closest("#accountButton")
+        )
+          closePopovers();
+      });
+
+      document.getElementById("menuToggle").addEventListener("click", () => {
+        sidebar.classList.toggle("open");
+        mobileOverlay.classList.toggle("show");
+      });
+      mobileOverlay.addEventListener("click", closeMobileNav);
+      document
+        .getElementById("notificationButton")
+        .addEventListener("click", () => togglePopover("notificationPopover"));
+      document
+        .getElementById("accountButton")
+        .addEventListener("click", () => togglePopover("accountPopover"));
+      document
+        .getElementById("helpButton")
+        .addEventListener("click", () => setView("support"));
+      document
+        .getElementById("closeModal")
+        .addEventListener("click", closeModal);
+      document
+        .getElementById("cancelModal")
+        .addEventListener("click", closeModal);
+      document
+        .getElementById("modalBackdrop")
+        .addEventListener("click", (e) => {
+          if (e.target.id === "modalBackdrop") closeModal();
+        });
+      document.getElementById("choosePlan").addEventListener("click", () => {
+        closeModal();
+        showToast(
+          `Paket ${selectedPlan} dipilih. Proses pembelian tidak tersedia pada demo UI.`,
+        );
+      });
+      document.getElementById("planOptions").addEventListener("click", (e) => {
+        const option = e.target.closest(".plan-option");
+        if (!option) return;
+        selectedPlan = option.dataset.plan;
+        document
+          .querySelectorAll(".plan-option")
+          .forEach((el) => el.classList.toggle("selected", el === option));
+      });
+      document.addEventListener("click", (e) => {
+        const toggle = e.target.closest("[data-toggle]");
+        if (toggle) {
+          toggle.classList.toggle("on");
+          showToast("Preferensi diperbarui (simulasi).");
+        }
+      });
+      document
+        .getElementById("globalSearch")
+        .addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            const value = e.target.value.toLowerCase().trim();
+            if (!value) return;
+            if (/drive|gmail|foto|storage|penyimpanan|ruang/.test(value))
+              setView("storage");
+            else if (/manfaat|benefit|keluarga|ai/.test(value))
+              setView("benefits");
+            else if (/bantuan|support/.test(value)) setView("support");
+            else
+              showToast(
+                `Tidak ada hasil untuk “${e.target.value}” pada demo ini.`,
+              );
+          }
+        });
+      document.addEventListener("keydown", (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+          e.preventDefault();
+          document.getElementById("globalSearch").focus();
+        }
+        if (e.key === "Escape") {
+          closeModal();
+          closePopovers();
+          closeMobileNav();
+        }
+      });
+
+      // ===== DEVICE SWITCHER =====
+      const switchDesktop = document.getElementById("switchDesktop");
+      const switchMobile = document.getElementById("switchMobile");
+      function setMode(mode) {
+        if (mode === "mobile") {
+          document.body.classList.add("mobile-mode");
+          switchDesktop.classList.remove("active");
+          switchDesktop.setAttribute("aria-selected", "false");
+          switchMobile.classList.add("active");
+          switchMobile.setAttribute("aria-selected", "true");
+        } else {
+          document.body.classList.remove("mobile-mode");
+          switchMobile.classList.remove("active");
+          switchMobile.setAttribute("aria-selected", "false");
+          switchDesktop.classList.add("active");
+          switchDesktop.setAttribute("aria-selected", "true");
+        }
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      switchDesktop.addEventListener("click", () => setMode("desktop"));
+      switchMobile.addEventListener("click", () => setMode("mobile"));
+
+      // Live clock for pixel phone
+      function updatePixelTime() {
+        const el = document.getElementById("pixelTime");
+        if (el) {
+          const now = new Date();
+          const h = String(now.getHours()).padStart(2, "0");
+          const m = String(now.getMinutes()).padStart(2, "0");
+          el.textContent = `${h}:${m}`;
+        }
+      }
+      updatePixelTime();
+      setInterval(updatePixelTime, 30000);
+
+      renderHome();
+    </script>
+  </body>
+</html>

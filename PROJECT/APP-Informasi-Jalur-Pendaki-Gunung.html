@@ -1,0 +1,4352 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aplikasi Informasi Jalur Pendakian Gunung</title>
+    <meta
+      name="description"
+      content="Aplikasi informasi jalur pendakian gunung: status gunung, kuota & booking online, peta jalur interaktif, perlengkapan wajib, dan pelaporan darurat."
+    />
+    <style>
+      /* ============ TOKEN & DASAR ============ */
+      :root {
+        --bg: #f7f6f2;
+        --surface: #ffffff;
+        --ink: #1c2420;
+        --mut: #5f6b64;
+        --line: #e4e1d8;
+        --line2: #d0ccc0;
+        --acc: #1e6b48;
+        --acc-dk: #17563a;
+        --acc-bg: #e8f2ec;
+        --acc-line: #bcd9c8;
+        --red: #b3261e;
+        --red-bg: #faeae8;
+        --red-line: #ecc7c3;
+        --amb: #8f6400;
+        --amb-bg: #f7efdb;
+        --amb-line: #e5d3a6;
+        --blu: #2f4b7c;
+        --blu-bg: #e9eef7;
+        --blu-line: #c4cfe3;
+        --wat: #2f6ea8;
+        --wat-bg: #e9f1f8;
+        --r: 12px;
+        --font:
+          ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family: var(--font);
+        background: var(--bg);
+        color: var(--ink);
+        font-size: 15.5px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      ::selection {
+        background: var(--acc);
+        color: #fff;
+      }
+      img,
+      svg {
+        vertical-align: middle;
+      }
+      a {
+        color: var(--acc);
+      }
+      h1,
+      h2,
+      h3,
+      h4 {
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+      }
+      :focus-visible {
+        outline: 2px solid var(--acc);
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+      .container {
+        max-width: 1140px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+      .ic {
+        width: 18px;
+        height: 18px;
+        flex: none;
+        color: currentColor;
+      }
+      .mut {
+        color: var(--mut);
+      }
+      /* ============ IKON (symbol SVG) ============ */
+      .ic-s {
+        width: 15px;
+        height: 15px;
+      }
+      .ic-m {
+        width: 22px;
+        height: 22px;
+      }
+      .ic-l {
+        width: 26px;
+        height: 26px;
+      }
+      /* ============ TOMBOL ============ */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--ink);
+        background: transparent;
+        color: var(--ink);
+        padding: 9px 16px;
+        border-radius: 9px;
+        font-family: inherit;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          color 0.15s,
+          border-color 0.15s;
+        text-decoration: none;
+      }
+      .btn:hover {
+        background: var(--ink);
+        color: #fff;
+      }
+      .btn-solid {
+        background: var(--acc);
+        border-color: var(--acc);
+        color: #fff;
+      }
+      .btn-solid:hover {
+        background: var(--acc-dk);
+        border-color: var(--acc-dk);
+      }
+      .btn-sm {
+        padding: 6px 12px;
+        font-size: 13px;
+        border-radius: 8px;
+      }
+      .btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .btn:disabled:hover {
+        background: transparent;
+        color: var(--ink);
+      }
+      .btn-solid:disabled:hover {
+        background: var(--acc);
+        color: #fff;
+      }
+      /* ============ TOPBAR ============ */
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 60;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+      }
+      .topbar-in {
+        display: flex;
+        align-items: center;
+        gap: 26px;
+        height: 62px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-weight: 800;
+        font-size: 17px;
+        letter-spacing: -0.03em;
+        color: var(--ink);
+        text-decoration: none;
+      }
+      .brand .ic {
+        width: 24px;
+        height: 24px;
+        color: var(--acc);
+      }
+      .brand small {
+        font-weight: 600;
+        color: var(--mut);
+        font-size: 10.5px;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        border-left: 1px solid var(--line2);
+        padding-left: 9px;
+        margin-left: 1px;
+      }
+      .topnav {
+        display: flex;
+        gap: 4px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        flex: 1;
+      }
+      .topnav::-webkit-scrollbar {
+        display: none;
+      }
+      .topnav a {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--mut);
+        text-decoration: none;
+        padding: 7px 11px;
+        border-radius: 8px;
+        white-space: nowrap;
+      }
+      .topnav a:hover {
+        color: var(--ink);
+        background: var(--bg);
+      }
+      .topnav a.on {
+        color: var(--acc);
+        background: var(--acc-bg);
+      }
+      .demo-pill {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: var(--amb);
+        border: 1px solid var(--amb-line);
+        background: var(--amb-bg);
+        border-radius: 999px;
+        padding: 4px 11px;
+        white-space: nowrap;
+      }
+      /* ============ HERO ============ */
+      .hero {
+        padding: 80px 0 0;
+        scroll-margin-top: 70px;
+      }
+      .overline {
+        font-size: 11.5px;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--acc);
+      }
+      .hero h1 {
+        font-size: clamp(34px, 5.2vw, 56px);
+        margin: 14px 0 0;
+        max-width: 780px;
+      }
+      .hero .lede {
+        font-size: clamp(16px, 1.9vw, 19px);
+        color: var(--mut);
+        max-width: 660px;
+        margin: 18px 0 36px;
+        line-height: 1.65;
+      }
+      .hero-stats {
+        display: flex;
+        flex-wrap: wrap;
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        max-width: 820px;
+      }
+      .hstat {
+        padding: 18px 36px 18px 0;
+        margin-right: 36px;
+        border-right: 1px solid var(--line);
+      }
+      .hstat:last-child {
+        border-right: 0;
+        margin-right: 0;
+        padding-right: 0;
+      }
+      .hstat b {
+        font-size: 30px;
+        display: block;
+        letter-spacing: -0.02em;
+        font-weight: 800;
+      }
+      .hstat span {
+        font-size: 12px;
+        color: var(--mut);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-weight: 600;
+      }
+      .qgrid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
+        gap: 14px;
+        margin: 40px 0 0;
+      }
+      .qcard {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 18px;
+        display: block;
+        color: inherit;
+        text-decoration: none;
+        transition:
+          border-color 0.15s,
+          background 0.15s;
+      }
+      .qcard .ic {
+        color: var(--acc);
+        width: 24px;
+        height: 24px;
+      }
+      .qcard h3 {
+        font-size: 15px;
+        margin: 12px 0 6px;
+      }
+      .qcard p {
+        font-size: 12.5px;
+        color: var(--mut);
+        line-height: 1.55;
+      }
+      .qcard .go {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        font-size: 12.5px;
+        font-weight: 700;
+        color: var(--acc);
+        margin-top: 12px;
+      }
+      .qcard:hover {
+        border-color: var(--acc-line);
+        background: var(--acc-bg);
+      }
+      .hero-art {
+        display: block;
+        width: 100%;
+        height: auto;
+        margin-top: 58px;
+      }
+      /* ============ SECTION ============ */
+      .section {
+        padding: 76px 0;
+        border-top: 1px solid var(--line);
+        scroll-margin-top: 62px;
+      }
+      .sec-head {
+        max-width: 640px;
+        margin-bottom: 34px;
+      }
+      .sec-head h2 {
+        font-size: clamp(26px, 3.4vw, 34px);
+        margin: 12px 0 10px;
+      }
+      .sec-head p {
+        color: var(--mut);
+        font-size: 15.5px;
+      }
+      .sub-h {
+        font-size: 18px;
+        margin: 34px 0 14px;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 20px;
+      }
+      /* ============ STATUS GUNUNG ============ */
+      .status-tools {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 22px;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .chip {
+        border: 1px solid var(--line2);
+        background: var(--surface);
+        border-radius: 999px;
+        padding: 7px 14px;
+        font-family: inherit;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--mut);
+        cursor: pointer;
+        transition:
+          border-color 0.15s,
+          color 0.15s;
+      }
+      .chip:hover {
+        border-color: var(--ink);
+        color: var(--ink);
+      }
+      .chip.on {
+        background: var(--ink);
+        border-color: var(--ink);
+        color: #fff;
+      }
+      .chip .n {
+        opacity: 0.65;
+        font-weight: 500;
+        margin-left: 5px;
+        font-size: 12px;
+      }
+      .searchbox {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--line2);
+        border-radius: 10px;
+        padding: 8px 12px;
+        background: var(--surface);
+        flex: 1;
+        min-width: 210px;
+        max-width: 300px;
+        color: var(--mut);
+      }
+      .searchbox input {
+        border: 0;
+        outline: 0;
+        background: transparent;
+        font: inherit;
+        font-size: 14px;
+        width: 100%;
+        color: var(--ink);
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 16px;
+      }
+      .mcard {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 20px 20px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .mcard-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: flex-start;
+      }
+      .mcard-top h3 {
+        font-size: 19px;
+      }
+      .mcard-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 16px;
+        color: var(--mut);
+        font-size: 13px;
+      }
+      .mcard-meta span {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .mcard-meta .ic {
+        width: 14px;
+        height: 14px;
+      }
+      .mcard-note {
+        font-size: 13.5px;
+        color: var(--mut);
+        line-height: 1.55;
+        flex: 1;
+      }
+      .mcard-foot {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid var(--line);
+        padding-top: 12px;
+        gap: 10px;
+      }
+      .mcard-foot .mut {
+        font-size: 12px;
+      }
+      .st {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12.5px;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid;
+        white-space: nowrap;
+      }
+      .st .ic {
+        width: 13px;
+        height: 13px;
+      }
+      .st-buka {
+        color: var(--acc);
+        background: var(--acc-bg);
+        border-color: var(--acc-line);
+      }
+      .st-ditutup {
+        color: var(--red);
+        background: var(--red-bg);
+        border-color: var(--red-line);
+      }
+      .st-siaga {
+        color: var(--amb);
+        background: var(--amb-bg);
+        border-color: var(--amb-line);
+      }
+      .st-ekstrem {
+        color: var(--blu);
+        background: var(--blu-bg);
+        border-color: var(--blu-line);
+      }
+      .st-net {
+        color: var(--ink);
+        background: var(--bg);
+        border-color: var(--line2);
+      }
+      .st-air {
+        color: var(--wat);
+        background: var(--wat-bg);
+        border-color: #c3d8ea;
+      }
+      .empty {
+        border: 1px dashed var(--line2);
+        border-radius: var(--r);
+        padding: 36px;
+        text-align: center;
+        color: var(--mut);
+        font-size: 14px;
+      }
+      /* ============ KUOTA & BOOKING ============ */
+      .kuota-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 18px;
+        align-items: start;
+      }
+      .kuota-grid > *,
+      .map-grid > *,
+      .emerg-grid > * {
+        min-width: 0;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 14px;
+      }
+      .field > span {
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mut);
+      }
+      .field input,
+      .field select,
+      .field textarea {
+        border: 1px solid var(--line2);
+        border-radius: 9px;
+        padding: 10px 12px;
+        font: inherit;
+        font-size: 14.5px;
+        background: var(--surface);
+        color: var(--ink);
+        width: 100%;
+      }
+      .field input:focus,
+      .field select:focus,
+      .field textarea:focus {
+        border-color: var(--acc);
+        outline: 2px solid var(--acc-bg);
+      }
+      .field.err input,
+      .field.err select,
+      .field.err textarea {
+        border-color: var(--red);
+      }
+      .fmsg {
+        font-size: 12px;
+        color: var(--red);
+        display: none;
+      }
+      .field.err .fmsg {
+        display: block;
+      }
+      .banner {
+        border: 1px solid;
+        border-radius: 10px;
+        padding: 12px 14px;
+        font-size: 13.5px;
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        margin: 14px 0;
+        line-height: 1.5;
+      }
+      .banner .ic {
+        margin-top: 2px;
+      }
+      .banner.ok {
+        border-color: var(--acc-line);
+        background: var(--acc-bg);
+        color: var(--acc);
+      }
+      .banner.warn {
+        border-color: var(--amb-line);
+        background: var(--amb-bg);
+        color: var(--amb);
+      }
+      .banner.stop {
+        border-color: var(--red-line);
+        background: var(--red-bg);
+        color: var(--red);
+      }
+      .tbl {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      .tbl th {
+        font-size: 10.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        color: var(--mut);
+        text-align: left;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--line);
+        font-weight: 700;
+      }
+      .tbl td {
+        padding: 11px 10px;
+        border-bottom: 1px solid var(--line);
+      }
+      .tbl tr:last-child td {
+        border-bottom: 0;
+      }
+      .tbl tbody tr {
+        cursor: pointer;
+        transition: background 0.12s;
+      }
+      .tbl tbody tr:hover {
+        background: var(--bg);
+      }
+      .tbl tbody tr.sel {
+        background: var(--acc-bg);
+      }
+      .tbl .nm {
+        font-weight: 700;
+      }
+      .tbl .mut {
+        font-size: 12.5px;
+      }
+      .sisa {
+        font-weight: 800;
+      }
+      .sisa.mid {
+        color: var(--amb);
+      }
+      .sisa.low {
+        color: var(--red);
+      }
+      .datechips {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 8px;
+      }
+      .dchip {
+        border: 1px solid var(--line2);
+        background: var(--surface);
+        border-radius: 10px;
+        padding: 8px 2px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1px;
+        cursor: pointer;
+        font-family: inherit;
+        transition: border-color 0.12s;
+      }
+      .dchip:hover {
+        border-color: var(--ink);
+      }
+      .dchip .d-hari {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--mut);
+        font-weight: 700;
+      }
+      .dchip .d-tgl {
+        font-size: 16px;
+        font-weight: 800;
+      }
+      .dchip .d-sisa {
+        font-size: 10.5px;
+        color: var(--mut);
+      }
+      .dchip.on {
+        border-color: var(--acc);
+        background: var(--acc-bg);
+      }
+      .dchip.on .d-sisa {
+        color: var(--acc);
+        font-weight: 800;
+      }
+      .dchip.penuh {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .dchip.penuh .d-tgl {
+        text-decoration: line-through;
+      }
+      .ckbox-agree {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        font-size: 13.5px;
+        cursor: pointer;
+        margin: 4px 0 16px;
+        line-height: 1.55;
+      }
+      .ckbox-agree .ckbox {
+        margin-top: 1px;
+      }
+      .ckbox-agree.err {
+        color: var(--red);
+      }
+      .ckbox-agree.err .ckbox {
+        border-color: var(--red);
+      }
+      .hasil {
+        margin-top: 18px;
+      }
+      .hasil-kode {
+        font-size: clamp(20px, 2.6vw, 26px);
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        color: var(--acc);
+      }
+      .hasil-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px 20px;
+        margin-top: 14px;
+      }
+      .hasil-grid div span {
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        color: var(--mut);
+        font-weight: 700;
+        margin-bottom: 2px;
+      }
+      .hasil-grid div b {
+        font-size: 14.5px;
+      }
+      .bk-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .bk-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 18px;
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-size: 13.5px;
+      }
+      .bk-row .kd {
+        font-weight: 800;
+        color: var(--acc);
+        font-size: 14px;
+      }
+      .bk-row .bt {
+        margin-left: auto;
+      }
+      .btn-x {
+        border: 1px solid var(--red-line);
+        background: transparent;
+        color: var(--red);
+        border-radius: 8px;
+        padding: 5px 11px;
+        font-family: inherit;
+        font-size: 12.5px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .btn-x:hover {
+        background: var(--red);
+        border-color: var(--red);
+        color: #fff;
+      }
+      /* ============ PETA INTERAKTIF ============ */
+      .map-grid {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 18px;
+        align-items: start;
+      }
+      .map-wrap {
+        padding: 0;
+        overflow: hidden;
+        position: relative;
+        background: #f1efe7;
+      }
+      #petaSvg {
+        display: block;
+        width: 100%;
+        height: auto;
+        background: #f1efe7;
+        touch-action: none;
+        cursor: grab;
+        user-select: none;
+      }
+      #petaSvg.drag {
+        cursor: grabbing;
+      }
+      .map-controls {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .map-controls button {
+        width: 34px;
+        height: 34px;
+        border: 1px solid var(--line2);
+        background: var(--surface);
+        border-radius: 9px;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        color: var(--ink);
+        transition: border-color 0.15s;
+      }
+      .map-controls button:hover {
+        border-color: var(--ink);
+      }
+      .map-controls .ic {
+        width: 16px;
+        height: 16px;
+      }
+      .map-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 18px;
+        padding: 11px 16px;
+        border-top: 1px solid var(--line);
+        font-size: 12px;
+        color: var(--mut);
+        align-items: center;
+        background: var(--surface);
+      }
+      .lg {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .lg .lg-shape {
+        width: 13px;
+        height: 13px;
+        border: 1.5px solid var(--ink);
+        border-radius: 4px;
+        background: #fff;
+        flex: none;
+        display: grid;
+        place-items: center;
+      }
+      .lg .lg-shape.circ {
+        border-radius: 99px;
+        border-color: var(--wat);
+        background: var(--wat-bg);
+      }
+      .lg .lg-shape .ic {
+        width: 8px;
+        height: 8px;
+      }
+      .lg .lg-shape.circ .ic {
+        color: var(--wat);
+      }
+      .lg .lg-shape.tri {
+        border: 0;
+        background: transparent;
+        border-radius: 0;
+      }
+      .lg-note {
+        margin-left: auto;
+        font-size: 11px;
+        color: var(--mut);
+      }
+      .contour {
+        fill: none;
+        stroke: #dbd7ca;
+        stroke-width: 1;
+      }
+      .contour.first {
+        fill: #ebe8dc;
+      }
+      .trail {
+        fill: none;
+        stroke: var(--acc);
+        stroke-width: 2.6;
+        stroke-linecap: round;
+      }
+      .mk {
+        cursor: pointer;
+        outline: none;
+      }
+      .mk .mk-bg {
+        fill: #fff;
+        stroke: var(--ink);
+        stroke-width: 1.4;
+      }
+      .mk .mk-bg.circ {
+        fill: var(--wat-bg);
+        stroke: var(--wat);
+      }
+      .mk .mki {
+        color: var(--ink);
+      }
+      .mk.air .mki {
+        color: var(--wat);
+      }
+      .mk.puncak .mki {
+        color: var(--ink);
+      }
+      .mk-ring {
+        opacity: 0;
+        fill: none;
+        stroke: var(--acc);
+        stroke-width: 2;
+        transition: opacity 0.15s;
+      }
+      .mk:hover .mk-ring,
+      .mk:focus-visible .mk-ring,
+      .mk.sel .mk-ring {
+        opacity: 1;
+      }
+      .mk.sel .mk-bg {
+        stroke: var(--acc);
+        stroke-width: 2;
+      }
+      .mk text.lbl {
+        font-size: 12px;
+        font-weight: 700;
+        fill: var(--ink);
+        paint-order: stroke;
+        stroke: #f1efe7;
+        stroke-width: 3.5px;
+        font-family: var(--font);
+      }
+      .mk.air text.lbl {
+        fill: var(--wat);
+      }
+      .map-side {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .detail-body {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .detail-body h3 {
+        font-size: 20px;
+        padding-right: 6px;
+      }
+      .d-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .dl {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        font-size: 14px;
+        border-top: 1px solid var(--line);
+        padding-top: 11px;
+      }
+      .dl .ic {
+        color: var(--mut);
+        margin-top: 3px;
+        width: 16px;
+        height: 16px;
+      }
+      .dl b {
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--mut);
+        font-weight: 700;
+      }
+      .dl span {
+        font-size: 13.5px;
+        line-height: 1.5;
+      }
+      .dl.ok .ic {
+        color: var(--wat);
+      }
+      .dl.warn .ic {
+        color: var(--amb);
+      }
+      .d-ket {
+        font-size: 13.5px;
+        color: var(--mut);
+        line-height: 1.6;
+        border-top: 1px solid var(--line);
+        padding-top: 11px;
+      }
+      .titik-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        max-height: 300px;
+        overflow: auto;
+      }
+      .titik-list li {
+        border-bottom: 1px solid var(--line);
+      }
+      .titik-list li:last-child {
+        border-bottom: 0;
+      }
+      .titik-list button {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        width: 100%;
+        background: none;
+        border: 0;
+        font: inherit;
+        padding: 9px 4px;
+        cursor: pointer;
+        text-align: left;
+        color: var(--ink);
+        font-size: 13.5px;
+      }
+      .titik-list button:hover {
+        background: var(--bg);
+      }
+      .titik-list li.sel button {
+        background: var(--acc-bg);
+        color: var(--acc);
+        font-weight: 700;
+      }
+      .titik-list .ic {
+        width: 14px;
+        height: 14px;
+        color: var(--mut);
+        flex: none;
+      }
+      .titik-list li.sel .ic {
+        color: var(--acc);
+      }
+      .titik-list .km {
+        margin-left: auto;
+        font-size: 11.5px;
+        color: var(--mut);
+        flex: none;
+      }
+      .profil-wrap {
+        margin-top: 18px;
+      }
+      .profil-wrap h3 {
+        font-size: 16px;
+        margin-bottom: 4px;
+      }
+      .profil-wrap .mut {
+        font-size: 12.5px;
+        margin-bottom: 10px;
+        display: block;
+      }
+      #profilSvg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .pro-grid {
+        stroke: var(--line);
+        stroke-dasharray: 2 5;
+      }
+      .pro-ax {
+        stroke: var(--line2);
+      }
+      .pro-line {
+        fill: none;
+        stroke: var(--ink);
+        stroke-width: 2;
+      }
+      .pro-dot {
+        fill: #fff;
+        stroke: var(--ink);
+        stroke-width: 1.6;
+        cursor: pointer;
+      }
+      .pro-dot.water {
+        stroke: var(--wat);
+      }
+      .pro-dot.sel {
+        fill: var(--acc);
+        stroke: var(--acc);
+      }
+      .pro-lbl {
+        font-size: 10.5px;
+        fill: var(--mut);
+        font-family: var(--font);
+      }
+      .pro-guide {
+        stroke: var(--acc);
+        stroke-width: 1;
+        stroke-dasharray: 3 4;
+      }
+      /* ============ CHECKLIST PERLENGKAPAN ============ */
+      .ck-top {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        flex-wrap: wrap;
+      }
+      .bar {
+        flex: 1;
+        height: 8px;
+        background: var(--line);
+        border-radius: 99px;
+        overflow: hidden;
+        min-width: 180px;
+      }
+      .bar i {
+        display: block;
+        height: 100%;
+        background: var(--acc);
+        width: 0;
+        transition: width 0.25s;
+      }
+      #ckPct {
+        font-weight: 800;
+        font-size: 15px;
+        min-width: 150px;
+        text-align: right;
+      }
+      #ckPct small {
+        display: block;
+        font-size: 11px;
+        color: var(--mut);
+        font-weight: 600;
+      }
+      .verdict {
+        margin-top: 16px;
+        padding: 14px 18px;
+        border-radius: 10px;
+        border: 1px solid;
+        font-size: 14px;
+        line-height: 1.55;
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+      }
+      .verdict .ic {
+        margin-top: 3px;
+        flex: none;
+        width: 20px;
+        height: 20px;
+      }
+      .verdict div {
+        min-width: 0;
+      }
+      .verdict.ok {
+        border-color: var(--acc-line);
+        background: var(--acc-bg);
+        color: var(--acc);
+      }
+      .verdict.warn {
+        border-color: var(--amb-line);
+        background: var(--amb-bg);
+        color: var(--amb);
+      }
+      .verdict ul {
+        margin: 8px 0 0 18px;
+        font-size: 13px;
+        color: var(--mut);
+      }
+      .verdict.ok ul {
+        color: var(--acc);
+      }
+      .ck-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+        gap: 16px;
+        margin-top: 18px;
+      }
+      .ck-cat {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+      }
+      .ck-cat-head {
+        display: flex;
+        gap: 11px;
+        align-items: center;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line);
+      }
+      .ck-cat-head .ic {
+        color: var(--acc);
+        width: 20px;
+        height: 20px;
+      }
+      .ck-cat-head h3 {
+        font-size: 15px;
+      }
+      .ck-cat-head .cnt {
+        margin-left: auto;
+        font-size: 12px;
+        color: var(--mut);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .ck-item {
+        display: flex;
+        gap: 12px;
+        padding: 11px 18px;
+        border-bottom: 1px solid var(--line);
+        cursor: pointer;
+        align-items: flex-start;
+        position: relative;
+      }
+      .ck-item:last-child {
+        border-bottom: 0;
+      }
+      .ck-item:hover {
+        background: #fbfaf7;
+      }
+      .ck-item input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .ckbox {
+        width: 20px;
+        height: 20px;
+        border: 1.5px solid var(--ink);
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+        margin-top: 2px;
+        transition:
+          background 0.12s,
+          border-color 0.12s;
+      }
+      .ckbox .ic {
+        width: 13px;
+        height: 13px;
+        color: #fff;
+        opacity: 0;
+      }
+      .ck-item input:checked ~ .ckbox {
+        background: var(--acc);
+        border-color: var(--acc);
+      }
+      .ck-item input:checked ~ .ckbox .ic {
+        opacity: 1;
+      }
+      .ck-item input:focus-visible ~ .ckbox {
+        outline: 2px solid var(--acc);
+        outline-offset: 2px;
+      }
+      .ck-item input:checked ~ .ck-body .ck-name {
+        text-decoration: line-through;
+        color: var(--mut);
+      }
+      .ck-body {
+        min-width: 0;
+      }
+      .ck-name {
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .ck-ket {
+        font-size: 12.5px;
+        color: var(--mut);
+        margin-top: 2px;
+        line-height: 1.5;
+      }
+      .tag {
+        font-size: 9.5px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        border: 1px solid;
+        border-radius: 5px;
+        padding: 1px 6px;
+        margin-left: 7px;
+        vertical-align: 1.5px;
+        text-transform: uppercase;
+      }
+      .tag.wajib {
+        color: var(--red);
+        border-color: var(--red-line);
+        background: var(--red-bg);
+      }
+      .tag.ops {
+        color: var(--mut);
+        border-color: var(--line2);
+        background: var(--bg);
+      }
+      /* ============ DARURAT ============ */
+      #darurat .sec-head .overline {
+        color: var(--red);
+      }
+      .emerg-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 14px;
+        margin-bottom: 20px;
+      }
+      .emc {
+        border: 1px solid var(--red-line);
+        background: var(--red-bg);
+        border-radius: var(--r);
+        padding: 16px 18px;
+        display: flex;
+        gap: 14px;
+        align-items: center;
+      }
+      .emc .ic {
+        color: var(--red);
+        width: 26px;
+        height: 26px;
+      }
+      .emc b {
+        font-size: 22px;
+        display: block;
+        letter-spacing: -0.01em;
+      }
+      .emc small {
+        color: var(--mut);
+        font-size: 12px;
+        line-height: 1.4;
+        display: block;
+      }
+      .emerg-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        align-items: start;
+      }
+      .prot-head {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 6px;
+      }
+      .prot-head .ic {
+        color: var(--red);
+        width: 20px;
+        height: 20px;
+      }
+      .prot-head h3 {
+        font-size: 17px;
+      }
+      .prot-sub {
+        font-size: 13px;
+        color: var(--mut);
+        margin-bottom: 8px;
+        line-height: 1.55;
+      }
+      .step {
+        display: flex;
+        gap: 13px;
+        padding: 10px 0;
+        border-bottom: 1px dashed var(--line);
+        align-items: flex-start;
+      }
+      .step:last-child {
+        border-bottom: 0;
+        padding-bottom: 2px;
+      }
+      .step-n {
+        width: 24px;
+        height: 24px;
+        border: 1.5px solid var(--ink);
+        border-radius: 99px;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        font-weight: 800;
+        flex: none;
+      }
+      .step p {
+        font-size: 13.5px;
+        line-height: 1.55;
+        padding-top: 2px;
+      }
+      .step p b {
+        font-weight: 700;
+      }
+      .report {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 18px 20px;
+        margin-bottom: 14px;
+      }
+      .report-head {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 16px;
+        align-items: center;
+      }
+      .report-head .kd {
+        font-weight: 800;
+        color: var(--red);
+        font-size: 15px;
+      }
+      .report-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 22px;
+        margin-top: 10px;
+        font-size: 13px;
+        color: var(--mut);
+      }
+      .report-meta b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .report-desc {
+        font-size: 13.5px;
+        margin-top: 10px;
+        line-height: 1.6;
+        color: var(--ink);
+        border-left: 3px solid var(--line2);
+        padding-left: 12px;
+      }
+      .tl {
+        display: flex;
+        margin-top: 16px;
+      }
+      .tl-step {
+        flex: 1;
+        text-align: center;
+        position: relative;
+        font-size: 10.5px;
+        color: var(--mut);
+        font-weight: 600;
+        line-height: 1.3;
+      }
+      .tl-step::before {
+        content: "";
+        display: block;
+        width: 11px;
+        height: 11px;
+        border: 1.5px solid var(--line2);
+        border-radius: 99px;
+        margin: 0 auto 6px;
+        background: var(--surface);
+        position: relative;
+        z-index: 1;
+      }
+      .tl-step::after {
+        content: "";
+        position: absolute;
+        top: 5px;
+        left: -50%;
+        width: 100%;
+        border-top: 1.5px solid var(--line2);
+      }
+      .tl-step:first-child::after {
+        display: none;
+      }
+      .tl-step.done {
+        color: var(--acc);
+      }
+      .tl-step.done::before {
+        background: var(--acc);
+        border-color: var(--acc);
+      }
+      .tl-step.done::after {
+        border-color: var(--acc);
+      }
+      /* ============ FOOTER & TOAST ============ */
+      footer {
+        border-top: 1px solid var(--line);
+        padding: 30px 0 36px;
+        font-size: 12.5px;
+        color: var(--mut);
+        line-height: 1.7;
+      }
+      footer b {
+        color: var(--ink);
+      }
+      #toastWrap {
+        position: fixed;
+        bottom: 22px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 100;
+        align-items: center;
+      }
+      .toast {
+        background: var(--ink);
+        color: #fff;
+        border-radius: 10px;
+        padding: 11px 18px;
+        font-size: 13.5px;
+        font-weight: 600;
+        display: flex;
+        gap: 9px;
+        align-items: center;
+        opacity: 0;
+        transform: translateY(8px);
+        transition:
+          opacity 0.25s,
+          transform 0.25s;
+        max-width: min(92vw, 480px);
+      }
+      .toast.show {
+        opacity: 1;
+        transform: none;
+      }
+      .toast .ic {
+        width: 16px;
+        height: 16px;
+        color: #8fd6ac;
+      }
+      .toast.err {
+        background: var(--red);
+      }
+      .toast.err .ic {
+        color: #ffd2ce;
+      }
+      /* ============ RESPONSIVE ============ */
+      @media (max-width: 960px) {
+        .map-grid,
+        .kuota-grid,
+        .emerg-grid {
+          grid-template-columns: 1fr;
+        }
+        .topbar-in {
+          gap: 14px;
+        }
+        .brand small {
+          display: none;
+        }
+      }
+      @media (max-width: 640px) {
+        .section {
+          padding: 56px 0;
+        }
+        .hero {
+          padding-top: 56px;
+        }
+        .datechips {
+          grid-template-columns: repeat(4, 1fr);
+        }
+        .hstat {
+          padding-right: 20px;
+          margin-right: 20px;
+        }
+        .hstat b {
+          font-size: 24px;
+        }
+        .demo-pill {
+          display: none;
+        }
+        .tl-step {
+          font-size: 9.5px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ==== DEFINISI IKON SVG (symbol) ==== -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <g id="_base"></g>
+      </defs>
+      <symbol
+        id="i-mtn"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M3 19 9.5 7.5l3.2 5.4 2-3.4L21 19Z" />
+        <path d="M9.5 7.5l1.6 2.7 1.6-2.7" />
+      </symbol>
+      <symbol
+        id="i-check"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M4.5 12.5l5 5L19.5 6.5" />
+      </symbol>
+      <symbol
+        id="i-x"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+      >
+        <path d="M6 6l12 12M18 6 6 18" />
+      </symbol>
+      <symbol
+        id="i-lock"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <rect x="5" y="11" width="14" height="9" rx="2" />
+        <path d="M8 11V7.5a4 4 0 0 1 8 0V11" />
+      </symbol>
+      <symbol
+        id="i-alert"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M12 3.5 2.5 19.5h19L12 3.5Z" />
+        <path d="M12 9.5v4.5M12 17.3v.01" />
+      </symbol>
+      <symbol
+        id="i-wind"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M3 8h9.5a2.75 2.75 0 1 0-2.75-2.75" />
+        <path d="M3 12.5h13.5a2.75 2.75 0 1 1-2.75 2.75" />
+        <path d="M3 17h6" />
+      </symbol>
+      <symbol
+        id="i-tent"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M12 4 3 20h18L12 4Z" />
+        <path d="M12 12.5 8.5 20M12 12.5l3.5 7.5" />
+      </symbol>
+      <symbol
+        id="i-drop"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M12 3.5s6 6.3 6 10.5a6 6 0 0 1-12 0C6 9.8 12 3.5 12 3.5Z" />
+      </symbol>
+      <symbol
+        id="i-flag"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M6 21V3.5" />
+        <path d="M6 4.5h11.5l-2.8 3.5 2.8 3.5H6" />
+      </symbol>
+      <symbol
+        id="i-peak"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M12 3.5 17.5 20h-11L12 3.5Z" />
+        <path d="M12 10v3.5" />
+      </symbol>
+      <symbol
+        id="i-gate"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M5 20V7M19 20V7M3.5 7h17M5 12.5h14" />
+      </symbol>
+      <symbol
+        id="i-pin"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M12 21s7-6.4 7-11.2A7 7 0 1 0 5 9.8C5 14.6 12 21 12 21Z" />
+        <circle cx="12" cy="9.8" r="2.6" />
+      </symbol>
+      <symbol
+        id="i-cal"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
+        <path d="M3.5 10h17M8 3v4M16 3v4" />
+      </symbol>
+      <symbol
+        id="i-map"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M9 4.5 3.5 6.5v13L9 17.5l6 2 5.5-2v-13l-5.5 2-6-2Z" />
+        <path d="M9 4.5v13M15 6.5v13" />
+      </symbol>
+      <symbol
+        id="i-pack"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <rect x="6" y="7.5" width="12" height="13" rx="3" />
+        <path d="M9.5 7.5V6a2.5 2.5 0 0 1 5 0v1.5M9 13.5h6" />
+      </symbol>
+      <symbol
+        id="i-sos"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+      >
+        <circle cx="12" cy="12" r="8.5" />
+        <circle cx="12" cy="12" r="3.5" />
+        <path
+          d="M5.98 5.98l4.24 4.24M18.02 5.98l-4.24 4.24M5.98 18.02l4.24-4.24M18.02 18.02l-4.24-4.24"
+        />
+      </symbol>
+      <symbol
+        id="i-phone"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path
+          d="M6.5 3.5h3l1.8 4.6-2.3 1.6a11.5 11.5 0 0 0 5.3 5.3l1.6-2.3 4.6 1.8v3a2 2 0 0 1-2 2A16 16 0 0 1 4.5 5.5a2 2 0 0 1 2-2Z"
+        />
+      </symbol>
+      <symbol
+        id="i-clock"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="M12 7.5V12l3 2" />
+      </symbol>
+      <symbol
+        id="i-up"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M12 20V5M6 11l6-6 6 6" />
+      </symbol>
+      <symbol
+        id="i-users"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="9" cy="8.2" r="3.6" />
+        <path
+          d="M2.8 20a6.2 6.2 0 0 1 12.4 0M16.4 5.1a3.6 3.6 0 0 1 0 6.7M17.8 14.4a6.2 6.2 0 0 1 3.7 5.6"
+        />
+      </symbol>
+      <symbol
+        id="i-search"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+      >
+        <circle cx="11" cy="11" r="6.5" />
+        <path d="M16 16l5 5" />
+      </symbol>
+      <symbol
+        id="i-plus"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+      >
+        <path d="M12 5.5v13M5.5 12h13" />
+      </symbol>
+      <symbol
+        id="i-minus"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+      >
+        <path d="M5.5 12h13" />
+      </symbol>
+      <symbol
+        id="i-reset"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <polyline points="20 4 20 9.5 14.5 9.5" />
+        <path d="M19.2 14a7.6 7.6 0 1 1-1.4-8L20 9.5" />
+      </symbol>
+      <symbol
+        id="i-arrow"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M4.5 12h15M13.5 6l6 6-6 6" />
+      </symbol>
+      <symbol
+        id="i-flame"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path
+          d="M12 3.5c.8 3-3.5 4.5-3.5 8.2a3.5 3.5 0 0 0 7 0c0-1.6-.9-2.4-.9-2.4 2.2.6 3.4 2.3 3.4 4.4a6 6 0 0 1-12 0C6 9.5 10.8 7.5 12 3.5Z"
+        />
+      </symbol>
+      <symbol
+        id="i-cross"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M9.5 4h5v5h5v5h-5v5h-5v-5h-5V9h5V4Z" />
+      </symbol>
+      <symbol
+        id="i-info"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+      >
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="M12 11v5M12 7.8v.01" />
+      </symbol>
+      <symbol
+        id="i-shield"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path
+          d="M12 3.5 19 6.3v5.4c0 4.4-3 7.4-7 8.8-4-1.4-7-4.4-7-8.8V6.3L12 3.5Z"
+        />
+        <path d="M9 12l2.2 2.2L15.5 10" />
+      </symbol>
+      <symbol
+        id="i-doc"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M7 3.5h7.5L19 8v12.5H7V3.5Z" />
+        <path d="M14.5 3.5V8H19M10 12h6M10 15.5h6" />
+      </symbol>
+      <symbol
+        id="i-kit"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <rect x="3.5" y="7.5" width="17" height="12" rx="2" />
+        <path
+          d="M9.5 7.5V6a1.5 1.5 0 0 1 1.5-1.5h2A1.5 1.5 0 0 1 14.5 6v1.5M12 11v5M9.5 13.5h5"
+        />
+      </symbol>
+      <symbol
+        id="i-comp"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="M15.5 8.5l-2 5-5 2 2-5 5-2Z" />
+      </symbol>
+      <symbol
+        id="i-route"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="6" cy="18" r="2.3" />
+        <circle cx="17.5" cy="6.5" r="2.3" />
+        <path d="M8.2 16.4C12 15 10.8 11.2 15.4 8.6" />
+      </symbol>
+    </svg>
+
+    <!-- ==== TOPBAR ==== -->
+    <header class="topbar">
+      <div class="container topbar-in">
+        <a class="brand" href="#beranda"
+          ><svg class="ic" aria-hidden="true"><use href="#i-mtn" /></svg
+          >RutePuncak<small>Jalur Pendakian</small></a
+        >
+        <nav class="topnav" id="topnav" aria-label="Navigasi utama">
+          <a href="#status">Status Gunung</a>
+          <a href="#kuota">Kuota &amp; Booking</a>
+          <a href="#peta">Peta Jalur</a>
+          <a href="#alat">Perlengkapan</a>
+          <a href="#darurat">Darurat</a>
+        </nav>
+        <span class="demo-pill">Data simulasi</span>
+      </div>
+    </header>
+
+    <main>
+      <!-- ==== HERO ==== -->
+      <section id="beranda" class="hero">
+        <div class="container">
+          <p class="overline">Informasi Jalur Pendakian Gunung</p>
+          <h1>Rencanakan pendakian yang aman, tertib, dan terinformasi.</h1>
+          <p class="lede">
+            RutePuncak menghimpun status gunung, kuota harian jalur resmi, peta
+            jalur lengkap dengan pos perhentian dan sumber air, daftar
+            perlengkapan wajib, serta kanal pelaporan darurat — semuanya dalam
+            satu tempat.
+          </p>
+          <div class="hero-stats" id="heroStats"></div>
+          <div class="qgrid">
+            <a class="qcard" href="#status"
+              ><svg class="ic" aria-hidden="true"><use href="#i-mtn" /></svg>
+              <h3>Status Gunung</h3>
+              <p>
+                Pantau gunung yang buka, ditutup, siaga, atau berstatus cuaca
+                ekstrem.
+              </p>
+              <span class="go"
+                >Lihat direktori<svg class="ic ic-s" aria-hidden="true">
+                  <use href="#i-arrow" /></svg></span
+            ></a>
+            <a class="qcard" href="#kuota"
+              ><svg class="ic" aria-hidden="true"><use href="#i-cal" /></svg>
+              <h3>Kuota &amp; Booking</h3>
+              <p>
+                Cek sisa kuota harian dan daftarkan rombongan Anda secara
+                online.
+              </p>
+              <span class="go"
+                >Cek kuota<svg class="ic ic-s" aria-hidden="true">
+                  <use href="#i-arrow" /></svg></span
+            ></a>
+            <a class="qcard" href="#peta"
+              ><svg class="ic" aria-hidden="true"><use href="#i-map" /></svg>
+              <h3>Peta Jalur</h3>
+              <p>
+                Jelajahi jalur pendakian, pos perhentian, dan titik sumber air.
+              </p>
+              <span class="go"
+                >Buka peta<svg class="ic ic-s" aria-hidden="true">
+                  <use href="#i-arrow" /></svg></span
+            ></a>
+            <a class="qcard" href="#alat"
+              ><svg class="ic" aria-hidden="true"><use href="#i-pack" /></svg>
+              <h3>Perlengkapan</h3>
+              <p>
+                Daftar periksa perlengkapan wajib keselamatan sebelum berangkat.
+              </p>
+              <span class="go"
+                >Periksa perlengkapan<svg class="ic ic-s" aria-hidden="true">
+                  <use href="#i-arrow" /></svg></span
+            ></a>
+            <a class="qcard" href="#darurat"
+              ><svg class="ic" aria-hidden="true"><use href="#i-sos" /></svg>
+              <h3>Darurat</h3>
+              <p>
+                Laporkan pendaki tersesat atau mengalami cedera dengan cepat.
+              </p>
+              <span class="go"
+                >Lihat prosedur<svg class="ic ic-s" aria-hidden="true">
+                  <use href="#i-arrow" /></svg></span
+            ></a>
+          </div>
+        </div>
+        <svg
+          class="hero-art"
+          viewBox="0 0 1200 170"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path id="heroRidge" fill="#eae7db" d="" />
+        </svg>
+      </section>
+
+      <!-- ==== FITUR 1: STATUS GUNUNG ==== -->
+      <section id="status" class="section">
+        <div class="container">
+          <div class="sec-head">
+            <p class="overline">Fitur 01 — Direktori</p>
+            <h2>Status Gunung</h2>
+            <p>
+              Setiap gunung diawasi status operasional jalurnya:
+              <b>buka</b> (pendakian normal sesuai kuota), <b>ditutup</b> (jalur
+              tidak aktif), <b>siaga</b> (dibuka terbatas dengan pembatasan),
+              atau <b>cuaca ekstrem</b> (pendakian ditangguhkan). Gunakan filter
+              atau pencarian di bawah.
+            </p>
+          </div>
+          <div class="status-tools">
+            <div
+              class="chips"
+              id="statusChips"
+              role="group"
+              aria-label="Filter status"
+            ></div>
+            <label class="searchbox"
+              ><svg class="ic" aria-hidden="true"><use href="#i-search" /></svg
+              ><input
+                id="cariGunung"
+                type="text"
+                placeholder="Cari nama gunung…"
+                aria-label="Cari nama gunung"
+            /></label>
+          </div>
+          <div class="cards" id="gunungGrid"></div>
+        </div>
+      </section>
+
+      <!-- ==== FITUR 2: KUOTA & BOOKING ==== -->
+      <section id="kuota" class="section">
+        <div class="container">
+          <div class="sec-head">
+            <p class="overline">Fitur 02 — Pendaftaran</p>
+            <h2>Kuota Pendakian &amp; Booking Online</h2>
+            <p>
+              Pilih gunung dan tanggal untuk melihat sisa kuota tiap jalur
+              resmi, lalu daftarkan rombongan Anda. Pada status <b>siaga</b>,
+              jumlah pendaki per rombongan dibatasi maksimal 5 orang; pada
+              status <b>ditutup</b> dan <b>cuaca ekstrem</b>, pendaftaran tidak
+              dibuka.
+            </p>
+          </div>
+          <div class="kuota-grid">
+            <div class="card">
+              <div class="field" style="max-width: 340px">
+                <span for="slGunung">Pilih gunung</span>
+                <select id="slGunung" aria-label="Pilih gunung"></select>
+              </div>
+              <div id="kuotaBanner" role="status"></div>
+              <h3 class="sub-h" style="margin-top: 18px">
+                Jalur resmi &amp; sisa kuota
+              </h3>
+              <div style="overflow-x: auto">
+                <table class="tbl" id="tblJalur">
+                  <thead>
+                    <tr>
+                      <th scope="col">Jalur</th>
+                      <th scope="col">Jarak</th>
+                      <th scope="col">Durasi</th>
+                      <th scope="col">Kuota/hari</th>
+                      <th scope="col">Sisa</th>
+                    </tr>
+                  </thead>
+                  <tbody id="jalurBody"></tbody>
+                </table>
+              </div>
+              <h3 class="sub-h">Tanggal pendakian (14 hari ke depan)</h3>
+              <p class="mut" style="font-size: 12.5px; margin-bottom: 10px">
+                Angka di bawah tanggal = sisa kuota jalur terpilih.
+              </p>
+              <div class="datechips" id="dateChips"></div>
+            </div>
+            <form class="card" id="formBooking" novalidate>
+              <h3 style="font-size: 17px; margin-bottom: 6px">
+                Formulir pendaftaran
+              </h3>
+              <p class="mut" style="font-size: 12.5px; margin-bottom: 16px">
+                Rombongan: <b id="ringkasanJalur">—</b>
+              </p>
+              <div class="field" id="f-nama">
+                <span for="inNama">Nama ketua rombongan</span
+                ><input
+                  id="inNama"
+                  type="text"
+                  autocomplete="name"
+                  placeholder="cth. Rani Puspita"
+                /><small class="fmsg">Nama minimal 3 huruf.</small>
+              </div>
+              <div class="field" id="f-hp">
+                <span for="inHp">No. HP aktif</span
+                ><input
+                  id="inHp"
+                  type="tel"
+                  inputmode="tel"
+                  placeholder="08xx-xxxx-xxxx"
+                  autocomplete="tel"
+                /><small class="fmsg"
+                  >Masukkan nomor HP yang valid (9–15 digit).</small
+                >
+              </div>
+              <div class="field" id="f-nik">
+                <span for="inNik">No. identitas (KTP/KITAS) ketua</span
+                ><input
+                  id="inNik"
+                  type="text"
+                  inputmode="numeric"
+                  placeholder="16 digit"
+                /><small class="fmsg">Nomor identitas 8–20 digit.</small>
+              </div>
+              <div class="field" id="f-jml">
+                <span for="inJml">Jumlah pendaki (termasuk ketua)</span
+                ><input id="inJml" type="number" min="1" value="4" /><small
+                  class="fmsg"
+                  >Jumlah melebihi batas atau sisa kuota.</small
+                >
+              </div>
+              <div class="field" id="f-turun">
+                <span for="inTurun">Rencana tanggal turun</span
+                ><input id="inTurun" type="date" /><small class="fmsg"
+                  >Tanggal turun harus setelah tanggal naik.</small
+                >
+              </div>
+              <label class="ckbox-agree" id="f-setuju">
+                <input
+                  type="checkbox"
+                  id="inSetuju"
+                  style="position: absolute; opacity: 0; pointer-events: none"
+                />
+                <span class="ckbox"
+                  ><svg class="ic" aria-hidden="true">
+                    <use href="#i-check" /></svg
+                ></span>
+                <span
+                  >Saya menyatakan data di atas benar dan seluruh anggota
+                  membawa <a href="#alat">perlengkapan wajib</a> serta surat
+                  keterangan sehat.</span
+                >
+              </label>
+              <button
+                class="btn btn-solid"
+                type="submit"
+                id="btnBooking"
+                style="width: 100%; justify-content: center"
+              >
+                <svg class="ic" aria-hidden="true"><use href="#i-cal" /></svg
+                >Daftarkan Rombongan
+              </button>
+              <p
+                class="mut"
+                style="font-size: 11.5px; margin-top: 10px; line-height: 1.55"
+              >
+                Simulasi pendaftaran. Nomor pokok dan e-tiket asli diterbitkan
+                oleh sistem SIMAKSI balai taman nasional setempat setelah
+                pembayaran.
+              </p>
+            </form>
+          </div>
+          <div id="hasilBooking" class="card hasil" hidden></div>
+          <h3 class="sub-h">Riwayat pendaftaran pada sesi ini</h3>
+          <div class="bk-list" id="daftarBooking"></div>
+        </div>
+      </section>
+
+      <!-- ==== FITUR 3: PETA JALUR INTERAKTIF ==== -->
+      <section id="peta" class="section">
+        <div class="container">
+          <div class="sec-head">
+            <p class="overline">Fitur 03 — Navigasi</p>
+            <h2>Peta Jalur Interaktif</h2>
+            <p>
+              Contoh detail: <b>Gunung Gede — Jalur Cibodas</b>. Klik setiap
+              titik pada peta untuk melihat ketinggian, jarak dari gerbang,
+              estimasi waktu, dan ketersediaan sumber air. Peta dapat digeser
+              (drag) dan diperbesar.
+            </p>
+          </div>
+          <div class="map-grid">
+            <div class="map-wrap card" style="padding: 0">
+              <svg
+                id="petaSvg"
+                viewBox="0 0 820 560"
+                role="application"
+                aria-label="Peta jalur pendakian Gunung Gede jalur Cibodas"
+              >
+                <g id="gZoom"></g>
+              </svg>
+              <div class="map-controls">
+                <button
+                  id="zoomIn"
+                  type="button"
+                  aria-label="Perbesar peta"
+                  title="Perbesar"
+                >
+                  <svg class="ic" aria-hidden="true">
+                    <use href="#i-plus" />
+                  </svg>
+                </button>
+                <button
+                  id="zoomOut"
+                  type="button"
+                  aria-label="Perkecil peta"
+                  title="Perkecil"
+                >
+                  <svg class="ic" aria-hidden="true">
+                    <use href="#i-minus" />
+                  </svg>
+                </button>
+                <button
+                  id="zoomReset"
+                  type="button"
+                  aria-label="Atur ulang tampilan"
+                  title="Atur ulang"
+                >
+                  <svg class="ic" aria-hidden="true">
+                    <use href="#i-reset" />
+                  </svg>
+                </button>
+              </div>
+              <div class="map-legend">
+                <span class="lg"
+                  ><span class="lg-shape"
+                    ><svg class="ic" aria-hidden="true">
+                      <use href="#i-gate" /></svg></span
+                  >Gerbang</span
+                >
+                <span class="lg"
+                  ><span class="lg-shape"
+                    ><svg class="ic" aria-hidden="true">
+                      <use href="#i-tent" /></svg></span
+                  >Pos peristirahatan</span
+                >
+                <span class="lg"
+                  ><span class="lg-shape"
+                    ><svg class="ic" aria-hidden="true">
+                      <use href="#i-pin" /></svg></span
+                  >Titik penting</span
+                >
+                <span class="lg"
+                  ><span class="lg-shape circ"
+                    ><svg class="ic" aria-hidden="true">
+                      <use href="#i-drop" /></svg></span
+                  >Sumber air</span
+                >
+                <span class="lg"
+                  ><span class="lg-shape"
+                    ><svg class="ic" aria-hidden="true">
+                      <use href="#i-peak" /></svg></span
+                  >Puncak</span
+                >
+                <span class="lg-note"
+                  >Peta skematik, bukan skala sebenarnya</span
+                >
+              </div>
+            </div>
+            <aside class="map-side">
+              <div
+                class="card detail"
+                id="titikDetail"
+                aria-live="polite"
+              ></div>
+              <div class="card">
+                <h3 style="font-size: 15px; margin-bottom: 6px">
+                  Daftar titik jalur
+                </h3>
+                <ul class="titik-list" id="titikList"></ul>
+              </div>
+            </aside>
+          </div>
+          <div class="profil-wrap card">
+            <h3>Profil elevasi — Jalur Cibodas</h3>
+            <span class="mut"
+              >Jarak total ±9,9 km · kenaikan 1.633 mdpl · titik biru menandakan
+              sumber air</span
+            >
+            <svg
+              id="profilSvg"
+              viewBox="0 0 820 200"
+              aria-label="Grafik profil elevasi jalur"
+            ></svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==== FITUR 4: PERLENGKAPAN WAJIB ==== -->
+      <section id="alat" class="section">
+        <div class="container">
+          <div class="sec-head">
+            <p class="overline">Fitur 04 — Persiapan</p>
+            <h2>Perlengkapan Wajib Keselamatan</h2>
+            <p>
+              Daftar periksa standar keselamatan pendaki — mengacu pemeriksaan
+              fisik gerbang taman nasional (contoh: identitas asli, surat sehat
+              maksimal 7 hari, sepatu gunung, sleeping bag, sampai survival
+              kit). Centang tiap item yang sudah Anda siapkan; kelengkapan
+              dihitung dari item bertanda
+              <b style="color: var(--red)">wajib</b>.
+            </p>
+          </div>
+          <div class="ck-top card">
+            <div
+              class="bar"
+              role="progressbar"
+              aria-label="Progres kelengkapan item wajib"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+              id="ckBarWrap"
+            >
+              <i id="ckBar"></i>
+            </div>
+            <div id="ckPct">0% <small>item wajib siap</small></div>
+            <button class="btn btn-sm" type="button" id="ckReset">
+              <svg class="ic ic-s" aria-hidden="true">
+                <use href="#i-reset" /></svg
+              >Atur ulang
+            </button>
+          </div>
+          <div id="ckVerdict"></div>
+          <div class="ck-grid" id="ckGrid"></div>
+        </div>
+      </section>
+
+      <!-- ==== FITUR 5: PELAPORAN DARURAT ==== -->
+      <section id="darurat" class="section">
+        <div class="container">
+          <div class="sec-head">
+            <p class="overline">Fitur 05 — Tanggap Darurat</p>
+            <h2>Pelaporan Darurat</h2>
+            <p>
+              Untuk pendaki <b>tersesat</b>, <b>cedera/kecelakaan</b>, atau
+              <b>keadaan medis darurat</b>. Laporan diteruskan ke pos SAR dan
+              tim nasional. Sampaikan titik terakhir yang diketahui dan
+              perkiraan koordinat bila tersedia — itu mempercepat pencarian.
+            </p>
+          </div>
+          <div class="emerg-cards">
+            <div class="emc">
+              <svg class="ic" aria-hidden="true"><use href="#i-phone" /></svg>
+              <div>
+                <b>112</b><small>Darurat nasional (gratis, 24 jam)</small>
+              </div>
+            </div>
+            <div class="emc">
+              <svg class="ic" aria-hidden="true"><use href="#i-sos" /></svg>
+              <div><b>111</b><small>Call center Basarnas</small></div>
+            </div>
+            <div class="emc">
+              <svg class="ic" aria-hidden="true"><use href="#i-cross" /></svg>
+              <div><b>115</b><small>Ambulans / PSC medis</small></div>
+            </div>
+            <div class="emc">
+              <svg class="ic" aria-hidden="true"><use href="#i-flame" /></svg>
+              <div><b>113</b><small>Pemadam — karhutla</small></div>
+            </div>
+          </div>
+          <div class="emerg-grid">
+            <form class="card" id="formDarurat" novalidate>
+              <h3 style="font-size: 17px; margin-bottom: 16px">
+                Formulir laporan darurat
+              </h3>
+              <div class="field" id="df-jenis">
+                <span for="slJenis">Jenis kejadian</span>
+                <select id="slJenis" aria-label="Jenis kejadian">
+                  <option value="tersesat">Pendaki tersesat</option>
+                  <option value="cedera">Kecelakaan / cedera</option>
+                  <option value="medis">Keadaan medis darurat</option>
+                </select>
+              </div>
+              <div class="field" id="df-pelapor">
+                <span for="inPelapor">Nama pelapor</span
+                ><input
+                  id="inPelapor"
+                  type="text"
+                  placeholder="Nama Anda"
+                /><small class="fmsg">Nama minimal 3 huruf.</small>
+              </div>
+              <div class="field" id="df-hp">
+                <span for="inHpDarurat">No. HP yang bisa dihubungi</span
+                ><input
+                  id="inHpDarurat"
+                  type="tel"
+                  inputmode="tel"
+                  placeholder="08xx-xxxx-xxxx"
+                /><small class="fmsg">Masukkan nomor HP yang valid.</small>
+              </div>
+              <div class="field" id="df-korban">
+                <span for="inKorban">Nama korban / pendaki</span
+                ><input
+                  id="inKorban"
+                  type="text"
+                  placeholder="cth. Dimas A."
+                /><small class="fmsg">Nama korban minimal 3 huruf.</small>
+              </div>
+              <div class="field" id="df-jmlkorban">
+                <span for="inJmlKorban">Jumlah orang terlibat</span
+                ><input
+                  id="inJmlKorban"
+                  type="number"
+                  min="1"
+                  value="1"
+                /><small class="fmsg">Minimal 1 orang.</small>
+              </div>
+              <div class="field" id="df-gunung">
+                <span for="slGunungLapor">Gunung / jalur</span
+                ><select
+                  id="slGunungLapor"
+                  aria-label="Gunung kejadian"
+                ></select>
+              </div>
+              <div class="field" id="df-lokasi">
+                <span for="inLokasi">Lokasi terakhir diketahui</span
+                ><input
+                  id="inLokasi"
+                  type="text"
+                  placeholder="cth. antara Pos 3 dan Air Panas, dekat batu besar"
+                /><small class="fmsg"
+                  >Jelaskan titik terakhir yang diketahui.</small
+                >
+              </div>
+              <div class="field" id="df-koordinat">
+                <span for="inKoord">Perkiraan koordinat (opsional)</span
+                ><input
+                  id="inKoord"
+                  type="text"
+                  placeholder="cth. -6.789, 107.012"
+                />
+              </div>
+              <div class="field" id="df-waktu">
+                <span for="inWaktu">Waktu kejadian</span
+                ><input id="inWaktu" type="datetime-local" /><small class="fmsg"
+                  >Isi waktu kejadian.</small
+                >
+              </div>
+              <div class="field" id="df-desk">
+                <span for="inDesk">Deskripsi kejadian</span
+                ><textarea
+                  id="inDesk"
+                  rows="3"
+                  placeholder="Kondisi korban, cuaca, perbekalan tersisa, ciri fisik/pakaian…"
+                ></textarea
+                ><small class="fmsg"
+                  >Tuliskan deskripsi singkat (min. 10 karakter).</small
+                >
+              </div>
+              <button
+                class="btn btn-solid"
+                type="submit"
+                style="
+                  width: 100%;
+                  justify-content: center;
+                  background: var(--red);
+                  border-color: var(--red);
+                "
+              >
+                <svg class="ic" aria-hidden="true"><use href="#i-sos" /></svg
+                >Kirim Laporan Darurat
+              </button>
+              <p
+                class="mut"
+                style="font-size: 11.5px; margin-top: 10px; line-height: 1.55"
+              >
+                Bila ada sinyal, tetap telepon <b>112</b> atau
+                <b>111</b> langsung setelah mengirim laporan. Formulir ini
+                simulasi pelaporan untuk keperluan peragaan.
+              </p>
+            </form>
+            <div class="card" id="protokolPanel" aria-live="polite"></div>
+          </div>
+          <h3 class="sub-h">Laporan aktif pada sesi ini</h3>
+          <div id="daftarLaporan"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="container">
+        <p>
+          <b>RutePuncak</b> — aplikasi peraga informasi jalur pendakian gunung.
+          Seluruh angka kuota, status, dan laporan di halaman ini adalah
+          <b>data simulasi</b> untuk keperluan demonstrasi, bukan data resmi.
+        </p>
+        <p style="margin-top: 6px">
+          Untuk data resmi, gunakan kanal SIMAKSI balai taman nasional setempat,
+          pengumuman BPBD/BMKG, dan protokol resmi Basarnas. Prinsip pendakian:
+          bawa sampah turun, hormati flora-fauna, dan utamakan keselamatan.
+        </p>
+      </div>
+    </footer>
+
+    <div id="toastWrap" role="status" aria-live="polite"></div>
+    <script>
+      // ================= DATA (SIMULASI) =================
+      "use strict";
+
+      const STATUS = {
+        buka: {
+          label: "Buka",
+          icon: "i-check",
+          desc: "Pendakian terbuka sesuai kuota dan jadwal reguler.",
+        },
+        ditutup: {
+          label: "Ditutup",
+          icon: "i-lock",
+          desc: "Jalur ditutup sementara; pendaftaran tidak dibuka.",
+        },
+        siaga: {
+          label: "Siaga",
+          icon: "i-alert",
+          desc: "Dibuka terbatas dengan pembatasan jumlah dan jam pendakian.",
+        },
+        ekstrem: {
+          label: "Cuaca Ekstrem",
+          icon: "i-wind",
+          desc: "Pendakian ditangguhkan karena peringatan cuaca ekstrem.",
+        },
+      };
+
+      const GUNUNG = [
+        {
+          id: "gede",
+          nama: "Gunung Gede",
+          wilayah: "Jawa Barat",
+          elevasi: 2958,
+          status: "buka",
+          catatan:
+            "Tiga jalur resmi aktif (Cibodas, Putri, Selabintana). Simaksi dan surat sehat diperiksa di gerbang; pendakian ditutup pukul 12.00 siang.",
+          diperbarui: "2026-11-13",
+          jalur: [
+            {
+              id: "cibodas",
+              nama: "Cibodas",
+              kuota: 150,
+              jarak: "9,9 km",
+              durasi: "6-8 jam",
+            },
+            {
+              id: "putri",
+              nama: "Gunung Putri",
+              kuota: 100,
+              jarak: "9,5 km",
+              durasi: "7-9 jam",
+            },
+            {
+              id: "selabintana",
+              nama: "Selabintana",
+              kuota: 75,
+              jarak: "12 km",
+              durasi: "9-11 jam",
+            },
+          ],
+        },
+        {
+          id: "pangrango",
+          nama: "Gunung Pangrango",
+          wilayah: "Jawa Barat",
+          elevasi: 3019,
+          status: "buka",
+          catatan:
+            "Jalur Gunung Putri aktif. Mandatori camping hanya di Telaga Biru dan alun-alun; dilarang berkemah di puncak.",
+          diperbarui: "2026-11-12",
+          jalur: [
+            {
+              id: "putri2",
+              nama: "Gunung Putri",
+              kuota: 100,
+              jarak: "10 km",
+              durasi: "8-10 jam",
+            },
+          ],
+        },
+        {
+          id: "prau",
+          nama: "Gunung Prau",
+          wilayah: "Jawa Tengah",
+          elevasi: 2565,
+          status: "buka",
+          catatan:
+            "Gunung populer pemula. Jalur Patak Banteng ramai akhir pekan; antrian registrasi mulai 05.00. Wajib koordinat rencana mendaki.",
+          diperbarui: "2026-11-14",
+          jalur: [
+            {
+              id: "patakbanteng",
+              nama: "Patak Banteng",
+              kuota: 150,
+              jarak: "3,8 km",
+              durasi: "3-4 jam",
+            },
+            {
+              id: "kalilembu",
+              nama: "Kalilembu",
+              kuota: 100,
+              jarak: "4 km",
+              durasi: "3-4 jam",
+            },
+          ],
+        },
+        {
+          id: "merbabu",
+          nama: "Gunung Merbabu",
+          wilayah: "Jawa Tengah",
+          elevasi: 3145,
+          status: "buka",
+          catatan:
+            "Suhu puncak dapat di bawah 5 derajat C. Jalur Selo paling pendek; Post 3 Suwanting sering kabut sore hari.",
+          diperbarui: "2026-11-11",
+          jalur: [
+            {
+              id: "selo",
+              nama: "Selo",
+              kuota: 100,
+              jarak: "8 km",
+              durasi: "7-9 jam",
+            },
+            {
+              id: "suwanting",
+              nama: "Suwanting",
+              kuota: 60,
+              jarak: "10 km",
+              durasi: "9-11 jam",
+            },
+          ],
+        },
+        {
+          id: "rinjani",
+          nama: "Gunung Rinjani",
+          wilayah: "Nusa Tenggara Barat",
+          elevasi: 3726,
+          status: "siaga",
+          catatan:
+            "Hujan deras dan angin kencang di atas 2.700 mdpl. Pendakian dibatasi sampai Danau Segara Anak; puncak ditutup sementara. Maksimal 5 orang per rombongan.",
+          diperbarui: "2026-11-13",
+          jalur: [
+            {
+              id: "sembalun",
+              nama: "Sembalun",
+              kuota: 150,
+              jarak: "23 km",
+              durasi: "2 hari",
+            },
+            {
+              id: "senaru",
+              nama: "Senaru",
+              kuota: 100,
+              jarak: "22 km",
+              durasi: "2 hari",
+            },
+          ],
+        },
+        {
+          id: "kerinci",
+          nama: "Gunung Kerinci",
+          wilayah: "Jambi",
+          elevasi: 3805,
+          status: "siaga",
+          catatan:
+            "Kabut tebal pukul 14.00-08.00. Wajib pendamping pemandu lokal. Kuota harian dikurangi selama musim hujan.",
+          diperbarui: "2026-11-12",
+          jalur: [
+            {
+              id: "kersiktuo",
+              nama: "Kersik Tuo",
+              kuota: 75,
+              jarak: "17 km",
+              durasi: "2 hari",
+            },
+          ],
+        },
+        {
+          id: "semeru",
+          nama: "Gunung Semeru",
+          wilayah: "Jawa Timur",
+          elevasi: 3676,
+          status: "ditutup",
+          catatan:
+            "Ditutup sementara karena peningkatan aktivitas vulkanik (level waspada). Area radius 5 km dari Jongring Seloko dilarang dimasuki. Pantau pengumuman resmi.",
+          diperbarui: "2026-11-10",
+          jalur: [
+            {
+              id: "ranupani",
+              nama: "Ranu Pani",
+              kuota: 100,
+              jarak: "21 km",
+              durasi: "2 hari",
+            },
+          ],
+        },
+        {
+          id: "marapi",
+          nama: "Gunung Marapi",
+          wilayah: "Sumatera Barat",
+          elevasi: 2891,
+          status: "ditutup",
+          catatan:
+            "Seluruh jalur pendakian ditutup sejak aktivitas erupsi meningkat. Zona bahaya radius 3 km dari kawah aktif.",
+          diperbarui: "2026-11-09",
+          jalur: [
+            {
+              id: "kotobaru",
+              nama: "Koto Baru",
+              kuota: 75,
+              jarak: "6 km",
+              durasi: "5-6 jam",
+            },
+          ],
+        },
+        {
+          id: "lawu",
+          nama: "Gunung Lawu",
+          wilayah: "Jawa Tengah - Jawa Timur",
+          elevasi: 3265,
+          status: "ekstrem",
+          catatan:
+            "Peringatan dini cuaca ekstrem: angin lebih dari 45 km/jam dan potensi hujan es di area puncak. Seluruh pendakian ditangguhkan 3 hari (14-16 Nov).",
+          diperbarui: "2026-11-14",
+          jalur: [
+            {
+              id: "cemorosewu",
+              nama: "Cemoro Sewu",
+              kuota: 100,
+              jarak: "10 km",
+              durasi: "7-9 jam",
+            },
+            {
+              id: "cemorokandang",
+              nama: "Cemoro Kandang",
+              kuota: 100,
+              jarak: "12 km",
+              durasi: "8-10 jam",
+            },
+          ],
+        },
+        {
+          id: "agung",
+          nama: "Gunung Agung",
+          wilayah: "Bali",
+          elevasi: 2997,
+          status: "ditutup",
+          catatan:
+            "Ditutup untuk pendakian karena kenaikan aktivitas seismik. Pura Besakih tetap terbuka untuk kegiatan keagamaan di area luar.",
+          diperbarui: "2026-11-11",
+          jalur: [
+            {
+              id: "besakih",
+              nama: "Pura Besakih",
+              kuota: 60,
+              jarak: "11 km",
+              durasi: "8-10 jam",
+            },
+          ],
+        },
+      ];
+
+      // ---- Titik peta: Gunung Gede - Jalur Cibodas (angka estimasi) ----
+      const TITIK = [
+        {
+          id: "gerbang",
+          nama: "Gerbang Cibodas",
+          jenis: "gerbang",
+          alt: 1325,
+          km: 0,
+          jam: "Titik awal",
+          air: "ya",
+          airKet:
+            "Kantor pos dan warung; isi ulang air terakhir sebelum mendaki.",
+          ket: "Pos registrasi SIMAKSI, cek perlengkapan dan surat sehat. Pendakian ditutup pukul 12.00 siang untuk menghindari pendakian malam.",
+        },
+        {
+          id: "pos1",
+          nama: "Pos 1",
+          jenis: "pos",
+          alt: 1550,
+          km: 1.6,
+          jam: "\u00b145 mnt",
+          air: "tidak",
+          airKet: "Tidak ada sumber air; bawa air minimal 2 liter per orang.",
+          ket: "Pos peristirahatan pertama setelah jalur landai berbatu. Tempat istirahat pendek, bukan area berkemah.",
+        },
+        {
+          id: "curug",
+          nama: "Curug Cibeureum",
+          jenis: "air",
+          alt: 1600,
+          km: 2.1,
+          jam: "\u00b11 jam",
+          air: "ya",
+          airKet:
+            "Air terjun tiga aliran; jernih, tetap sebaiknya direbus sebelum diminum.",
+          ket: "Air terjun merah-putih-hitam setinggi \u00b150 m, \u00b1300 m dari jalur utama. Sumber air terakhir sebelum Pos 3.",
+        },
+        {
+          id: "pos2",
+          nama: "Pos 2",
+          jenis: "pos",
+          alt: 1975,
+          km: 3.4,
+          jam: "\u00b12 jam",
+          air: "tidak",
+          airKet: "Tidak ada sumber air.",
+          ket: "Pos peristirahatan di tanjakan berkelanjutan. Mulai titik ini suhu turun signifikan; gunakan lapisan pakaian.",
+        },
+        {
+          id: "batuseribu",
+          nama: "Batu Seribu",
+          jenis: "landmark",
+          alt: 2150,
+          km: 4.5,
+          jam: "\u00b12,5 jam",
+          air: "tidak",
+          airKet: "Tidak ada sumber air.",
+          ket: "Formasi batu berlumut tebal di kanan jalur. Patokan populer; jalur menyempit dan licin saat hujan.",
+        },
+        {
+          id: "pos3",
+          nama: "Pos 3",
+          jenis: "pos",
+          alt: 2400,
+          km: 5.8,
+          jam: "\u00b13,5 jam",
+          air: "tidak",
+          airKet: "Tidak ada sumber air.",
+          ket: "Pos terakhir sebelum tanjakan berat. Banyak pendaki istirahat makan di sini. Sinyal seluler umumnya hilang.",
+        },
+        {
+          id: "airpanas",
+          nama: "Air Panas Gede",
+          jenis: "air",
+          alt: 2550,
+          km: 6.4,
+          jam: "\u00b14 jam",
+          air: "bersyarat",
+          airKet:
+            "Mata air panas vulkanik \u2014 TIDAK layak minum. Hanya untuk memasak tidak disarankan.",
+          ket: "Rembesan air panas \u00b115 m dari jalur utama, menandakan sistem vulkanik aktif. Jangan berendam; tanah rapuh dan panas.",
+        },
+        {
+          id: "kandangbadak",
+          nama: "Kandang Badak",
+          jenis: "pos",
+          alt: 2400,
+          km: 7.0,
+          jam: "\u00b14,5 jam",
+          air: "tidak",
+          airKet: "Tidak ada sumber air permanen.",
+          ket: "Pertemuan jalur Gede dan Pangrango. Area berkemah sangat terbatas dan berangin; umumnya hanya untuk istirahat.",
+        },
+        {
+          id: "suryakencana",
+          nama: "Alun-Alun Suryakencana",
+          jenis: "landmark",
+          alt: 2750,
+          km: 8.6,
+          jam: "\u00b15,5 jam",
+          air: "ya",
+          airKet:
+            "Mata air kecil \u00b1150 m dari tepi alun-alun; rebus sebelum diminum.",
+          ket: "Padang luas \u00b110 ha di kaki puncak \u2014 camping ground utama. Berkemah hanya di tepi, jangan di tengah (rawan beku dan angin).",
+        },
+        {
+          id: "mataair",
+          nama: "Mata Air Suryakencana",
+          jenis: "air",
+          alt: 2730,
+          km: 8.8,
+          jam: "\u00b15,5 jam",
+          air: "ya",
+          airKet:
+            "Debit kecil dan keruh setelah hujan; saring dan rebus sebelum diminum.",
+          ket: "Sungai kecil di pinggir alun-alun, satu-satunya sumber air sebelum puncak. Isi ulang di sini untuk malam di Suryakencana.",
+        },
+        {
+          id: "puncak",
+          nama: "Puncak Gede",
+          jenis: "puncak",
+          alt: 2958,
+          km: 9.9,
+          jam: "\u00b16-8 jam",
+          air: "tidak",
+          airKet: "Tidak ada sumber air.",
+          ket: "Puncak tertinggi dengan kawah aktif. DILARANG berkemah dan mendekati bibir kawah. Summit attack umumnya pukul 04.00 dari Suryakencana.",
+        },
+      ];
+
+      // ---- Perlengkapan wajib ----
+      const PERLENGKAPAN = [
+        {
+          id: "dok",
+          nama: "Dokumen & Administrasi",
+          icon: "i-doc",
+          items: [
+            {
+              n: "KTP/KITAS asli seluruh anggota",
+              w: true,
+              k: "Fotokopi tidak diterima; dibawa saat registrasi gerbang.",
+            },
+            {
+              n: "Surat keterangan sehat dari dokter",
+              w: true,
+              k: "Maksimal 7 hari sebelum tanggal pendakian.",
+            },
+            {
+              n: "Bukti pendaftaran/SIMAKI tercetak",
+              w: true,
+              k: "Bawa fisik dan salinan digital di HP.",
+            },
+            {
+              n: "Data kontak & HP seluruh anggota",
+              w: true,
+              k: "Diserahkan ke petugas pos untuk keperluan darurat.",
+            },
+          ],
+        },
+        {
+          id: "shelter",
+          nama: "Shelter & Tidur",
+          icon: "i-tent",
+          items: [
+            {
+              n: "Carrier 40-60 L + rain cover",
+              w: true,
+              k: "Ransel gunung dengan tali pinggang dan penutup hujan.",
+            },
+            {
+              n: "Tenda sesuai jumlah penghuni",
+              w: true,
+              k: "Kuat terpaan angin; bila perlu tambahkan patok ekstra.",
+            },
+            {
+              n: "Sleeping bag (nyaman di bawah 5\u00b0C)",
+              w: true,
+              k: "Suhu puncak bisa mendekati titik beku.",
+            },
+            {
+              n: "Matras alas tidur",
+              w: true,
+              k: "Isolasi dingin dari tanah, tidak digantikan pakaian.",
+            },
+            {
+              n: "Flysheet/tambahan naungan",
+              w: false,
+              k: "Berguna untuk area masak dan berteduh saat hujan deras.",
+            },
+          ],
+        },
+        {
+          id: "pakaian",
+          nama: "Pakaian & Pelindung",
+          icon: "i-pack",
+          items: [
+            {
+              n: "Jaket tebal / fleece / hardshell",
+              w: true,
+              k: "Gunakan sistem berlapis (layering), bukan satu jaket tebal saja.",
+            },
+            {
+              n: "Jas hujan 2 potong / ponco",
+              w: true,
+              k: "Hujan gunung datang tiba-tiba; ponco sekaligus melindungi carrier.",
+            },
+            {
+              n: "Sepatu gunung (sol kaku, ankle support)",
+              w: true,
+              k: "Jalur berbatu dan licin; sepatu kets tidak diterima di banyak gerbang.",
+            },
+            {
+              n: "Kaos kaki & sarung tangan tebal",
+              w: true,
+              k: "Sarung tangan wajib untuk melindungi tangan saat memegang batu dingin.",
+            },
+            {
+              n: "Topi / buff / balaclava",
+              w: true,
+              k: "Panas berlebih di kawah dan dingin di puncak \u2014 lindungi kepala.",
+            },
+            {
+              n: "Baju ganti dalam plastik kedap",
+              w: true,
+              k: "Pakaian basah mempercepat hipotermia.",
+            },
+            {
+              n: "Pakaian cadangan dalam dry bag",
+              w: false,
+              k: "Simpan cadangan untuk kondisi darurat turun cepat.",
+            },
+          ],
+        },
+        {
+          id: "logistik",
+          nama: "Logistik & Air",
+          icon: "i-drop",
+          items: [
+            {
+              n: "Air minum minimal 2 liter/orang",
+              w: true,
+              k: "Antar-gerbang ke Pos 3 tidak ada sumber air.",
+            },
+            {
+              n: "Makanan padat kalori & tahan lama",
+              w: true,
+              k: "Cokelat, kacang, roti, mi instan; hitung 1,5x kebutuhan.",
+            },
+            {
+              n: "Kompor portabel + bahan bakar",
+              w: true,
+              k: "Dilarang membakar kayu hutan.",
+            },
+            {
+              n: "Peralatan masak ringan (nesting)",
+              w: true,
+              k: "Panci kecil, spork, gelas; hemat muat carrier.",
+            },
+            {
+              n: "Korek api dalam wadah kedap",
+              w: true,
+              k: "Bawa dua, simpan di tempat berbeda.",
+            },
+            {
+              n: "Kantong sampah bawa-turun",
+              w: true,
+              k: "Prinsip leave no trace: semua sampah turun kembali.",
+            },
+          ],
+        },
+        {
+          id: "navigasi",
+          nama: "Navigasi & Komunikasi",
+          icon: "i-comp",
+          items: [
+            {
+              n: "Peta jalur & kompas",
+              w: true,
+              k: "Jangan mengandalkan HP saja; baterai habis saat dingin.",
+            },
+            {
+              n: "HP penuh + powerbank 10.000 mAh",
+              w: true,
+              k: "Aktifkan mode hemat baterai saat mendaki.",
+            },
+            {
+              n: "Peluit darurat per orang",
+              w: true,
+              k: "Sinyal SOS: 3 tiupan panjang berulang.",
+            },
+            {
+              n: "Headlamp + baterai cadangan",
+              w: true,
+              k: "Satu per orang, bukan berbagi; summit attack sebelum subuh.",
+            },
+            {
+              n: "GPS/smartwatch dengan trek",
+              w: false,
+              k: "Catat posisi tiap pos sebagai jejak mundur.",
+            },
+            {
+              n: "Radio HT (bila tersedia)",
+              w: false,
+              k: "Berguna di area tanpa sinyal; sesuaikan kanal pos jaga.",
+            },
+          ],
+        },
+        {
+          id: "p3k",
+          nama: "P3K & Keselamatan",
+          icon: "i-kit",
+          items: [
+            {
+              n: "Kotak P3K rombongan",
+              w: true,
+              k: "Plester, kasa, antiseptik, perban segitiga, obat demam/diare.",
+            },
+            {
+              n: "Obat pribadi rutin",
+              w: true,
+              k: "Alergi, asma, darah tinggi \u2014 bawa cadangan 2x durasi.",
+            },
+            {
+              n: "Selimut darurat (emergency blanket)",
+              w: true,
+              k: "Mencegah hipotermia saat menunggu bantuan.",
+            },
+            {
+              n: "Tali paracord 5-10 m",
+              w: false,
+              k: "Pengaman tambahan di tanjakan terjal.",
+            },
+            {
+              n: "Masker & kacamata (debu vulkanik)",
+              w: false,
+              k: "Wajib untuk gunung berstatus vulkanik aktif.",
+            },
+          ],
+        },
+      ];
+
+      // ---- Protokol darurat ----
+      const PROTOKOL = {
+        tersesat: {
+          icon: "i-pin",
+          judul: "Protokol pendaki tersesat",
+          sub: "Panduan singkat saat anggota rombongan atau Anda sendiri kehilangan jalur.",
+          langkah: [
+            "<b>Berhenti dan tenang.</b> Jangan terus berjalan menebak arah; jarak tersesat makin jauh dengan setiap langkah salah.",
+            "<b>Tetap di satu titik</b>, terutama setelah gelap. Pindah hanya bila ada bahaya langsung (sungai naik, longsor, jurang).",
+            "<b>Hemat baterai HP.</b> Aktifkan mode pesawat, matikan layar; nyalakan berkala untuk sinyal atau pelacakan.",
+            "<b>Beri tanda besar:</b> pakaian warna cerah, batu berjenjang, atau ranting di area terbuka agar terlihat dari udara.",
+            "<b>Tiup peluit 3x panjang</b> setiap 10 menit \u2014 sinyal darurat internasional; beri jeda untuk mendengar jawaban.",
+            "<b>Catat patokan:</b> titik terakhir, arah jalan, jam, bentang sekitar \u2014 informasi ini mempercepat tim SAR.",
+            "<b>Jauhi aliran sungai saat hujan deras</b> karena risiko banjir bandang di lereng gunung sangat tinggi.",
+          ],
+        },
+        cedera: {
+          icon: "i-kit",
+          judul: "Protokol kecelakaan / cedera",
+          sub: "Penanganan pertama cedera jatuh, terkilir, atau luka di jalur pendakian.",
+          langkah: [
+            "<b>Amankan lokasi</b> sebelum menolong: pastikan penolong tidak ikut jatuh (tebing, batu lepas, licin).",
+            "<b>Hentikan pendarahan</b> dengan tekanan langsung kasa bersih; angkat bagian luka bila memungkinkan.",
+            "<b>Jangan pindahkan korban</b> dengan dugaan cedera tulang belakang kecuali ada bahaya yang mengancam nyawa.",
+            "<b>Bidai</b> anggota tubuh patah/terkilir menggunakan tongkat pendakian atau matras gulung.",
+            "<b>Jaga kehangatan</b> korban dengan selimut darurat; korban diam cepat hipotermia meski cuaca terlihat cerah.",
+            "<b>Bagi tugas rombongan:</b> satu tim menemani korban, satu tim mencari sinyal \u2014 tidak boleh jalan sendirian.",
+            "<b>Monitor respons</b> (sadar/tertidur) dan pernapasan tiap 10-15 menit; catat perubahannya.",
+          ],
+        },
+        medis: {
+          icon: "i-cross",
+          judul: "Protokol keadaan medis darurat",
+          sub: "Respons darurat untuk serangan penyakit di gunung (sesak, kejang, hipotermia, heat stroke).",
+          langkah: [
+            "<b>Kenali gejala umum:</b> sesak berat, nyeri dada, kejang, lemas tiba-tiba, atau kebinguhan (tanda hipotermia/panas).",
+            "<b>Posisikan korban:</b> setengah duduk bila sesak; posisi miring (recovery position) bila tidak sadar namun bernapas.",
+            "<b>Berikan obat pribadi korban</b> hanya bila korban sadar dan memang obat rutinnya (cth. inhaler).",
+            "<b>Jangan beri makan/minum</b> pada korban tidak sadar \u2014 risiko tersedak.",
+            "<b>Turunkan panas / hangatkan</b> sesuai kondisi: lapisi pakaian atau longgarkan dan teduhkan.",
+            "<b>Catat waktu kejadian dan perubahan</b> \u2014 data penting bagi tim medis saat evakuasi.",
+            "<b>Rencanakan evakuasi dini</b> ke titik bersinyal atau pos jaga; hubungi 115/112 sambil menunggu.",
+          ],
+        },
+      };
+
+      const JENIS_LAPORAN = {
+        tersesat: "Pendaki tersesat",
+        cedera: "Kecelakaan / cedera",
+        medis: "Keadaan medis darurat",
+      };
+      const TAHAP_LAPORAN = [
+        "Diterima sistem",
+        "Diteruskan ke Pos SAR",
+        "Tim SAR bergerak",
+        "Selesai",
+      ];
+      // Dibangkitkan otomatis oleh scripts/gen_map.py - geometri peta skematik.
+      const MAP_GEO = {
+        viewBox: [0, 0, 820, 560],
+        trail:
+          "M 78.0 492.0 C 196.7 450.7 218.7 456.7 238.0 448.0 C 257.3 439.3 268.7 417.0 286.0 406.0 C 303.3 395.0 327.7 395.0 342.0 382.0 C 356.3 369.0 376.0 344.7 372.0 328.0 C 368.0 311.3 312.0 295.7 318.0 282.0 C 324.0 268.3 376.3 258.3 408.0 246.0 C 439.7 233.7 499.0 211.3 508.0 208.0 C 517.0 204.7 444.7 240.7 462.0 226.0 C 479.3 211.3 587.0 137.7 612.0 120.0 C 637.0 102.3 612.0 120.0 612.0 120.0 ",
+        contours: [
+          "M 650.0 150.0 C 653.6 154.4 658.9 160.9 659.2 165.8 C 659.4 170.8 655.3 176.1 651.7 179.7 C 648.0 183.4 641.6 185.0 637.3 187.5 C 633.0 190.0 629.7 192.6 625.8 194.6 C 621.9 196.6 617.9 198.8 613.8 199.6 C 609.7 200.4 605.1 199.3 601.0 199.3 C 596.9 199.3 593.1 199.3 589.0 199.3 C 584.9 199.3 580.3 200.4 576.2 199.6 C 572.1 198.8 568.1 196.6 564.2 194.6 C 560.3 192.6 557.0 190.0 552.7 187.5 C 548.4 185.0 542.0 183.4 538.3 179.7 C 534.7 176.1 530.6 170.8 530.8 165.8 C 531.1 160.9 536.4 154.4 540.0 150.0 C 543.6 145.6 550.0 143.1 552.3 139.5 C 554.7 135.9 553.8 132.8 554.3 128.6 C 554.7 124.5 553.5 118.6 555.0 114.5 C 556.5 110.4 560.0 107.0 563.3 104.1 C 566.6 101.1 570.7 99.0 574.8 96.7 C 578.9 94.4 583.1 91.2 587.7 90.1 C 592.3 89.0 597.7 89.0 602.3 90.1 C 606.9 91.2 611.1 94.4 615.2 96.7 C 619.3 99.0 623.4 101.1 626.7 104.1 C 630.0 107.0 633.5 110.4 635.0 114.5 C 636.5 118.6 635.3 124.5 635.7 128.6 C 636.2 132.8 635.3 135.9 637.7 139.5 C 640.0 143.1 646.4 145.6 650.0 150.0 Z",
+          "M 717.1 150.0 C 717.0 158.9 708.8 169.1 702.6 176.5 C 696.4 183.9 686.7 189.1 679.9 194.5 C 673.0 199.9 667.6 204.7 661.5 208.9 C 655.4 213.2 649.2 216.1 643.4 220.1 C 637.5 224.1 632.5 227.6 626.5 233.0 C 620.5 238.4 614.9 247.7 607.4 252.4 C 599.9 257.0 589.8 261.5 581.5 260.8 C 573.3 260.1 565.1 252.8 557.7 248.4 C 550.3 243.9 544.5 238.4 536.9 234.2 C 529.3 230.0 518.5 229.0 512.2 223.3 C 506.0 217.7 499.7 209.0 499.2 200.3 C 498.7 191.6 506.1 179.6 509.1 171.2 C 512.0 162.8 517.2 157.1 517.1 150.0 C 517.0 142.9 510.8 136.7 508.4 128.7 C 506.0 120.6 502.2 110.3 502.8 101.6 C 503.3 92.9 507.3 84.0 511.8 76.3 C 516.3 68.6 522.5 60.5 529.8 55.5 C 537.1 50.5 546.6 46.3 555.6 46.0 C 564.5 45.7 575.0 51.1 583.3 53.8 C 591.7 56.5 598.1 61.0 605.7 62.2 C 613.2 63.5 621.1 60.1 628.6 61.4 C 636.1 62.6 645.0 64.7 650.5 69.6 C 656.1 74.5 657.6 84.4 661.9 90.7 C 666.2 97.0 669.4 101.9 676.3 107.3 C 683.2 112.8 696.5 116.2 703.3 123.3 C 710.1 130.4 717.2 141.1 717.1 150.0 Z",
+          "M 742.8 150.0 C 737.8 162.0 731.9 172.4 726.3 182.4 C 720.7 192.3 715.1 201.2 709.1 209.9 C 703.1 218.6 695.6 224.4 690.4 234.6 C 685.3 244.7 683.9 257.4 678.5 270.9 C 673.0 284.5 668.1 306.2 657.8 315.7 C 647.5 325.2 630.2 330.4 616.6 328.1 C 603.1 325.8 588.4 309.8 576.5 302.0 C 564.7 294.1 556.3 286.0 545.3 281.0 C 534.4 275.9 520.8 277.6 510.9 271.8 C 501.1 266.0 491.6 256.5 486.3 246.3 C 481.0 236.2 482.6 221.6 479.1 210.8 C 475.6 200.1 471.3 192.1 465.2 182.0 C 459.2 171.8 447.8 161.9 442.8 150.0 C 437.8 138.1 434.9 123.8 435.0 110.6 C 435.1 97.3 438.3 83.0 443.5 70.5 C 448.6 58.0 455.1 43.4 465.9 35.6 C 476.7 27.9 493.8 24.1 508.1 24.0 C 522.3 24.0 539.4 34.2 551.5 35.2 C 563.5 36.2 570.3 35.4 580.5 30.3 C 590.7 25.1 600.8 9.1 612.7 4.1 C 624.6 -0.8 640.3 -3.0 651.7 0.5 C 663.2 3.9 671.5 17.1 681.3 24.9 C 691.2 32.7 700.3 39.6 710.8 47.4 C 721.4 55.1 737.1 61.0 744.7 71.4 C 752.3 81.9 756.8 97.1 756.5 110.2 C 756.2 123.3 747.8 138.0 742.8 150.0 Z",
+          "M 787.4 150.0 C 788.3 165.0 784.2 180.9 780.3 195.7 C 776.4 210.5 767.4 221.9 764.2 238.8 C 761.0 255.7 765.4 277.3 761.3 297.3 C 757.2 317.4 753.2 347.1 739.4 359.1 C 725.5 371.2 698.5 373.4 678.2 369.5 C 657.9 365.6 634.9 344.0 617.6 335.8 C 600.2 327.6 589.1 322.3 574.3 320.3 C 559.6 318.3 544.0 325.5 529.1 323.8 C 514.1 322.0 498.7 316.6 484.7 309.8 C 470.6 303.1 458.4 292.9 444.7 283.2 C 430.9 273.4 413.6 264.4 402.2 251.2 C 390.9 238.0 380.8 220.7 376.7 203.8 C 372.5 186.9 376.5 167.7 377.4 150.0 C 378.3 132.3 378.2 114.5 382.2 97.6 C 386.2 80.6 389.1 60.3 401.2 48.3 C 413.2 36.2 436.9 29.9 454.4 25.5 C 472.0 21.0 493.4 28.3 506.5 21.7 C 519.5 15.2 522.6 1.6 532.9 -13.9 C 543.1 -29.4 553.0 -59.1 568.1 -71.2 C 583.3 -83.4 606.0 -88.6 623.7 -86.7 C 641.5 -84.8 658.8 -69.4 674.5 -59.6 C 690.1 -49.7 704.7 -39.4 717.6 -27.6 C 730.4 -15.8 743.6 -3.4 751.6 11.3 C 759.5 26.0 761.4 44.9 765.3 60.6 C 769.1 76.4 771.1 90.8 774.8 105.7 C 778.5 120.6 786.5 135.0 787.4 150.0 Z",
+          "M 871.8 150.0 C 869.0 171.9 856.2 191.0 853.2 213.6 C 850.2 236.3 858.3 262.3 853.7 285.8 C 849.1 309.2 843.4 340.2 825.6 354.3 C 807.9 368.4 772.6 370.2 747.1 370.4 C 721.7 370.6 693.9 355.9 672.9 355.4 C 652.0 354.9 639.3 361.1 621.4 367.4 C 603.5 373.6 585.8 387.3 565.5 393.0 C 545.2 398.7 522.8 401.3 499.6 401.7 C 476.3 402.0 448.8 402.5 426.0 394.9 C 403.1 387.3 375.7 375.1 362.4 356.1 C 349.0 337.1 347.0 305.3 345.8 280.8 C 344.6 256.3 355.8 230.9 355.2 209.1 C 354.5 187.3 344.5 170.4 341.8 150.0 C 339.0 129.6 331.5 105.2 338.6 86.8 C 345.7 68.4 369.3 53.4 384.4 39.5 C 399.4 25.5 418.6 20.4 428.9 2.9 C 439.2 -14.7 436.7 -42.0 446.0 -65.8 C 455.4 -89.6 466.4 -124.6 485.0 -140.1 C 503.5 -155.6 533.4 -159.9 557.5 -158.8 C 581.6 -157.6 607.7 -144.0 629.4 -133.1 C 651.0 -122.3 671.2 -109.2 687.5 -93.9 C 703.8 -78.6 715.1 -57.7 727.0 -41.3 C 739.0 -24.9 744.4 -8.0 759.1 4.7 C 773.7 17.3 796.6 21.6 815.1 34.5 C 833.5 47.4 860.3 63.0 869.8 82.3 C 879.2 101.5 874.5 128.1 871.8 150.0 Z",
+          "M 927.2 150.0 C 922.7 178.3 931.1 205.3 925.8 231.5 C 920.5 257.8 912.7 287.7 895.5 307.7 C 878.2 327.7 845.0 338.1 822.2 351.3 C 799.3 364.5 778.1 372.1 758.5 386.9 C 739.0 401.7 725.6 424.1 705.0 440.1 C 684.5 456.2 661.1 471.3 635.5 483.3 C 609.8 495.2 581.4 505.0 551.1 511.8 C 520.7 518.5 482.6 531.0 453.2 523.8 C 423.9 516.5 390.6 496.1 375.2 468.4 C 359.8 440.7 363.8 389.7 360.9 357.4 C 357.9 325.1 367.3 297.2 357.5 274.6 C 347.8 252.1 319.1 242.9 302.4 222.1 C 285.7 201.3 261.7 175.2 257.2 150.0 C 252.7 124.8 267.8 96.8 275.3 71.2 C 282.8 45.6 294.7 23.7 302.2 -3.7 C 309.8 -31.0 308.0 -66.2 320.7 -93.0 C 333.3 -119.8 353.5 -148.9 377.9 -164.5 C 402.4 -180.0 438.0 -183.4 467.5 -186.3 C 496.9 -189.2 527.3 -187.4 554.7 -181.9 C 582.1 -176.4 609.1 -166.5 631.8 -153.3 C 654.5 -140.1 670.2 -114.4 690.8 -102.7 C 711.5 -91.0 727.2 -85.6 755.8 -83.0 C 784.4 -80.3 829.9 -94.6 862.4 -86.9 C 894.9 -79.2 935.7 -61.5 950.8 -36.7 C 965.9 -12.0 956.9 30.7 952.9 61.8 C 949.0 92.9 931.7 121.7 927.2 150.0 Z",
+        ],
+        summit: [595, 150],
+        hero: "M0,150 L80,95 L130,125 L210,60 L260,105 L330,70 L390,120 L470,40 L540,110 L610,80 L680,125 L760,55 L830,115 L900,75 L970,130 L1050,85 L1120,120 L1200,65 L1200,170 L0,170 Z",
+        order: [
+          "gerbang",
+          "pos1",
+          "curug",
+          "pos2",
+          "batuseribu",
+          "pos3",
+          "airpanas",
+          "kandangbadak",
+          "suryakencana",
+          "mataair",
+          "puncak",
+        ],
+        titik: {
+          gerbang: { x: 78, y: 492, ldx: 0, ldy: 34, anchor: "middle" },
+          pos1: { x: 170, y: 458, ldx: 18, ldy: 4, anchor: "start" },
+          curug: { x: 238, y: 448, ldx: 0, ldy: -22, anchor: "middle" },
+          pos2: { x: 286, y: 406, ldx: -18, ldy: 4, anchor: "end" },
+          batuseribu: { x: 342, y: 382, ldx: 0, ldy: -22, anchor: "middle" },
+          pos3: { x: 372, y: 328, ldx: 18, ldy: 4, anchor: "start" },
+          airpanas: { x: 318, y: 282, ldx: -18, ldy: 4, anchor: "end" },
+          kandangbadak: { x: 408, y: 246, ldx: 18, ldy: 4, anchor: "start" },
+          suryakencana: { x: 508, y: 208, ldx: 0, ldy: -22, anchor: "middle" },
+          mataair: { x: 462, y: 226, ldx: 12, ldy: 26, anchor: "start" },
+          puncak: { x: 612, y: 120, ldx: 20, ldy: 4, anchor: "start" },
+        },
+      };
+      // ================= UTIL =================
+      const $ = (s, c) => (c || document).querySelector(s);
+      const $$ = (s, c) => Array.from((c || document).querySelectorAll(s));
+      const NS = "http://www.w3.org/2000/svg";
+      function svgEl(tag, attrs) {
+        const el = document.createElementNS(NS, tag);
+        for (const k in attrs) el.setAttribute(k, attrs[k]);
+        return el;
+      }
+      const icon = (id, cls) =>
+        `<svg class="${cls || "ic"}" aria-hidden="true"><use href="#${id}"/></svg>`;
+      const esc = (s) =>
+        String(s).replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      function hashStr(s) {
+        let h = 2166136261;
+        for (let i = 0; i < s.length; i++) {
+          h ^= s.charCodeAt(i);
+          h = Math.imul(h, 16777619);
+        }
+        return h >>> 0;
+      }
+      function toast(msg, type) {
+        const el = document.createElement("div");
+        el.className = "toast" + (type === "err" ? " err" : "");
+        el.innerHTML =
+          icon(type === "err" ? "i-alert" : "i-check") + "<span></span>";
+        el.querySelector("span").textContent = msg;
+        $("#toastWrap").appendChild(el);
+        requestAnimationFrame(() => el.classList.add("show"));
+        setTimeout(() => {
+          el.classList.remove("show");
+          setTimeout(() => el.remove(), 300);
+        }, 2800);
+      }
+      const HARI = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+      function fmtTgl(iso) {
+        return new Date(iso + "T00:00:00").toLocaleDateString("id-ID", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        });
+      }
+      function isoLocal(t) {
+        return (
+          t.getFullYear() +
+          "-" +
+          String(t.getMonth() + 1).padStart(2, "0") +
+          "-" +
+          String(t.getDate()).padStart(2, "0")
+        );
+      }
+      function setErr(id, isError) {
+        $("#" + id).classList.toggle("err", !!isError);
+        return !isError;
+      }
+
+      // ================= NAV AKTIF =================
+      function initNav() {
+        const links = $$("#topnav a");
+        const secObs = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((e) => {
+              if (!e.isIntersecting) return;
+              links.forEach((l) => l.classList.remove("on"));
+              const l = links.find(
+                (a) => a.getAttribute("href") === "#" + e.target.id,
+              );
+              if (l) l.classList.add("on");
+            });
+          },
+          { rootMargin: "-25% 0px -65% 0px" },
+        );
+        ["status", "kuota", "peta", "alat", "darurat"].forEach((id) => {
+          const s = document.getElementById(id);
+          if (s) secObs.observe(s);
+        });
+      }
+
+      // ================= HERO =================
+      function renderHero() {
+        const nJalur = GUNUNG.reduce((s, g) => s + g.jalur.length, 0);
+        const kuota = GUNUNG.reduce(
+          (s, g) => s + g.jalur.reduce((a, j) => a + j.kuota, 0),
+          0,
+        );
+        const buka = GUNUNG.filter((g) => g.status === "buka").length;
+        $("#heroStats").innerHTML =
+          `<div class="hstat"><b>${GUNUNG.length}</b><span>Gunung terpantau</span></div>` +
+          `<div class="hstat"><b>${nJalur}</b><span>Jalur resmi</span></div>` +
+          `<div class="hstat"><b>${kuota.toLocaleString("id-ID")}</b><span>Kuota harian total</span></div>` +
+          `<div class="hstat"><b>${buka}</b><span>Buka hari ini</span></div>`;
+        $("#heroRidge").setAttribute("d", MAP_GEO.hero);
+      }
+
+      // ================= FITUR 1: DIREKTORI STATUS =================
+      let statusFilter = "semua",
+        statusQuery = "";
+
+      function renderChips() {
+        const defs = [
+          ["semua", "Semua"],
+          ["buka", "Buka"],
+          ["ditutup", "Ditutup"],
+          ["siaga", "Siaga"],
+          ["ekstrem", "Cuaca Ekstrem"],
+        ];
+        $("#statusChips").innerHTML = defs
+          .map(([k, l]) => {
+            const n =
+              k === "semua"
+                ? GUNUNG.length
+                : GUNUNG.filter((g) => g.status === k).length;
+            return `<button type="button" class="chip${statusFilter === k ? " on" : ""}" data-f="${k}">${l}<span class="n">${n}</span></button>`;
+          })
+          .join("");
+      }
+
+      function renderGunung() {
+        const q = statusQuery.trim().toLowerCase();
+        const list = GUNUNG.filter(
+          (g) =>
+            (statusFilter === "semua" || g.status === statusFilter) &&
+            (!q ||
+              g.nama.toLowerCase().includes(q) ||
+              g.wilayah.toLowerCase().includes(q)),
+        );
+        const grid = $("#gunungGrid");
+        if (!list.length) {
+          grid.innerHTML =
+            '<div class="empty" style="grid-column:1/-1">Tidak ada gunung yang cocok dengan filter atau pencarian.</div>';
+          return;
+        }
+        grid.innerHTML = list
+          .map((g) => {
+            const st = STATUS[g.status];
+            const kuota = g.jalur.reduce((a, j) => a + j.kuota, 0);
+            return `<article class="mcard">
+      <div class="mcard-top"><h3>${g.nama}</h3><span class="st st-${g.status}">${icon(st.icon, "ic ic-s")}${st.label}</span></div>
+      <div class="mcard-meta">
+        <span>${icon("i-up", "ic ic-s")} ${g.elevasi.toLocaleString("id-ID")} mdpl</span>
+        <span>${icon("i-pin", "ic ic-s")} ${g.wilayah}</span>
+        <span>${icon("i-route", "ic ic-s")} ${g.jalur.length} jalur</span>
+        <span>${icon("i-users", "ic ic-s")} kuota ${kuota}/hari</span>
+      </div>
+      <p class="mcard-note">${g.catatan}</p>
+      <div class="mcard-foot">
+        <span class="mut">Diperbarui ${fmtTgl(g.diperbarui)}</span>
+        <button type="button" class="btn btn-sm" data-book="${g.id}">${icon("i-cal", "ic ic-s")}Kuota &amp; booking</button>
+      </div>
+    </article>`;
+          })
+          .join("");
+      }
+
+      function initStatus() {
+        renderChips();
+        renderGunung();
+        $("#statusChips").addEventListener("click", (e) => {
+          const b = e.target.closest(".chip");
+          if (!b) return;
+          statusFilter = b.dataset.f;
+          renderChips();
+          renderGunung();
+        });
+        $("#cariGunung").addEventListener("input", (e) => {
+          statusQuery = e.target.value;
+          renderGunung();
+        });
+        $("#gunungGrid").addEventListener("click", (e) => {
+          const b = e.target.closest("[data-book]");
+          if (!b) return;
+          pilihGunung(b.dataset.book);
+          $("#kuota").scrollIntoView({ behavior: "smooth" });
+        });
+      }
+
+      // ================= FITUR 2: KUOTA & BOOKING =================
+      const BOOKINGS = [];
+      let selGunung = "gede",
+        selJalur = "cibodas",
+        selTgl = isoLocal(new Date());
+
+      const maxGrup = (g) =>
+        g.status === "siaga" ? 5 : g.status === "buka" ? 10 : 0;
+      const getGunung = (id) => GUNUNG.find((g) => g.id === id);
+      const getJalur = (g, id) => g.jalur.find((j) => j.id === id);
+
+      function sisaKuota(gid, jid, d) {
+        const g = getGunung(gid);
+        if (!g) return 0;
+        const j = getJalur(g, jid);
+        if (!j) return 0;
+        let terisi;
+        if (g.status === "ditutup" || g.status === "ekstrem") terisi = j.kuota;
+        else {
+          const h = hashStr(gid + "|" + jid + "|" + d);
+          terisi = h % 23 === 0 ? j.kuota : h % Math.round(j.kuota * 0.85);
+        }
+        const booked = BOOKINGS.filter(
+          (b) => b.g === gid && b.j === jid && b.d === d,
+        ).reduce((s, b) => s + b.n, 0);
+        return Math.max(0, j.kuota - terisi - booked);
+      }
+
+      function tanggalList() {
+        const out = [],
+          hariIni = new Date();
+        for (let i = 0; i < 14; i++) {
+          const t = new Date(hariIni);
+          t.setDate(hariIni.getDate() + i);
+          out.push(t);
+        }
+        return out;
+      }
+
+      function renderKuota() {
+        const g = getGunung(selGunung);
+        const maxG = maxGrup(g);
+        const st = STATUS[g.status];
+        const bannerCls =
+          g.status === "buka" ? "ok" : g.status === "siaga" ? "warn" : "stop";
+        $("#kuotaBanner").innerHTML =
+          `<div class="banner ${bannerCls}">${icon(st.icon)}<span><b>${st.label}.</b> ${st.desc}${maxG ? " Maksimal " + maxG + " pendaki per rombongan." : ""}</span></div>`;
+
+        $("#jalurBody").innerHTML = g.jalur
+          .map((j) => {
+            const sisa = sisaKuota(g.id, j.id, selTgl);
+            const cls =
+              sisa === 0
+                ? "low"
+                : sisa <= j.kuota * 0.25
+                  ? "low"
+                  : sisa <= j.kuota * 0.5
+                    ? "mid"
+                    : "";
+            return `<tr data-j="${j.id}" class="${j.id === selJalur ? "sel" : ""}" tabindex="0" aria-label="Pilih jalur ${j.nama}">
+      <td class="nm">${j.nama}</td><td class="mut">${j.jarak}</td><td class="mut">${j.durasi}</td><td>${j.kuota}</td>
+      <td><span class="sisa ${cls}">${sisa}</span></td></tr>`;
+          })
+          .join("");
+
+        $("#dateChips").innerHTML = tanggalList()
+          .map((t) => {
+            const d = isoLocal(t);
+            const sisa = sisaKuota(g.id, selJalur, d);
+            const penuh = sisa === 0;
+            return `<button type="button" class="dchip${d === selTgl ? " on" : ""}${penuh ? " penuh" : ""}" data-d="${d}"${penuh ? " disabled" : ""}>
+      <span class="d-hari">${HARI[t.getDay()]}</span><span class="d-tgl">${t.getDate()}</span>
+      <span class="d-sisa">${penuh ? "Penuh" : sisa + " sisa"}</span></button>`;
+          })
+          .join("");
+
+        const jalur = getJalur(g, selJalur);
+        $("#ringkasanJalur").textContent =
+          `${g.nama} · Jalur ${jalur.nama} · naik ${fmtTgl(selTgl)}`;
+        $("#inJml").max = maxG || 1;
+        if (maxG === 0) $("#inJml").value = 1;
+        else if (parseInt($("#inJml").value, 10) > maxG)
+          $("#inJml").value = maxG;
+        $("#inTurun").min = selTgl;
+        if ($("#inTurun").value && $("#inTurun").value <= selTgl)
+          $("#inTurun").value = "";
+        [
+          "#inNama",
+          "#inHp",
+          "#inNik",
+          "#inJml",
+          "#inTurun",
+          "#inSetuju",
+        ].forEach((s) => {
+          $(s).disabled = maxG === 0;
+        });
+        $("#btnBooking").disabled = maxG === 0;
+        $("#btnBooking").innerHTML =
+          maxG === 0
+            ? icon("i-lock") + "Pendaftaran ditutup"
+            : icon("i-cal") + "Daftarkan Rombongan";
+      }
+
+      function pilihGunung(id) {
+        selGunung = id;
+        selJalur = getGunung(id).jalur[0].id;
+        $("#slGunung").value = id;
+        renderKuota();
+      }
+
+      function renderHasil(b) {
+        const g = getGunung(b.g);
+        const sisa = sisaKuota(b.g, b.j, b.d);
+        $("#hasilBooking").hidden = false;
+        $("#hasilBooking").innerHTML = `
+    <div style="display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap">
+      <div>
+        <p class="overline">Pendaftaran berhasil</p>
+        <div class="hasil-kode">${b.kode}</div>
+      </div>
+      <span class="st st-buka">${icon("i-check", "ic ic-s")}Terkonfirmasi (simulasi)</span>
+    </div>
+    <div class="hasil-grid">
+      <div><span>Ketua rombongan</span><b>${esc(b.nama)}</b></div>
+      <div><span>Gunung / jalur</span><b>${b.gNama} · ${b.jNama}</b></div>
+      <div><span>Tanggal naik</span><b>${fmtTgl(b.d)}</b></div>
+      <div><span>Tanggal turun</span><b>${fmtTgl(b.turun)}</b></div>
+      <div><span>Jumlah pendaki</span><b>${b.n} orang</b></div>
+      <div><span>Sisa kuota ${fmtTgl(b.d)}</span><b>${sisa} orang</b></div>
+    </div>
+    <p class="mut" style="font-size:12.5px;margin-top:14px">Simpan kode ini. Tunjukkan pada saat registrasi gerbang ${g.nama} bersama identitas asli, surat sehat, dan bukti ini.</p>`;
+      }
+
+      function renderBookingList() {
+        const w = $("#daftarBooking");
+        if (!BOOKINGS.length) {
+          w.innerHTML =
+            '<div class="empty">Belum ada pendaftaran pada sesi ini. Isi formulir di atas untuk mendaftar.</div>';
+          return;
+        }
+        w.innerHTML = BOOKINGS.map(
+          (b, i) => `<div class="bk-row">
+    <span class="kd">${b.kode}</span>
+    <span>${icon("i-mtn", "ic ic-s")} ${b.gNama} · ${b.jNama}</span>
+    <span>${icon("i-cal", "ic ic-s")} ${fmtTgl(b.d)} &rarr; ${fmtTgl(b.turun)}</span>
+    <span>${icon("i-users", "ic ic-s")} ${b.n} orang</span>
+    <span class="st st-buka">${icon("i-check", "ic ic-s")}Terkonfirmasi</span>
+    <span class="bt"><button type="button" class="btn-x" data-cancel="${i}">Batalkan</button></span>
+  </div>`,
+        ).join("");
+      }
+
+      function onSubmitBooking(e) {
+        e.preventDefault();
+        const g = getGunung(selGunung);
+        const jalur = getJalur(g, selJalur);
+        const maxG = maxGrup(g);
+        const jml = parseInt($("#inJml").value, 10) || 0;
+        const sisa = sisaKuota(g.id, jalur.id, selTgl);
+        let ok = true;
+        ok = setErr("f-nama", $("#inNama").value.trim().length < 3) && ok;
+        ok =
+          setErr(
+            "f-hp",
+            !/^(\+62|62|0)8\d{7,12}$/.test(
+              $("#inHp").value.replace(/[\s\-().]/g, ""),
+            ),
+          ) && ok;
+        ok =
+          setErr("f-nik", !/^\d{8,20}$/.test($("#inNik").value.trim())) && ok;
+        ok = setErr("f-jml", !(jml >= 1 && jml <= maxG && jml <= sisa)) && ok;
+        ok =
+          setErr(
+            "f-turun",
+            !$("#inTurun").value || $("#inTurun").value <= selTgl,
+          ) && ok;
+        ok = setErr("f-setuju", !$("#inSetuju").checked) && ok;
+        if (!ok) {
+          toast("Periksa kembali isian yang ditandai merah.", "err");
+          return;
+        }
+        const kode =
+          g.id.toUpperCase().slice(0, 4) +
+          "-" +
+          jalur.id.toUpperCase().slice(0, 4) +
+          "-" +
+          selTgl.replace(/-/g, "") +
+          "-" +
+          (hashStr(selTgl + $("#inNama").value + Date.now()) % 65536)
+            .toString(16)
+            .toUpperCase()
+            .padStart(4, "0");
+        BOOKINGS.unshift({
+          kode,
+          g: g.id,
+          gNama: g.nama,
+          j: jalur.id,
+          jNama: jalur.nama,
+          d: selTgl,
+          turun: $("#inTurun").value,
+          n: jml,
+          nama: $("#inNama").value.trim(),
+        });
+        renderHasil(BOOKINGS[0]);
+        renderBookingList();
+        renderKuota();
+        toast("Rombongan terdaftar. Kode: " + kode);
+        $("#hasilBooking").scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+
+      function initKuota() {
+        $("#slGunung").innerHTML = GUNUNG.map(
+          (g) => `<option value="${g.id}">${g.nama} — ${g.wilayah}</option>`,
+        ).join("");
+        $("#slGunung").value = selGunung;
+        renderKuota();
+        renderBookingList();
+        $("#slGunung").addEventListener("change", (e) =>
+          pilihGunung(e.target.value),
+        );
+        $("#jalurBody").addEventListener("click", (e) => {
+          const tr = e.target.closest("tr[data-j]");
+          if (!tr) return;
+          selJalur = tr.dataset.j;
+          renderKuota();
+        });
+        $("#jalurBody").addEventListener("keydown", (e) => {
+          const tr = e.target.closest("tr[data-j]");
+          if (tr && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            selJalur = tr.dataset.j;
+            renderKuota();
+          }
+        });
+        $("#dateChips").addEventListener("click", (e) => {
+          const b = e.target.closest(".dchip");
+          if (!b || b.classList.contains("penuh")) return;
+          selTgl = b.dataset.d;
+          renderKuota();
+        });
+        $("#formBooking").addEventListener("submit", onSubmitBooking);
+        $("#daftarBooking").addEventListener("click", (e) => {
+          const btn = e.target.closest("[data-cancel]");
+          if (!btn) return;
+          if (btn.dataset.arm !== "1") {
+            btn.dataset.arm = "1";
+            btn.textContent = "Yakin? Klik lagi";
+            setTimeout(() => {
+              if (btn.isConnected) {
+                btn.dataset.arm = "";
+                btn.textContent = "Batalkan";
+              }
+            }, 2600);
+            return;
+          }
+          const i = parseInt(btn.dataset.cancel, 10);
+          const b = BOOKINGS.splice(i, 1)[0];
+          renderBookingList();
+          renderKuota();
+          if (BOOKINGS.length) renderHasil(BOOKINGS[0]);
+          else $("#hasilBooking").hidden = true;
+          toast("Pendaftaran " + b.kode + " dibatalkan; kuota dikembalikan.");
+        });
+      }
+      // ================= FITUR 3: PETA INTERAKTIF =================
+      const JENIS_IKON = {
+        gerbang: "i-gate",
+        pos: "i-tent",
+        landmark: "i-pin",
+        air: "i-drop",
+        puncak: "i-peak",
+      };
+      const JENIS_LABEL = {
+        gerbang: "Gerbang",
+        pos: "Pos peristirahatan",
+        landmark: "Titik penting",
+        air: "Sumber air",
+        puncak: "Puncak",
+      };
+      const AIR_LABEL = {
+        ya: "Tersedia",
+        bersyarat: "Ada, dengan catatan",
+        tidak: "Tidak tersedia",
+      };
+      let selTitik = null;
+      const z = { k: 1, tx: 0, ty: 0 };
+
+      function buildPeta() {
+        const g = $("#gZoom");
+        MAP_GEO.contours.forEach((d, i) =>
+          g.appendChild(
+            svgEl("path", { d, class: "contour" + (i === 0 ? " first" : "") }),
+          ),
+        );
+        g.appendChild(svgEl("path", { d: MAP_GEO.trail, class: "trail" }));
+        // kompas
+        const comp = svgEl("g", { transform: "translate(36 46)" });
+        comp.appendChild(
+          svgEl("circle", {
+            r: 17,
+            fill: "#ffffff",
+            stroke: "#d0ccc0",
+            "stroke-width": 1.2,
+          }),
+        );
+        comp.appendChild(
+          svgEl("path", { d: "M0 7 L4 -3 L0 0 L-4 -3 Z", fill: "#d0ccc0" }),
+        );
+        comp.appendChild(
+          svgEl("path", { d: "M0 -7 L4 3 L0 0 L-4 3 Z", fill: "#1c2420" }),
+        );
+        const u = svgEl("text", {
+          y: -24,
+          "text-anchor": "middle",
+          class: "pro-lbl",
+          "font-weight": 700,
+        });
+        u.textContent = "U";
+        comp.appendChild(u);
+        g.appendChild(comp);
+        // marker tiap titik
+        TITIK.forEach((t) => {
+          const geo = MAP_GEO.titik[t.id];
+          const m = svgEl("g", {
+            class:
+              "mk" +
+              (t.jenis === "air" ? " air" : "") +
+              (t.jenis === "puncak" ? " puncak" : ""),
+            transform: "translate(" + geo.x + " " + geo.y + ")",
+            "data-id": t.id,
+            tabindex: 0,
+            role: "button",
+            "aria-label": t.nama,
+          });
+          m.appendChild(
+            svgEl("circle", {
+              class: "mk-ring",
+              r: t.jenis === "air" ? 16 : 19,
+            }),
+          );
+          if (t.jenis === "air")
+            m.appendChild(svgEl("circle", { class: "mk-bg circ", r: 12 }));
+          else
+            m.appendChild(
+              svgEl("rect", {
+                class: "mk-bg",
+                x: -12,
+                y: -12,
+                width: 24,
+                height: 24,
+                rx: 8,
+              }),
+            );
+          m.appendChild(
+            svgEl("use", {
+              href: "#" + JENIS_IKON[t.jenis],
+              class: "mki",
+              x: -8,
+              y: -8,
+              width: 16,
+              height: 16,
+            }),
+          );
+          const lbl = svgEl("text", {
+            class: "lbl",
+            x: geo.ldx,
+            y: geo.ldy,
+            "text-anchor": geo.anchor,
+          });
+          lbl.textContent = t.nama;
+          m.appendChild(lbl);
+          g.appendChild(m);
+        });
+      }
+
+      function applyZ() {
+        const W = 820,
+          H = 560;
+        z.tx = Math.min(0, Math.max(W - W * z.k, z.tx));
+        z.ty = Math.min(0, Math.max(H - H * z.k, z.ty));
+        $("#gZoom").setAttribute(
+          "transform",
+          "translate(" +
+            z.tx.toFixed(1) +
+            " " +
+            z.ty.toFixed(1) +
+            ") scale(" +
+            z.k.toFixed(3) +
+            ")",
+        );
+      }
+
+      function renderTitikList() {
+        $("#titikList").innerHTML = TITIK.map(
+          (t) =>
+            `<li data-id="${t.id}"><button type="button">${icon(JENIS_IKON[t.jenis], "ic ic-s")}<span>${t.nama}</span><span class="km">km ${String(t.km).replace(".", ",")}</span></button></li>`,
+        ).join("");
+      }
+
+      function renderDetail(t) {
+        if (!t) {
+          $("#titikDetail").innerHTML = `<div class="detail-body">
+      <h3>Jalur Cibodas — Gunung Gede</h3>
+      <p class="mut" style="font-size:13.5px;line-height:1.65">Klik titik pada peta atau pilih dari daftar untuk melihat ketinggian, jarak dari gerbang, estimasi waktu, dan ketersediaan sumber air.</p>
+    </div>`;
+          return;
+        }
+        const airCls =
+          t.air === "ya" ? "ok" : t.air === "bersyarat" ? "warn" : "";
+        const jamTxt =
+          t.jam === "Titik awal"
+            ? "Titik awal pendakian"
+            : t.jam + " dari gerbang";
+        $("#titikDetail").innerHTML = `
+    <div class="detail-body">
+      <h3>${t.nama}</h3>
+      <div class="d-badges">
+        <span class="st st-net">${icon(JENIS_IKON[t.jenis], "ic ic-s")}${JENIS_LABEL[t.jenis]}</span>
+        <span class="st st-air">${icon("i-drop", "ic ic-s")}${AIR_LABEL[t.air]}</span>
+      </div>
+      <div class="dl">${icon("i-up", "ic ic-s")}<div><b>Ketinggian</b><span>${t.alt.toLocaleString("id-ID")} mdpl</span></div></div>
+      <div class="dl">${icon("i-route", "ic ic-s")}<div><b>Jarak dari gerbang</b><span>${String(t.km).replace(".", ",")} km</span></div></div>
+      <div class="dl">${icon("i-clock", "ic ic-s")}<div><b>Estimasi waktu</b><span>${jamTxt}</span></div></div>
+      <div class="dl ${airCls}">${icon("i-drop", "ic ic-s")}<div><b>Sumber air</b><span>${AIR_LABEL[t.air]}. ${t.airKet}</span></div></div>
+      <p class="d-ket">${t.ket}</p>
+    </div>`;
+      }
+
+      // ---- profil elevasi ----
+      const PROF = {
+        X0: 46,
+        X1: 800,
+        Y0: 170,
+        Y1: 26,
+        KM: 10.2,
+        A0: 1300,
+        A1: 3000,
+      };
+      const fx = (km) => PROF.X0 + (km / PROF.KM) * (PROF.X1 - PROF.X0);
+      const fy = (a) =>
+        PROF.Y0 - ((a - PROF.A0) / (PROF.A1 - PROF.A0)) * (PROF.Y0 - PROF.Y1);
+
+      function buildProfil() {
+        const svg = $("#profilSvg");
+        [1500, 2000, 2500, 3000].forEach((alt) => {
+          svg.appendChild(
+            svgEl("line", {
+              x1: 40,
+              x2: 806,
+              y1: fy(alt),
+              y2: fy(alt),
+              class: "pro-grid",
+            }),
+          );
+          const tx = svgEl("text", {
+            x: 36,
+            y: fy(alt) + 3.5,
+            "text-anchor": "end",
+            class: "pro-lbl",
+          });
+          tx.textContent = alt.toLocaleString("id-ID");
+          svg.appendChild(tx);
+        });
+        svg.appendChild(
+          svgEl("line", {
+            x1: 40,
+            x2: 806,
+            y1: PROF.Y0,
+            y2: PROF.Y0,
+            class: "pro-ax",
+          }),
+        );
+        for (let km = 0; km <= 10; km += 2) {
+          const tx = svgEl("text", {
+            x: fx(km),
+            y: 190,
+            "text-anchor": "middle",
+            class: "pro-lbl",
+          });
+          tx.textContent = km === 10 ? "10 km" : String(km);
+          svg.appendChild(tx);
+        }
+        svg.appendChild(
+          svgEl("polyline", {
+            points: TITIK.map(
+              (t) => fx(t.km).toFixed(1) + "," + fy(t.alt).toFixed(1),
+            ).join(" "),
+            class: "pro-line",
+          }),
+        );
+        const guide = svgEl("line", {
+          class: "pro-guide",
+          x1: 0,
+          x2: 0,
+          y1: PROF.Y1,
+          y2: PROF.Y0,
+          visibility: "hidden",
+        });
+        const lbl = svgEl("text", {
+          class: "pro-lbl",
+          "text-anchor": "middle",
+          visibility: "hidden",
+          "font-weight": 700,
+          fill: "#1e6b48",
+        });
+        svg.appendChild(guide);
+        svg.appendChild(lbl);
+        svg._guide = guide;
+        svg._lbl = lbl;
+        TITIK.forEach((t) => {
+          svg.appendChild(
+            svgEl("circle", {
+              cx: fx(t.km).toFixed(1),
+              cy: fy(t.alt).toFixed(1),
+              r: t.jenis === "air" ? 4 : 3.5,
+              class: "pro-dot" + (t.jenis === "air" ? " water" : ""),
+              "data-id": t.id,
+              "aria-label": t.nama,
+              tabindex: 0,
+              role: "button",
+            }),
+          );
+        });
+      }
+
+      function updateProfilSel(t) {
+        const svg = $("#profilSvg");
+        if (!t) {
+          svg._guide.setAttribute("visibility", "hidden");
+          svg._lbl.setAttribute("visibility", "hidden");
+          return;
+        }
+        const x = fx(t.km),
+          y = fy(t.alt);
+        svg._guide.setAttribute("x1", x);
+        svg._guide.setAttribute("x2", x);
+        svg._guide.setAttribute("visibility", "visible");
+        svg._lbl.setAttribute("x", Math.min(745, Math.max(75, x)));
+        svg._lbl.setAttribute("y", Math.max(15, y - 10));
+        svg._lbl.textContent =
+          t.nama + " · " + t.alt.toLocaleString("id-ID") + " mdpl";
+        svg._lbl.setAttribute("visibility", "visible");
+      }
+
+      function selectTitik(id) {
+        selTitik = id;
+        const t = TITIK.find((x) => x.id === id) || null;
+        $$("#petaSvg .mk").forEach((m) =>
+          m.classList.toggle("sel", m.dataset.id === id),
+        );
+        $$("#titikList li").forEach((li) =>
+          li.classList.toggle("sel", li.dataset.id === id),
+        );
+        $$("#profilSvg .pro-dot").forEach((c) =>
+          c.classList.toggle("sel", c.dataset.id === id),
+        );
+        renderDetail(t);
+        updateProfilSel(t);
+      }
+
+      function initPeta() {
+        buildPeta();
+        renderTitikList();
+        buildProfil();
+        selectTitik("gerbang");
+        $("#zoomIn").addEventListener("click", () => {
+          z.k = Math.min(4, z.k * 1.3);
+          applyZ();
+        });
+        $("#zoomOut").addEventListener("click", () => {
+          z.k = Math.max(1, z.k / 1.3);
+          if (z.k <= 1.001) {
+            z.k = 1;
+            z.tx = 0;
+            z.ty = 0;
+          }
+          applyZ();
+        });
+        $("#zoomReset").addEventListener("click", () => {
+          z.k = 1;
+          z.tx = 0;
+          z.ty = 0;
+          applyZ();
+        });
+
+        const svg = $("#petaSvg");
+        let dragState = null,
+          moved = false;
+        svg.addEventListener("pointerdown", (e) => {
+          dragState = {
+            x: e.clientX,
+            y: e.clientY,
+            tx: z.tx,
+            ty: z.ty,
+            w: svg.getBoundingClientRect().width,
+          };
+          moved = false;
+        });
+        window.addEventListener("pointermove", (e) => {
+          if (!dragState) return;
+          const s = 820 / dragState.w;
+          const dx = (e.clientX - dragState.x) * s,
+            dy = (e.clientY - dragState.y) * s;
+          if (Math.abs(dx) + Math.abs(dy) > 4) moved = true;
+          z.tx = dragState.tx + dx;
+          z.ty = dragState.ty + dy;
+          applyZ();
+        });
+        window.addEventListener("pointerup", () => {
+          dragState = null;
+        });
+
+        $$("#petaSvg .mk").forEach((m) => {
+          m.addEventListener("click", () => {
+            if (!moved) selectTitik(m.dataset.id);
+          });
+          m.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              selectTitik(m.dataset.id);
+            }
+          });
+        });
+        $("#titikList").addEventListener("click", (e) => {
+          const li = e.target.closest("li[data-id]");
+          if (li) selectTitik(li.dataset.id);
+        });
+        $("#profilSvg").addEventListener("click", (e) => {
+          const c = e.target.closest("circle[data-id]");
+          if (c) selectTitik(c.dataset.id);
+        });
+      }
+
+      // ================= FITUR 4: CHECKLIST PERLENGKAPAN =================
+      const ckState = {};
+
+      function renderChecklist() {
+        $("#ckGrid").innerHTML = PERLENGKAPAN.map(
+          (c, ci) => `
+    <div class="ck-cat" data-ci="${ci}">
+      <div class="ck-cat-head">${icon(c.icon)}<h3>${c.nama}</h3><span class="cnt"></span></div>
+      ${c.items
+        .map(
+          (it, i) => `
+        <label class="ck-item">
+          <input type="checkbox" data-k="${ci}.${i}"${ckState[ci + "." + i] ? " checked" : ""}>
+          <span class="ckbox">${icon("i-check", "ic")}</span>
+          <span class="ck-body">
+            <span class="ck-name">${it.n}<span class="tag ${it.w ? "wajib" : "ops"}">${it.w ? "Wajib" : "Opsional"}</span></span>
+            <span class="ck-ket">${it.k}</span>
+          </span>
+        </label>`,
+        )
+        .join("")}
+    </div>`,
+        ).join("");
+        updateCkProgress();
+      }
+
+      function ckRows() {
+        const rows = [];
+        PERLENGKAPAN.forEach((c, ci) =>
+          c.items.forEach((it, i) => rows.push({ key: ci + "." + i, it, ci })),
+        );
+        return rows;
+      }
+
+      function updateCkProgress() {
+        const rows = ckRows();
+        const wajib = rows.filter((r) => r.it.w);
+        const wajibOk = wajib.filter((r) => ckState[r.key]).length;
+        const pct = Math.round((wajibOk / wajib.length) * 100);
+        $("#ckBar").style.width = pct + "%";
+        $("#ckBarWrap").setAttribute("aria-valuenow", String(pct));
+        $("#ckPct").innerHTML =
+          pct +
+          "% <small>" +
+          wajibOk +
+          "/" +
+          wajib.length +
+          " item wajib siap</small>";
+        $$(".ck-cat").forEach((catEl) => {
+          const ci = +catEl.dataset.ci;
+          const items = PERLENGKAPAN[ci].items;
+          const done = items.filter((it, i) => ckState[ci + "." + i]).length;
+          catEl.querySelector(".cnt").textContent = done + "/" + items.length;
+        });
+        const kurang = wajib.filter((r) => !ckState[r.key]).map((r) => r.it.n);
+        const v = $("#ckVerdict");
+        if (!kurang.length) {
+          v.innerHTML = `<div class="verdict ok">${icon("i-shield")}<div><b>Semua perlengkapan wajib siap.</b> Periksa ulang sepatu, headlamp, dan surat sehat H-1 sebelum berangkat. Selamat mendaki dan utamakan keselamatan.</div></div>`;
+        } else {
+          v.innerHTML = `<div class="verdict warn">${icon("i-alert")}<div><b>Belum lengkap — ${kurang.length} item wajib belum disiapkan:</b><ul>${kurang.map((n) => "<li>" + n + "</li>").join("")}</ul></div></div>`;
+        }
+      }
+
+      function initChecklist() {
+        renderChecklist();
+        $("#ckGrid").addEventListener("change", (e) => {
+          const inp = e.target.closest("input[data-k]");
+          if (!inp) return;
+          ckState[inp.dataset.k] = inp.checked;
+          updateCkProgress();
+        });
+        $("#ckReset").addEventListener("click", () => {
+          Object.keys(ckState).forEach((k) => {
+            delete ckState[k];
+          });
+          renderChecklist();
+          toast("Daftar periksa diatur ulang.");
+        });
+      }
+
+      // ================= FITUR 5: PELAPORAN DARURAT =================
+      const LAPORAN = [];
+      let sarTimer = null;
+
+      function renderProtokol(jenis) {
+        const p = PROTOKOL[jenis];
+        $("#protokolPanel").innerHTML = `
+    <div class="prot-head">${icon(p.icon)}<h3>${p.judul}</h3></div>
+    <p class="prot-sub">${p.sub}</p>
+    <div>${p.langkah.map((s, i) => `<div class="step"><span class="step-n">${i + 1}</span><p>${s}</p></div>`).join("")}</div>
+    <p class="mut" style="font-size:12px;margin-top:12px;line-height:1.55">Sambil menjalankan protokol di atas, hubungi langsung <b>112</b> (darurat nasional) atau <b>111</b> (Basarnas) bila masih ada sinyal.</p>`;
+      }
+
+      function renderLaporan() {
+        const w = $("#daftarLaporan");
+        if (!LAPORAN.length) {
+          w.innerHTML =
+            '<div class="empty">Belum ada laporan pada sesi ini. Gunakan formulir di atas untuk keadaan darurat.</div>';
+          return;
+        }
+        w.innerHTML = LAPORAN.map(
+          (r) => `
+    <div class="report">
+      <div class="report-head">
+        <span class="kd">${r.kode}</span>
+        <span class="st st-ditutup">${icon(PROTOKOL[r.jenis].icon, "ic ic-s")}${JENIS_LAPORAN[r.jenis]}</span>
+        <span class="mut" style="font-size:12px;margin-left:auto">${r.waktuStr}</span>
+      </div>
+      <div class="report-meta">
+        <span>Pelapor <b>${r.pelapor} · ${r.hp}</b></span>
+        <span>Korban <b>${r.korban} · ${r.jml} orang</b></span>
+        <span>Gunung <b>${r.gunungNama}</b></span>
+        <span>Waktu kejadian <b>${r.waktuKej}</b></span>
+      </div>
+      <div class="report-meta" style="margin-top:6px">
+        <span>Lokasi terakhir <b>${r.lokasi}${r.koord ? " · " + r.koord : ""}</b></span>
+      </div>
+      <p class="report-desc">${r.desk}</p>
+      <div class="tl">${TAHAP_LAPORAN.map((t, i) => `<div class="tl-step${i <= r.tahap ? " done" : ""}">${t}</div>`).join("")}</div>
+    </div>`,
+        ).join("");
+      }
+
+      function startSar() {
+        if (sarTimer) return;
+        sarTimer = setInterval(() => {
+          LAPORAN.forEach((r) => {
+            if (r.tahap < TAHAP_LAPORAN.length - 1) r.tahap++;
+          });
+          renderLaporan();
+          if (!LAPORAN.some((r) => r.tahap < TAHAP_LAPORAN.length - 1)) {
+            clearInterval(sarTimer);
+            sarTimer = null;
+          }
+        }, 20000);
+      }
+
+      function onSubmitDarurat(e) {
+        e.preventDefault();
+        let ok = true;
+        ok =
+          setErr("df-pelapor", $("#inPelapor").value.trim().length < 3) && ok;
+        ok =
+          setErr(
+            "df-hp",
+            !/^(\+62|62|0)8\d{7,12}$/.test(
+              $("#inHpDarurat").value.replace(/[\s\-().]/g, ""),
+            ),
+          ) && ok;
+        ok = setErr("df-korban", $("#inKorban").value.trim().length < 3) && ok;
+        ok =
+          setErr(
+            "df-jmlkorban",
+            !(parseInt($("#inJmlKorban").value, 10) >= 1),
+          ) && ok;
+        ok = setErr("df-lokasi", $("#inLokasi").value.trim().length < 5) && ok;
+        ok = setErr("df-waktu", !$("#inWaktu").value) && ok;
+        ok = setErr("df-desk", $("#inDesk").value.trim().length < 10) && ok;
+        if (!ok) {
+          toast("Lengkapi isian yang ditandai merah.", "err");
+          return;
+        }
+        const jenis = $("#slJenis").value;
+        const now = new Date();
+        const kode =
+          "SAR-" +
+          (hashStr(String(now.getTime()) + $("#inKorban").value) % 65536)
+            .toString(16)
+            .toUpperCase()
+            .padStart(4, "0");
+        LAPORAN.unshift({
+          kode,
+          jenis,
+          pelapor: esc($("#inPelapor").value.trim()),
+          hp: esc($("#inHpDarurat").value.trim()),
+          korban: esc($("#inKorban").value.trim()),
+          jml: parseInt($("#inJmlKorban").value, 10) || 1,
+          gunungNama: $("#slGunungLapor").selectedOptions[0].textContent,
+          lokasi: esc($("#inLokasi").value.trim()),
+          koord: esc($("#inKoord").value.trim()),
+          waktuKej: esc($("#inWaktu").value.replace("T", " ")),
+          desk: esc($("#inDesk").value.trim()),
+          waktuStr: now.toLocaleString("id-ID", {
+            day: "numeric",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          tahap: 0,
+        });
+        renderLaporan();
+        startSar();
+        toast("Laporan terkirim. Kode: " + kode);
+        e.target.reset();
+        renderProtokol($("#slJenis").value);
+        $("#daftarLaporan").scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+
+      function initDarurat() {
+        $("#slGunungLapor").innerHTML = GUNUNG.map(
+          (g) => `<option value="${g.id}">${g.nama} — ${g.wilayah}</option>`,
+        ).join("");
+        const now = new Date(),
+          pad = (n) => String(n).padStart(2, "0");
+        $("#inWaktu").value =
+          now.getFullYear() +
+          "-" +
+          pad(now.getMonth() + 1) +
+          "-" +
+          pad(now.getDate()) +
+          "T" +
+          pad(now.getHours()) +
+          ":" +
+          pad(now.getMinutes());
+        renderProtokol("tersesat");
+        renderLaporan();
+        $("#slJenis").addEventListener("change", (e) =>
+          renderProtokol(e.target.value),
+        );
+        $("#formDarurat").addEventListener("submit", onSubmitDarurat);
+      }
+
+      // ================= INIT =================
+      function init() {
+        renderHero();
+        initNav();
+        initStatus();
+        initKuota();
+        initPeta();
+        initChecklist();
+        initDarurat();
+      }
+      init();
+    </script>
+  </body>
+</html>

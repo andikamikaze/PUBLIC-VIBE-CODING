@@ -1,0 +1,3429 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#06c755" />
+    <title>LINE — Clone</title>
+    <style>
+      :root {
+        --line: #06c755;
+        --line-dark: #05ad49;
+        --line-light: #88d839;
+        --text: #161b20;
+        --muted: #929aa2;
+        --subtle: #f5f6f7;
+        --border: #eceef0;
+        --surface: #fff;
+        --blue: #4d9df7;
+        --shadow: 0 18px 50px rgba(28, 39, 49, 0.15);
+        --font:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, "Noto Sans", sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        background: linear-gradient(135deg, #e8edf1 0%, #d8dde2 100%);
+        color: var(--text);
+        font-family: var(--font);
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      button {
+        border: 0;
+        cursor: pointer;
+      }
+
+      /* ============ DEVICE SWITCHER ============ */
+      .device-switcher {
+        position: fixed;
+        top: 18px;
+        right: 18px;
+        z-index: 100;
+        display: flex;
+        gap: 0;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 4px;
+        border-radius: 14px;
+        box-shadow:
+          0 8px 24px rgba(0, 0, 0, 0.12),
+          0 2px 6px rgba(0, 0, 0, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+      }
+      .device-switcher button {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 9px 14px;
+        background: transparent;
+        color: #6a7279;
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: 600;
+        transition: all 0.25s ease;
+      }
+      .device-switcher button svg {
+        width: 16px;
+        height: 16px;
+        stroke-width: 1.8;
+      }
+      .device-switcher button.active {
+        background: var(--line);
+        color: white;
+        box-shadow: 0 3px 10px rgba(6, 199, 85, 0.35);
+      }
+      .device-switcher button:hover:not(.active) {
+        background: #f3f5f6;
+        color: #20262b;
+      }
+
+      /* ============ DESKTOP VIEW ============ */
+      .desktop-wrapper {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+        transition: opacity 0.3s;
+      }
+      body.mobile-mode .desktop-wrapper {
+        display: none;
+      }
+
+      .app-shell {
+        height: calc(100dvh - 80px);
+        width: 100%;
+        max-width: 1400px;
+        max-height: 900px;
+        background: var(--surface);
+        display: grid;
+        grid-template-columns: 68px 360px minmax(0, 1fr);
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        border-radius: 14px;
+        transition: all 0.3s ease;
+      }
+
+      /* Desktop sidebar navigation */
+      .side-nav {
+        background: #fbfcfc;
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 18px 0;
+        gap: 8px;
+        z-index: 4;
+      }
+      .brand-mark {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: var(--line);
+        color: white;
+        display: grid;
+        place-items: center;
+        margin-bottom: 14px;
+        box-shadow: 0 5px 12px rgba(6, 199, 85, 0.25);
+      }
+      .brand-mark svg {
+        width: 24px;
+        height: 24px;
+      }
+      .nav-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: transparent;
+        color: #929aa1;
+        display: grid;
+        place-items: center;
+        position: relative;
+        transition: 0.18s ease;
+      }
+      .nav-icon svg {
+        width: 22px;
+        height: 22px;
+        stroke-width: 1.9;
+      }
+      .nav-icon:hover {
+        background: #f0f2f3;
+        color: #4d555c;
+      }
+      .nav-icon.active {
+        background: #e8f9ee;
+        color: var(--line-dark);
+      }
+      .nav-icon.active::before {
+        content: "";
+        position: absolute;
+        left: -12px;
+        width: 3px;
+        height: 22px;
+        border-radius: 0 3px 3px 0;
+        background: var(--line);
+      }
+      .nav-spacer {
+        flex: 1;
+      }
+      .nav-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f4caab, #bb7e60);
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 1px #e6e9ea;
+        margin-top: 8px;
+      }
+
+      /* Conversation list */
+      .list-pane {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        border-right: 1px solid var(--border);
+        position: relative;
+        z-index: 2;
+      }
+      .list-header {
+        padding: 20px 20px 14px;
+      }
+      .header-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+      .header-title {
+        font-size: 24px;
+        font-weight: 750;
+        letter-spacing: -0.6px;
+        margin: 0;
+      }
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .icon-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: transparent;
+        color: #59636b;
+        display: grid;
+        place-items: center;
+        transition: 0.15s;
+      }
+      .icon-btn:hover {
+        background: #f2f4f5;
+      }
+      .icon-btn svg {
+        width: 18px;
+        height: 18px;
+        stroke-width: 1.9;
+      }
+      .search-box {
+        height: 38px;
+        background: #f3f5f6;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        gap: 8px;
+        color: #9ba2a8;
+      }
+      .search-box svg {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+      }
+      .search-box input {
+        outline: 0;
+        border: 0;
+        background: transparent;
+        width: 100%;
+        color: #252b31;
+        font-size: 13px;
+      }
+      .search-box input::placeholder {
+        color: #9aa2a9;
+      }
+      .top-tabs {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 0 20px;
+        border-bottom: 1px solid var(--border);
+        height: 44px;
+        flex-shrink: 0;
+      }
+      .top-tab {
+        padding: 0;
+        align-self: stretch;
+        background: transparent;
+        color: #969da3;
+        font-size: 13px;
+        font-weight: 600;
+        position: relative;
+        white-space: nowrap;
+      }
+      .top-tab.active {
+        color: #20262b;
+      }
+      .top-tab.active::after {
+        content: "";
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 2.5px;
+        border-radius: 3px 3px 0 0;
+        background: var(--line);
+      }
+      .chat-list {
+        overflow-y: auto;
+        flex: 1;
+        scrollbar-width: thin;
+        scrollbar-color: #e0e4e6 transparent;
+      }
+      .chat-list::-webkit-scrollbar,
+      .messages::-webkit-scrollbar {
+        width: 5px;
+      }
+      .chat-list::-webkit-scrollbar-thumb,
+      .messages::-webkit-scrollbar-thumb {
+        background: #e4e8e9;
+        border-radius: 6px;
+      }
+      .list-label {
+        padding: 14px 20px 6px;
+        font-size: 10.5px;
+        color: #a2a9ae;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+      }
+      .chat-row {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        text-align: left;
+        padding: 10px 16px 10px 18px;
+        background: #fff;
+        gap: 12px;
+        min-height: 72px;
+        transition: background 0.13s;
+        border-bottom: 1px solid #f6f7f8;
+      }
+      .chat-row:hover {
+        background: #f8f9f9;
+      }
+      .chat-row.selected {
+        background: #f0faf3;
+      }
+      .avatar-wrap {
+        width: 48px;
+        height: 48px;
+        position: relative;
+        flex-shrink: 0;
+      }
+      .avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        color: #fff;
+        font-weight: 700;
+        font-size: 14px;
+        letter-spacing: -0.5px;
+      }
+      .avatar .face {
+        filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.08));
+        font-size: 23px;
+      }
+      .online-dot {
+        position: absolute;
+        width: 11px;
+        height: 11px;
+        bottom: 0;
+        right: 0;
+        border: 2px solid white;
+        border-radius: 50%;
+        background: #20c66a;
+      }
+      .chat-content {
+        min-width: 0;
+        flex: 1;
+        align-self: stretch;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 4px;
+      }
+      .chat-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .chat-name {
+        font-size: 13.5px;
+        font-weight: 650;
+        color: #20262b;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .chat-time {
+        font-size: 10px;
+        color: #a1a8ad;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .chat-preview {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .preview-text {
+        color: #91999f;
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .preview-text .read {
+        color: #68a9f4;
+        font-weight: 600;
+      }
+      .unread {
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        border-radius: 10px;
+        background: var(--line);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-size: 10px;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .muted-icon {
+        color: #b6bdc1;
+        font-size: 12px;
+      }
+      .empty-search {
+        text-align: center;
+        padding: 48px 20px;
+        color: #9ba3a9;
+        font-size: 12px;
+        display: none;
+      }
+
+      /* Empty state for other sections */
+      .section-empty {
+        flex: 1;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 60px 40px;
+        color: #9aa2a8;
+      }
+      .section-empty.visible {
+        display: flex;
+      }
+      .section-empty .big-icon {
+        width: 90px;
+        height: 90px;
+        border-radius: 28px;
+        background: #f3f5f6;
+        color: #b4bdc2;
+        display: grid;
+        place-items: center;
+        margin-bottom: 20px;
+      }
+      .section-empty .big-icon svg {
+        width: 42px;
+        height: 42px;
+        stroke-width: 1.4;
+      }
+      .section-empty h3 {
+        margin: 0 0 8px;
+        color: #465057;
+        font-size: 15px;
+      }
+      .section-empty p {
+        margin: 0;
+        font-size: 12px;
+        max-width: 280px;
+        line-height: 1.5;
+      }
+
+      /* Main chat */
+      .chat-pane {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        position: relative;
+      }
+      .chat-header {
+        height: 64px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        justify-content: space-between;
+        flex-shrink: 0;
+        background: #fff;
+        z-index: 1;
+      }
+      .chat-head-person {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        min-width: 0;
+      }
+      .chat-head-person .avatar {
+        width: 40px;
+        height: 40px;
+      }
+      .chat-head-person .avatar .face {
+        font-size: 20px;
+      }
+      .chat-head-meta {
+        min-width: 0;
+      }
+      .chat-head-name {
+        font-size: 14px;
+        font-weight: 700;
+        margin: 0 0 2px;
+      }
+      .chat-head-status {
+        font-size: 11px;
+        color: #9aa2a8;
+      }
+      .head-actions {
+        display: flex;
+        gap: 4px;
+        color: #707a81;
+      }
+      .head-actions .icon-btn {
+        width: 36px;
+        height: 36px;
+      }
+      .chat-bg {
+        flex: 1;
+        min-height: 0;
+        position: relative;
+        overflow: hidden;
+        background-color: #e6f4ea;
+        background-image:
+          radial-gradient(
+            circle at 20% 30%,
+            rgba(136, 216, 57, 0.12),
+            transparent 40%
+          ),
+          radial-gradient(
+            circle at 80% 70%,
+            rgba(6, 199, 85, 0.08),
+            transparent 45%
+          );
+      }
+      .messages {
+        position: relative;
+        z-index: 0;
+        height: 100%;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        padding: 20px clamp(18px, 3vw, 45px) 20px;
+        gap: 12px;
+      }
+      .date-divider {
+        align-self: center;
+        border-radius: 20px;
+        padding: 5px 12px;
+        font-size: 10px;
+        color: #8d959b;
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(6px);
+        margin: 2px 0 8px;
+        border: 1px solid rgba(0, 0, 0, 0.04);
+      }
+      .message {
+        display: flex;
+        align-items: flex-end;
+        gap: 6px;
+        max-width: 70%;
+      }
+      .message.incoming {
+        align-self: flex-start;
+      }
+      .message.outgoing {
+        align-self: flex-end;
+        flex-direction: row-reverse;
+      }
+      .msg-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        display: grid;
+        place-items: center;
+        color: white;
+        font-size: 9px;
+        font-weight: 700;
+      }
+      .msg-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        min-width: 0;
+        align-items: flex-start;
+      }
+      .outgoing .msg-stack {
+        align-items: flex-end;
+      }
+      .msg-sender {
+        color: #6e757b;
+        font-size: 10.5px;
+        font-weight: 600;
+        padding: 0 4px;
+      }
+      .bubble {
+        padding: 9px 13px;
+        background: #fff;
+        border: 1px solid #eef0f1;
+        border-radius: 4px 16px 16px 16px;
+        box-shadow: 0 1px 1.5px rgba(30, 40, 48, 0.04);
+        color: #353c42;
+        font-size: 13px;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+        position: relative;
+        max-width: 100%;
+        word-wrap: break-word;
+      }
+      .outgoing .bubble {
+        background: #88d839;
+        border-color: #7cc92e;
+        border-radius: 16px 4px 16px 16px;
+        color: #1a2b10;
+        box-shadow: 0 1px 1.5px rgba(100, 180, 50, 0.18);
+      }
+      .msg-meta {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+        color: #a2a9ae;
+        font-size: 9.5px;
+        padding: 0 4px;
+      }
+      .msg-meta .ticks {
+        color: #d8a94a;
+        font-weight: 800;
+        letter-spacing: -2px;
+        font-size: 10px;
+      }
+      .composer-wrap {
+        padding: 10px 16px 14px;
+        background: white;
+        border-top: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+      .composer-tools {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 2px 8px;
+        color: #949da3;
+      }
+      .tool-btn {
+        background: transparent;
+        color: inherit;
+        display: grid;
+        place-items: center;
+        padding: 2px;
+        border-radius: 6px;
+        transition: 0.15s;
+      }
+      .tool-btn:hover {
+        color: var(--line-dark);
+        background: #f3f5f6;
+      }
+      .tool-btn svg {
+        width: 18px;
+        height: 18px;
+        stroke-width: 1.8;
+      }
+      .composer {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+      }
+      .composer-input {
+        min-height: 40px;
+        max-height: 120px;
+        flex: 1;
+        border-radius: 20px;
+        background: #f3f5f6;
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+      }
+      .composer-input input {
+        width: 100%;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        font-size: 13px;
+        color: #252b30;
+        height: 40px;
+      }
+      .composer-input input::placeholder {
+        color: #a3aaaf;
+      }
+      .send-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: white;
+        background: var(--line);
+        transition: 0.16s;
+        box-shadow: 0 3px 8px rgba(6, 199, 85, 0.25);
+      }
+      .send-btn:hover {
+        background: var(--line-dark);
+        transform: translateY(-1px);
+      }
+      .send-btn svg {
+        width: 17px;
+        height: 17px;
+        margin-left: -2px;
+      }
+      .mobile-back {
+        display: none;
+      }
+      .mobile-bottom {
+        display: none;
+      }
+
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 27px;
+        transform: translate(-50%, 20px);
+        opacity: 0;
+        pointer-events: none;
+        background: #252c31;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 12px;
+        font-size: 12px;
+        z-index: 200;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+        transition: 0.22s;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+
+      /* ============ MOBILE WRAPPER ============ */
+      .mobile-wrapper {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        transition: opacity 0.3s;
+      }
+      body.mobile-mode .mobile-wrapper {
+        display: flex;
+      }
+
+      /* Pixel Phone Frame */
+      .pixel-phone {
+        position: relative;
+        width: 380px;
+        height: 800px;
+        background: #1a1a1a;
+        border-radius: 55px;
+        padding: 14px;
+        box-shadow:
+          0 0 0 2px #2a2a2a,
+          0 0 0 8px #0d0d0d,
+          0 0 0 9px #333,
+          0 30px 80px rgba(0, 0, 0, 0.35),
+          0 15px 40px rgba(0, 0, 0, 0.25);
+        flex-shrink: 0;
+      }
+      /* Side buttons (power, volume) */
+      .pixel-phone::before,
+      .pixel-phone::after {
+        content: "";
+        position: absolute;
+        background: #2a2a2a;
+        border-radius: 2px;
+      }
+      .pixel-phone::before {
+        right: -2px;
+        top: 180px;
+        width: 3px;
+        height: 80px;
+        box-shadow: 0 110px 0 #2a2a2a;
+      }
+      .pixel-phone::after {
+        left: -2px;
+        top: 140px;
+        width: 3px;
+        height: 40px;
+        box-shadow:
+          0 60px 0 #2a2a2a,
+          0 110px 0 #2a2a2a;
+      }
+
+      .phone-screen {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background: #fff;
+        border-radius: 42px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Dynamic Island / Notch */
+      .dynamic-island {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 110px;
+        height: 32px;
+        background: #000;
+        border-radius: 20px;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 12px;
+      }
+      .dynamic-island::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 30% 30%, #2a2a2a, #0a0a0a);
+        box-shadow: inset 0 0 2px rgba(255, 255, 255, 0.1);
+      }
+
+      /* Status bar */
+      .status-bar {
+        height: 44px;
+        padding: 0 24px 0 28px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        font-size: 13px;
+        font-weight: 600;
+        color: #111;
+        padding-bottom: 6px;
+        flex-shrink: 0;
+        z-index: 40;
+      }
+      .status-icons {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .status-icons svg {
+        width: 14px;
+        height: 14px;
+      }
+      .battery {
+        width: 22px;
+        height: 11px;
+        border: 1.3px solid #111;
+        border-radius: 3px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        padding: 1.5px;
+      }
+      .battery::after {
+        content: "";
+        position: absolute;
+        right: -3px;
+        top: 3px;
+        width: 1.5px;
+        height: 4px;
+        background: #111;
+        border-radius: 0 1px 1px 0;
+      }
+      .battery-level {
+        height: 100%;
+        width: 78%;
+        background: #111;
+        border-radius: 1.5px;
+      }
+
+      /* Mobile app shell */
+      .m-app {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .m-top-bar {
+        padding: 6px 14px 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #fff;
+        flex-shrink: 0;
+        border-bottom: 1px solid #f0f2f3;
+      }
+      .m-profile {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f4caab, #bb7e60);
+        display: grid;
+        place-items: center;
+        color: white;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .m-brand {
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--line-dark);
+        letter-spacing: -0.5px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .m-brand svg {
+        width: 22px;
+        height: 22px;
+      }
+      .m-actions {
+        display: flex;
+        gap: 4px;
+      }
+      .m-actions .icon-btn {
+        width: 32px;
+        height: 32px;
+      }
+      .m-actions .icon-btn svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .m-search-row {
+        padding: 4px 14px 10px;
+        background: #fff;
+      }
+      .m-search-row .search-box {
+        height: 36px;
+        border-radius: 8px;
+      }
+
+      .m-chat-list {
+        flex: 1;
+        overflow-y: auto;
+        padding-bottom: 80px;
+        scrollbar-width: none;
+      }
+      .m-chat-list::-webkit-scrollbar {
+        display: none;
+      }
+      .m-chat-row {
+        padding: 10px 14px;
+        gap: 11px;
+        min-height: 66px;
+        border-bottom: 1px solid #f6f7f8;
+        display: flex;
+        align-items: center;
+        background: #fff;
+        text-align: left;
+        width: 100%;
+      }
+      .m-chat-row:active {
+        background: #f0faf3;
+      }
+      .m-chat-row .avatar {
+        width: 46px;
+        height: 46px;
+        font-size: 13px;
+      }
+      .m-chat-row .avatar .face {
+        font-size: 21px;
+      }
+      .m-chat-row .avatar-wrap {
+        width: 46px;
+        height: 46px;
+      }
+      .m-chat-row .chat-name {
+        font-size: 13px;
+      }
+      .m-chat-row .preview-text {
+        font-size: 12px;
+      }
+      .m-chat-row .chat-time {
+        font-size: 10px;
+      }
+
+      /* Mobile bottom nav */
+      .m-bottom-nav {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: #fff;
+        border-top: 1px solid #f0f2f3;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        z-index: 20;
+        padding: 0 4px 8px;
+      }
+      .m-nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        background: transparent;
+        color: #9ca4aa;
+        padding: 6px 0;
+      }
+      .m-nav-item svg {
+        width: 22px;
+        height: 22px;
+        stroke-width: 1.8;
+      }
+      .m-nav-item span {
+        font-size: 9.5px;
+        font-weight: 600;
+      }
+      .m-nav-item.active {
+        color: var(--line-dark);
+      }
+
+      /* Mobile chat view */
+      .m-chat-view {
+        position: absolute;
+        inset: 0;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        z-index: 15;
+        transform: translateX(100%);
+        transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .m-chat-view.open {
+        transform: translateX(0);
+      }
+
+      .m-chat-header {
+        height: 48px;
+        padding: 0 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #fff;
+        border-bottom: 1px solid #f0f2f3;
+        flex-shrink: 0;
+      }
+      .m-back-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: transparent;
+        color: #5f6970;
+        display: grid;
+        place-items: center;
+      }
+      .m-back-btn:active {
+        background: #f0f2f3;
+      }
+      .m-back-btn svg {
+        width: 22px;
+        height: 22px;
+      }
+      .m-chat-header .avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 10px;
+      }
+      .m-chat-header .avatar .face {
+        font-size: 15px;
+      }
+      .m-chat-header .chat-head-meta {
+        flex: 1;
+        min-width: 0;
+      }
+      .m-chat-header .chat-head-name {
+        font-size: 13px;
+        margin: 0;
+      }
+      .m-chat-header .chat-head-status {
+        font-size: 10px;
+      }
+      .m-chat-header .head-actions {
+        gap: 0;
+      }
+      .m-chat-header .head-actions .icon-btn {
+        width: 34px;
+        height: 34px;
+      }
+
+      .m-chat-bg {
+        flex: 1;
+        min-height: 0;
+        background: #e6f4ea;
+        background-image:
+          radial-gradient(
+            circle at 20% 30%,
+            rgba(136, 216, 57, 0.15),
+            transparent 40%
+          ),
+          radial-gradient(
+            circle at 80% 70%,
+            rgba(6, 199, 85, 0.1),
+            transparent 45%
+          );
+        position: relative;
+      }
+      .m-messages {
+        position: relative;
+        height: 100%;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        padding: 14px 10px;
+        gap: 10px;
+        scrollbar-width: none;
+      }
+      .m-messages::-webkit-scrollbar {
+        display: none;
+      }
+      .m-messages .message {
+        max-width: 80%;
+        gap: 5px;
+      }
+      .m-messages .msg-avatar {
+        width: 24px;
+        height: 24px;
+        font-size: 8px;
+      }
+      .m-messages .bubble {
+        padding: 8px 12px;
+        font-size: 13px;
+        border-radius: 4px 14px 14px 14px;
+      }
+      .m-messages .outgoing .bubble {
+        border-radius: 14px 4px 14px 14px;
+      }
+      .m-messages .msg-meta {
+        font-size: 9px;
+      }
+
+      .m-composer {
+        padding: 8px 8px calc(8px);
+        background: #fff;
+        border-top: 1px solid #f0f2f3;
+        flex-shrink: 0;
+        display: flex;
+        align-items: flex-end;
+        gap: 6px;
+      }
+      .m-composer .tool-btn {
+        width: 36px;
+        height: 36px;
+      }
+      .m-composer .composer-input {
+        min-height: 36px;
+        height: 36px;
+        border-radius: 18px;
+        padding: 0 14px;
+        flex: 1;
+      }
+      .m-composer .composer-input input {
+        height: 36px;
+        font-size: 13px;
+      }
+      .m-composer .send-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+      }
+      .m-composer .send-btn svg {
+        width: 15px;
+        height: 15px;
+      }
+
+      /* Home gesture indicator */
+      .gesture-bar {
+        position: absolute;
+        bottom: 6px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 110px;
+        height: 4px;
+        background: #000;
+        border-radius: 2px;
+        z-index: 60;
+        opacity: 0.85;
+      }
+
+      /* Hide desktop elements when mobile mode */
+      body.mobile-mode .side-nav,
+      body.mobile-mode .list-pane:not(.in-phone),
+      body.mobile-mode .chat-pane:not(.in-phone) {
+        display: none;
+      }
+
+      /* Mobile section containers */
+      .m-section {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+      }
+      .m-section.hidden {
+        display: none;
+      }
+
+      /* Friends list in mobile */
+      .friends-list,
+      .news-list {
+        flex: 1;
+        overflow-y: auto;
+        padding-bottom: 80px;
+        scrollbar-width: none;
+      }
+      .friends-list::-webkit-scrollbar,
+      .news-list::-webkit-scrollbar {
+        display: none;
+      }
+      .friend-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        background: #fff;
+        border-bottom: 1px solid #f6f7f8;
+      }
+      .friend-row .avatar {
+        width: 42px;
+        height: 42px;
+      }
+      .friend-row .avatar .face {
+        font-size: 19px;
+      }
+      .friend-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .friend-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: #20262b;
+      }
+      .friend-status {
+        font-size: 11px;
+        color: #9aa2a8;
+        margin-top: 2px;
+      }
+
+      /* News / Timeline */
+      .news-card {
+        padding: 14px;
+        background: #fff;
+        margin-bottom: 8px;
+        border-bottom: 1px solid #f0f2f3;
+      }
+      .news-card-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .news-card-head .avatar {
+        width: 36px;
+        height: 36px;
+      }
+      .news-card-head .avatar .face {
+        font-size: 17px;
+      }
+      .news-author {
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .news-time {
+        font-size: 11px;
+        color: #9aa2a8;
+        margin-top: 2px;
+      }
+      .news-img {
+        height: 160px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #a8d4a0, #5ba74e);
+        margin-bottom: 8px;
+        display: grid;
+        place-items: center;
+        font-size: 40px;
+      }
+      .news-text {
+        font-size: 12.5px;
+        color: #4a5157;
+        line-height: 1.5;
+      }
+      .news-actions {
+        display: flex;
+        gap: 16px;
+        margin-top: 10px;
+        color: #9aa2a8;
+        font-size: 11px;
+      }
+      .news-actions span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      /* Wallet */
+      .wallet-header {
+        background: linear-gradient(135deg, #06c755, #05ad49);
+        padding: 24px 16px;
+        color: white;
+      }
+      .wallet-balance {
+        font-size: 11px;
+        opacity: 0.85;
+        margin-bottom: 6px;
+      }
+      .wallet-amount {
+        font-size: 28px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+      }
+      .wallet-card {
+        background: #fff;
+        margin: 10px 14px;
+        padding: 14px;
+        border-radius: 14px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
+      .wallet-card-title {
+        font-size: 11px;
+        color: #9aa2a8;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+      .wallet-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+      }
+      .wallet-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+      }
+      .wallet-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: #f3f5f6;
+        display: grid;
+        place-items: center;
+        color: var(--line-dark);
+      }
+      .wallet-icon svg {
+        width: 20px;
+        height: 20px;
+        stroke-width: 1.8;
+      }
+      .wallet-item span {
+        font-size: 10px;
+        color: #4a5157;
+        font-weight: 500;
+        text-align: center;
+      }
+
+      /* Calls list */
+      .call-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        background: #fff;
+        border-bottom: 1px solid #f6f7f8;
+      }
+      .call-row .avatar {
+        width: 42px;
+        height: 42px;
+      }
+      .call-row .avatar .face {
+        font-size: 19px;
+      }
+      .call-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .call-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: #20262b;
+      }
+      .call-meta {
+        font-size: 11px;
+        color: #9aa2a8;
+        margin-top: 2px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .call-meta .missed {
+        color: #e55b5b;
+      }
+      .call-action-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--line-dark);
+        display: grid;
+        place-items: center;
+      }
+      .call-action-btn svg {
+        width: 18px;
+        height: 18px;
+        stroke-width: 1.8;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: scale(0.98);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      body.mobile-mode .mobile-wrapper {
+        animation: slideIn 0.3s ease;
+      }
+      body:not(.mobile-mode) .desktop-wrapper {
+        animation: slideIn 0.3s ease;
+      }
+
+      /* Responsive fallback - if screen too small on desktop mode, auto switch */
+      @media (max-width: 700px) {
+        .device-switcher {
+          top: 10px;
+          right: 10px;
+          padding: 3px;
+        }
+        .device-switcher button {
+          padding: 7px 10px;
+          font-size: 11px;
+        }
+        .device-switcher button span {
+          display: none;
+        }
+        body:not(.mobile-mode) {
+          display: flex;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- SVG Symbols -->
+    <svg
+      aria-hidden="true"
+      style="position: absolute; width: 0; height: 0; overflow: hidden"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <symbol id="i-home" viewBox="0 0 24 24">
+        <path
+          d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-chat" viewBox="0 0 24 24">
+        <path
+          d="M20.5 11.4a8.4 8.4 0 0 1-8.8 8.1 9.7 9.7 0 0 1-3.8-.8L3 20l1.3-4.1a7.6 7.6 0 0 1-1.5-4.5 8.4 8.4 0 0 1 8.9-8.1 8.4 8.4 0 0 1 8.8 8.1Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-phone" viewBox="0 0 24 24">
+        <path
+          d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"
+          fill="none"
+          stroke="currentColor"
+        />
+        <path d="M10 17h4" stroke="currentColor" stroke-linecap="round" />
+      </symbol>
+      <symbol id="i-wallet" viewBox="0 0 24 24">
+        <path
+          d="M4 6.5A2.5 2.5 0 0 1 6.5 4H19v16H5a2 2 0 0 1-2-2V6.5Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M3 8h16v9h-4a3 3 0 0 1 0-6h4M15 14.5h.01"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-users" viewBox="0 0 24 24">
+        <circle cx="9" cy="8" r="3.5" fill="none" stroke="currentColor" />
+        <path
+          d="M2.8 20a6.2 6.2 0 0 1 12.4 0M16 5a3.2 3.2 0 0 1 0 6.2m1.2 2.5a5.6 5.6 0 0 1 4 5.3"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-search" viewBox="0 0 24 24">
+        <circle
+          cx="10.8"
+          cy="10.8"
+          r="6.8"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+        <path
+          d="m16 16 4.5 4.5"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24">
+        <path
+          d="M12 5v14M5 12h14"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-more" viewBox="0 0 24 24">
+        <circle cx="5" cy="12" r="1" fill="currentColor" />
+        <circle cx="12" cy="12" r="1" fill="currentColor" />
+        <circle cx="19" cy="12" r="1" fill="currentColor" />
+      </symbol>
+      <symbol id="i-video" viewBox="0 0 24 24">
+        <rect
+          x="3"
+          y="6"
+          width="13"
+          height="12"
+          rx="2"
+          fill="none"
+          stroke="currentColor"
+        />
+        <path
+          d="m16 10 5-3v10l-5-3"
+          fill="none"
+          stroke="currentColor"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-call" viewBox="0 0 24 24">
+        <path
+          d="M7 3.8 9.8 8l-2 2a15 15 0 0 0 6.2 6.2l2-2 4.2 2.8-.7 3a1.7 1.7 0 0 1-1.9 1.3A17.3 17.3 0 0 1 2.7 5.6 1.7 1.7 0 0 1 4 3.7l3-.7Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-image" viewBox="0 0 24 24">
+        <rect
+          x="3"
+          y="4"
+          width="18"
+          height="16"
+          rx="2"
+          fill="none"
+          stroke="currentColor"
+        />
+        <circle cx="8.5" cy="9" r="1.5" fill="none" stroke="currentColor" />
+        <path
+          d="m4 17 5-5 4 4 3-3 4 4"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-smile" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" />
+        <path
+          d="M8 14s1.3 2.5 4 2.5 4-2.5 4-2.5M9 9h.01M15 9h.01"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-paperclip" viewBox="0 0 24 24">
+        <path
+          d="m8 12.5 6.7-6.7a3.2 3.2 0 0 1 4.5 4.5l-8.5 8.5a5 5 0 0 1-7.1-7.1l8.2-8.2"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-send" viewBox="0 0 24 24">
+        <path
+          d="m21 3 7.5 18-3.8-7.7L2 9.5 21 3Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M21 3 13.5 21 9.7 13.3 2 9.5 21 3Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M9.7 13.3 21 3"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-back" viewBox="0 0 24 24">
+        <path
+          d="m15 18-6-6 6-6"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" />
+        <path
+          d="M19.4 15a1.7 1.7 0 0 1-2.4 2.4 1.7 1.7 0 0 0-2.9 1.2v.2a1.7 1.7 0 0 1-3.4 0v-.2a1.7 1.7 0 0 0-2.9-1.2 1.7 1.7 0 0 1-2.4-2.4 1.7 1.7 0 0 0-1.2-2.9H4a1.7 1.7 0 0 1 0-3.4h.2a1.7 1.7 0 0 0 1.2-2.9 1.7 1.7 0 0 1 2.4-2.4 1.7 1.7 0 0 0 2.9-1.2V2a1.7 1.7 0 0 1 3.4 0v.2a1.7 1.7 0 0 0 2.9 1.2 1.7 1.7 0 0 1 2.4 2.4 1.7 1.7 0 0 0 1.2 2.9h.2a1.7 1.7 0 0 1 0 3.4h-.2a1.7 1.7 0 0 0-1.2 2.9Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-qr" viewBox="0 0 24 24">
+        <rect
+          x="3"
+          y="3"
+          width="7"
+          height="7"
+          rx="1"
+          fill="none"
+          stroke="currentColor"
+        />
+        <rect
+          x="14"
+          y="3"
+          width="7"
+          height="7"
+          rx="1"
+          fill="none"
+          stroke="currentColor"
+        />
+        <rect
+          x="3"
+          y="14"
+          width="7"
+          height="7"
+          rx="1"
+          fill="none"
+          stroke="currentColor"
+        />
+        <path
+          d="M14 14h3v3h-3zM20 14v3M14 20h7"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-news" viewBox="0 0 24 24">
+        <path
+          d="M4 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 0-2 2V4Z"
+          fill="none"
+          stroke="currentColor"
+        />
+        <path
+          d="M4 4h14M7 9h8M7 13h5"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-heart" viewBox="0 0 24 24">
+        <path
+          d="M20.8 6.6a5.5 5.5 0 0 0-9-2.1 5.5 5.5 0 0 0-9 2.1C1 11.6 12 20 12 20s11-8.4 8.8-13.4Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-comment" viewBox="0 0 24 24">
+        <path
+          d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 20l.9-4.2A8.4 8.4 0 0 1 3 11.5 8.5 8.5 0 0 1 11.5 3 8.5 8.5 0 0 1 21 11.5Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-signal" viewBox="0 0 24 24">
+        <path
+          d="M2 20h2v-4H2zM6 20h2v-8H6zM10 20h2v-12h-2zM14 20h2v-16h-2zM18 20h2V2h-2z"
+          fill="currentColor"
+        />
+      </symbol>
+      <symbol id="i-wifi" viewBox="0 0 24 24">
+        <path
+          d="M12 18a2 2 0 1 0 0 4 2 2 0 0 0 0-4ZM5 12.5a10 10 0 0 1 14 0M2 9a14 14 0 0 1 20 0M8 16a5 5 0 0 1 8 0"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-heart-fill" viewBox="0 0 24 24">
+        <path
+          d="M20.8 6.6a5.5 5.5 0 0 0-9-2.1 5.5 5.5 0 0 0-9 2.1C1 11.6 12 20 12 20s11-8.4 8.8-13.4Z"
+          fill="currentColor"
+        />
+      </symbol>
+      <symbol id="i-arrow-down" viewBox="0 0 24 24">
+        <path
+          d="M12 5v14M5 12l7 7 7-7"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-laptop" viewBox="0 0 24 24">
+        <rect
+          x="3"
+          y="4"
+          width="18"
+          height="12"
+          rx="1.5"
+          fill="none"
+          stroke="currentColor"
+          stroke-linejoin="round"
+        />
+        <path d="M2 20h20" stroke="currentColor" stroke-linecap="round" />
+      </symbol>
+      <symbol id="i-mobile" viewBox="0 0 24 24">
+        <rect
+          x="6"
+          y="2"
+          width="12"
+          height="20"
+          rx="2.5"
+          fill="none"
+          stroke="currentColor"
+          stroke-linejoin="round"
+        />
+        <path d="M11 18h2" stroke="currentColor" stroke-linecap="round" />
+      </symbol>
+    </svg>
+
+    <!-- Device Switcher -->
+    <div class="device-switcher">
+      <button id="btnDesktop" class="active">
+        <svg><use href="#i-laptop" /></svg>
+        <span>Desktop</span>
+      </button>
+      <button id="btnMobile">
+        <svg><use href="#i-mobile" /></svg>
+        <span>Mobile</span>
+      </button>
+    </div>
+
+    <!-- ============ DESKTOP VIEW ============ -->
+    <div class="desktop-wrapper">
+      <main class="app-shell" id="appShell">
+        <aside class="side-nav" aria-label="Navigasi utama">
+          <div class="brand-mark" aria-label="LINE">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 3.2c-5 0-9 3.2-9 7.2 0 3.7 3.5 6.7 8.1 7.1.4 0 .7.2.8.6l.3 1.6c.1.4.5.5.8.3 2.3-1.3 5.9-4.1 6.8-7.7.9-4.7-2.8-9.1-7.8-9.1Z"
+                fill="white"
+              />
+              <path
+                d="M7.1 8.2h1v4h2M11 8.2h1v4h-1zM14 12.2V8.2h1l1.8 2.6V8.2h1v4h-1l-1.8-2.6v2.6Z"
+                stroke="#06c755"
+                stroke-width=".7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+          <button class="nav-icon" data-section="Home" title="Home">
+            <svg><use href="#i-home" /></svg>
+          </button>
+          <button class="nav-icon active" data-section="Chats" title="Chats">
+            <svg><use href="#i-chat" /></svg>
+          </button>
+          <button class="nav-icon" data-section="VoOM" title="VoOM">
+            <svg><use href="#i-news" /></svg>
+          </button>
+          <button class="nav-icon" data-section="News" title="News">
+            <svg><use href="#i-news" /></svg>
+          </button>
+          <button class="nav-icon" data-section="Friends" title="Friends">
+            <svg><use href="#i-users" /></svg>
+          </button>
+          <button class="nav-icon" data-section="Calls" title="Calls">
+            <svg><use href="#i-phone" /></svg>
+          </button>
+          <button class="nav-icon" data-section="Wallet" title="Wallet">
+            <svg><use href="#i-wallet" /></svg>
+          </button>
+          <div class="nav-spacer"></div>
+          <button class="nav-icon" id="settingsButton" title="Settings">
+            <svg><use href="#i-settings" /></svg>
+          </button>
+          <div class="nav-avatar" title="Profil saya">AR</div>
+        </aside>
+
+        <section class="list-pane" aria-label="Daftar percakapan">
+          <header class="list-header">
+            <div class="header-top">
+              <h1 class="header-title" id="sectionTitle">Chats</h1>
+              <div class="header-actions">
+                <button class="icon-btn" id="addChat" title="Buat chat baru">
+                  <svg><use href="#i-plus" /></svg>
+                </button>
+                <button class="icon-btn" id="listMore" title="Menu lainnya">
+                  <svg><use href="#i-more" /></svg>
+                </button>
+              </div>
+            </div>
+            <label class="search-box">
+              <svg><use href="#i-search" /></svg>
+              <input
+                id="searchInput"
+                type="search"
+                placeholder="Search"
+                autocomplete="off"
+                aria-label="Cari percakapan"
+              />
+            </label>
+          </header>
+          <nav class="top-tabs" aria-label="Kategori chat">
+            <button class="top-tab active" data-filter="all">All</button>
+            <button class="top-tab" data-filter="unread">Unread</button>
+            <button class="top-tab" data-filter="groups">Groups</button>
+            <button class="top-tab" data-filter="official">Official</button>
+          </nav>
+          <div class="chat-list" id="chatList">
+            <div class="list-label">Today</div>
+            <button
+              class="chat-row selected"
+              data-chat="maya"
+              data-kind="person"
+              data-unread="0"
+            >
+              <div class="avatar-wrap">
+                <div
+                  class="avatar"
+                  style="--avatar-bg: linear-gradient(145deg, #e9b89a, #ad6e51)"
+                >
+                  <span class="face">👩🏻</span>
+                </div>
+                <i class="online-dot"></i>
+              </div>
+              <div class="chat-content">
+                <div class="chat-line">
+                  <span class="chat-name">Maya Putri</span
+                  ><span class="chat-time">16:42</span>
+                </div>
+                <div class="chat-preview">
+                  <span class="preview-text"
+                    ><span class="read">✓✓</span> Oke, sampai ketemu
+                    nanti!</span
+                  >
+                </div>
+              </div>
+            </button>
+            <button
+              class="chat-row"
+              data-chat="keluarga"
+              data-kind="group"
+              data-unread="3"
+            >
+              <div class="avatar-wrap">
+                <div
+                  class="avatar"
+                  style="background: linear-gradient(135deg, #f7cf73, #df855d)"
+                >
+                  <span class="face">🏡</span>
+                </div>
+              </div>
+              <div class="chat-content">
+                <div class="chat-line">
+                  <span class="chat-name">Keluarga Besar ❤️</span
+                  ><span class="chat-time">16:18</span>
+                </div>
+                <div class="chat-preview">
+                  <span class="preview-text"
+                    >Ibu: Jangan lupa makan ya semuanya</span
+                  ><span class="unread">3</span>
+                </div>
+              </div>
+            </button>
+            <button
+              class="chat-row"
+              data-chat="dimas"
+              data-kind="person"
+              data-unread="1"
+            >
+              <div class="avatar-wrap">
+                <div
+                  class="avatar"
+                  style="background: linear-gradient(145deg, #9ac7b7, #467c70)"
+                >
+                  <span class="face">👨🏻</span>
+                </div>
+                <i class="online-dot"></i>
+              </div>
+              <div class="chat-content">
+                <div class="chat-line">
+                  <span class="chat-name">Dimas Saputra</span
+                  ><span class="chat-time">15:56</span>
+                </div>
+                <div class="chat-preview">
+                  <span class="preview-text">🎤 Voice message 0:42</span
+                  ><span class="unread">1</span>
+                </div>
+              </div>
+            </button>
+            <button
+              class="chat-row"
+              data-chat="design"
+              data-kind="group"
+              data-unread="0"
+            >
+              <div class="avatar-wrap">
+                <div
+                  class="avatar"
+                  style="background: linear-gradient(135deg, #c7b7e9, #8375b7)"
+                >
+                  <span class="face">🎨</span>
+                </div>
+              </div>
+              <div class="chat-content">
+                <div class="chat-line">
+                  <span class="chat-name">Design Team ✨</span
+                  ><span class="chat-time">15:21</span>
+                </div>
+                <div class="chat-preview">
+                  <span class="preview-text"
+                    >Raka: File revisinya sudah aku upload.</span
+                  >
+                </div>
+              </div>
+            </button>
+            <button
+              class="chat-row"
+              data-chat="nina"
+              data-kind="person"
+              data-unread="0"
+            >
+              <div class="avatar-wrap">
+                <div
+                  class="avatar"
+                  style="background: linear-gradient(145deg, #f5a8bb, #b85f83)"
+                >
+                  <span class="face">👩🏽</span>
+                </div>
+              </div>
+              <div class="chat-content">
+                <div class="chat-line">
+                  <span class="chat-name">Nina Rahma</span
+                  ><span class="chat-time">14:08</span>
+                </div>
+                <div class="chat-preview">
+                  <span class="preview-text"
+                    ><span class="read">✓✓</span> Hahaha lucu banget 😂</span
+                  >
+                </div>
+              </div>
+            </button>
+            <div class="list-label">Yesterday</div>
+            <button
+              class="chat-row"
+              data-chat="official"
+              data-kind="official"
+              data-unread="0"
+            >
+              <div class="avatar-wrap">
+                <div class="avatar" style="background: #06c755">
+                  <span class="face" style="font-size: 20px">LINE</span>
+                </div>
+              </div>
+              <div class="chat-content">
+                <div class="chat-line">
+                  <span class="chat-name">LINE</span
+                  ><span class="chat-time">Kemarin</span>
+                </div>
+                <div class="chat-preview">
+                  <span class="preview-text"
+                    >Nikmati fitur terbaru dari LINE!</span
+                  ><span class="muted-icon">●</span>
+                </div>
+              </div>
+            </button>
+            <button
+              class="chat-row"
+              data-chat="rani"
+              data-kind="person"
+              data-unread="0"
+            >
+              <div class="avatar-wrap">
+                <div
+                  class="avatar"
+                  style="background: linear-gradient(135deg, #f2d08a, #bd9254)"
+                >
+                  <span class="face">👩🏼</span>
+                </div>
+              </div>
+              <div class="chat-content">
+                <div class="chat-line">
+                  <span class="chat-name">Rani Amelia</span
+                  ><span class="chat-time">Kemarin</span>
+                </div>
+                <div class="chat-preview">
+                  <span class="preview-text"
+                    ><span class="read">✓✓</span> Makasih banyak yaa!</span
+                  >
+                </div>
+              </div>
+            </button>
+            <button
+              class="chat-row"
+              data-chat="weekend"
+              data-kind="group"
+              data-unread="0"
+            >
+              <div class="avatar-wrap">
+                <div
+                  class="avatar"
+                  style="background: linear-gradient(135deg, #a8c9e7, #6c8eb5)"
+                >
+                  <span class="face">🏖️</span>
+                </div>
+              </div>
+              <div class="chat-content">
+                <div class="chat-line">
+                  <span class="chat-name">Weekend Plan</span
+                  ><span class="chat-time">Rab</span>
+                </div>
+                <div class="chat-preview">
+                  <span class="preview-text">Fajar: Gas ke pantai! 🌊</span>
+                </div>
+              </div>
+            </button>
+            <div class="empty-search" id="emptySearch">
+              Tidak ada percakapan yang cocok.
+            </div>
+          </div>
+        </section>
+
+        <section class="chat-pane" aria-label="Percakapan">
+          <div class="section-empty" id="sectionEmpty">
+            <div class="big-icon">
+              <svg><use href="#i-home" /></svg>
+            </div>
+            <h3>Pilih section untuk melihat konten</h3>
+            <p>Klik salah satu menu di sidebar untuk memulai</p>
+          </div>
+          <div
+            id="chatPaneContent"
+            style="display: flex; flex-direction: column; height: 100%"
+          >
+            <header class="chat-header">
+              <div class="chat-head-person">
+                <div
+                  class="avatar"
+                  id="activeAvatar"
+                  style="background: linear-gradient(145deg, #e9b89a, #ad6e51)"
+                >
+                  <span class="face">👩🏻</span>
+                </div>
+                <div class="chat-head-meta">
+                  <h2 class="chat-head-name" id="activeName">Maya Putri</h2>
+                  <div class="chat-head-status" id="activeStatus">online</div>
+                </div>
+              </div>
+              <div class="head-actions">
+                <button class="icon-btn" id="audioCall" title="Panggilan suara">
+                  <svg><use href="#i-call" /></svg>
+                </button>
+                <button class="icon-btn" id="videoCall" title="Panggilan video">
+                  <svg><use href="#i-video" /></svg>
+                </button>
+                <button class="icon-btn" id="chatMore" title="Info chat">
+                  <svg><use href="#i-more" /></svg>
+                </button>
+              </div>
+            </header>
+            <div class="chat-bg">
+              <div class="messages" id="messages">
+                <div class="date-divider">Hari ini</div>
+              </div>
+            </div>
+            <footer class="composer-wrap">
+              <div class="composer-tools">
+                <button
+                  class="tool-btn"
+                  id="attachButton"
+                  title="Lampirkan file"
+                >
+                  <svg><use href="#i-paperclip" /></svg>
+                </button>
+                <button class="tool-btn" id="imageButton" title="Kirim gambar">
+                  <svg><use href="#i-image" /></svg>
+                </button>
+                <button class="tool-btn" id="emojiButton" title="Emoji">
+                  <svg><use href="#i-smile" /></svg>
+                </button>
+              </div>
+              <form class="composer" id="messageForm">
+                <label class="composer-input">
+                  <input
+                    id="messageInput"
+                    type="text"
+                    placeholder="Aa"
+                    autocomplete="off"
+                    aria-label="Tulis pesan"
+                  />
+                </label>
+                <button class="send-btn" type="submit" aria-label="Kirim pesan">
+                  <svg><use href="#i-send" /></svg>
+                </button>
+              </form>
+            </footer>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- ============ MOBILE VIEW ============ -->
+    <div class="mobile-wrapper">
+      <div class="pixel-phone">
+        <div class="phone-screen">
+          <!-- Dynamic Island -->
+          <div class="dynamic-island"></div>
+          <!-- Status bar -->
+          <div class="status-bar">
+            <span id="phoneTime">9:41</span>
+            <div class="status-icons">
+              <svg><use href="#i-signal" /></svg>
+              <svg><use href="#i-wifi" /></svg>
+              <div class="battery"><div class="battery-level"></div></div>
+            </div>
+          </div>
+
+          <div class="m-app" id="mobileApp">
+            <!-- CHATS SECTION -->
+            <div class="m-section" data-m-section="Chats" id="mSectionChats">
+              <div class="m-top-bar">
+                <div class="m-profile">AR</div>
+                <div class="m-brand">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M12 3.2c-5 0-9 3.2-9 7.2 0 3.7 3.5 6.7 8.1 7.1.4 0 .7.2.8.6l.3 1.6c.1.4.5.5.8.3 2.3-1.3 5.9-4.1 6.8-7.7.9-4.7-2.8-9.1-7.8-9.1Z"
+                      fill="#05ad49"
+                    />
+                    <path
+                      d="M7.1 8.2h1v4h2M11 8.2h1v4h-1zM14 12.2V8.2h1l1.8 2.6V8.2h1v4h-1l-1.8-2.6v2.6Z"
+                      stroke="#fff"
+                      stroke-width=".6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </div>
+                <div class="m-actions">
+                  <button class="icon-btn" title="QR">
+                    <svg><use href="#i-qr" /></svg>
+                  </button>
+                  <button class="icon-btn" id="mAddChat" title="Tambah">
+                    <svg><use href="#i-plus" /></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="m-search-row">
+                <label class="search-box">
+                  <svg><use href="#i-search" /></svg>
+                  <input
+                    id="mSearchInput"
+                    type="search"
+                    placeholder="Search"
+                    autocomplete="off"
+                  />
+                </label>
+              </div>
+              <div class="m-chat-list" id="mChatList">
+                <!-- akan diisi JS -->
+              </div>
+              <nav class="m-bottom-nav">
+                <button class="m-nav-item" data-m-section="Home">
+                  <svg><use href="#i-home" /></svg><span>Home</span>
+                </button>
+                <button class="m-nav-item active" data-m-section="Chats">
+                  <svg><use href="#i-chat" /></svg><span>Chats</span>
+                </button>
+                <button class="m-nav-item" data-m-section="VoOM">
+                  <svg><use href="#i-news" /></svg><span>VoOM</span>
+                </button>
+                <button class="m-nav-item" data-m-section="News">
+                  <svg><use href="#i-news" /></svg><span>News</span>
+                </button>
+                <button class="m-nav-item" data-m-section="Wallet">
+                  <svg><use href="#i-wallet" /></svg><span>Wallet</span>
+                </button>
+              </nav>
+            </div>
+
+            <!-- HOME SECTION -->
+            <div class="m-section hidden" data-m-section="Home">
+              <div class="m-top-bar">
+                <div class="m-profile">AR</div>
+                <div class="m-brand" style="color: #20262b; font-size: 18px">
+                  Home
+                </div>
+                <div class="m-actions">
+                  <button class="icon-btn">
+                    <svg><use href="#i-search" /></svg>
+                  </button>
+                  <button class="icon-btn">
+                    <svg><use href="#i-settings" /></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="friends-list" style="padding: 16px 14px">
+                <div
+                  style="text-align: center; padding: 30px 20px; color: #9aa2a8"
+                >
+                  <div
+                    style="
+                      width: 70px;
+                      height: 70px;
+                      border-radius: 50%;
+                      background: linear-gradient(135deg, #f4caab, #bb7e60);
+                      color: white;
+                      display: grid;
+                      place-items: center;
+                      font-size: 22px;
+                      font-weight: 700;
+                      margin: 0 auto 14px;
+                    "
+                  >
+                    AR
+                  </div>
+                  <h3 style="margin: 0 0 6px; color: #20262b; font-size: 17px">
+                    Andi Rahman
+                  </h3>
+                  <div style="font-size: 12px">ID: @andi.rhmn</div>
+                  <div
+                    style="
+                      margin-top: 20px;
+                      display: grid;
+                      grid-template-columns: repeat(4, 1fr);
+                      gap: 10px;
+                    "
+                  >
+                    <div
+                      style="
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 6px;
+                      "
+                    >
+                      <div
+                        style="
+                          width: 44px;
+                          height: 44px;
+                          border-radius: 12px;
+                          background: #f3f5f6;
+                          display: grid;
+                          place-items: center;
+                          color: #06c755;
+                        "
+                      >
+                        <svg width="20" height="20"><use href="#i-qr" /></svg>
+                      </div>
+                      <span style="font-size: 10px; color: #4a5157">My QR</span>
+                    </div>
+                    <div
+                      style="
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 6px;
+                      "
+                    >
+                      <div
+                        style="
+                          width: 44px;
+                          height: 44px;
+                          border-radius: 12px;
+                          background: #f3f5f6;
+                          display: grid;
+                          place-items: center;
+                          color: #06c755;
+                        "
+                      >
+                        <svg width="20" height="20"><use href="#i-plus" /></svg>
+                      </div>
+                      <span style="font-size: 10px; color: #4a5157">Add</span>
+                    </div>
+                    <div
+                      style="
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 6px;
+                      "
+                    >
+                      <div
+                        style="
+                          width: 44px;
+                          height: 44px;
+                          border-radius: 12px;
+                          background: #f3f5f6;
+                          display: grid;
+                          place-items: center;
+                          color: #06c755;
+                        "
+                      >
+                        <svg width="20" height="20">
+                          <use href="#i-heart" />
+                        </svg>
+                      </div>
+                      <span style="font-size: 10px; color: #4a5157"
+                        >Favorites</span
+                      >
+                    </div>
+                    <div
+                      style="
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 6px;
+                      "
+                    >
+                      <div
+                        style="
+                          width: 44px;
+                          height: 44px;
+                          border-radius: 12px;
+                          background: #f3f5f6;
+                          display: grid;
+                          place-items: center;
+                          color: #06c755;
+                        "
+                      >
+                        <svg width="20" height="20">
+                          <use href="#i-settings" />
+                        </svg>
+                      </div>
+                      <span style="font-size: 10px; color: #4a5157"
+                        >Settings</span
+                      >
+                    </div>
+                  </div>
+                </div>
+                <div class="list-label" style="padding-left: 0">
+                  Recommended
+                </div>
+                <div class="friend-row">
+                  <div
+                    class="avatar"
+                    style="
+                      background: linear-gradient(135deg, #a8c9e7, #6c8eb5);
+                      font-size: 19px;
+                    "
+                  >
+                    <span class="face">🎬</span>
+                  </div>
+                  <div class="friend-info">
+                    <div class="friend-name">LINE Movie</div>
+                    <div class="friend-status">Official account</div>
+                  </div>
+                </div>
+                <div class="friend-row">
+                  <div
+                    class="avatar"
+                    style="
+                      background: linear-gradient(135deg, #f7cf73, #df855d);
+                      font-size: 19px;
+                    "
+                  >
+                    <span class="face">🎵</span>
+                  </div>
+                  <div class="friend-info">
+                    <div class="friend-name">LINE Music</div>
+                    <div class="friend-status">Official account</div>
+                  </div>
+                </div>
+                <div class="friend-row">
+                  <div
+                    class="avatar"
+                    style="
+                      background: linear-gradient(135deg, #f5a8bb, #b85f83);
+                      font-size: 19px;
+                    "
+                  >
+                    <span class="face">📰</span>
+                  </div>
+                  <div class="friend-info">
+                    <div class="friend-name">LINE TODAY</div>
+                    <div class="friend-status">Official account</div>
+                  </div>
+                </div>
+              </div>
+              <nav class="m-bottom-nav">
+                <button class="m-nav-item active" data-m-section="Home">
+                  <svg><use href="#i-home" /></svg><span>Home</span>
+                </button>
+                <button class="m-nav-item" data-m-section="Chats">
+                  <svg><use href="#i-chat" /></svg><span>Chats</span>
+                </button>
+                <button class="m-nav-item" data-m-section="VoOM">
+                  <svg><use href="#i-news" /></svg><span>VoOM</span>
+                </button>
+                <button class="m-nav-item" data-m-section="News">
+                  <svg><use href="#i-news" /></svg><span>News</span>
+                </button>
+                <button class="m-nav-item" data-m-section="Wallet">
+                  <svg><use href="#i-wallet" /></svg><span>Wallet</span>
+                </button>
+              </nav>
+            </div>
+
+            <!-- VOOM SECTION -->
+            <div class="m-section hidden" data-m-section="VoOM">
+              <div class="m-top-bar">
+                <div class="m-profile">AR</div>
+                <div class="m-brand" style="color: #20262b; font-size: 18px">
+                  VoOM
+                </div>
+                <div class="m-actions">
+                  <button class="icon-btn">
+                    <svg><use href="#i-search" /></svg>
+                  </button>
+                  <button class="icon-btn">
+                    <svg><use href="#i-plus" /></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="news-list">
+                <div class="news-card">
+                  <div class="news-card-head">
+                    <div
+                      class="avatar"
+                      style="
+                        background: linear-gradient(145deg, #e9b89a, #ad6e51);
+                        width: 36px;
+                        height: 36px;
+                      "
+                    >
+                      <span class="face" style="font-size: 17px">👩🏻</span>
+                    </div>
+                    <div>
+                      <div class="news-author">Maya Putri</div>
+                      <div class="news-time">2 jam lalu</div>
+                    </div>
+                  </div>
+                  <div class="news-img">🌅</div>
+                  <div class="news-text">
+                    Sunset yang indah di pantai hari ini! 🌊✨ Siapa yang mau
+                    ikut weekend ini?
+                  </div>
+                  <div class="news-actions">
+                    <span
+                      ><svg width="14" height="14"><use href="#i-heart" /></svg>
+                      124</span
+                    >
+                    <span
+                      ><svg width="14" height="14">
+                        <use href="#i-comment" />
+                      </svg>
+                      23</span
+                    >
+                    <span style="margin-left: auto"
+                      ><svg width="14" height="14"><use href="#i-send" /></svg
+                    ></span>
+                  </div>
+                </div>
+                <div class="news-card">
+                  <div class="news-card-head">
+                    <div
+                      class="avatar"
+                      style="
+                        background: linear-gradient(145deg, #9ac7b7, #467c70);
+                        width: 36px;
+                        height: 36px;
+                      "
+                    >
+                      <span class="face" style="font-size: 17px">👨🏻</span>
+                    </div>
+                    <div>
+                      <div class="news-author">Dimas Saputra</div>
+                      <div class="news-time">5 jam lalu</div>
+                    </div>
+                  </div>
+                  <div
+                    class="news-img"
+                    style="
+                      background: linear-gradient(135deg, #f7cf73, #df855d);
+                    "
+                  >
+                    🏀
+                  </div>
+                  <div class="news-text">
+                    Latihan basket hari ini sangat seru! Siap untuk turnamen
+                    minggu depan 💪
+                  </div>
+                  <div class="news-actions">
+                    <span
+                      ><svg width="14" height="14"><use href="#i-heart" /></svg>
+                      87</span
+                    >
+                    <span
+                      ><svg width="14" height="14">
+                        <use href="#i-comment" />
+                      </svg>
+                      15</span
+                    >
+                  </div>
+                </div>
+              </div>
+              <nav class="m-bottom-nav">
+                <button class="m-nav-item" data-m-section="Home">
+                  <svg><use href="#i-home" /></svg><span>Home</span>
+                </button>
+                <button class="m-nav-item" data-m-section="Chats">
+                  <svg><use href="#i-chat" /></svg><span>Chats</span>
+                </button>
+                <button class="m-nav-item active" data-m-section="VoOM">
+                  <svg><use href="#i-news" /></svg><span>VoOM</span>
+                </button>
+                <button class="m-nav-item" data-m-section="News">
+                  <svg><use href="#i-news" /></svg><span>News</span>
+                </button>
+                <button class="m-nav-item" data-m-section="Wallet">
+                  <svg><use href="#i-wallet" /></svg><span>Wallet</span>
+                </button>
+              </nav>
+            </div>
+
+            <!-- NEWS SECTION -->
+            <div class="m-section hidden" data-m-section="News">
+              <div class="m-top-bar">
+                <div class="m-profile">AR</div>
+                <div class="m-brand" style="color: #20262b; font-size: 18px">
+                  News
+                </div>
+                <div class="m-actions">
+                  <button class="icon-btn">
+                    <svg><use href="#i-search" /></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="news-list">
+                <div class="news-card">
+                  <div class="news-card-head">
+                    <div
+                      class="avatar"
+                      style="background: #06c755; width: 36px; height: 36px"
+                    >
+                      <span
+                        class="face"
+                        style="font-size: 11px; font-weight: 700; color: white"
+                        >LINE</span
+                      >
+                    </div>
+                    <div>
+                      <div class="news-author">LINE TODAY</div>
+                      <div class="news-time">30 menit lalu</div>
+                    </div>
+                  </div>
+                  <div
+                    class="news-img"
+                    style="
+                      background: linear-gradient(135deg, #4d9df7, #2d7cd8);
+                    "
+                  >
+                    📰
+                  </div>
+                  <div class="news-text">
+                    Berita terkini: Update fitur terbaru LINE 2026 sudah hadir!
+                    Nikmati sticker animasi baru dan fitur panggilan video HD.
+                  </div>
+                  <div class="news-actions">
+                    <span
+                      ><svg width="14" height="14"><use href="#i-heart" /></svg>
+                      1.2k</span
+                    >
+                    <span
+                      ><svg width="14" height="14">
+                        <use href="#i-comment" />
+                      </svg>
+                      345</span
+                    >
+                  </div>
+                </div>
+                <div class="news-card">
+                  <div class="news-card-head">
+                    <div
+                      class="avatar"
+                      style="
+                        background: linear-gradient(135deg, #c7b7e9, #8375b7);
+                        width: 36px;
+                        height: 36px;
+                      "
+                    >
+                      <span class="face" style="font-size: 17px">🎮</span>
+                    </div>
+                    <div>
+                      <div class="news-author">LINE Games</div>
+                      <div class="news-time">2 jam lalu</div>
+                    </div>
+                  </div>
+                  <div
+                    class="news-img"
+                    style="
+                      background: linear-gradient(135deg, #c7b7e9, #8375b7);
+                    "
+                  >
+                    🎮
+                  </div>
+                  <div class="news-text">
+                    Event spesial! Dapatkan diamond gratis untuk game LINE
+                    Rangers hingga akhir bulan ini.
+                  </div>
+                  <div class="news-actions">
+                    <span
+                      ><svg width="14" height="14"><use href="#i-heart" /></svg>
+                      567</span
+                    >
+                    <span
+                      ><svg width="14" height="14">
+                        <use href="#i-comment" />
+                      </svg>
+                      89</span
+                    >
+                  </div>
+                </div>
+              </div>
+              <nav class="m-bottom-nav">
+                <button class="m-nav-item" data-m-section="Home">
+                  <svg><use href="#i-home" /></svg><span>Home</span>
+                </button>
+                <button class="m-nav-item" data-m-section="Chats">
+                  <svg><use href="#i-chat" /></svg><span>Chats</span>
+                </button>
+                <button class="m-nav-item" data-m-section="VoOM">
+                  <svg><use href="#i-news" /></svg><span>VoOM</span>
+                </button>
+                <button class="m-nav-item active" data-m-section="News">
+                  <svg><use href="#i-news" /></svg><span>News</span>
+                </button>
+                <button class="m-nav-item" data-m-section="Wallet">
+                  <svg><use href="#i-wallet" /></svg><span>Wallet</span>
+                </button>
+              </nav>
+            </div>
+
+            <!-- WALLET SECTION -->
+            <div class="m-section hidden" data-m-section="Wallet">
+              <div
+                class="m-top-bar"
+                style="
+                  background: transparent;
+                  position: absolute;
+                  top: 0;
+                  left: 0;
+                  right: 0;
+                  z-index: 2;
+                "
+              >
+                <div
+                  class="m-profile"
+                  style="background: rgba(255, 255, 255, 0.2)"
+                >
+                  AR
+                </div>
+                <div class="m-brand" style="color: white; font-size: 18px">
+                  Wallet
+                </div>
+                <div class="m-actions">
+                  <button class="icon-btn" style="color: white">
+                    <svg><use href="#i-more" /></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="friends-list" style="padding-top: 44px">
+                <div class="wallet-header">
+                  <div class="wallet-balance">LINE Pay Balance</div>
+                  <div class="wallet-amount">Rp 1.250.000</div>
+                </div>
+                <div class="wallet-card">
+                  <div class="wallet-card-title">Quick Actions</div>
+                  <div class="wallet-grid">
+                    <div class="wallet-item">
+                      <div class="wallet-icon">
+                        <svg><use href="#i-arrow-down" /></svg>
+                      </div>
+                      <span>Top Up</span>
+                    </div>
+                    <div class="wallet-item">
+                      <div class="wallet-icon">
+                        <svg><use href="#i-send" /></svg>
+                      </div>
+                      <span>Transfer</span>
+                    </div>
+                    <div class="wallet-item">
+                      <div class="wallet-icon">
+                        <svg><use href="#i-qr" /></svg>
+                      </div>
+                      <span>Scan</span>
+                    </div>
+                    <div class="wallet-item">
+                      <div class="wallet-icon">
+                        <svg><use href="#i-paperclip" /></svg>
+                      </div>
+                      <span>Request</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="wallet-card">
+                  <div class="wallet-card-title">Services</div>
+                  <div class="wallet-grid">
+                    <div class="wallet-item">
+                      <div class="wallet-icon">
+                        <svg><use href="#i-phone" /></svg>
+                      </div>
+                      <span>Pulsa</span>
+                    </div>
+                    <div class="wallet-item">
+                      <div class="wallet-icon">
+                        <svg><use href="#i-wallet" /></svg>
+                      </div>
+                      <span>Bills</span>
+                    </div>
+                    <div class="wallet-item">
+                      <div class="wallet-icon">
+                        <svg><use href="#i-image" /></svg>
+                      </div>
+                      <span>Voucher</span>
+                    </div>
+                    <div class="wallet-item">
+                      <div class="wallet-icon">
+                        <svg><use href="#i-more" /></svg>
+                      </div>
+                      <span>More</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <nav class="m-bottom-nav">
+                <button class="m-nav-item" data-m-section="Home">
+                  <svg><use href="#i-home" /></svg><span>Home</span>
+                </button>
+                <button class="m-nav-item" data-m-section="Chats">
+                  <svg><use href="#i-chat" /></svg><span>Chats</span>
+                </button>
+                <button class="m-nav-item" data-m-section="VoOM">
+                  <svg><use href="#i-news" /></svg><span>VoOM</span>
+                </button>
+                <button class="m-nav-item" data-m-section="News">
+                  <svg><use href="#i-news" /></svg><span>News</span>
+                </button>
+                <button class="m-nav-item active" data-m-section="Wallet">
+                  <svg><use href="#i-wallet" /></svg><span>Wallet</span>
+                </button>
+              </nav>
+            </div>
+
+            <!-- MOBILE CHAT VIEW (OVERLAY) -->
+            <div class="m-chat-view" id="mChatView">
+              <div class="m-chat-header">
+                <button class="m-back-btn" id="mBackBtn">
+                  <svg><use href="#i-back" /></svg>
+                </button>
+                <div
+                  class="avatar"
+                  id="mActiveAvatar"
+                  style="background: linear-gradient(145deg, #e9b89a, #ad6e51)"
+                >
+                  <span class="face">👩🏻</span>
+                </div>
+                <div class="chat-head-meta">
+                  <h2 class="chat-head-name" id="mActiveName">Maya Putri</h2>
+                  <div class="chat-head-status" id="mActiveStatus">online</div>
+                </div>
+                <div class="head-actions">
+                  <button class="icon-btn" id="mAudioCall">
+                    <svg><use href="#i-call" /></svg>
+                  </button>
+                  <button class="icon-btn" id="mVideoCall">
+                    <svg><use href="#i-video" /></svg>
+                  </button>
+                  <button class="icon-btn" id="mChatMore">
+                    <svg><use href="#i-more" /></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="m-chat-bg">
+                <div class="m-messages" id="mMessages">
+                  <div class="date-divider">Hari ini</div>
+                </div>
+              </div>
+              <form class="m-composer" id="mMessageForm">
+                <button type="button" class="tool-btn" id="mAttachBtn">
+                  <svg><use href="#i-plus" /></svg>
+                </button>
+                <label class="composer-input"
+                  ><input
+                    id="mMessageInput"
+                    type="text"
+                    placeholder="Aa"
+                    autocomplete="off"
+                /></label>
+                <button type="button" class="tool-btn" id="mEmojiBtn">
+                  <svg><use href="#i-smile" /></svg>
+                </button>
+                <button class="send-btn" type="submit">
+                  <svg><use href="#i-send" /></svg>
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Gesture bar -->
+          <div class="gesture-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status"></div>
+
+    <script>
+      // ============ DATA ============
+      const chats = {
+        maya: {
+          name: "Maya Putri",
+          status: "online",
+          initials: "MP",
+          face: "👩🏻",
+          color: "linear-gradient(145deg,#e9b89a,#ad6e51)",
+          messages: [
+            ["in", "Haii! Jadi kita ketemu jam 5 sore nanti? 😊", "16:35"],
+            ["out", "Jadi dong! Aku sudah selesai kerja nih.", "16:37"],
+            ["in", "Asik! Kita ketemu di tempat biasa aja ya.", "16:39"],
+            ["out", "Siap, nanti aku kabarin kalau sudah sampai.", "16:40"],
+            ["in", "Oke, sampai ketemu nanti!", "16:42"],
+          ],
+        },
+        keluarga: {
+          name: "Keluarga Besar ❤️",
+          status: "12 anggota",
+          initials: "KB",
+          face: "🏡",
+          color: "linear-gradient(135deg,#f7cf73,#df855d)",
+          messages: [
+            ["in", "Ibu: Jangan lupa makan ya semuanya", "16:18"],
+            ["in", "Ayah: Minggu jadi kumpul di rumah?", "16:12"],
+            ["out", "InsyaAllah jadi, Yah. Nanti aku kabari lagi.", "16:14"],
+          ],
+        },
+        dimas: {
+          name: "Dimas Saputra",
+          status: "online",
+          initials: "DS",
+          face: "👨🏻",
+          color: "linear-gradient(145deg,#9ac7b7,#467c70)",
+          messages: [
+            ["in", "Eh, nanti sore jadi main basket?", "15:50"],
+            ["out", "Jadi. Jam berapa?", "15:52"],
+            ["in", "🎤 Voice message 0:42", "15:56"],
+          ],
+        },
+        design: {
+          name: "Design Team ✨",
+          status: "8 anggota",
+          initials: "DT",
+          face: "🎨",
+          color: "linear-gradient(135deg,#c7b7e9,#8375b7)",
+          messages: [
+            ["in", "Raka: Update desain sudah aku push.", "15:18"],
+            ["in", "Raka: File revisinya sudah aku upload.", "15:21"],
+          ],
+        },
+        nina: {
+          name: "Nina Rahma",
+          status: "terakhir dilihat 14:10",
+          initials: "NR",
+          face: "👩🏽",
+          color: "linear-gradient(145deg,#f5a8bb,#b85f83)",
+          messages: [
+            ["in", "Lihat video yang aku kirim tadi 😂", "14:04"],
+            ["out", "HAHAHA ngakak banget 😭", "14:06"],
+            ["in", "Hahaha lucu banget 😂", "14:08"],
+          ],
+        },
+        official: {
+          name: "LINE",
+          status: "Akun resmi",
+          initials: "LN",
+          face: "LINE",
+          color: "#06c755",
+          messages: [
+            [
+              "in",
+              "Selamat datang di LINE! Nikmati cara baru untuk tetap terhubung dengan teman dan keluarga.",
+              "Kemarin",
+            ],
+          ],
+        },
+        rani: {
+          name: "Rani Amelia",
+          status: "terakhir dilihat kemarin",
+          initials: "RA",
+          face: "👩🏼",
+          color: "linear-gradient(135deg,#f2d08a,#bd9254)",
+          messages: [
+            ["in", "Ini aku kirim foto-fotonya ya!", "Kemarin"],
+            ["out", "Makasih banyak yaa!", "Kemarin"],
+          ],
+        },
+        weekend: {
+          name: "Weekend Plan",
+          status: "5 anggota",
+          initials: "WP",
+          face: "🏖️",
+          color: "linear-gradient(135deg,#a8c9e7,#6c8eb5)",
+          messages: [
+            ["in", "Fajar: Gas ke pantai! 🌊", "Rab"],
+            ["out", "Setujuu, berangkat pagi ya", "Rab"],
+          ],
+        },
+      };
+
+      let currentChat = "maya";
+      let toastTimer;
+      const toastEl = document.getElementById("toast");
+
+      function showToast(text) {
+        toastEl.textContent = text;
+        toastEl.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toastEl.classList.remove("show"), 1900);
+      }
+
+      // ============ DEVICE SWITCHER ============
+      const btnDesktop = document.getElementById("btnDesktop");
+      const btnMobile = document.getElementById("btnMobile");
+
+      function setMode(mode) {
+        if (mode === "mobile") {
+          document.body.classList.add("mobile-mode");
+          btnDesktop.classList.remove("active");
+          btnMobile.classList.add("active");
+        } else {
+          document.body.classList.remove("mobile-mode");
+          btnDesktop.classList.add("active");
+          btnMobile.classList.remove("active");
+        }
+      }
+
+      btnDesktop.addEventListener("click", () => setMode("desktop"));
+      btnMobile.addEventListener("click", () => setMode("mobile"));
+
+      // ============ DESKTOP RENDER ============
+      const appShell = document.getElementById("appShell");
+      const messagesEl = document.getElementById("messages");
+      const messageInput = document.getElementById("messageInput");
+      const sectionEmpty = document.getElementById("sectionEmpty");
+      const chatPaneContent = document.getElementById("chatPaneContent");
+
+      function setAvatar(el, chat) {
+        el.style.background = chat.color;
+        el.innerHTML = `<span class="face" style="font-size:${chat.face === "LINE" ? "17px" : "24px"}">${chat.face}</span>`;
+      }
+
+      function addMessageTo(
+        container,
+        direction,
+        text,
+        time,
+        chat,
+        showSender = false,
+        senderName = "",
+      ) {
+        const message = document.createElement("div");
+        message.className = `message ${direction === "out" ? "outgoing" : "incoming"}`;
+        const stack = document.createElement("div");
+        stack.className = "msg-stack";
+        if (showSender && direction === "in") {
+          const sender = document.createElement("div");
+          sender.className = "msg-sender";
+          sender.textContent = senderName;
+          stack.appendChild(sender);
+        }
+        const bubble = document.createElement("div");
+        bubble.className = "bubble";
+        bubble.textContent = text;
+        const meta = document.createElement("div");
+        meta.className = "msg-meta";
+        meta.textContent = time;
+        if (direction === "out") {
+          const ticks = document.createElement("span");
+          ticks.className = "ticks";
+          ticks.textContent = "✓✓";
+          meta.appendChild(ticks);
+          stack.append(bubble, meta);
+          message.appendChild(stack);
+        } else {
+          const avatar = document.createElement("div");
+          avatar.className = "msg-avatar";
+          avatar.textContent = chat.initials;
+          avatar.style.background = chat.color;
+          stack.append(bubble, meta);
+          message.append(avatar, stack);
+        }
+        container.appendChild(message);
+      }
+
+      function renderChat(id) {
+        const chat = chats[id];
+        if (!chat) return;
+        currentChat = id;
+        document.getElementById("activeName").textContent = chat.name;
+        document.getElementById("activeStatus").textContent = chat.status;
+        setAvatar(document.getElementById("activeAvatar"), chat);
+        messagesEl.innerHTML = '<div class="date-divider">Hari ini</div>';
+        chat.messages.forEach(([direction, text, time]) =>
+          addMessageTo(messagesEl, direction, text, time, chat),
+        );
+        document
+          .querySelectorAll(".chat-row")
+          .forEach((row) =>
+            row.classList.toggle("selected", row.dataset.chat === id),
+          );
+        const activeRow = document.querySelector(
+          `.chat-row[data-chat="${id}"]`,
+        );
+        if (activeRow) {
+          activeRow.dataset.unread = "0";
+          const badge = activeRow.querySelector(".unread");
+          if (badge) badge.remove();
+        }
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+        // Show chat pane, hide empty
+        sectionEmpty.classList.remove("visible");
+        chatPaneContent.style.display = "flex";
+      }
+
+      document.querySelectorAll(".chat-row").forEach((row) =>
+        row.addEventListener("click", () => {
+          renderChat(row.dataset.chat);
+          if (window.matchMedia("(max-width: 720px)").matches)
+            appShell.classList.add("chat-open");
+        }),
+      );
+
+      document
+        .getElementById("messageForm")
+        .addEventListener("submit", (event) => {
+          event.preventDefault();
+          const text = messageInput.value.trim();
+          if (!text) return;
+          const time = new Date().toLocaleTimeString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          chats[currentChat].messages.push(["out", text, time]);
+          addMessageTo(messagesEl, "out", text, time, chats[currentChat]);
+          messageInput.value = "";
+          const row = document.querySelector(
+            `.chat-row[data-chat="${currentChat}"] .preview-text`,
+          );
+          if (row) row.textContent = text;
+          const timeEl = document.querySelector(
+            `.chat-row[data-chat="${currentChat}"] .chat-time`,
+          );
+          if (timeEl) timeEl.textContent = time;
+          messagesEl.scrollTop = messagesEl.scrollHeight;
+        });
+
+      document
+        .getElementById("searchInput")
+        .addEventListener("input", (event) => {
+          const query = event.target.value.toLowerCase().trim();
+          let visible = 0;
+          document.querySelectorAll(".chat-row").forEach((row) => {
+            const match = row.innerText.toLowerCase().includes(query);
+            row.style.display = match ? "flex" : "none";
+            if (match) visible++;
+          });
+          document.getElementById("emptySearch").style.display = visible
+            ? "none"
+            : "block";
+          document
+            .querySelectorAll(".list-label")
+            .forEach(
+              (label) => (label.style.display = query ? "none" : "block"),
+            );
+        });
+
+      document.querySelectorAll(".top-tab").forEach((tab) =>
+        tab.addEventListener("click", () => {
+          document
+            .querySelectorAll(".top-tab")
+            .forEach((t) => t.classList.toggle("active", t === tab));
+          const filter = tab.dataset.filter;
+          let visible = 0;
+          document.querySelectorAll(".chat-row").forEach((row) => {
+            const kind = row.dataset.kind;
+            const unread = Number(row.dataset.unread) > 0;
+            const match =
+              filter === "all" ||
+              (filter === "unread" && unread) ||
+              (filter === "groups" && kind === "group") ||
+              (filter === "official" && kind === "official");
+            row.style.display = match ? "flex" : "none";
+            if (match) visible++;
+          });
+          document.getElementById("emptySearch").style.display = visible
+            ? "none"
+            : "block";
+        }),
+      );
+
+      function changeSection(section) {
+        document.getElementById("sectionTitle").textContent = section;
+        document
+          .querySelectorAll("[data-section]")
+          .forEach((button) =>
+            button.classList.toggle(
+              "active",
+              button.dataset.section === section,
+            ),
+          );
+        if (section !== "Chats") {
+          sectionEmpty.classList.add("visible");
+          chatPaneContent.style.display = "none";
+          showToast(`${section} — tampilan demo`);
+        } else {
+          sectionEmpty.classList.remove("visible");
+          chatPaneContent.style.display = "flex";
+          renderChat(currentChat);
+        }
+      }
+
+      document
+        .querySelectorAll("[data-section]")
+        .forEach((button) =>
+          button.addEventListener("click", () =>
+            changeSection(button.dataset.section),
+          ),
+        );
+
+      document
+        .getElementById("addChat")
+        .addEventListener("click", () =>
+          showToast("Pilih teman untuk memulai chat baru"),
+        );
+      document
+        .getElementById("listMore")
+        .addEventListener("click", () => showToast("Menu percakapan"));
+      document
+        .getElementById("chatMore")
+        .addEventListener("click", () => showToast("Info percakapan"));
+      document
+        .getElementById("settingsButton")
+        .addEventListener("click", () => showToast("Pengaturan"));
+      document
+        .getElementById("audioCall")
+        .addEventListener("click", () =>
+          showToast("Memulai panggilan suara (demo)"),
+        );
+      document
+        .getElementById("videoCall")
+        .addEventListener("click", () =>
+          showToast("Memulai panggilan video (demo)"),
+        );
+      document
+        .getElementById("attachButton")
+        .addEventListener("click", () => showToast("Lampiran file (demo)"));
+      document
+        .getElementById("imageButton")
+        .addEventListener("click", () => showToast("Pilih gambar (demo)"));
+      document.getElementById("emojiButton").addEventListener("click", () => {
+        messageInput.value += " 😊";
+        messageInput.focus();
+      });
+
+      // ============ MOBILE RENDER ============
+      const mChatList = document.getElementById("mChatList");
+      const mChatView = document.getElementById("mChatView");
+      const mMessages = document.getElementById("mMessages");
+      const mMessageInput = document.getElementById("mMessageInput");
+
+      function buildMobileChatList() {
+        mChatList.innerHTML = '<div class="list-label">Today</div>';
+        const order = ["maya", "keluarga", "dimas", "design", "nina"];
+        order.forEach((id, idx) => {
+          const chat = chats[id];
+          const lastMsg = chat.messages[chat.messages.length - 1];
+          const unread = id === "keluarga" ? 3 : id === "dimas" ? 1 : 0;
+          const row = document.createElement("button");
+          row.className = "m-chat-row";
+          row.dataset.chat = id;
+          row.innerHTML = `
+            <div class="avatar-wrap">
+              <div class="avatar" style="background: ${chat.color}"><span class="face">${chat.face}</span></div>
+              ${id === "maya" || id === "dimas" ? '<i class="online-dot"></i>' : ""}
+            </div>
+            <div class="chat-content">
+              <div class="chat-line">
+                <span class="chat-name">${chat.name}</span>
+                <span class="chat-time">${lastMsg[2]}</span>
+              </div>
+              <div class="chat-preview">
+                <span class="preview-text">${lastMsg[0] === "out" ? '<span class="read">✓✓</span> ' : ""}${lastMsg[1]}</span>
+                ${unread > 0 ? `<span class="unread">${unread}</span>` : ""}
+              </div>
+            </div>
+          `;
+          row.addEventListener("click", () => renderMobileChat(id));
+          mChatList.appendChild(row);
+        });
+
+        mChatList.insertAdjacentHTML(
+          "beforeend",
+          '<div class="list-label">Yesterday</div>',
+        );
+        const yOrder = ["official", "rani", "weekend"];
+        yOrder.forEach((id) => {
+          const chat = chats[id];
+          const lastMsg = chat.messages[chat.messages.length - 1];
+          const row = document.createElement("button");
+          row.className = "m-chat-row";
+          row.dataset.chat = id;
+          row.innerHTML = `
+            <div class="avatar-wrap">
+              <div class="avatar" style="background: ${chat.color}"><span class="face" style="font-size: ${chat.face === "LINE" ? "11px; font-weight:700; color:white" : "21px"}">${chat.face}</span></div>
+            </div>
+            <div class="chat-content">
+              <div class="chat-line">
+                <span class="chat-name">${chat.name}</span>
+                <span class="chat-time">${lastMsg[2]}</span>
+              </div>
+              <div class="chat-preview">
+                <span class="preview-text">${lastMsg[0] === "out" ? '<span class="read">✓✓</span> ' : ""}${lastMsg[1]}</span>
+              </div>
+            </div>
+          `;
+          row.addEventListener("click", () => renderMobileChat(id));
+          mChatList.appendChild(row);
+        });
+      }
+
+      function renderMobileChat(id) {
+        const chat = chats[id];
+        if (!chat) return;
+        currentChat = id;
+        document.getElementById("mActiveName").textContent = chat.name;
+        document.getElementById("mActiveStatus").textContent = chat.status;
+        setAvatar(document.getElementById("mActiveAvatar"), chat);
+        mMessages.innerHTML = '<div class="date-divider">Hari ini</div>';
+        chat.messages.forEach(([direction, text, time]) =>
+          addMessageTo(mMessages, direction, text, time, chat),
+        );
+        mMessages.scrollTop = mMessages.scrollHeight;
+        mChatView.classList.add("open");
+      }
+
+      document.getElementById("mBackBtn").addEventListener("click", () => {
+        mChatView.classList.remove("open");
+      });
+
+      document
+        .getElementById("mMessageForm")
+        .addEventListener("submit", (event) => {
+          event.preventDefault();
+          const text = mMessageInput.value.trim();
+          if (!text) return;
+          const time = new Date().toLocaleTimeString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          chats[currentChat].messages.push(["out", text, time]);
+          addMessageTo(mMessages, "out", text, time, chats[currentChat]);
+          mMessageInput.value = "";
+          mMessages.scrollTop = mMessages.scrollHeight;
+        });
+
+      document.getElementById("mEmojiBtn").addEventListener("click", () => {
+        mMessageInput.value += " 😊";
+        mMessageInput.focus();
+      });
+      document
+        .getElementById("mAttachBtn")
+        .addEventListener("click", () => showToast("Lampiran (demo)"));
+      document
+        .getElementById("mAudioCall")
+        .addEventListener("click", () => showToast("Panggilan suara (demo)"));
+      document
+        .getElementById("mVideoCall")
+        .addEventListener("click", () => showToast("Panggilan video (demo)"));
+      document
+        .getElementById("mChatMore")
+        .addEventListener("click", () => showToast("Info chat (demo)"));
+      document
+        .getElementById("mAddChat")
+        .addEventListener("click", () => showToast("Tambah teman (demo)"));
+
+      document
+        .getElementById("mSearchInput")
+        .addEventListener("input", (event) => {
+          const query = event.target.value.toLowerCase().trim();
+          document.querySelectorAll(".m-chat-row").forEach((row) => {
+            const match = row.innerText.toLowerCase().includes(query);
+            row.style.display = match ? "flex" : "none";
+          });
+          document
+            .querySelectorAll(".m-chat-list .list-label")
+            .forEach(
+              (label) => (label.style.display = query ? "none" : "block"),
+            );
+        });
+
+      // Mobile section navigation
+      function switchMobileSection(section) {
+        document
+          .querySelectorAll(".m-section")
+          .forEach((s) => s.classList.add("hidden"));
+        const target = document.querySelector(
+          `.m-section[data-m-section="${section}"]`,
+        );
+        if (target) target.classList.remove("hidden");
+        // Update bottom navs
+        document.querySelectorAll(".m-bottom-nav").forEach((nav) => {
+          nav
+            .querySelectorAll(".m-nav-item")
+            .forEach((item) =>
+              item.classList.toggle(
+                "active",
+                item.dataset.mSection === section,
+              ),
+            );
+        });
+        mChatView.classList.remove("open");
+      }
+
+      document.querySelectorAll("[data-m-section]").forEach((button) => {
+        button.addEventListener("click", (e) => {
+          e.stopPropagation();
+          switchMobileSection(button.dataset.mSection);
+        });
+      });
+
+      // Phone time update
+      function updatePhoneTime() {
+        const now = new Date();
+        const h = now.getHours().toString().padStart(2, "0");
+        const m = now.getMinutes().toString().padStart(2, "0");
+        document.getElementById("phoneTime").textContent = `${h}:${m}`;
+      }
+      updatePhoneTime();
+      setInterval(updatePhoneTime, 30000);
+
+      // ============ INIT ============
+      buildMobileChatList();
+      renderChat("maya");
+    </script>
+  </body>
+</html>

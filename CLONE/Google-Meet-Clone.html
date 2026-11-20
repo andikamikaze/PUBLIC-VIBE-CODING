@@ -1,0 +1,4153 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>Meet — Video call dan rapat</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --blue: #1a73e8;
+        --blue-dark: #0b57d0;
+        --blue-light: #e8f0fe;
+        --ink: #202124;
+        --muted: #5f6368;
+        --line: #dadce0;
+        --surface: #fff;
+        --soft: #f8fafd;
+        --meeting-bg: #202124;
+        --meeting-panel: #292a2d;
+        --meeting-panel-2: #303134;
+        --red: #ea4335;
+        --green: #188038;
+        --yellow: #fbbc04;
+        --pixel-frame: #1a1a1a;
+        --pixel-screen: #000;
+        --pixel-edge: #0a0a0a;
+        --shadow:
+          0 1px 2px rgba(60, 64, 67, 0.12), 0 2px 6px 2px rgba(60, 64, 67, 0.08);
+        --shadow-lg:
+          0 8px 34px rgba(60, 64, 67, 0.18), 0 2px 8px rgba(60, 64, 67, 0.08);
+        font-family: "Google Sans", "Segoe UI", Roboto, Arial, sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        color: var(--ink);
+        background: linear-gradient(135deg, #f0f4f9 0%, #e3e8f0 100%);
+        overflow: hidden;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:focus-visible,
+      input:focus-visible {
+        outline: 3px solid rgba(26, 115, 232, 0.28);
+        outline-offset: 2px;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .icon {
+        width: 20px;
+        height: 20px;
+        display: block;
+        flex: 0 0 auto;
+      }
+      .icon.sm {
+        width: 18px;
+        height: 18px;
+      }
+      .icon.lg {
+        width: 24px;
+        height: 24px;
+      }
+      .icon.xl {
+        width: 32px;
+        height: 32px;
+      }
+
+      /* === MODE SWITCHER === */
+      .mode-switcher {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 50px;
+        padding: 6px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        box-shadow:
+          0 8px 32px rgba(0, 0, 0, 0.18),
+          0 2px 8px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .mode-switcher:hover {
+        box-shadow:
+          0 12px 40px rgba(0, 0, 0, 0.22),
+          0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateX(-50%) translateY(-2px);
+      }
+      .mode-btn {
+        border: 0;
+        background: transparent;
+        padding: 10px 20px;
+        border-radius: 50px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #5f6368;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        white-space: nowrap;
+      }
+      .mode-btn.active {
+        background: var(--blue);
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(26, 115, 232, 0.35);
+      }
+      .mode-btn:not(.active):hover {
+        background: #f1f3f4;
+        color: var(--ink);
+      }
+      .mode-btn .icon {
+        width: 16px;
+        height: 16px;
+      }
+
+      /* === VIEW CONTAINER === */
+      .view-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .view-container.desktop-mode {
+        background: linear-gradient(135deg, #f0f4f9 0%, #e3e8f0 100%);
+      }
+      .view-container.mobile-mode {
+        background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);
+        padding: 20px;
+      }
+
+      /* === DESKTOP WRAPPER === */
+      .desktop-wrapper {
+        width: 100%;
+        height: 100%;
+        position: relative;
+      }
+      .desktop-wrapper .app-shell {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #fff;
+      }
+
+      /* === PIXEL PHONE FRAME === */
+      .pixel-phone {
+        position: relative;
+        width: 380px;
+        height: 780px;
+        max-height: calc(100vh - 140px);
+        background: var(--pixel-frame);
+        border-radius: 52px;
+        padding: 14px;
+        box-shadow:
+          0 0 0 2px #0a0a0a,
+          0 0 0 4px #2a2a2a,
+          0 25px 70px rgba(0, 0, 0, 0.5),
+          0 15px 40px rgba(0, 0, 0, 0.4),
+          inset 0 0 2px rgba(255, 255, 255, 0.1);
+        transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .pixel-phone:hover {
+        transform: translateY(-4px);
+      }
+      .pixel-phone::before,
+      .pixel-phone::after {
+        content: "";
+        position: absolute;
+        background: #3a3a3a;
+        border-radius: 2px;
+      }
+      /* Volume buttons */
+      .pixel-phone::before {
+        top: 140px;
+        left: -3px;
+        width: 3px;
+        height: 50px;
+      }
+      .pixel-phone::after {
+        top: 200px;
+        left: -3px;
+        width: 3px;
+        height: 50px;
+      }
+      .power-btn {
+        position: absolute;
+        top: 180px;
+        right: -3px;
+        width: 3px;
+        height: 70px;
+        background: #3a3a3a;
+        border-radius: 2px;
+      }
+      .phone-screen {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background: var(--pixel-screen);
+        border-radius: 38px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      /* Notch / Camera cutout (Pixel style - top center) */
+      .phone-notch {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .phone-camera {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #0a0a0a;
+        box-shadow: inset 0 0 2px rgba(255, 255, 255, 0.3);
+        position: relative;
+      }
+      .phone-camera::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #1a2a4a, #000);
+      }
+      /* Status bar */
+      .phone-status-bar {
+        height: 38px;
+        padding: 10px 20px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+        font-weight: 500;
+        color: white;
+        z-index: 50;
+        flex-shrink: 0;
+      }
+      .status-left {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .status-right {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .status-signal,
+      .status-wifi {
+        width: 14px;
+        height: 10px;
+      }
+      .status-battery {
+        width: 22px;
+        height: 10px;
+        border: 1px solid white;
+        border-radius: 2px;
+        position: relative;
+        padding: 1px;
+      }
+      .status-battery::after {
+        content: "";
+        position: absolute;
+        right: -3px;
+        top: 2px;
+        width: 2px;
+        height: 4px;
+        background: white;
+        border-radius: 0 1px 1px 0;
+      }
+      .status-battery .battery-level {
+        width: 85%;
+        height: 100%;
+        background: white;
+        border-radius: 1px;
+      }
+      /* Navigation bar */
+      .phone-nav-bar {
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 80px;
+        flex-shrink: 0;
+        background: #000;
+      }
+      .nav-gesture-bar {
+        width: 120px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.4);
+        border-radius: 2px;
+      }
+
+      /* === HOME === */
+      #home {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        overflow: auto;
+      }
+      .home-nav {
+        height: 72px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 34px;
+        border-bottom: 1px solid #f1f3f4;
+        flex: 0 0 auto;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #5f6368;
+        font-size: 22px;
+        letter-spacing: -0.7px;
+        font-weight: 500;
+      }
+      .brand-mark {
+        width: 30px;
+        height: 30px;
+      }
+      .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        color: #5f6368;
+      }
+      .nav-icon {
+        border: 0;
+        background: transparent;
+        color: #5f6368;
+        padding: 8px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+      }
+      .nav-icon:hover {
+        background: #f1f3f4;
+      }
+      .avatar-small {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        color: #fff;
+        background: linear-gradient(140deg, #5e97d4, #7657b8);
+        display: grid;
+        place-items: center;
+        font-size: 13px;
+        font-weight: 600;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 1px #dadce0;
+      }
+      .home-main {
+        width: min(1220px, calc(100% - 64px));
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: minmax(430px, 1.05fr) minmax(420px, 0.95fr);
+        align-items: center;
+        gap: clamp(40px, 7vw, 108px);
+        flex: 1;
+        padding: 54px 0 66px;
+      }
+      .hero-copy {
+        padding: 0 0 28px;
+      }
+      .hero-copy h1 {
+        margin: 0 0 22px;
+        font-size: clamp(39px, 4.4vw, 58px);
+        line-height: 1.12;
+        letter-spacing: -2.2px;
+        font-weight: 400;
+        color: #202124;
+        max-width: 570px;
+      }
+      .hero-copy p {
+        margin: 0;
+        color: #5f6368;
+        font-size: 18px;
+        line-height: 1.55;
+        max-width: 505px;
+      }
+      .hero-rule {
+        width: 100%;
+        height: 1px;
+        background: #dadce0;
+        margin: 38px 0 24px;
+      }
+      .home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 14px;
+      }
+      .primary-btn {
+        min-height: 48px;
+        background: var(--blue);
+        border: 0;
+        color: #fff;
+        border-radius: 4px;
+        padding: 0 20px;
+        font-size: 15px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        box-shadow: 0 1px 2px rgba(60, 64, 67, 0.25);
+        transition:
+          background 0.15s,
+          box-shadow 0.15s;
+      }
+      .primary-btn:hover {
+        background: var(--blue-dark);
+        box-shadow: 0 2px 5px rgba(60, 64, 67, 0.25);
+      }
+      .text-btn {
+        min-height: 46px;
+        border: 0;
+        background: transparent;
+        color: var(--blue);
+        font-size: 14px;
+        font-weight: 600;
+        padding: 0 12px;
+        border-radius: 4px;
+      }
+      .text-btn:hover {
+        background: #f1f6fe;
+      }
+      .join-box {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .code-input-wrap {
+        width: 220px;
+        min-height: 48px;
+        border: 1px solid #80868b;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 12px;
+        transition:
+          border 0.15s,
+          box-shadow 0.15s;
+      }
+      .code-input-wrap:focus-within {
+        border: 2px solid var(--blue);
+        padding: 0 11px;
+        box-shadow: 0 0 0 1px rgba(26, 115, 232, 0.08);
+      }
+      .code-input-wrap .icon {
+        color: #5f6368;
+      }
+      .code-input {
+        width: 100%;
+        border: 0;
+        outline: 0 !important;
+        background: transparent;
+        color: #202124;
+        font-size: 14px;
+        min-width: 0;
+      }
+      .code-input::placeholder {
+        color: #80868b;
+      }
+      .join-btn {
+        color: #9aa0a6;
+        border: 0;
+        background: transparent;
+        padding: 12px 10px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 4px;
+      }
+      .join-btn.enabled {
+        color: var(--blue);
+      }
+      .join-btn.enabled:hover {
+        background: #f1f6fe;
+      }
+      .home-note {
+        margin-top: 30px;
+        color: #5f6368;
+        font-size: 13px;
+        line-height: 1.55;
+      }
+      .home-note a {
+        color: var(--blue);
+        text-decoration: none;
+      }
+      .home-visual {
+        min-width: 0;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 25px 0 55px;
+      }
+      .visual-card {
+        position: relative;
+        width: min(100%, 520px);
+        aspect-ratio: 1.18 / 1;
+        border-radius: 24px;
+        overflow: hidden;
+        background: #f7f9fc;
+        box-shadow: 0 8px 34px rgba(60, 64, 67, 0.1);
+        border: 1px solid #eef0f3;
+      }
+      .visual-top {
+        position: absolute;
+        top: 21px;
+        left: 24px;
+        right: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        z-index: 2;
+      }
+      .visual-label {
+        color: #5f6368;
+        font-size: 12px;
+        background: rgba(255, 255, 255, 0.82);
+        padding: 7px 11px;
+        border-radius: 20px;
+      }
+      .visual-dots {
+        display: flex;
+        gap: 5px;
+      }
+      .visual-dots span {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #c4c7c5;
+      }
+      .visual-scene {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: radial-gradient(
+          ellipse at 51% 43%,
+          #e7f0fb 0,
+          #f6f9fe 48%,
+          #f5f7fa 100%
+        );
+      }
+      .scene-orbit {
+        position: absolute;
+        width: 75%;
+        height: 75%;
+        border: 1px solid rgba(26, 115, 232, 0.1);
+        border-radius: 50%;
+        transform: rotate(-19deg);
+        animation: orbit-spin 40s linear infinite;
+      }
+      .scene-orbit.two {
+        width: 92%;
+        height: 54%;
+        transform: rotate(25deg);
+        border-color: rgba(52, 168, 83, 0.12);
+        animation: orbit-spin 60s linear infinite reverse;
+      }
+      @keyframes orbit-spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .scene-person {
+        position: absolute;
+        width: 190px;
+        height: 240px;
+        bottom: 51px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      .scene-person .body {
+        position: absolute;
+        width: 188px;
+        height: 142px;
+        left: 1px;
+        bottom: 0;
+        border-radius: 95px 95px 22px 22px;
+        background: linear-gradient(130deg, #4f8ed6, #1c5da7);
+        box-shadow: inset -20px -12px 30px rgba(0, 0, 0, 0.1);
+      }
+      .scene-person .neck {
+        position: absolute;
+        width: 48px;
+        height: 53px;
+        left: 71px;
+        top: 100px;
+        background: #d89b78;
+        border-radius: 15px;
+      }
+      .scene-person .head {
+        position: absolute;
+        width: 106px;
+        height: 122px;
+        left: 42px;
+        top: 0;
+        border-radius: 48% 48% 46% 46%;
+        background: linear-gradient(120deg, #e8b18e, #c98266);
+        box-shadow: inset -10px -5px 18px rgba(120, 65, 49, 0.1);
+      }
+      .scene-person .hair {
+        position: absolute;
+        z-index: 1;
+        width: 111px;
+        height: 67px;
+        left: 39px;
+        top: -7px;
+        background: #2b292a;
+        border-radius: 62% 55% 31% 26%;
+        transform: rotate(-3deg);
+      }
+      .scene-person .hair:after {
+        content: "";
+        position: absolute;
+        height: 54px;
+        width: 28px;
+        right: -1px;
+        top: 39px;
+        background: #2b292a;
+        border-radius: 0 0 18px 18px;
+      }
+      .scene-person .head:after {
+        content: "";
+        position: absolute;
+        width: 48px;
+        height: 6px;
+        top: 72px;
+        left: 29px;
+        border-bottom: 2px solid rgba(112, 55, 48, 0.55);
+        border-radius: 0 0 50% 50%;
+      }
+      .scene-badge {
+        position: absolute;
+        bottom: 20px;
+        right: 22px;
+        padding: 10px 13px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: var(--shadow);
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 12px;
+        color: #3c4043;
+      }
+      .scene-badge .green-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #34a853;
+        animation: pulse-dot 2s ease-in-out infinite;
+      }
+      @keyframes pulse-dot {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+      .visual-controls {
+        position: absolute;
+        bottom: 25px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 15px;
+        border-radius: 30px;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 4px 16px rgba(60, 64, 67, 0.12);
+      }
+      .visual-controls span {
+        width: 31px;
+        height: 31px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #f1f3f4;
+        color: #5f6368;
+      }
+      .visual-controls span.end {
+        width: 45px;
+        border-radius: 20px;
+        background: #ea4335;
+        color: white;
+      }
+      .floating-chip {
+        position: absolute;
+        left: -8px;
+        bottom: 8px;
+        background: #fff;
+        padding: 13px 16px;
+        border-radius: 13px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: var(--shadow);
+        font-size: 12px;
+        color: #5f6368;
+        animation: float-in 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.3s backwards;
+      }
+      @keyframes float-in {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .floating-chip strong {
+        display: block;
+        color: #202124;
+        font-size: 13px;
+        margin-bottom: 2px;
+      }
+      .chip-avatars {
+        display: flex;
+        padding-left: 4px;
+      }
+      .chip-avatars i {
+        width: 27px;
+        height: 27px;
+        margin-left: -5px;
+        border-radius: 50%;
+        border: 2px solid white;
+        display: grid;
+        place-items: center;
+        color: white;
+        font-size: 9px;
+        font-style: normal;
+        background: #6d83b5;
+      }
+      .chip-avatars i:nth-child(2) {
+        background: #b77c68;
+      }
+      .chip-avatars i:nth-child(3) {
+        background: #499b83;
+      }
+      .home-footer {
+        height: 54px;
+        flex: 0 0 auto;
+        border-top: 1px solid #f1f3f4;
+        color: #80868b;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 17px;
+      }
+      .home-footer a {
+        color: inherit;
+        text-decoration: none;
+      }
+      .home-footer a:hover {
+        color: var(--blue);
+      }
+
+      /* === DROPDOWN / MODAL === */
+      .dropdown {
+        position: absolute;
+        z-index: 20;
+        top: 58px;
+        left: 0;
+        width: 244px;
+        padding: 8px;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 8px 28px rgba(60, 64, 67, 0.24);
+        border: 1px solid #eceff1;
+      }
+      .dropdown button {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        padding: 12px 10px;
+        border-radius: 7px;
+        text-align: left;
+        font-size: 14px;
+        color: #3c4043;
+      }
+      .dropdown button:hover {
+        background: #f1f3f4;
+      }
+      .dropdown button .icon {
+        color: #5f6368;
+      }
+      .modal-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(32, 33, 36, 0.38);
+        display: grid;
+        place-items: center;
+        z-index: 100;
+        padding: 20px;
+      }
+      .modal {
+        width: min(440px, 100%);
+        background: white;
+        border-radius: 16px;
+        padding: 26px;
+        box-shadow: 0 14px 44px rgba(0, 0, 0, 0.24);
+        animation: modal-in 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      @keyframes modal-in {
+        from {
+          opacity: 0;
+          transform: scale(0.92);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      .modal h2 {
+        margin: 0 0 10px;
+        font-size: 21px;
+        font-weight: 500;
+        letter-spacing: -0.3px;
+      }
+      .modal p {
+        margin: 0 0 22px;
+        color: #5f6368;
+        font-size: 14px;
+        line-height: 1.55;
+      }
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 22px;
+      }
+      .secondary-btn {
+        background: white;
+        color: var(--blue);
+        border: 1px solid #dadce0;
+        border-radius: 4px;
+        min-height: 40px;
+        padding: 0 16px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .secondary-btn:hover {
+        background: #f8fafd;
+      }
+      .modal-link {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        background: #f8fafd;
+        padding: 12px;
+        border-radius: 8px;
+        color: #3c4043;
+        font-size: 13px;
+        overflow: hidden;
+      }
+      .modal-link span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+      }
+
+      /* === PREJOIN === */
+      #prejoin {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        background: #f8f9fa;
+      }
+      .prejoin-nav {
+        height: 70px;
+        flex: 0 0 auto;
+        padding: 0 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #5f6368;
+      }
+      .prejoin-nav .brand {
+        font-size: 21px;
+      }
+      .prejoin-layout {
+        flex: 1;
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(330px, 0.8fr);
+        gap: 58px;
+        width: min(1160px, calc(100% - 64px));
+        margin: 0 auto;
+        align-items: center;
+        padding: 22px 0 70px;
+      }
+      .preview-side {
+        min-width: 0;
+      }
+      .preview-window {
+        width: 100%;
+        aspect-ratio: 16/9;
+        border-radius: 14px;
+        background: #25262a;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 3px 16px rgba(60, 64, 67, 0.12);
+      }
+      .preview-art {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at 50% 45%, #485b73, #222a35 75%);
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        transition: opacity 0.3s;
+      }
+      .preview-person {
+        position: relative;
+        width: 210px;
+        height: 275px;
+        margin-top: 70px;
+      }
+      .preview-person .p-body {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 210px;
+        height: 150px;
+        background: linear-gradient(125deg, #738aa0, #3d5268);
+        border-radius: 100px 100px 0 0;
+      }
+      .preview-person .p-neck {
+        position: absolute;
+        top: 110px;
+        left: 84px;
+        width: 44px;
+        height: 55px;
+        background: #c98e70;
+      }
+      .preview-person .p-head {
+        position: absolute;
+        top: 0;
+        left: 51px;
+        width: 108px;
+        height: 132px;
+        border-radius: 50% 50% 46% 46%;
+        background: linear-gradient(140deg, #e2ae8a, #b7755d);
+      }
+      .preview-person .p-hair {
+        position: absolute;
+        top: -8px;
+        left: 47px;
+        width: 115px;
+        height: 68px;
+        background: #252323;
+        border-radius: 60% 60% 25% 24%;
+        z-index: 1;
+      }
+      .preview-person .p-hair:after {
+        content: "";
+        position: absolute;
+        top: 36px;
+        right: 0;
+        width: 22px;
+        height: 61px;
+        background: #252323;
+        border-radius: 0 0 18px 18px;
+      }
+      .preview-person .p-head:after {
+        content: "";
+        position: absolute;
+        width: 38px;
+        height: 5px;
+        top: 78px;
+        left: 35px;
+        border-bottom: 2px solid rgba(96, 49, 40, 0.6);
+        border-radius: 50%;
+      }
+      .preview-vignette {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(0deg, rgba(0, 0, 0, 0.34), transparent 35%);
+      }
+      .preview-name {
+        position: absolute;
+        bottom: 17px;
+        left: 19px;
+        color: white;
+        font-size: 14px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .preview-state {
+        position: absolute;
+        bottom: 15px;
+        right: 17px;
+        color: white;
+        background: rgba(32, 33, 36, 0.72);
+        border-radius: 8px;
+        padding: 8px;
+        display: flex;
+        gap: 8px;
+      }
+      .preview-buttons {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        margin-top: 19px;
+      }
+      .round-control {
+        width: 48px;
+        height: 48px;
+        border: 0;
+        border-radius: 50%;
+        background: #e8eaed;
+        color: #3c4043;
+        display: grid;
+        place-items: center;
+        transition: all 0.2s;
+      }
+      .round-control:hover {
+        background: #dadce0;
+        transform: scale(1.05);
+      }
+      .round-control.off {
+        color: white;
+        background: var(--red);
+      }
+      .prejoin-copy {
+        padding: 0 0 10px;
+      }
+      .prejoin-copy h1 {
+        margin: 0 0 13px;
+        font-size: 32px;
+        font-weight: 400;
+        letter-spacing: -0.7px;
+      }
+      .prejoin-copy p {
+        margin: 0 0 27px;
+        color: #5f6368;
+        font-size: 15px;
+        line-height: 1.55;
+      }
+      .prejoin-name {
+        width: 100%;
+        border: 1px solid #dadce0;
+        border-radius: 5px;
+        padding: 13px 14px;
+        margin-bottom: 16px;
+        font-size: 14px;
+      }
+      .prejoin-join {
+        min-height: 46px;
+        padding: 0 28px;
+      }
+      .prejoin-copy .small-help {
+        margin-top: 18px;
+        font-size: 12px;
+        color: #80868b;
+      }
+
+      /* === MEETING ROOM === */
+      #meeting {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        background: var(--meeting-bg);
+        color: #e8eaed;
+        overflow: hidden;
+      }
+      .meeting-top {
+        height: 66px;
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+        color: #e8eaed;
+      }
+      .meeting-title-area {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 13px;
+      }
+      .meeting-title {
+        font-size: 15px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .meeting-code {
+        font-size: 12px;
+        color: #9aa0a6;
+        border-left: 1px solid #5f6368;
+        padding-left: 13px;
+        white-space: nowrap;
+      }
+      .meeting-top-right {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        color: #bdc1c6;
+        font-size: 13px;
+      }
+      .top-action {
+        border: 0;
+        background: transparent;
+        color: #bdc1c6;
+        padding: 7px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+      }
+      .top-action:hover {
+        background: #3c4043;
+        color: #fff;
+      }
+      .meeting-content {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        gap: 0;
+        padding: 0 22px 8px;
+      }
+      .stage {
+        flex: 1;
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+      }
+      .participant-grid {
+        width: 100%;
+        height: 100%;
+        max-height: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-rows: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+        margin: auto;
+      }
+      .participant {
+        min-width: 0;
+        min-height: 0;
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        background: #3c4651;
+        display: grid;
+        place-items: center;
+        isolation: isolate;
+        transition: all 0.3s;
+      }
+      .participant:nth-child(1) {
+        background: linear-gradient(145deg, #465c6d, #273945);
+      }
+      .participant:nth-child(2) {
+        background: linear-gradient(135deg, #655b59, #30373c);
+      }
+      .participant:nth-child(3) {
+        background: linear-gradient(145deg, #5b6b68, #293e3e);
+      }
+      .participant:nth-child(4) {
+        background: linear-gradient(135deg, #665b79, #2e3445);
+      }
+      .participant:nth-child(5) {
+        background: linear-gradient(145deg, #6e6758, #3e3a35);
+      }
+      .participant:nth-child(6) {
+        background: linear-gradient(135deg, #4e687e, #26394a);
+      }
+      .participant:before {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        inset: 0;
+        background: radial-gradient(
+          ellipse at 50% 35%,
+          rgba(255, 255, 255, 0.11),
+          transparent 56%
+        );
+        z-index: -1;
+      }
+      .participant .person-shape {
+        position: relative;
+        width: clamp(82px, 12vw, 145px);
+        height: clamp(125px, 20vw, 220px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        margin-top: 23px;
+      }
+      .person-shape .torso {
+        width: 100%;
+        height: 54%;
+        border-radius: 48% 48% 0 0;
+        background: var(--shirt, #607d99);
+        box-shadow: inset -15px -5px 18px rgba(0, 0, 0, 0.12);
+      }
+      .person-shape .neck {
+        position: absolute;
+        bottom: 47%;
+        width: 22%;
+        height: 22%;
+        background: var(--skin, #d4a080);
+        border-radius: 8px;
+      }
+      .person-shape .face {
+        position: absolute;
+        bottom: 61%;
+        width: 53%;
+        height: 41%;
+        border-radius: 47% 47% 45% 45%;
+        background: var(--skin, #d4a080);
+        box-shadow: inset -7px -4px 12px rgba(0, 0, 0, 0.08);
+      }
+      .person-shape .hair {
+        position: absolute;
+        z-index: 2;
+        bottom: 87%;
+        width: 57%;
+        height: 22%;
+        background: var(--hair, #282526);
+        border-radius: 60% 55% 25% 22%;
+      }
+      .person-shape .hair:after {
+        content: "";
+        position: absolute;
+        right: -2px;
+        top: 50%;
+        width: 19%;
+        height: 85%;
+        border-radius: 0 0 9px 9px;
+        background: var(--hair, #282526);
+      }
+      .participant:nth-child(2) .person-shape {
+        transform: scale(0.93);
+      }
+      .participant:nth-child(3) .person-shape {
+        transform: scale(0.95);
+      }
+      .participant:nth-child(4) .person-shape {
+        transform: scale(0.9);
+      }
+      .participant:nth-child(5) .person-shape {
+        transform: scale(0.94);
+      }
+      .participant:nth-child(6) .person-shape {
+        transform: scale(0.9);
+      }
+      .participant .participant-footer {
+        position: absolute;
+        left: 12px;
+        right: 12px;
+        bottom: 10px;
+        z-index: 4;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .participant-name {
+        font-size: 13px;
+        color: #fff;
+        font-weight: 500;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .participant-status {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .status-pill {
+        width: 27px;
+        height: 27px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        background: rgba(32, 33, 36, 0.76);
+      }
+      .you-tile {
+        outline: 2px solid #8ab4f8;
+        outline-offset: -2px;
+      }
+      .you-avatar {
+        position: absolute;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: linear-gradient(145deg, #76a9e7, #4c64a6);
+        display: grid;
+        place-items: center;
+        font-size: 25px;
+        font-weight: 500;
+        color: #fff;
+        box-shadow: 0 3px 14px rgba(0, 0, 0, 0.18);
+      }
+      .presenting-banner {
+        position: absolute;
+        top: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(32, 33, 36, 0.86);
+        padding: 9px 14px;
+        border-radius: 7px;
+        color: #e8eaed;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        z-index: 6;
+        box-shadow: 0 2px 9px rgba(0, 0, 0, 0.14);
+        animation: slide-down 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      @keyframes slide-down {
+        from {
+          transform: translate(-50%, -10px);
+          opacity: 0;
+        }
+        to {
+          transform: translate(-50%, 0);
+          opacity: 1;
+        }
+      }
+      .caption-box {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 80px;
+        width: min(520px, 85%);
+        text-align: center;
+        background: rgba(32, 33, 36, 0.78);
+        padding: 13px 18px;
+        border-radius: 9px;
+        font-size: 16px;
+        line-height: 1.45;
+        color: white;
+        z-index: 8;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+        animation: fade-in 0.3s ease-out;
+      }
+      @keyframes fade-in {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      .meeting-bottom {
+        height: 88px;
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+      }
+      .bottom-left {
+        min-width: 180px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        color: #bdc1c6;
+        font-size: 13px;
+      }
+      .bottom-center {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .meeting-control {
+        min-width: 48px;
+        height: 48px;
+        border: 0;
+        border-radius: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        background: #3c4043;
+        color: #e8eaed;
+        padding: 0 14px;
+        transition:
+          background 0.15s,
+          transform 0.15s;
+      }
+      .meeting-control:hover {
+        background: #4a4d50;
+        transform: translateY(-2px);
+      }
+      .meeting-control.active {
+        background: #8ab4f8;
+        color: #202124;
+      }
+      .meeting-control.off {
+        background: #ea4335;
+        color: white;
+      }
+      .meeting-control .control-label {
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      .meeting-control.leave {
+        min-width: 58px;
+        width: 58px;
+        border-radius: 18px;
+        background: #ea4335;
+        color: white;
+      }
+      .meeting-control.leave:hover {
+        background: #d93025;
+      }
+      .meeting-control.more {
+        border-radius: 50%;
+        width: 48px;
+        padding: 0;
+      }
+      .bottom-right {
+        min-width: 180px;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 9px;
+      }
+      .side-toggle {
+        width: 42px;
+        height: 42px;
+        border: 0;
+        background: transparent;
+        color: #bdc1c6;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+      .side-toggle:hover,
+      .side-toggle.selected {
+        background: #3c4043;
+        color: #fff;
+      }
+      .side-toggle .count {
+        position: absolute;
+        top: -1px;
+        right: -2px;
+        height: 17px;
+        min-width: 17px;
+        border-radius: 10px;
+        background: #8ab4f8;
+        color: #202124;
+        display: grid;
+        place-items: center;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 0 4px;
+      }
+      .room-panel {
+        width: 350px;
+        flex: 0 0 350px;
+        margin-left: 16px;
+        background: #292a2d;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+        color: #e8eaed;
+        animation: panel-slide 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      @keyframes panel-slide {
+        from {
+          opacity: 0;
+          transform: translateX(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+      .panel-header {
+        height: 60px;
+        padding: 0 19px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #3c4043;
+        flex: 0 0 auto;
+      }
+      .panel-header h3 {
+        margin: 0;
+        font-weight: 500;
+        font-size: 16px;
+      }
+      .panel-close {
+        width: 33px;
+        height: 33px;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        display: grid;
+        place-items: center;
+        color: #bdc1c6;
+      }
+      .panel-close:hover {
+        background: #3c4043;
+        color: white;
+      }
+      .panel-body {
+        flex: 1;
+        overflow: auto;
+        padding: 18px;
+      }
+      .chat-message {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 18px;
+        animation: msg-in 0.3s ease-out;
+      }
+      @keyframes msg-in {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .chat-avatar {
+        flex: 0 0 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: white;
+        font-size: 10px;
+        font-weight: 600;
+        background: #7a8db2;
+      }
+      .chat-message:nth-child(2) .chat-avatar {
+        background: #b47c66;
+      }
+      .chat-message:nth-child(3) .chat-avatar {
+        background: #558a7b;
+      }
+      .chat-message:nth-child(4) .chat-avatar {
+        background: #8a78ad;
+      }
+      .chat-content {
+        min-width: 0;
+      }
+      .chat-meta {
+        color: #9aa0a6;
+        font-size: 11px;
+        margin: 1px 0 5px;
+      }
+      .chat-meta strong {
+        color: #e8eaed;
+        font-size: 12px;
+        font-weight: 500;
+        margin-right: 6px;
+      }
+      .chat-text {
+        background: #3c4043;
+        border-radius: 0 10px 10px 10px;
+        padding: 9px 11px;
+        font-size: 13px;
+        line-height: 1.45;
+        color: #e8eaed;
+        overflow-wrap: anywhere;
+      }
+      .chat-compose {
+        margin: 0 14px 14px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        background: #3c4043;
+        border-radius: 25px;
+        padding: 4px 5px 4px 14px;
+        flex: 0 0 auto;
+      }
+      .chat-compose input {
+        flex: 1;
+        min-width: 0;
+        border: 0;
+        background: transparent;
+        outline: 0;
+        color: #e8eaed;
+        font-size: 13px;
+        padding: 8px 0;
+      }
+      .chat-compose input::placeholder {
+        color: #9aa0a6;
+      }
+      .send-chat {
+        border: 0;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #8ab4f8;
+        color: #202124;
+        display: grid;
+        place-items: center;
+      }
+      .send-chat:hover {
+        background: #aecbfa;
+      }
+      .panel-hint {
+        color: #9aa0a6;
+        font-size: 11px;
+        padding: 0 17px 13px;
+        text-align: center;
+      }
+      .people-count {
+        font-size: 13px;
+        color: #bdc1c6;
+        margin: 0 0 15px;
+      }
+      .person-row {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 10px 0;
+      }
+      .person-row .chat-avatar {
+        width: 35px;
+        height: 35px;
+        flex-basis: 35px;
+        font-size: 11px;
+      }
+      .person-row-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .person-row-info strong {
+        display: block;
+        font-weight: 500;
+        font-size: 13px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .person-row-info span {
+        display: block;
+        font-size: 11px;
+        color: #9aa0a6;
+        margin-top: 3px;
+      }
+      .person-row .icon {
+        color: #9aa0a6;
+      }
+      .detail-code {
+        padding: 14px;
+        background: #3c4043;
+        border-radius: 9px;
+        margin-bottom: 19px;
+      }
+      .detail-label {
+        font-size: 11px;
+        color: #9aa0a6;
+        margin-bottom: 7px;
+      }
+      .detail-value {
+        font-size: 14px;
+        color: #e8eaed;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .detail-value button {
+        border: 0;
+        color: #8ab4f8;
+        background: transparent;
+        padding: 3px;
+        display: grid;
+        place-items: center;
+      }
+      .detail-section-title {
+        font-weight: 500;
+        font-size: 13px;
+        margin: 22px 0 10px;
+      }
+      .detail-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #bdc1c6;
+        font-size: 13px;
+        padding: 11px 0;
+      }
+      .more-menu {
+        position: absolute;
+        bottom: 77px;
+        left: 50%;
+        transform: translateX(42px);
+        z-index: 25;
+        width: 210px;
+        padding: 7px;
+        background: #3c4043;
+        border-radius: 9px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.35);
+        animation: menu-in 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      @keyframes menu-in {
+        from {
+          opacity: 0;
+          transform: translateX(42px) translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(42px) translateY(0);
+        }
+      }
+      .more-menu button {
+        width: 100%;
+        text-align: left;
+        border: 0;
+        border-radius: 6px;
+        color: #e8eaed;
+        background: transparent;
+        padding: 11px 10px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .more-menu button:hover {
+        background: #505357;
+      }
+      .toast {
+        position: absolute;
+        bottom: 104px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 200;
+        background: #303134;
+        color: #fff;
+        padding: 12px 18px;
+        border-radius: 7px;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
+        font-size: 13px;
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity 0.2s,
+          transform 0.2s;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, -5px);
+      }
+      .end-modal-mark {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #fce8e6;
+        color: #d93025;
+        display: grid;
+        place-items: center;
+        margin-bottom: 16px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      /* === REACTIONS === */
+      .reaction-picker {
+        position: absolute;
+        bottom: 110px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(32, 33, 36, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 30px;
+        padding: 8px;
+        display: flex;
+        gap: 6px;
+        z-index: 30;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        animation: pop-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      @keyframes pop-in {
+        from {
+          opacity: 0;
+          transform: translate(-50%, 10px) scale(0.8);
+        }
+        to {
+          opacity: 1;
+          transform: translate(-50%, 0) scale(1);
+        }
+      }
+      .reaction-btn {
+        width: 40px;
+        height: 40px;
+        border: 0;
+        background: transparent;
+        border-radius: 50%;
+        font-size: 22px;
+        cursor: pointer;
+        transition: all 0.15s;
+        display: grid;
+        place-items: center;
+      }
+      .reaction-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: scale(1.15);
+      }
+      .floating-reaction {
+        position: absolute;
+        font-size: 40px;
+        pointer-events: none;
+        z-index: 50;
+        animation: float-up 3s ease-out forwards;
+      }
+      @keyframes float-up {
+        0% {
+          transform: translateY(0) scale(0.5);
+          opacity: 0;
+        }
+        20% {
+          opacity: 1;
+          transform: translateY(-30px) scale(1);
+        }
+        80% {
+          opacity: 0.9;
+        }
+        100% {
+          transform: translateY(-400px) scale(0.8);
+          opacity: 0;
+        }
+      }
+
+      /* === RECORDING INDICATOR === */
+      .recording-badge {
+        position: absolute;
+        top: 20px;
+        right: 24px;
+        background: rgba(234, 67, 53, 0.9);
+        color: white;
+        padding: 8px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        z-index: 10;
+        animation: rec-pulse 2s ease-in-out infinite;
+      }
+      @keyframes rec-pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.7;
+        }
+      }
+      .recording-badge .rec-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: white;
+      }
+
+      /* === LIVE TRANSLATE === */
+      .translate-badge {
+        position: absolute;
+        top: 20px;
+        left: 24px;
+        background: rgba(52, 168, 83, 0.9);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 15px;
+        font-size: 11px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        z-index: 10;
+      }
+
+      /* === SPOTLIGHT === */
+      .participant.spotlight {
+        grid-column: 1 / -1;
+        grid-row: 1 / -1;
+      }
+      .participant.spotlight .person-shape {
+        transform: scale(1.3);
+      }
+
+      /* === JOINING ANIMATION === */
+      .joining-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(32, 33, 36, 0.85);
+        backdrop-filter: blur(10px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 200;
+        color: white;
+        gap: 24px;
+        animation: fade-in 0.3s ease-out;
+      }
+      .spinner {
+        width: 60px;
+        height: 60px;
+        border: 4px solid rgba(255, 255, 255, 0.2);
+        border-top-color: #8ab4f8;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .joining-text {
+        font-size: 18px;
+        font-weight: 500;
+      }
+      .joining-subtext {
+        font-size: 14px;
+        color: #bdc1c6;
+      }
+
+      /* === MOBILE MODE RESPONSIVE INSIDE PHONE === */
+      .mobile-mode #home,
+      .mobile-mode #prejoin,
+      .mobile-mode #meeting {
+        height: 100%;
+        overflow-y: auto;
+      }
+      .mobile-mode .home-nav {
+        height: 56px;
+        padding: 0 16px;
+      }
+      .mobile-mode .brand {
+        font-size: 18px;
+      }
+      .mobile-mode .brand-mark {
+        width: 24px;
+        height: 24px;
+      }
+      .mobile-mode .nav-right {
+        gap: 8px;
+      }
+      .mobile-mode .nav-right .help-text {
+        display: none;
+      }
+      .mobile-mode .home-main {
+        grid-template-columns: 1fr;
+        width: 100%;
+        padding: 20px 20px;
+        gap: 20px;
+      }
+      .mobile-mode .hero-copy {
+        padding-bottom: 0;
+      }
+      .mobile-mode .hero-copy h1 {
+        font-size: 28px;
+        letter-spacing: -1px;
+        margin-bottom: 12px;
+      }
+      .mobile-mode .hero-copy p {
+        font-size: 14px;
+      }
+      .mobile-mode .hero-rule {
+        margin: 20px 0 16px;
+      }
+      .mobile-mode .home-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+      .mobile-mode .primary-btn {
+        width: 100%;
+        min-height: 44px;
+      }
+      .mobile-mode .join-box {
+        width: 100%;
+      }
+      .mobile-mode .code-input-wrap {
+        flex: 1;
+        width: auto;
+      }
+      .mobile-mode .home-visual {
+        padding: 10px 0;
+      }
+      .mobile-mode .visual-card {
+        border-radius: 16px;
+        aspect-ratio: 4/3;
+      }
+      .mobile-mode .floating-chip {
+        left: 10px;
+        bottom: 0;
+        transform: scale(0.85);
+        transform-origin: left bottom;
+      }
+      .mobile-mode .home-footer {
+        gap: 12px;
+        font-size: 10px;
+      }
+      .mobile-mode #prejoin {
+        background: #f8f9fa;
+      }
+      .mobile-mode .prejoin-nav {
+        height: 56px;
+        padding: 0 16px;
+      }
+      .mobile-mode .prejoin-layout {
+        grid-template-columns: 1fr;
+        width: 100%;
+        padding: 20px;
+        gap: 20px;
+      }
+      .mobile-mode .preview-window {
+        aspect-ratio: 4/3;
+      }
+      .mobile-mode .prejoin-copy h1 {
+        font-size: 22px;
+      }
+      .mobile-mode .prejoin-copy p {
+        font-size: 14px;
+      }
+      .mobile-mode .preview-buttons {
+        gap: 10px;
+      }
+      .mobile-mode .round-control {
+        width: 42px;
+        height: 42px;
+      }
+      .mobile-mode #meeting {
+        background: var(--meeting-bg);
+      }
+      .mobile-mode .meeting-top {
+        height: 52px;
+        padding: 0 12px;
+      }
+      .mobile-mode .meeting-title {
+        font-size: 13px;
+      }
+      .mobile-mode .meeting-code {
+        display: none;
+      }
+      .mobile-mode .meeting-top-right {
+        gap: 6px;
+      }
+      .mobile-mode .meeting-top-right .meeting-clock {
+        display: none;
+      }
+      .mobile-mode .meeting-content {
+        padding: 0 8px 4px;
+      }
+      .mobile-mode .participant-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+      }
+      .mobile-mode .participant {
+        border-radius: 7px;
+      }
+      .mobile-mode .participant .person-shape {
+        width: 60px;
+        height: 90px;
+      }
+      .mobile-mode .participant-name {
+        font-size: 10px;
+      }
+      .mobile-mode .participant-footer {
+        left: 6px !important;
+        right: 6px !important;
+        bottom: 5px !important;
+      }
+      .mobile-mode .status-pill {
+        width: 20px;
+        height: 20px;
+      }
+      .mobile-mode .status-pill .icon {
+        width: 12px;
+        height: 12px;
+      }
+      .mobile-mode .you-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+      }
+      .mobile-mode .meeting-bottom {
+        height: 70px;
+        padding: 0 8px;
+      }
+      .mobile-mode .bottom-left {
+        display: none;
+      }
+      .mobile-mode .bottom-right {
+        min-width: 0;
+        gap: 1px;
+      }
+      .mobile-mode .bottom-center {
+        flex: 1;
+        justify-content: center;
+        gap: 4px;
+      }
+      .mobile-mode .meeting-control {
+        width: 40px;
+        min-width: 40px;
+        height: 40px;
+        padding: 0;
+      }
+      .mobile-mode .meeting-control .control-label {
+        display: none;
+      }
+      .mobile-mode .meeting-control.leave {
+        width: 48px;
+        min-width: 48px;
+        height: 40px;
+      }
+      .mobile-mode .meeting-control.more {
+        width: 40px;
+      }
+      .mobile-mode .side-toggle {
+        width: 34px;
+        height: 34px;
+      }
+      .mobile-mode .side-toggle .icon {
+        width: 16px;
+        height: 16px;
+      }
+      .mobile-mode .side-toggle:nth-child(1) {
+        display: none;
+      }
+      .mobile-mode .room-panel {
+        position: absolute;
+        z-index: 30;
+        top: 52px;
+        bottom: 70px;
+        left: 8px;
+        right: 8px;
+        width: auto;
+        margin: 0;
+      }
+      .mobile-mode .caption-box {
+        bottom: 72px;
+        font-size: 12px;
+      }
+      .mobile-mode .presenting-banner {
+        top: 7px;
+        font-size: 11px;
+      }
+      .mobile-mode .more-menu {
+        bottom: 70px;
+        left: auto;
+        right: 8px;
+        transform: none;
+      }
+      .mobile-mode .recording-badge,
+      .mobile-mode .translate-badge {
+        font-size: 10px;
+        padding: 5px 10px;
+        top: 55px;
+      }
+
+      /* === PIXEL MODE ADJUSTMENTS === */
+      .pixel-mode .pixel-phone {
+        transform: none;
+      }
+      .pixel-mode .phone-screen * {
+        font-family: "Google Sans", "Roboto", sans-serif;
+      }
+      .pixel-mode .view-container.mobile-mode {
+        background: transparent;
+        padding: 0;
+      }
+
+      /* === APP BADGE === */
+      .app-badge {
+        position: fixed;
+        top: 24px;
+        left: 24px;
+        z-index: 999;
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(10px);
+        padding: 10px 16px;
+        border-radius: 30px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #202124;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+      }
+      .app-badge .badge-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--blue);
+        animation: pulse-dot 2s infinite;
+      }
+    </style>
+  </head>
+  <body>
+    <svg
+      aria-hidden="true"
+      style="position: absolute; width: 0; height: 0; overflow: hidden"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <symbol id="i-key" viewBox="0 0 24 24">
+        <circle
+          cx="8"
+          cy="15"
+          r="4"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+        <path
+          d="m11 12 9-9m-4 4 3 3m-6 0 3 3"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24">
+        <rect
+          x="3"
+          y="3"
+          width="8"
+          height="8"
+          rx="1.4"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+        <rect
+          x="13"
+          y="3"
+          width="8"
+          height="8"
+          rx="1.4"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+        <rect
+          x="3"
+          y="13"
+          width="8"
+          height="8"
+          rx="1.4"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+        <rect
+          x="13"
+          y="13"
+          width="8"
+          height="8"
+          rx="1.4"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+      </symbol>
+      <symbol id="i-send" viewBox="0 0 24 24">
+        <path
+          d="m3 11 18-8-8 18-2.5-7.5L3 11Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M10.5 13.5 21 3"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-video" viewBox="0 0 24 24">
+        <rect
+          x="3"
+          y="6"
+          width="13"
+          height="12"
+          rx="2"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        />
+        <path d="m16 10 5-3v10l-5-3z" fill="currentColor" />
+      </symbol>
+      <symbol id="i-video-off" viewBox="0 0 24 24">
+        <path
+          d="M3 6.5A2.5 2.5 0 0 1 5.5 4H14a2 2 0 0 1 2 2v1l5-3v16l-5-3v1a2 2 0 0 1-2 2H5.5A2.5 2.5 0 0 1 3 17.5z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+        <path d="m3 3 18 18" stroke="currentColor" stroke-width="2" />
+      </symbol>
+      <symbol id="i-mic" viewBox="0 0 24 24">
+        <rect
+          x="9"
+          y="3"
+          width="6"
+          height="12"
+          rx="3"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        />
+        <path
+          d="M5 11a7 7 0 0 0 14 0M12 18v3m-4 0h8"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-mic-off" viewBox="0 0 24 24">
+        <path
+          d="M9 9V6a3 3 0 0 1 5.8-1M15 10v2a3 3 0 0 1-5.1 2.1M5 11a7 7 0 0 0 12.4 4.4M19 11a7 7 0 0 1-.5 2.6M12 18v3m-4 0h8M3 3l18 18"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-people" viewBox="0 0 24 24">
+        <circle
+          cx="9"
+          cy="8"
+          r="3.2"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+        <path
+          d="M3 20v-1.2A4.8 4.8 0 0 1 7.8 14h2.4a4.8 4.8 0 0 1 4.8 4.8V20M16 5.2a3.2 3.2 0 0 1 0 6.2m2.2 3.1a4.6 4.6 0 0 1 2.8 4.3V20"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-chat" viewBox="0 0 24 24">
+        <path
+          d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H5l-2 2v-9.5A7.5 7.5 0 0 1 10.5 4H12a8 8 0 0 1 8 7.5Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M7 10h9M7 14h6"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-present" viewBox="0 0 24 24">
+        <rect
+          x="3"
+          y="4"
+          width="18"
+          height="13"
+          rx="2"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+        <path
+          d="M12 17v4m-4 0h8M8 9l4-3 4 3m-4-3v8"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-hand" viewBox="0 0 24 24">
+        <path
+          d="M8 12V5a1.5 1.5 0 0 1 3 0v6-8a1.5 1.5 0 0 1 3 0v8-6a1.5 1.5 0 0 1 3 0v7-4a1.5 1.5 0 0 1 3 0v7c0 4-2.6 7-6.5 7h-1c-2.1 0-3.6-.8-4.8-2.4L4 14.5a1.7 1.7 0 0 1 2.6-2.2L8 14"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-captions" viewBox="0 0 24 24">
+        <rect
+          x="3"
+          y="5"
+          width="18"
+          height="14"
+          rx="2"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+        <path
+          d="M10 10.5a2 2 0 1 0 0 3m7-3a2 2 0 1 0 0 3"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-more" viewBox="0 0 24 24">
+        <circle cx="5" cy="12" r="1.7" fill="currentColor" />
+        <circle cx="12" cy="12" r="1.7" fill="currentColor" />
+        <circle cx="19" cy="12" r="1.7" fill="currentColor" />
+      </symbol>
+      <symbol id="i-phone" viewBox="0 0 24 24">
+        <path
+          d="M7 3h3l2 5-2 1.5a15 15 0 0 0 4.5 4.5L16 12l5 2v3c0 1.1-.9 2-2 2C10.7 19 5 13.3 5 5c0-1.1.9-2 2-2Z"
+          fill="currentColor"
+        />
+      </symbol>
+      <symbol id="i-info" viewBox="0 0 24 24">
+        <circle
+          cx="12"
+          cy="12"
+          r="9"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+        <path
+          d="M12 11v5m0-8h.01"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24">
+        <path
+          d="M12 3 20 6v5c0 5-3.4 8.5-8 10-4.6-1.5-8-5-8-10V6z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+        <path
+          d="m9 12 2 2 4-4"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24">
+        <rect
+          x="8"
+          y="8"
+          width="12"
+          height="13"
+          rx="2"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+        <path
+          d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h3"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+      </symbol>
+      <symbol id="i-calendar" viewBox="0 0 24 24">
+        <rect
+          x="3"
+          y="5"
+          width="18"
+          height="16"
+          rx="2"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+        <path
+          d="M7 3v4m10-4v4M3 10h18"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24">
+        <path
+          d="M12 5v14M5 12h14"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-link" viewBox="0 0 24 24">
+        <path
+          d="M10 13a5 5 0 0 0 7.1 0l3-3A5 5 0 0 0 13 2.9l-1.7 1.7M14 11a5 5 0 0 0-7.1 0l-3 3A5 5 0 0 0 11 21.1l1.7-1.7"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24">
+        <circle
+          cx="12"
+          cy="12"
+          r="3"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+        <path
+          d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.7a8 8 0 0 1-1.8 1l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.8-1l-1.7.7-1.4-2.4L7.1 15a8 8 0 0 1 0-2l-1.4-1.1 1.4-2.4 1.7.7a8 8 0 0 1 1.8-1l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.8 1l1.7-.7 1.4 2.4-1.4 1.1a8 8 0 0 1 0 2Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.4"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-help" viewBox="0 0 24 24">
+        <circle
+          cx="12"
+          cy="12"
+          r="9"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+        <path
+          d="M9.7 9a2.4 2.4 0 1 1 4.3 1.5c-.7.8-2 1.1-2 2.5m0 3h.01"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-close" viewBox="0 0 24 24">
+        <path
+          d="m6 6 12 12M18 6 6 18"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-search" viewBox="0 0 24 24">
+        <circle
+          cx="10.8"
+          cy="10.8"
+          r="6.8"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+        <path
+          d="m16 16 5 5"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-mute" viewBox="0 0 24 24">
+        <path
+          d="M4 10v4h4l5 4V6l-5 4H4Zm13-1 5 6m0-6-5 6"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-volume" viewBox="0 0 24 24">
+        <path
+          d="M4 10v4h4l5 4V6l-5 4H4Zm12-1a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-desktop" viewBox="0 0 24 24">
+        <rect
+          x="3"
+          y="4"
+          width="18"
+          height="12"
+          rx="2"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+        <path
+          d="M9 20h6M12 16v4"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-smartphone" viewBox="0 0 24 24">
+        <rect
+          x="6"
+          y="3"
+          width="12"
+          height="18"
+          rx="2"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+        <path d="M11 18h2" stroke="currentColor" stroke-width="1.8" />
+      </symbol>
+      <symbol id="i-emoji" viewBox="0 0 24 24">
+        <circle
+          cx="12"
+          cy="12"
+          r="9"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+        <path
+          d="M8 10h.01M16 10h.01M8 15s1.5 2 4 2 4-2 4-2"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-emoji-active" viewBox="0 0 24 24">
+        <path
+          d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm-3.5 8.5a1.5 1.5 0 1 1 1.5-1.5 1.5 1.5 0 0 1-1.5 1.5Zm7 0A1.5 1.5 0 1 1 17 9a1.5 1.5 0 0 1-1.5 1.5ZM12 17.5a6 6 0 0 1-5.2-3h10.4a6 6 0 0 1-5.2 3Z"
+          fill="currentColor"
+        />
+      </symbol>
+      <symbol id="i-record" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" fill="currentColor" />
+      </symbol>
+      <symbol id="i-translate" viewBox="0 0 24 24">
+        <path
+          d="M12.87 15.07l-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.76 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"
+          fill="currentColor"
+        />
+      </symbol>
+      <symbol id="i-whiteboard" viewBox="0 0 24 24">
+        <rect
+          x="3"
+          y="3"
+          width="18"
+          height="18"
+          rx="2"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+        <path
+          d="M7 14l3-3 3 3 4-4"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-poll" viewBox="0 0 24 24">
+        <path
+          d="M4 20V10M10 20V4M16 20v-6M20 20H4"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-pin" viewBox="0 0 24 24">
+        <path
+          d="M16 4v4l2 2v2h-5v7l-1 1-1-1v-7H6v-2l2-2V4h8z"
+          fill="currentColor"
+        />
+      </symbol>
+      <symbol id="i-noise" viewBox="0 0 24 24">
+        <path
+          d="M12 1v22M4 12h16M8 6v12M16 8v8M2 12h20"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+    </svg>
+
+    <!-- App Badge -->
+    <div class="app-badge">
+      <span class="badge-dot"></span>
+      <span>Google Meet Clone</span>
+    </div>
+
+    <!-- Mode Switcher -->
+    <div class="mode-switcher">
+      <button
+        class="mode-btn active"
+        data-mode="desktop"
+        title="Tampilan Desktop"
+      >
+        <svg class="icon"><use href="#i-desktop" /></svg>
+        <span>Desktop</span>
+      </button>
+      <button
+        class="mode-btn"
+        data-mode="mobile"
+        title="Tampilan Mobile (Pixel Phone)"
+      >
+        <svg class="icon"><use href="#i-smartphone" /></svg>
+        <span>Mobile</span>
+      </button>
+    </div>
+
+    <!-- View Container -->
+    <div class="view-container desktop-mode" id="viewContainer">
+      <!-- Desktop Wrapper -->
+      <div class="desktop-wrapper" id="desktopWrapper">
+        <div class="app-shell">
+          <main id="home">
+            <header class="home-nav">
+              <div class="brand">
+                <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true">
+                  <path
+                    fill="#00875A"
+                    d="M5 13.8A5.8 5.8 0 0 1 10.8 8H25v12H5z"
+                  />
+                  <path
+                    fill="#2684FC"
+                    d="M25 8h12a6 6 0 0 1 6 6v5l-12 8-6-7z"
+                  />
+                  <path fill="#FFBA00" d="M5 20h20v12H5z" />
+                  <path fill="#DE350B" d="M25 27 43 14v20L25 21z" />
+                  <path
+                    fill="#00B8D9"
+                    d="M5 32h20v8H10.8A5.8 5.8 0 0 1 5 34.2z"
+                  />
+                  <path fill="#6554C0" d="M25 20h18v14a6 6 0 0 1-6 6H25z" />
+                </svg>
+                <span>Meet</span>
+              </div>
+              <div class="nav-right">
+                <button class="nav-icon" title="Bantuan" aria-label="Bantuan">
+                  <svg class="icon"><use href="#i-help" /></svg>
+                </button>
+                <button
+                  class="nav-icon"
+                  title="Setelan"
+                  aria-label="Setelan"
+                  id="homeSettings"
+                >
+                  <svg class="icon"><use href="#i-settings" /></svg>
+                </button>
+                <span
+                  class="help-text"
+                  id="homeClock"
+                  style="font-size: 14px; white-space: nowrap"
+                  >16:30 · Sab, 31 Okt</span
+                >
+                <div class="avatar-small" title="Akun">AR</div>
+              </div>
+            </header>
+
+            <section class="home-main">
+              <div class="hero-copy">
+                <h1>Video call dan rapat bersama siapa saja</h1>
+                <p>
+                  Terhubung, berkolaborasi, dan rayakan momen bersama dari mana
+                  saja dengan video call.
+                </p>
+                <div class="hero-rule"></div>
+                <div class="home-actions">
+                  <div style="position: relative">
+                    <button class="primary-btn" id="newMeetingBtn">
+                      <svg class="icon"><use href="#i-video" /></svg> Rapat baru
+                    </button>
+                    <div class="dropdown hidden" id="newMeetingMenu">
+                      <button id="startInstant">
+                        <svg class="icon"><use href="#i-plus" /></svg
+                        ><span>Mulai rapat instan</span>
+                      </button>
+                      <button id="createMeetingLink">
+                        <svg class="icon"><use href="#i-link" /></svg
+                        ><span>Buat rapat untuk nanti</span>
+                      </button>
+                      <button id="scheduleMeeting">
+                        <svg class="icon"><use href="#i-calendar" /></svg
+                        ><span>Jadwalkan di Kalender</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="join-box">
+                    <label
+                      class="code-input-wrap"
+                      aria-label="Masukkan kode atau link"
+                    >
+                      <svg class="icon"><use href="#i-key" /></svg>
+                      <input
+                        id="meetingCodeInput"
+                        class="code-input"
+                        type="text"
+                        placeholder="Masukkan kode atau link"
+                        autocomplete="off"
+                      />
+                    </label>
+                    <button class="join-btn" id="joinCodeBtn" disabled>
+                      Bergabung
+                    </button>
+                  </div>
+                </div>
+                <div class="home-note">
+                  <a href="#" id="learnMore">Pelajari lebih lanjut</a> tentang
+                  Meet. Dengan bergabung, Anda menyetujui
+                  <a href="#">Persyaratan Layanan</a> dan
+                  <a href="#">Kebijakan Privasi</a>.
+                </div>
+              </div>
+              <div class="home-visual">
+                <div class="visual-card">
+                  <div class="visual-top">
+                    <span class="visual-label">Terhubung dari mana saja</span>
+                    <div class="visual-dots">
+                      <span></span><span></span><span></span>
+                    </div>
+                  </div>
+                  <div class="visual-scene">
+                    <div class="scene-orbit"></div>
+                    <div class="scene-orbit two"></div>
+                    <div class="scene-person">
+                      <div class="hair"></div>
+                      <div class="head"></div>
+                      <div class="neck"></div>
+                      <div class="body"></div>
+                    </div>
+                    <div class="scene-badge">
+                      <span class="green-dot"></span> Rapat berjalan lancar
+                    </div>
+                  </div>
+                  <div class="visual-controls">
+                    <span
+                      ><svg class="icon sm"><use href="#i-mic" /></svg></span
+                    ><span
+                      ><svg class="icon sm"><use href="#i-video" /></svg></span
+                    ><span
+                      ><svg class="icon sm">
+                        <use href="#i-captions" /></svg></span
+                    ><span class="end"
+                      ><svg class="icon sm"><use href="#i-phone" /></svg
+                    ></span>
+                  </div>
+                </div>
+                <div class="floating-chip">
+                  <div class="chip-avatars"><i>AN</i><i>DP</i><i>+3</i></div>
+                  <div>
+                    <strong>Diskusi tim</strong>6 orang sedang berbicara
+                  </div>
+                </div>
+              </div>
+            </section>
+            <footer class="home-footer">
+              <span>© 2026 Google LLC</span><a href="#">Tentang</a
+              ><a href="#">Privasi</a><a href="#">Persyaratan</a
+              ><a href="#">Panduan Meet</a>
+            </footer>
+          </main>
+
+          <section id="prejoin" class="hidden">
+            <header class="prejoin-nav">
+              <div class="brand">
+                <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true">
+                  <path
+                    fill="#00875A"
+                    d="M5 13.8A5.8 5.8 0 0 1 10.8 8H25v12H5z"
+                  />
+                  <path
+                    fill="#2684FC"
+                    d="M25 8h12a6 6 0 0 1 6 6v5l-12 8-6-7z"
+                  />
+                  <path fill="#FFBA00" d="M5 20h20v12H5z" />
+                  <path fill="#DE350B" d="M25 27 43 14v20L25 21z" />
+                  <path
+                    fill="#00B8D9"
+                    d="M5 32h20v8H10.8A5.8 5.8 0 0 1 5 34.2z"
+                  />
+                  <path
+                    fill="#6554C0"
+                    d="M25 20h18v14a6 6 0 0 1-6 6H25z"
+                  /></svg
+                ><span>Meet</span>
+              </div>
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 18px;
+                  color: #5f6368;
+                  font-size: 13px;
+                "
+              >
+                <span id="prejoinTime">16:30</span
+                ><button
+                  class="nav-icon"
+                  aria-label="Setelan"
+                  id="prejoinSettings"
+                >
+                  <svg class="icon"><use href="#i-settings" /></svg>
+                </button>
+                <div class="avatar-small">AR</div>
+              </div>
+            </header>
+            <div class="prejoin-layout">
+              <div class="preview-side">
+                <div class="preview-window" id="previewWindow">
+                  <div class="preview-art" id="previewArt">
+                    <div class="preview-person">
+                      <div class="p-hair"></div>
+                      <div class="p-head"></div>
+                      <div class="p-neck"></div>
+                      <div class="p-body"></div>
+                    </div>
+                  </div>
+                  <div class="preview-vignette"></div>
+                  <div class="preview-name">
+                    <span id="previewDisplayName">Anda</span
+                    ><span style="opacity: 0.7">(Anda)</span>
+                  </div>
+                  <div class="preview-state">
+                    <svg class="icon sm"><use href="#i-shield" /></svg
+                    ><svg class="icon sm" id="previewSpeaker">
+                      <use href="#i-volume" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="preview-buttons">
+                  <button
+                    class="round-control"
+                    id="preMicBtn"
+                    title="Matikan mikrofon"
+                    aria-label="Mikrofon"
+                  >
+                    <svg class="icon lg"><use href="#i-mic" /></svg>
+                  </button>
+                  <button
+                    class="round-control"
+                    id="preCamBtn"
+                    title="Matikan kamera"
+                    aria-label="Kamera"
+                  >
+                    <svg class="icon lg"><use href="#i-video" /></svg>
+                  </button>
+                  <button
+                    class="round-control"
+                    id="preAudioBtn"
+                    title="Audio"
+                    aria-label="Audio"
+                  >
+                    <svg class="icon lg"><use href="#i-volume" /></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="prejoin-copy">
+                <h1>Siap bergabung?</h1>
+                <p>Periksa audio dan video Anda sebelum bergabung ke rapat.</p>
+                <input
+                  id="displayNameInput"
+                  class="prejoin-name"
+                  type="text"
+                  value="Alex Rahman"
+                  maxlength="30"
+                  aria-label="Nama Anda"
+                />
+                <button class="primary-btn prejoin-join" id="joinNowBtn">
+                  Gabung sekarang
+                </button>
+                <div class="small-help">
+                  Orang lain dalam rapat akan dapat melihat nama dan foto profil
+                  Anda.
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="meeting" class="hidden">
+            <div class="recording-badge hidden" id="recordingBadge">
+              <span class="rec-dot"></span>
+              <span>REC</span>
+            </div>
+            <div class="translate-badge hidden" id="translateBadge">
+              <svg class="icon sm"><use href="#i-translate" /></svg>
+              <span>Terjemahan langsung · ID → EN</span>
+            </div>
+            <header class="meeting-top">
+              <div class="meeting-title-area">
+                <span class="meeting-title">Diskusi Tim Product</span>
+                <span class="meeting-code" id="roomCode">abc-defg-hij</span>
+              </div>
+              <div class="meeting-top-right">
+                <span class="meeting-clock" id="meetingClock">00:00</span>
+                <button
+                  class="top-action"
+                  id="topSecurity"
+                  title="Detail rapat"
+                >
+                  <svg class="icon"><use href="#i-shield" /></svg>
+                </button>
+                <button class="top-action" id="topMore" title="Opsi lainnya">
+                  <svg class="icon"><use href="#i-more" /></svg>
+                </button>
+                <div
+                  class="avatar-small"
+                  style="width: 30px; height: 30px; font-size: 11px"
+                >
+                  AR
+                </div>
+              </div>
+            </header>
+            <div class="meeting-content">
+              <div class="stage" id="stage">
+                <div class="participant-grid" id="participantGrid">
+                  <div class="participant" data-person="Nadia Putri">
+                    <div
+                      class="person-shape"
+                      style="--skin: #dba487; --hair: #292526; --shirt: #6687a6"
+                    >
+                      <div class="hair"></div>
+                      <div class="face"></div>
+                      <div class="neck"></div>
+                      <div class="torso"></div>
+                    </div>
+                    <div class="participant-footer">
+                      <span class="participant-name">Nadia Putri</span
+                      ><span class="participant-status"
+                        ><span class="status-pill"
+                          ><svg class="icon sm">
+                            <use href="#i-mute" /></svg></span
+                      ></span>
+                    </div>
+                  </div>
+                  <div class="participant" data-person="Dimas Pratama">
+                    <div
+                      class="person-shape"
+                      style="--skin: #bd8267; --hair: #211f21; --shirt: #9b806f"
+                    >
+                      <div class="hair"></div>
+                      <div class="face"></div>
+                      <div class="neck"></div>
+                      <div class="torso"></div>
+                    </div>
+                    <div class="participant-footer">
+                      <span class="participant-name">Dimas Pratama</span
+                      ><span class="participant-status"
+                        ><span class="status-pill"
+                          ><svg class="icon sm">
+                            <use href="#i-mic" /></svg></span
+                      ></span>
+                    </div>
+                  </div>
+                  <div class="participant" data-person="Maya Sari">
+                    <div
+                      class="person-shape"
+                      style="--skin: #e0ad88; --hair: #49332b; --shirt: #63877d"
+                    >
+                      <div class="hair"></div>
+                      <div class="face"></div>
+                      <div class="neck"></div>
+                      <div class="torso"></div>
+                    </div>
+                    <div class="participant-footer">
+                      <span class="participant-name">Maya Sari</span
+                      ><span class="participant-status"
+                        ><span class="status-pill"
+                          ><svg class="icon sm">
+                            <use href="#i-mute" /></svg></span
+                      ></span>
+                    </div>
+                  </div>
+                  <div class="participant" data-person="Rizky Maulana">
+                    <div
+                      class="person-shape"
+                      style="--skin: #d59b78; --hair: #262325; --shirt: #776b9a"
+                    >
+                      <div class="hair"></div>
+                      <div class="face"></div>
+                      <div class="neck"></div>
+                      <div class="torso"></div>
+                    </div>
+                    <div class="participant-footer">
+                      <span class="participant-name">Rizky Maulana</span
+                      ><span class="participant-status"
+                        ><span class="status-pill"
+                          ><svg class="icon sm">
+                            <use href="#i-mute" /></svg></span
+                      ></span>
+                    </div>
+                  </div>
+                  <div class="participant" data-person="Sarah Wijaya">
+                    <div
+                      class="person-shape"
+                      style="--skin: #e8b694; --hair: #352b29; --shirt: #9b8b64"
+                    >
+                      <div class="hair"></div>
+                      <div class="face"></div>
+                      <div class="neck"></div>
+                      <div class="torso"></div>
+                    </div>
+                    <div class="participant-footer">
+                      <span class="participant-name">Sarah Wijaya</span
+                      ><span class="participant-status"
+                        ><span class="status-pill"
+                          ><svg class="icon sm">
+                            <use href="#i-mute" /></svg></span
+                      ></span>
+                    </div>
+                  </div>
+                  <div class="participant you-tile" data-person="Anda">
+                    <div class="you-avatar" id="selfAvatar">AR</div>
+                    <div
+                      class="person-shape hidden"
+                      id="selfVideoArt"
+                      style="--skin: #d4a080; --hair: #292526; --shirt: #7087a6"
+                    >
+                      <div class="hair"></div>
+                      <div class="face"></div>
+                      <div class="neck"></div>
+                      <div class="torso"></div>
+                    </div>
+                    <div class="participant-footer">
+                      <span class="participant-name" id="selfTileName"
+                        >Anda</span
+                      ><span class="participant-status"
+                        ><span class="status-pill" id="selfMicStatus"
+                          ><svg class="icon sm">
+                            <use href="#i-mic" /></svg></span
+                      ></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="presenting-banner hidden" id="presentingBanner">
+                  <svg class="icon sm"><use href="#i-present" /></svg> Anda
+                  sedang membagikan layar
+                </div>
+                <div class="caption-box hidden" id="captionBox">
+                  "Oke, kita mulai dari pembaruan desain untuk minggu ini."
+                </div>
+              </div>
+              <aside class="room-panel hidden" id="roomPanel">
+                <div class="panel-header">
+                  <h3 id="panelTitle">Pesan dalam rapat</h3>
+                  <button
+                    class="panel-close"
+                    id="closePanel"
+                    aria-label="Tutup panel"
+                  >
+                    <svg class="icon"><use href="#i-close" /></svg>
+                  </button>
+                </div>
+                <div class="panel-body" id="panelBody"></div>
+                <div id="chatComposer" class="chat-compose">
+                  <input
+                    id="chatInput"
+                    type="text"
+                    placeholder="Kirim pesan ke semua orang"
+                    maxlength="300"
+                  /><button id="sendChatBtn" class="send-chat" title="Kirim">
+                    <svg class="icon sm"><use href="#i-send" /></svg>
+                  </button>
+                </div>
+                <div id="panelHint" class="panel-hint">
+                  Pesan dapat dilihat oleh semua peserta rapat.
+                </div>
+              </aside>
+            </div>
+            <footer class="meeting-bottom">
+              <div class="bottom-left">
+                <span id="meetingTimeLabel">16:30</span><span>·</span
+                ><span>abc-defg-hij</span>
+              </div>
+              <div class="bottom-center">
+                <button
+                  class="meeting-control"
+                  id="micBtn"
+                  title="Matikan mikrofon"
+                  aria-label="Mikrofon"
+                >
+                  <svg class="icon"><use href="#i-mic" /></svg
+                  ><span class="control-label">Mikrofon</span>
+                </button>
+                <button
+                  class="meeting-control"
+                  id="camBtn"
+                  title="Matikan kamera"
+                  aria-label="Kamera"
+                >
+                  <svg class="icon"><use href="#i-video" /></svg
+                  ><span class="control-label">Kamera</span>
+                </button>
+                <button
+                  class="meeting-control"
+                  id="captionsBtn"
+                  title="Aktifkan teks"
+                  aria-label="Teks"
+                >
+                  <svg class="icon"><use href="#i-captions" /></svg
+                  ><span class="control-label">Teks</span>
+                </button>
+                <button
+                  class="meeting-control"
+                  id="handBtn"
+                  title="Angkat tangan"
+                  aria-label="Angkat tangan"
+                >
+                  <svg class="icon"><use href="#i-hand" /></svg>
+                </button>
+                <button
+                  class="meeting-control"
+                  id="emojiBtn"
+                  title="Reaksi"
+                  aria-label="Reaksi"
+                >
+                  <svg class="icon"><use href="#i-emoji" /></svg>
+                </button>
+                <button
+                  class="meeting-control"
+                  id="presentBtn"
+                  title="Presentasikan sekarang"
+                  aria-label="Presentasikan"
+                >
+                  <svg class="icon"><use href="#i-present" /></svg
+                  ><span class="control-label">Presentasikan</span>
+                </button>
+                <button
+                  class="meeting-control more"
+                  id="moreBtn"
+                  title="Opsi lainnya"
+                  aria-label="Opsi lainnya"
+                >
+                  <svg class="icon lg"><use href="#i-more" /></svg>
+                </button>
+                <button
+                  class="meeting-control leave"
+                  id="leaveBtn"
+                  title="Keluar dari rapat"
+                  aria-label="Keluar"
+                >
+                  <svg class="icon lg"><use href="#i-phone" /></svg>
+                </button>
+              </div>
+              <div class="bottom-right">
+                <button
+                  class="side-toggle"
+                  id="detailsBtn"
+                  title="Detail rapat"
+                >
+                  <svg class="icon"><use href="#i-info" /></svg>
+                </button>
+                <button
+                  class="side-toggle"
+                  id="peopleBtn"
+                  title="Tampilkan semua orang"
+                >
+                  <svg class="icon"><use href="#i-people" /></svg
+                  ><span class="count">6</span>
+                </button>
+                <button class="side-toggle" id="chatBtn" title="Chat">
+                  <svg class="icon"><use href="#i-chat" /></svg>
+                </button>
+              </div>
+              <div class="more-menu hidden" id="moreMenu">
+                <button id="moreLayout">
+                  <svg class="icon sm"><use href="#i-grid" /></svg> Ubah tata
+                  letak
+                </button>
+                <button id="moreRecord">
+                  <svg class="icon sm"><use href="#i-record" /></svg> Rekam
+                  rapat
+                </button>
+                <button id="moreTranslate">
+                  <svg class="icon sm"><use href="#i-translate" /></svg>
+                  Terjemahan langsung
+                </button>
+                <button id="moreWhiteboard">
+                  <svg class="icon sm"><use href="#i-whiteboard" /></svg>
+                  Papan tulis
+                </button>
+                <button id="morePoll">
+                  <svg class="icon sm"><use href="#i-poll" /></svg> Polling
+                </button>
+                <button id="moreNoise">
+                  <svg class="icon sm"><use href="#i-noise" /></svg> Peredam
+                  kebisingan
+                </button>
+                <button id="moreFull">
+                  <svg class="icon sm"><use href="#i-video" /></svg> Layar penuh
+                </button>
+                <button id="moreSettings">
+                  <svg class="icon sm"><use href="#i-settings" /></svg> Setelan
+                </button>
+              </div>
+              <div class="reaction-picker hidden" id="reactionPicker">
+                <button class="reaction-btn" data-emoji="❤️">❤️</button>
+                <button class="reaction-btn" data-emoji="😂">😂</button>
+                <button class="reaction-btn" data-emoji="👍">👍</button>
+                <button class="reaction-btn" data-emoji="👏">👏</button>
+                <button class="reaction-btn" data-emoji="🎉">🎉</button>
+                <button class="reaction-btn" data-emoji="🔥">🔥</button>
+              </div>
+            </footer>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pixel Phone Frame (for mobile mode) -->
+    <div class="pixel-phone hidden" id="pixelPhone">
+      <div class="power-btn"></div>
+      <div class="phone-screen">
+        <div class="phone-notch">
+          <div class="phone-camera"></div>
+        </div>
+        <div class="phone-status-bar">
+          <div class="status-left">
+            <span id="phoneTime">16:30</span>
+          </div>
+          <div class="status-right">
+            <svg class="status-signal" viewBox="0 0 14 10" fill="none">
+              <rect x="0" y="8" width="2" height="2" fill="white" />
+              <rect x="3" y="6" width="2" height="4" fill="white" />
+              <rect x="6" y="4" width="2" height="6" fill="white" />
+              <rect x="9" y="2" width="2" height="8" fill="white" />
+              <rect x="12" y="0" width="2" height="10" fill="white" />
+            </svg>
+            <svg class="status-wifi" viewBox="0 0 14 10" fill="none">
+              <path d="M7 9l3-3a4.2 4.2 0 0 0-6 0l3 3z" fill="white" />
+              <path
+                d="M1 5a8.5 8.5 0 0 1 12 0M3 7a5.5 5.5 0 0 1 8 0"
+                stroke="white"
+                stroke-width="1.2"
+                stroke-linecap="round"
+              />
+            </svg>
+            <div class="status-battery">
+              <div class="battery-level"></div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="app-shell"
+          style="
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+          "
+        >
+          <!-- Mobile app shell will be mirrored here -->
+          <div id="mobileAppContent"></div>
+        </div>
+        <div class="phone-nav-bar">
+          <div class="nav-gesture-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-backdrop hidden" id="linkModal">
+      <div class="modal">
+        <h2>Rapat Anda siap</h2>
+        <p>Bagikan link ini kepada orang yang ingin Anda undang ke rapat.</p>
+        <div class="modal-link">
+          <svg class="icon sm" style="color: #5f6368">
+            <use href="#i-link" /></svg
+          ><span id="generatedLink">meet.google.com/abc-defg-hij</span
+          ><button
+            id="copyLinkBtn"
+            class="nav-icon"
+            style="color: #1a73e8"
+            title="Salin link"
+          >
+            <svg class="icon"><use href="#i-copy" /></svg>
+          </button>
+        </div>
+        <div class="modal-actions">
+          <button class="secondary-btn" id="linkModalClose">Tutup</button
+          ><button class="primary-btn" id="linkJoinNow">Gabung sekarang</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop hidden" id="endModal">
+      <div class="modal" style="text-align: center">
+        <div class="end-modal-mark">
+          <svg class="icon lg"><use href="#i-phone" /></svg>
+        </div>
+        <h2>Anda keluar dari rapat</h2>
+        <p>Rapat masih berlangsung untuk peserta lainnya.</p>
+        <div class="modal-actions" style="justify-content: center">
+          <button class="secondary-btn" id="rejoinBtn">Gabung kembali</button
+          ><button class="primary-btn" id="returnHomeBtn">
+            Kembali ke layar utama
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop hidden" id="genericModal">
+      <div class="modal">
+        <h2 id="genericTitle">Setelan</h2>
+        <p id="genericText">Pengaturan simulasi untuk tampilan ini.</p>
+        <div class="modal-actions">
+          <button class="primary-btn" id="genericClose">Selesai</button>
+        </div>
+      </div>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      const $ = (selector, root = document) => root.querySelector(selector);
+      const $$ = (selector, root = document) => [
+        ...root.querySelectorAll(selector),
+      ];
+      const icon = (name) => `<svg class="icon"><use href="#i-${name}"/></svg>`;
+      const home = $("#home"),
+        prejoin = $("#prejoin"),
+        meeting = $("#meeting");
+      const newMeetingBtn = $("#newMeetingBtn"),
+        newMeetingMenu = $("#newMeetingMenu");
+      const codeInput = $("#meetingCodeInput"),
+        joinCodeBtn = $("#joinCodeBtn");
+      const viewContainer = $("#viewContainer");
+      const desktopWrapper = $("#desktopWrapper");
+      const pixelPhone = $("#pixelPhone");
+      const mobileAppContent = $("#mobileAppContent");
+      let currentCode = "abc-defg-hij";
+      let micOn = true,
+        camOn = true,
+        captionsOn = false,
+        handUp = false,
+        presenting = false,
+        audioOn = true,
+        recording = false,
+        translating = false;
+      let activePanel = null,
+        meetingStartedAt = null,
+        meetingTimer = null,
+        toastTimer = null;
+      let currentMode = "desktop";
+      let currentScreen = "home";
+
+      function showToast(message) {
+        const toast = $("#toast");
+        toast.textContent = message;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 2400);
+      }
+
+      function makeCode() {
+        const letters = "abcdefghjkmnpqrstuvwxyz";
+        const part = (n) =>
+          Array.from(
+            { length: n },
+            () => letters[Math.floor(Math.random() * letters.length)],
+          ).join("");
+        return `${part(3)}-${part(4)}-${part(3)}`;
+      }
+
+      function normalizeCode(value) {
+        const trimmed = value.trim().toLowerCase();
+        const fromUrl = trimmed.match(
+          /(?:meet\.google\.com\/)?([a-z]{3}-[a-z]{4}-[a-z]{3})/,
+        );
+        return fromUrl
+          ? fromUrl[1]
+          : trimmed.replace(/[^a-z0-9-]/g, "").slice(0, 12);
+      }
+
+      function switchScreen(screen) {
+        currentScreen = screen;
+        home.classList.toggle("hidden", screen !== "home");
+        prejoin.classList.toggle("hidden", screen !== "prejoin");
+        meeting.classList.toggle("hidden", screen !== "meeting");
+        if (currentMode === "desktop") {
+          desktopWrapper.style.display = "block";
+          pixelPhone.classList.add("hidden");
+          document.body.style.overflow = "hidden";
+        }
+        syncMobileView();
+      }
+
+      function syncMobileView() {
+        if (currentMode !== "mobile") return;
+        // Clone desktop app into mobile phone frame
+        mobileAppContent.innerHTML = "";
+        const clone = desktopWrapper
+          .querySelector(".app-shell")
+          .cloneNode(true);
+        mobileAppContent.appendChild(clone);
+        // Reattach event listeners on clone
+        attachMobileEvents(clone);
+      }
+
+      function switchMode(mode) {
+        currentMode = mode;
+        $$(".mode-btn").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.mode === mode);
+        });
+        if (mode === "desktop") {
+          viewContainer.className = "view-container desktop-mode";
+          desktopWrapper.style.display = "block";
+          pixelPhone.classList.add("hidden");
+          document.body.style.overflow = "hidden";
+        } else {
+          viewContainer.className = "view-container mobile-mode";
+          desktopWrapper.style.display = "none";
+          pixelPhone.classList.remove("hidden");
+          document.body.style.overflow = "hidden";
+          syncMobileView();
+        }
+      }
+
+      // Mode switcher
+      $$(".mode-btn").forEach((btn) => {
+        btn.addEventListener("click", () => switchMode(btn.dataset.mode));
+      });
+
+      function openPrejoin(code) {
+        currentCode = code || makeCode();
+        $("#roomCode").textContent = currentCode;
+        $("#meetingTimeLabel").textContent = currentTime();
+        $("#displayNameInput").value =
+          $("#displayNameInput").value || "Alex Rahman";
+        $("#previewDisplayName").textContent = $("#displayNameInput").value;
+        newMeetingMenu.classList.add("hidden");
+        $("#prejoinTime").textContent = currentTime();
+        $("#phoneTime").textContent = currentTime();
+        setPrejoinControl($("#preMicBtn"), micOn, "mic");
+        setPrejoinControl($("#preCamBtn"), camOn, "cam");
+        $("#previewArt").style.opacity = camOn ? "1" : ".18";
+        switchScreen("prejoin");
+      }
+
+      function currentTime() {
+        return new Intl.DateTimeFormat("id-ID", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        })
+          .format(new Date())
+          .replace(".", ":");
+      }
+
+      function updateClock() {
+        const dateLabel = new Intl.DateTimeFormat("id-ID", {
+          weekday: "short",
+          day: "2-digit",
+          month: "short",
+        }).format(new Date());
+        $("#homeClock").textContent = `${currentTime()} · ${dateLabel}`;
+        $("#prejoinTime").textContent = currentTime();
+        $("#meetingTimeLabel").textContent = currentTime();
+        $("#phoneTime").textContent = currentTime();
+      }
+      updateClock();
+      setInterval(updateClock, 30000);
+
+      newMeetingBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        newMeetingMenu.classList.toggle("hidden");
+      });
+      document.addEventListener("click", (event) => {
+        if (
+          !newMeetingMenu.contains(event.target) &&
+          event.target !== newMeetingBtn
+        )
+          newMeetingMenu.classList.add("hidden");
+        if (
+          !$("#moreMenu").contains(event.target) &&
+          event.target !== $("#moreBtn")
+        )
+          $("#moreMenu").classList.add("hidden");
+        if (
+          !$("#reactionPicker").contains(event.target) &&
+          event.target !== $("#emojiBtn")
+        )
+          $("#reactionPicker").classList.add("hidden");
+      });
+      $("#startInstant").addEventListener("click", () =>
+        openPrejoin(makeCode()),
+      );
+      $("#createMeetingLink").addEventListener("click", () => {
+        currentCode = makeCode();
+        $("#generatedLink").textContent = `meet.google.com/${currentCode}`;
+        $("#linkModal").classList.remove("hidden");
+        newMeetingMenu.classList.add("hidden");
+      });
+      $("#scheduleMeeting").addEventListener("click", () => {
+        newMeetingMenu.classList.add("hidden");
+        showGeneric(
+          "Jadwalkan rapat",
+          "Fitur kalender hanya berupa pratinjau UI. Hubungkan Google Calendar untuk penjadwalan sungguhan.",
+        );
+      });
+      $("#linkModalClose").addEventListener("click", () =>
+        $("#linkModal").classList.add("hidden"),
+      );
+      $("#copyLinkBtn").addEventListener("click", async () => {
+        const text = $("#generatedLink").textContent;
+        try {
+          await navigator.clipboard.writeText(text);
+          showToast("Link rapat disalin");
+        } catch {
+          showToast("Link: " + text);
+        }
+      });
+      $("#linkJoinNow").addEventListener("click", () => {
+        $("#linkModal").classList.add("hidden");
+        openPrejoin(currentCode);
+      });
+      codeInput.addEventListener("input", () => {
+        const value = normalizeCode(codeInput.value);
+        joinCodeBtn.disabled = value.length < 5;
+        joinCodeBtn.classList.toggle("enabled", !joinCodeBtn.disabled);
+      });
+      codeInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && !joinCodeBtn.disabled) joinFromInput();
+      });
+      joinCodeBtn.addEventListener("click", joinFromInput);
+      function joinFromInput() {
+        const value = normalizeCode(codeInput.value);
+        if (value.length < 5) return;
+        openPrejoin(value.includes("-") ? value : makeCode());
+      }
+      $("#learnMore").addEventListener("click", (event) => {
+        event.preventDefault();
+        showToast("Video meeting untuk semua orang.");
+      });
+      $("#homeSettings").addEventListener("click", () =>
+        showGeneric(
+          "Setelan",
+          "Pilih mikrofon, kamera, speaker, atau preferensi tampilan. Ini adalah simulasi antarmuka.",
+        ),
+      );
+      $("#prejoinSettings").addEventListener("click", () =>
+        showGeneric(
+          "Setelan perangkat",
+          "Mikrofon: Default · Kamera: Default · Speaker: Default",
+        ),
+      );
+
+      $("#displayNameInput").addEventListener("input", () => {
+        $("#previewDisplayName").textContent =
+          $("#displayNameInput").value.trim() || "Anda";
+      });
+      function setPrejoinControl(button, on, type) {
+        button.classList.toggle("off", !on);
+        button.innerHTML = icon(
+          type === "mic"
+            ? on
+              ? "mic"
+              : "mic-off"
+            : on
+              ? "video"
+              : "video-off",
+        );
+        button.title = on
+          ? `Matikan ${type === "mic" ? "mikrofon" : "kamera"}`
+          : `Aktifkan ${type === "mic" ? "mikrofon" : "kamera"}`;
+      }
+      $("#preMicBtn").addEventListener("click", () => {
+        micOn = !micOn;
+        setPrejoinControl($("#preMicBtn"), micOn, "mic");
+      });
+      $("#preCamBtn").addEventListener("click", () => {
+        camOn = !camOn;
+        setPrejoinControl($("#preCamBtn"), camOn, "cam");
+        $("#previewArt").style.opacity = camOn ? "1" : ".18";
+        $("#previewWindow").style.background = camOn ? "#25262a" : "#34363a";
+      });
+      $("#preAudioBtn").addEventListener("click", () => {
+        audioOn = !audioOn;
+        $("#preAudioBtn").classList.toggle("off", !audioOn);
+        $("#preAudioBtn").innerHTML = icon(audioOn ? "volume" : "mute");
+        showToast(audioOn ? "Audio aktif" : "Audio nonaktif");
+      });
+      $("#joinNowBtn").addEventListener("click", joinMeeting);
+      function joinMeeting() {
+        const name = $("#displayNameInput").value.trim() || "Anda";
+        $("#selfTileName").textContent = name === "Alex Rahman" ? "Anda" : name;
+        $("#selfAvatar").textContent = name
+          .split(/\s+/)
+          .map((part) => part[0])
+          .join("")
+          .slice(0, 2)
+          .toUpperCase();
+        $("#roomCode").textContent = currentCode;
+        $("#micBtn").classList.toggle("off", !micOn);
+        $("#micBtn").innerHTML =
+          icon(micOn ? "mic" : "mic-off") +
+          '<span class="control-label">Mikrofon</span>';
+        $("#camBtn").classList.toggle("off", !camOn);
+        $("#camBtn").innerHTML =
+          icon(camOn ? "video" : "video-off") +
+          '<span class="control-label">Kamera</span>';
+        $("#selfMicStatus").innerHTML = icon(micOn ? "mic" : "mute");
+        $("#selfAvatar").classList.toggle("hidden", camOn);
+        $("#selfVideoArt").classList.toggle("hidden", !camOn);
+        meetingStartedAt = Date.now();
+        clearInterval(meetingTimer);
+        meetingTimer = setInterval(() => {
+          const seconds = Math.floor((Date.now() - meetingStartedAt) / 1000);
+          const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
+          const ss = String(seconds % 60).padStart(2, "0");
+          const hh = String(Math.floor(seconds / 3600)).padStart(2, "0");
+          $("#meetingClock").textContent =
+            hh === "00" ? `${mm}:${ss}` : `${hh}:${mm}:${ss}`;
+        }, 1000);
+        switchScreen("meeting");
+        showToast("Anda bergabung ke rapat");
+      }
+
+      $("#micBtn").addEventListener("click", () => {
+        micOn = !micOn;
+        $("#micBtn").classList.toggle("off", !micOn);
+        $("#micBtn").innerHTML =
+          icon(micOn ? "mic" : "mic-off") +
+          '<span class="control-label">Mikrofon</span>';
+        $("#micBtn").title = micOn ? "Matikan mikrofon" : "Aktifkan mikrofon";
+        $("#selfMicStatus").innerHTML = icon(micOn ? "mic" : "mute");
+        showToast(micOn ? "Mikrofon diaktifkan" : "Mikrofon dinonaktifkan");
+        if (currentMode === "mobile") syncMobileView();
+      });
+      $("#camBtn").addEventListener("click", () => {
+        camOn = !camOn;
+        $("#camBtn").classList.toggle("off", !camOn);
+        $("#camBtn").innerHTML =
+          icon(camOn ? "video" : "video-off") +
+          '<span class="control-label">Kamera</span>';
+        $("#selfAvatar").classList.toggle("hidden", camOn);
+        $("#selfVideoArt").classList.toggle("hidden", !camOn);
+        $("#camBtn").title = camOn ? "Matikan kamera" : "Aktifkan kamera";
+        showToast(camOn ? "Kamera diaktifkan" : "Kamera dinonaktifkan");
+        if (currentMode === "mobile") syncMobileView();
+      });
+      $("#captionsBtn").addEventListener("click", () => {
+        captionsOn = !captionsOn;
+        $("#captionsBtn").classList.toggle("active", captionsOn);
+        $("#captionBox").classList.toggle("hidden", !captionsOn);
+        showToast(
+          captionsOn
+            ? "Teks otomatis diaktifkan"
+            : "Teks otomatis dinonaktifkan",
+        );
+        if (currentMode === "mobile") syncMobileView();
+      });
+      $("#handBtn").addEventListener("click", () => {
+        handUp = !handUp;
+        $("#handBtn").classList.toggle("active", handUp);
+        showToast(handUp ? "Anda mengangkat tangan" : "Tangan diturunkan");
+      });
+
+      // Reactions
+      $("#emojiBtn").addEventListener("click", (event) => {
+        event.stopPropagation();
+        $("#reactionPicker").classList.toggle("hidden");
+      });
+      $$(".reaction-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const emoji = btn.dataset.emoji;
+          showFloatingReaction(emoji);
+          $("#reactionPicker").classList.add("hidden");
+        });
+      });
+      function showFloatingReaction(emoji) {
+        const stage = $("#stage");
+        const el = document.createElement("div");
+        el.className = "floating-reaction";
+        el.textContent = emoji;
+        el.style.left = Math.random() * 80 + 10 + "%";
+        el.style.bottom = "100px";
+        stage.appendChild(el);
+        setTimeout(() => el.remove(), 3000);
+      }
+
+      $("#presentBtn").addEventListener("click", () => {
+        presenting = !presenting;
+        $("#presentingBanner").classList.toggle("hidden", !presenting);
+        $("#presentBtn").classList.toggle("active", presenting);
+        showToast(
+          presenting
+            ? "Anda mulai mempresentasikan layar (simulasi)"
+            : "Presentasi dihentikan",
+        );
+        if (currentMode === "mobile") syncMobileView();
+      });
+      $("#moreBtn").addEventListener("click", (event) => {
+        event.stopPropagation();
+        $("#moreMenu").classList.toggle("hidden");
+      });
+      $("#moreLayout").addEventListener("click", () => {
+        $("#moreMenu").classList.add("hidden");
+        showToast("Tata letak: Ubin (simulasi)");
+      });
+      $("#moreRecord").addEventListener("click", () => {
+        recording = !recording;
+        $("#recordingBadge").classList.toggle("hidden", !recording);
+        $("#moreMenu").classList.add("hidden");
+        showToast(recording ? "Rekaman dimulai" : "Rekaman dihentikan");
+        if (currentMode === "mobile") syncMobileView();
+      });
+      $("#moreTranslate").addEventListener("click", () => {
+        translating = !translating;
+        $("#translateBadge").classList.toggle("hidden", !translating);
+        $("#moreMenu").classList.add("hidden");
+        showToast(
+          translating ? "Terjemahan langsung: ID → EN" : "Terjemahan dimatikan",
+        );
+        if (currentMode === "mobile") syncMobileView();
+      });
+      $("#moreWhiteboard").addEventListener("click", () => {
+        $("#moreMenu").classList.add("hidden");
+        showGeneric(
+          "Papan Tulis",
+          "Fitur papan tulis memungkinkan kolaborasi real-time dengan menggambar, menambahkan sticky notes, dan berkolaborasi dengan peserta rapat.",
+        );
+      });
+      $("#morePoll").addEventListener("click", () => {
+        $("#moreMenu").classList.add("hidden");
+        showGeneric(
+          "Polling",
+          "Buat polling untuk mendapatkan feedback dari peserta rapat. Fitur ini mendukung multiple choice dan rating.",
+        );
+      });
+      $("#moreNoise").addEventListener("click", () => {
+        $("#moreMenu").classList.add("hidden");
+        showToast("Peredam kebisingan AI diaktifkan");
+      });
+      $("#moreFull").addEventListener("click", async () => {
+        $("#moreMenu").classList.add("hidden");
+        try {
+          if (!document.fullscreenElement)
+            await document.documentElement.requestFullscreen();
+          else await document.exitFullscreen();
+        } catch {
+          showToast("Mode layar penuh tidak didukung browser ini");
+        }
+      });
+      $("#moreSettings").addEventListener("click", () => {
+        $("#moreMenu").classList.add("hidden");
+        showGeneric(
+          "Setelan rapat",
+          "Kualitas video: Otomatis · Audio: Default · Kontrol host: Tidak tersedia pada versi frontend.",
+        );
+      });
+      $("#topMore").addEventListener("click", () =>
+        showGeneric(
+          "Opsi rapat",
+          "Informasi rapat, keamanan, dan setelan tambahan tersedia sebagai pratinjau UI.",
+        ),
+      );
+
+      function panelShell(title, content, showComposer, hint = "") {
+        $("#panelTitle").textContent = title;
+        $("#panelBody").innerHTML = content;
+        $("#chatComposer").classList.toggle("hidden", !showComposer);
+        $("#panelHint").textContent = hint;
+        $("#panelHint").classList.toggle("hidden", !hint);
+        $("#roomPanel").classList.remove("hidden");
+      }
+      const people = [
+        ["NP", "Nadia Putri", "Penyelenggara rapat", "#7b91b9"],
+        ["DP", "Dimas Pratama", "Berbicara", "#ad806c"],
+        ["MS", "Maya Sari", "Mikrofon nonaktif", "#518e7a"],
+        ["RM", "Rizky Maulana", "Mikrofon nonaktif", "#8273a8"],
+        ["SW", "Sarah Wijaya", "Mikrofon nonaktif", "#9b8960"],
+        ["AR", "Anda", "Anda", "#607eb3"],
+      ];
+      function showPeople() {
+        const rows = people
+          .map(
+            ([initial, name, role, color], index) =>
+              `<div class="person-row"><div class="chat-avatar" style="background:${color}">${initial}</div><div class="person-row-info"><strong>${name}${index === 5 ? " (Anda)" : ""}</strong><span>${role}</span></div>${index === 1 ? '<svg class="icon"><use href="#i-mic"/></svg>' : '<svg class="icon"><use href="#i-mute"/></svg>'}</div>`,
+          )
+          .join("");
+        panelShell(
+          "Orang",
+          `<div class="people-count">6 orang dalam rapat</div>${rows}`,
+          false,
+          "",
+        );
+        activePanel = "people";
+        setSelectedSideButton();
+        if (currentMode === "mobile") syncMobileView();
+      }
+      function showChat() {
+        const content = `<div class="chat-message"><div class="chat-avatar">NP</div><div class="chat-content"><div class="chat-meta"><strong>Nadia Putri</strong>16:28</div><div class="chat-text">Halo semuanya! Kita tunggu sebentar ya.</div></div></div>
+      <div class="chat-message"><div class="chat-avatar">DP</div><div class="chat-content"><div class="chat-meta"><strong>Dimas Pratama</strong>16:29</div><div class="chat-text">Siap, materi sudah saya share.</div></div></div>
+      <div class="chat-message"><div class="chat-avatar">MS</div><div class="chat-content"><div class="chat-meta"><strong>Maya Sari</strong>16:29</div><div class="chat-text">Terima kasih. Menunggu yang lain bergabung.</div></div></div>`;
+        panelShell(
+          "Pesan dalam rapat",
+          content,
+          true,
+          "Pesan dapat dilihat oleh semua peserta rapat.",
+        );
+        activePanel = "chat";
+        setSelectedSideButton();
+        if (currentMode === "mobile") syncMobileView();
+      }
+      function showDetails() {
+        const content = `<div class="detail-code"><div class="detail-label">Link rapat</div><div class="detail-value"><span>meet.google.com/${currentCode}</span><button id="copyRoomCode" title="Salin link">${icon("copy")}</button></div></div>
+      <div class="detail-section-title">Detail bergabung</div>
+      <div class="detail-row">${icon("info")}<span>Diskusi Tim Product</span></div>
+      <div class="detail-row">${icon("calendar")}<span>Sabtu, 31 Oktober 2026 · 16.30 WIB</span></div>
+      <div class="detail-row">${icon("people")}<span>6 orang</span></div>
+      <div class="detail-section-title">Akses rapat</div>
+      <div class="detail-row">${icon("shield")}<span>Rapat dilindungi enkripsi</span></div>`;
+        panelShell("Detail rapat", content, false, "");
+        $("#copyRoomCode").addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(
+              `https://meet.google.com/${currentCode}`,
+            );
+            showToast("Link rapat disalin");
+          } catch {
+            showToast(`meet.google.com/${currentCode}`);
+          }
+        });
+        activePanel = "details";
+        setSelectedSideButton();
+        if (currentMode === "mobile") syncMobileView();
+      }
+      function setSelectedSideButton() {
+        $("#detailsBtn").classList.toggle(
+          "selected",
+          activePanel === "details",
+        );
+        $("#peopleBtn").classList.toggle("selected", activePanel === "people");
+        $("#chatBtn").classList.toggle("selected", activePanel === "chat");
+      }
+      function closePanel() {
+        $("#roomPanel").classList.add("hidden");
+        activePanel = null;
+        setSelectedSideButton();
+        if (currentMode === "mobile") syncMobileView();
+      }
+      $("#detailsBtn").addEventListener("click", () =>
+        activePanel === "details" ? closePanel() : showDetails(),
+      );
+      $("#topSecurity").addEventListener("click", () =>
+        activePanel === "details" ? closePanel() : showDetails(),
+      );
+      $("#peopleBtn").addEventListener("click", () =>
+        activePanel === "people" ? closePanel() : showPeople(),
+      );
+      $("#chatBtn").addEventListener("click", () =>
+        activePanel === "chat" ? closePanel() : showChat(),
+      );
+      $("#closePanel").addEventListener("click", closePanel);
+      function sendChat() {
+        const input = $("#chatInput");
+        const message = input.value.trim();
+        if (!message) return;
+        const node = document.createElement("div");
+        node.className = "chat-message";
+        const safeMessage = message.replace(
+          /[&<>"']/g,
+          (ch) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[ch],
+        );
+        node.innerHTML = `<div class="chat-avatar" style="background:#607eb3">AR</div><div class="chat-content"><div class="chat-meta"><strong>Anda</strong>Baru saja</div><div class="chat-text">${safeMessage}</div></div>`;
+        $("#panelBody").appendChild(node);
+        input.value = "";
+        $("#panelBody").scrollTop = $("#panelBody").scrollHeight;
+        if (currentMode === "mobile") syncMobileView();
+      }
+      $("#sendChatBtn").addEventListener("click", sendChat);
+      $("#chatInput").addEventListener("keydown", (event) => {
+        if (event.key === "Enter") sendChat();
+      });
+
+      $("#leaveBtn").addEventListener("click", () => {
+        $("#endModal").classList.remove("hidden");
+      });
+      $("#rejoinBtn").addEventListener("click", () => {
+        $("#endModal").classList.add("hidden");
+        if (!meetingStartedAt) joinMeeting();
+        else switchScreen("meeting");
+      });
+      $("#returnHomeBtn").addEventListener("click", () => {
+        $("#endModal").classList.add("hidden");
+        clearInterval(meetingTimer);
+        closePanel();
+        switchScreen("home");
+        showToast("Anda kembali ke layar utama");
+      });
+      function showGeneric(title, text) {
+        $("#genericTitle").textContent = title;
+        $("#genericText").textContent = text;
+        $("#genericModal").classList.remove("hidden");
+      }
+      $("#genericClose").addEventListener("click", () =>
+        $("#genericModal").classList.add("hidden"),
+      );
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          $("#linkModal").classList.add("hidden");
+          $("#endModal").classList.add("hidden");
+          $("#genericModal").classList.add("hidden");
+          $("#moreMenu").classList.add("hidden");
+          $("#reactionPicker").classList.add("hidden");
+          if (activePanel) closePanel();
+        }
+      });
+
+      // Mobile event handler - delegate events from cloned mobile view
+      function attachMobileEvents(cloneRoot) {
+        // Re-bind click handlers on the cloned elements
+        cloneRoot.addEventListener("click", (e) => {
+          const btn = e.target.closest("button");
+          if (!btn) return;
+          const id = btn.id;
+          // Map mobile button clicks to desktop handlers
+          const triggerDesktop = (selector) => {
+            const el = document.querySelector(selector);
+            if (el) el.click();
+          };
+          if (id === "newMeetingBtn") triggerDesktop("#newMeetingBtn");
+          if (id === "joinCodeBtn") triggerDesktop("#joinCodeBtn");
+          if (id === "joinNowBtn") triggerDesktop("#joinNowBtn");
+          if (id === "startInstant") triggerDesktop("#startInstant");
+          if (id === "createMeetingLink") triggerDesktop("#createMeetingLink");
+          if (id === "scheduleMeeting") triggerDesktop("#scheduleMeeting");
+          if (id === "preMicBtn") triggerDesktop("#preMicBtn");
+          if (id === "preCamBtn") triggerDesktop("#preCamBtn");
+          if (id === "preAudioBtn") triggerDesktop("#preAudioBtn");
+          if (id === "micBtn") triggerDesktop("#micBtn");
+          if (id === "camBtn") triggerDesktop("#camBtn");
+          if (id === "captionsBtn") triggerDesktop("#captionsBtn");
+          if (id === "handBtn") triggerDesktop("#handBtn");
+          if (id === "emojiBtn") triggerDesktop("#emojiBtn");
+          if (id === "presentBtn") triggerDesktop("#presentBtn");
+          if (id === "moreBtn") triggerDesktop("#moreBtn");
+          if (id === "leaveBtn") triggerDesktop("#leaveBtn");
+          if (id === "detailsBtn") triggerDesktop("#detailsBtn");
+          if (id === "peopleBtn") triggerDesktop("#peopleBtn");
+          if (id === "chatBtn") triggerDesktop("#chatBtn");
+          if (id === "closePanel") triggerDesktop("#closePanel");
+          if (id === "sendChatBtn") triggerDesktop("#sendChatBtn");
+          if (id === "topSecurity") triggerDesktop("#topSecurity");
+          if (id === "topMore") triggerDesktop("#topMore");
+          if (id === "homeSettings") triggerDesktop("#homeSettings");
+          if (id === "prejoinSettings") triggerDesktop("#prejoinSettings");
+          if (btn.classList.contains("reaction-btn")) {
+            btn.closest("#reactionPicker").click();
+          }
+          // More menu items
+          if (id === "moreRecord") triggerDesktop("#moreRecord");
+          if (id === "moreTranslate") triggerDesktop("#moreTranslate");
+          if (id === "moreWhiteboard") triggerDesktop("#moreWhiteboard");
+          if (id === "morePoll") triggerDesktop("#morePoll");
+          if (id === "moreNoise") triggerDesktop("#moreNoise");
+          if (id === "moreFull") triggerDesktop("#moreFull");
+          if (id === "moreSettings") triggerDesktop("#moreSettings");
+          if (id === "moreLayout") triggerDesktop("#moreLayout");
+        });
+        // Sync chat input
+        const mobileChatInput = cloneRoot.querySelector("#chatInput");
+        if (mobileChatInput) {
+          mobileChatInput.addEventListener("input", (e) => {
+            $("#chatInput").value = e.target.value;
+          });
+          mobileChatInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") sendChat();
+          });
+        }
+      }
+    </script>
+  </body>
+</html>

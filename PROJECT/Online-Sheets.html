@@ -1,0 +1,1658 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content="Minimalist spreadsheet workspace" />
+    <title>Online Sheets</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #fafbfc;
+        --panel: #ffffff;
+        --panel-soft: #f7f8fa;
+        --text: #1a1f24;
+        --text-secondary: #4a5260;
+        --muted: #8892a0;
+        --line: #eaedf1;
+        --line-soft: #f1f3f6;
+        --accent: #16a34a;
+        --accent-hover: #15803d;
+        --accent-soft: #ecfdf5;
+        --accent-softer: #f0fdf4;
+        --blue: #2563eb;
+        --red: #dc2626;
+        --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+        --shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+        --shadow-lg: 0 12px 40px rgba(15, 23, 42, 0.08);
+        --radius-sm: 6px;
+        --radius: 8px;
+        --radius-lg: 12px;
+        --transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font:
+          14px/1.5 "Inter",
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          sans-serif;
+        font-feature-settings: "cv11", "ss01";
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+        color: inherit;
+      }
+      button {
+        cursor: pointer;
+        border: 0;
+        background: transparent;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      td:focus-visible,
+      select:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 1px;
+      }
+      button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .app {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* ---------- Topbar ---------- */
+      .topbar {
+        height: 60px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        gap: 20px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        backdrop-filter: saturate(180%) blur(8px);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 600;
+        font-size: 15px;
+        letter-spacing: -0.3px;
+        white-space: nowrap;
+        color: var(--text);
+        text-decoration: none;
+      }
+      .brandmark {
+        width: 28px;
+        height: 28px;
+        background: var(--accent-soft);
+        border-radius: var(--radius-sm);
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        gap: 2px;
+        padding: 5px;
+        flex-shrink: 0;
+      }
+      .brandmark i {
+        background: var(--accent);
+        border-radius: 1px;
+        display: block;
+      }
+      .brandmark i:nth-child(2) {
+        opacity: 0.7;
+      }
+      .brandmark i:nth-child(3) {
+        opacity: 0.5;
+      }
+      .brandmark i:nth-child(4) {
+        opacity: 0.3;
+      }
+      .doc-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-left: 4px;
+        min-width: 0;
+        flex: 1;
+        max-width: 420px;
+      }
+      .doc-title input {
+        width: 100%;
+        min-width: 0;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        padding: 7px 10px;
+        background: transparent;
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--text);
+        transition: all var(--transition);
+      }
+      .doc-title input:hover {
+        background: var(--panel-soft);
+      }
+      .doc-title input:focus {
+        border-color: var(--line);
+        background: var(--panel);
+        outline: none;
+      }
+      .save-status {
+        font-size: 12px;
+        color: var(--muted);
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .save-status::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+      .top-actions {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* ---------- Buttons ---------- */
+      .btn {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        border-radius: var(--radius);
+        padding: 8px 14px;
+        color: var(--text-secondary);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        white-space: nowrap;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all var(--transition);
+      }
+      .btn:hover {
+        background: var(--panel-soft);
+        border-color: #dde1e6;
+        color: var(--text);
+      }
+      .btn.primary {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+        box-shadow: var(--shadow-sm);
+      }
+      .btn.primary:hover {
+        background: var(--accent-hover);
+        border-color: var(--accent-hover);
+      }
+      .btn.ghost {
+        border-color: transparent;
+        background: transparent;
+      }
+      .btn.ghost:hover {
+        background: var(--panel-soft);
+      }
+      .btn.icon {
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        font-size: 16px;
+      }
+      .btn.small {
+        padding: 6px 10px;
+        font-size: 12px;
+      }
+
+      /* ---------- Layout ---------- */
+      .layout {
+        display: grid;
+        grid-template-columns: 240px minmax(0, 1fr);
+        flex: 1;
+        min-height: calc(100vh - 60px);
+      }
+      .sidebar {
+        background: var(--panel);
+        border-right: 1px solid var(--line);
+        padding: 24px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+      }
+      .side-heading {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        padding: 0 12px;
+        margin-bottom: 6px;
+      }
+      .side-item {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        width: 100%;
+        text-align: left;
+        padding: 9px 12px;
+        border-radius: var(--radius);
+        color: var(--text-secondary);
+        font-size: 13px;
+        font-weight: 500;
+        transition: all var(--transition);
+      }
+      .side-item:hover {
+        background: var(--panel-soft);
+        color: var(--text);
+      }
+      .side-item.active {
+        background: var(--accent-soft);
+        color: var(--accent-hover);
+      }
+      .side-icon {
+        width: 18px;
+        text-align: center;
+        font-size: 15px;
+        opacity: 0.85;
+      }
+      .side-item.active .side-icon {
+        opacity: 1;
+      }
+      .sidebar-bottom {
+        margin-top: auto;
+        border-top: 1px solid var(--line);
+        padding: 18px 12px 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      /* ---------- Main ---------- */
+      .main {
+        min-width: 0;
+        padding: 32px clamp(16px, 3vw, 40px) 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+      .page-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 24px;
+      }
+      .page-heading h1 {
+        font-size: 24px;
+        letter-spacing: -0.6px;
+        margin: 0 0 6px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .page-heading p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .heading-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      /* ---------- Workspace ---------- */
+      .workspace {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .sheet-tabs {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel-soft);
+      }
+      .sheet-tab {
+        border: 0;
+        background: transparent;
+        border-radius: var(--radius-sm);
+        padding: 7px 14px;
+        color: var(--text-secondary);
+        font-size: 13px;
+        font-weight: 500;
+        transition: all var(--transition);
+      }
+      .sheet-tab:hover {
+        background: var(--panel);
+        color: var(--text);
+      }
+      .sheet-tab.active {
+        background: var(--panel);
+        color: var(--accent-hover);
+        box-shadow: var(--shadow-sm);
+      }
+      .sheet-tab-add {
+        border: 0;
+        background: transparent;
+        border-radius: var(--radius-sm);
+        width: 28px;
+        height: 28px;
+        color: var(--muted);
+        font-size: 18px;
+        margin-left: 4px;
+        transition: all var(--transition);
+      }
+      .sheet-tab-add:hover {
+        background: var(--panel);
+        color: var(--text);
+      }
+
+      /* ---------- Toolbar ---------- */
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--line);
+        flex-wrap: wrap;
+        background: var(--panel);
+      }
+      .tool-group {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding: 0 6px;
+        border-right: 1px solid var(--line-soft);
+      }
+      .tool-group:last-child {
+        border-right: 0;
+      }
+      .tool-btn {
+        height: 30px;
+        min-width: 30px;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-secondary);
+        padding: 0 9px;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all var(--transition);
+      }
+      .tool-btn:hover {
+        background: var(--panel-soft);
+        color: var(--text);
+      }
+      .tool-btn.active {
+        background: var(--accent-soft);
+        color: var(--accent-hover);
+      }
+      .tool-select {
+        height: 30px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        padding: 0 10px;
+        background: var(--panel);
+        color: var(--text-secondary);
+        font-size: 13px;
+        cursor: pointer;
+        transition: all var(--transition);
+      }
+      .tool-select:hover {
+        border-color: #d0d5dc;
+      }
+
+      /* ---------- Formula Row ---------- */
+      .formula-row {
+        display: flex;
+        align-items: center;
+        height: 38px;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel);
+      }
+      .name-box {
+        width: 80px;
+        flex-shrink: 0;
+        height: 100%;
+        border: 0;
+        border-right: 1px solid var(--line);
+        padding: 0 12px;
+        color: var(--text);
+        background: var(--panel-soft);
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 12px;
+        font-weight: 500;
+      }
+      .fx {
+        padding: 0 14px;
+        color: var(--muted);
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-style: italic;
+        font-size: 13px;
+      }
+      .formula-input {
+        height: 100%;
+        flex: 1;
+        min-width: 0;
+        border: 0;
+        padding: 0 12px;
+        outline: none !important;
+        color: var(--text);
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 13px;
+      }
+      .formula-input::placeholder {
+        color: var(--muted);
+      }
+
+      /* ---------- Grid ---------- */
+      .grid-wrap {
+        overflow: auto;
+        max-height: calc(100vh - 380px);
+        min-height: 320px;
+        position: relative;
+        background: var(--panel);
+      }
+      .sheet {
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: fixed;
+        min-width: 100%;
+        width: max-content;
+        font-size: 13px;
+      }
+      .sheet th,
+      .sheet td {
+        height: 32px;
+        border-right: 1px solid var(--line-soft);
+        border-bottom: 1px solid var(--line-soft);
+        padding: 0 10px;
+        min-width: 120px;
+        max-width: 320px;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      .sheet thead th {
+        height: 30px;
+        min-width: 120px;
+        background: var(--panel-soft);
+        color: var(--muted);
+        font-weight: 500;
+        text-align: center;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        font-size: 12px;
+        letter-spacing: 0.02em;
+      }
+      .sheet .corner {
+        left: 0;
+        z-index: 4;
+        min-width: 44px;
+        width: 44px;
+      }
+      .sheet .rownum {
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        width: 44px;
+        min-width: 44px;
+        text-align: center;
+        background: var(--panel-soft);
+        color: var(--muted);
+        font-weight: 400;
+        padding: 0;
+        font-size: 12px;
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+      }
+      .sheet td {
+        background: var(--panel);
+        outline: none;
+        transition: background var(--transition);
+      }
+      .sheet td:hover {
+        background: var(--panel-soft);
+      }
+      .sheet td.selected {
+        box-shadow: inset 0 0 0 2px var(--accent);
+        background: var(--accent-softer);
+        overflow: visible;
+      }
+      .sheet td.selected:hover {
+        background: var(--accent-softer);
+      }
+      .sheet td.bold {
+        font-weight: 600;
+      }
+      .sheet td.italic {
+        font-style: italic;
+      }
+      .sheet td.money {
+        text-align: right;
+      }
+      .sheet td.center {
+        text-align: center;
+      }
+      .sheet td.right {
+        text-align: right;
+      }
+      .sheet td:focus {
+        box-shadow: inset 0 0 0 2px var(--accent);
+      }
+
+      /* ---------- Statusbar ---------- */
+      .statusbar {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 10px 16px;
+        border-top: 1px solid var(--line);
+        font-size: 12px;
+        color: var(--muted);
+        background: var(--panel-soft);
+      }
+      .statusbar .right {
+        margin-left: auto;
+      }
+      .statusbar strong {
+        color: var(--text);
+        font-weight: 600;
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 11px;
+      }
+
+      /* ---------- Toast ---------- */
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(8px);
+        background: var(--text);
+        color: var(--panel);
+        padding: 10px 18px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-lg);
+        z-index: 30;
+        opacity: 0;
+        pointer-events: none;
+        transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* ---------- Modal ---------- */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        z-index: 20;
+      }
+      .modal-backdrop.open {
+        display: flex;
+      }
+      .modal {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        padding: 26px;
+        width: min(440px, 100%);
+        box-shadow: var(--shadow-lg);
+        animation: modalIn 180ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      @keyframes modalIn {
+        from {
+          opacity: 0;
+          transform: translateY(8px) scale(0.98);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+      .modal h2 {
+        margin: 0 0 8px;
+        font-size: 17px;
+        font-weight: 600;
+        letter-spacing: -0.3px;
+      }
+      .modal p {
+        margin: 0 0 20px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .modal label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 7px;
+        color: var(--text-secondary);
+      }
+      .modal input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        margin-bottom: 20px;
+        font-size: 14px;
+        transition: all var(--transition);
+      }
+      .modal input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-soft);
+      }
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      /* ---------- Responsive ---------- */
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+        .sidebar {
+          display: none;
+        }
+        .topbar {
+          padding: 0 14px;
+          gap: 10px;
+        }
+        .brand {
+          font-size: 14px;
+        }
+        .brandmark {
+          width: 26px;
+          height: 26px;
+        }
+        .doc-title {
+          margin-left: 0;
+          flex: 1;
+          min-width: 0;
+          max-width: none;
+        }
+        .save-status {
+          display: none;
+        }
+        .top-actions .hide-mobile {
+          display: none;
+        }
+        .main {
+          padding: 20px 12px;
+          gap: 18px;
+        }
+        .page-heading {
+          display: block;
+        }
+        .heading-actions {
+          margin-top: 14px;
+        }
+        .grid-wrap {
+          max-height: calc(100vh - 360px);
+        }
+        .sheet th,
+        .sheet td {
+          min-width: 105px;
+        }
+        .sheet .corner,
+        .sheet .rownum {
+          min-width: 38px;
+          width: 38px;
+        }
+        .toolbar {
+          gap: 2px;
+          padding: 7px;
+        }
+        .tool-group {
+          padding: 0 4px;
+        }
+        .tool-btn {
+          padding: 0 6px;
+        }
+        .tool-select {
+          max-width: 100px;
+        }
+        .page-heading h1 {
+          font-size: 20px;
+        }
+      }
+      @media (max-width: 480px) {
+        .brand span.brand-name {
+          display: none;
+        }
+        .top-actions {
+          gap: 5px;
+        }
+        .top-actions .btn {
+          padding: 7px 9px;
+        }
+        .top-actions .primary {
+          font-size: 12px;
+        }
+        .page-heading p {
+          max-width: 260px;
+        }
+        .heading-actions .btn {
+          font-size: 12px;
+        }
+        .grid-wrap {
+          min-height: 280px;
+        }
+        .statusbar {
+          gap: 10px;
+          font-size: 11px;
+          padding: 8px 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Online Sheets Platform">
+          <span class="brandmark" aria-hidden="true">
+            <i></i><i></i><i></i><i></i>
+          </span>
+          <span class="brand-name">Online Sheets Platform</span>
+        </a>
+        <div class="doc-title">
+          <input
+            id="workbookName"
+            aria-label="Nama workbook"
+            value="Untitled spreadsheet"
+          />
+          <span class="save-status" id="saveStatus">Tersimpan</span>
+        </div>
+        <div class="top-actions">
+          <button class="btn hide-mobile" id="importBtn">↑ Import</button>
+          <button class="btn hide-mobile" id="exportBtn">↓ Export</button>
+          <button class="btn primary" id="newWorkbook">＋ Baru</button>
+        </div>
+        <input
+          type="file"
+          id="fileInput"
+          accept=".csv,.tsv,text/csv,text/tab-separated-values"
+          hidden
+        />
+      </header>
+      <div class="layout">
+        <aside class="sidebar">
+          <div>
+            <div class="side-heading">Workspace</div>
+            <button class="side-item active" data-view="sheet">
+              <span class="side-icon">▦</span>Spreadsheet
+            </button>
+            <button class="side-item" id="templatesBtn">
+              <span class="side-icon">▤</span>Template
+            </button>
+            <button class="side-item" id="recentBtn">
+              <span class="side-icon">◷</span>Terakhir dibuka
+            </button>
+          </div>
+          <div>
+            <div class="side-heading">Tools</div>
+            <button class="side-item" id="addRowSide">
+              <span class="side-icon">＋</span>Tambah baris
+            </button>
+            <button class="side-item" id="addColSide">
+              <span class="side-icon">⊞</span>Tambah kolom
+            </button>
+            <button class="side-item" id="clearBtn">
+              <span class="side-icon">⌫</span>Kosongkan sheet
+            </button>
+          </div>
+          <div class="sidebar-bottom">
+            Perubahan tersimpan otomatis di browser.<br />Data tetap privat di
+            perangkat Anda.
+          </div>
+        </aside>
+        <main class="main">
+          <div class="page-heading">
+            <div>
+              <h1>Spreadsheet</h1>
+              <p>Kelola data, hitung nilai, dan ekspor hasil kerja Anda.</p>
+            </div>
+            <div class="heading-actions">
+              <button class="btn" id="addRow">＋ Baris</button>
+              <button class="btn" id="addCol">＋ Kolom</button>
+              <button class="btn primary" id="shareInfo">Bagikan ▾</button>
+            </div>
+          </div>
+          <section class="workspace" aria-label="Spreadsheet editor">
+            <div class="sheet-tabs" id="sheetTabs">
+              <button class="sheet-tab active" data-sheet="0">Sheet 1</button>
+              <button
+                class="sheet-tab-add"
+                id="addSheet"
+                aria-label="Tambah sheet"
+              >
+                +
+              </button>
+            </div>
+            <div class="toolbar" aria-label="Formatting toolbar">
+              <div class="tool-group">
+                <button class="tool-btn" id="undoBtn" title="Undo">↶</button>
+                <button class="tool-btn" id="redoBtn" title="Redo">↷</button>
+              </div>
+              <div class="tool-group">
+                <select
+                  class="tool-select"
+                  id="formatSelect"
+                  aria-label="Format angka"
+                >
+                  <option value="text">Otomatis</option>
+                  <option value="number">Angka</option>
+                  <option value="currency">Mata uang</option>
+                  <option value="percent">Persen</option>
+                </select>
+              </div>
+              <div class="tool-group">
+                <button class="tool-btn" id="boldBtn" title="Tebal">
+                  <b>B</b>
+                </button>
+                <button class="tool-btn" id="italicBtn" title="Miring">
+                  <i>I</i>
+                </button>
+              </div>
+              <div class="tool-group">
+                <button class="tool-btn" id="alignLeft" title="Rata kiri">
+                  ☰
+                </button>
+                <button class="tool-btn" id="alignCenter" title="Rata tengah">
+                  ≡
+                </button>
+                <button class="tool-btn" id="alignRight" title="Rata kanan">
+                  ☷
+                </button>
+              </div>
+              <div class="tool-group">
+                <button class="tool-btn" id="sumBtn" title="Masukkan rumus SUM">
+                  ∑ SUM
+                </button>
+                <button
+                  class="tool-btn"
+                  id="averageBtn"
+                  title="Masukkan rumus AVERAGE"
+                >
+                  AVG
+                </button>
+              </div>
+            </div>
+            <div class="formula-row">
+              <input
+                class="name-box"
+                id="cellName"
+                aria-label="Sel terpilih"
+                value="A1"
+              />
+              <span class="fx">fx</span>
+              <input
+                class="formula-input"
+                id="formulaInput"
+                aria-label="Nilai atau rumus sel"
+                placeholder="Masukkan nilai atau rumus..."
+              />
+            </div>
+            <div class="grid-wrap" id="gridWrap">
+              <table
+                class="sheet"
+                id="sheetGrid"
+                aria-label="Sel spreadsheet"
+              ></table>
+            </div>
+            <div class="statusbar">
+              <span id="cellCount">100 sel</span>
+              <span id="selectionStatus">Sel <strong>A1</strong></span>
+              <span class="right" id="calcStatus">Siap</span>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+    <div class="toast" id="toast" role="status"></div>
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modalTitle"
+      >
+        <h2 id="modalTitle">Buat spreadsheet</h2>
+        <p id="modalText">Mulai dengan workbook baru.</p>
+        <label for="modalInput" id="modalLabel">Nama workbook</label>
+        <input id="modalInput" value="Untitled spreadsheet" />
+        <div class="modal-actions">
+          <button class="btn" id="modalCancel">Batal</button>
+          <button class="btn primary" id="modalConfirm">Buat baru</button>
+        </div>
+      </div>
+    </div>
+    <script>
+      (() => {
+        const ROWS = 20,
+          COLS = 10,
+          STORAGE = "online-sheets-platform-v1";
+        const $ = (id) => document.getElementById(id);
+        let workbook = {
+          name: "Untitled spreadsheet",
+          sheets: [
+            { name: "Sheet 1", rows: ROWS, cols: COLS, data: {}, styles: {} },
+          ],
+        };
+        let activeSheet = 0,
+          selected = { r: 0, c: 0 },
+          history = [],
+          future = [],
+          modalAction = null,
+          toastTimer;
+        const sheet = () => workbook.sheets[activeSheet];
+        const colName = (n) => {
+          let s = "";
+          while (n >= 0) {
+            s = String.fromCharCode((n % 26) + 65) + s;
+            n = Math.floor(n / 26) - 1;
+          }
+          return s;
+        };
+        const cellRef = (r, c) => colName(c) + (r + 1);
+        const key = (r, c) => r + "," + c;
+        const parseRef = (s) => {
+          const m = String(s)
+            .toUpperCase()
+            .match(/^([A-Z]+)([1-9]\d*)$/);
+          if (!m) return null;
+          let c = 0;
+          for (const ch of m[1]) c = c * 26 + ch.charCodeAt(0) - 64;
+          return { r: Number(m[2]) - 1, c: c - 1 };
+        };
+        function raw(r, c) {
+          return sheet().data[key(r, c)] ?? "";
+        }
+        function save() {
+          try {
+            localStorage.setItem(STORAGE, JSON.stringify(workbook));
+            $("saveStatus").textContent = "Tersimpan";
+          } catch (e) {
+            $("saveStatus").textContent = "Gagal menyimpan";
+          }
+        }
+        function load() {
+          try {
+            const x = JSON.parse(localStorage.getItem(STORAGE));
+            if (x && x.sheets?.length) workbook = x;
+          } catch (e) {}
+          $("workbookName").value = workbook.name;
+        }
+        function snapshot() {
+          history.push(JSON.stringify(workbook));
+          if (history.length > 60) history.shift();
+          future = [];
+        }
+        function toast(msg) {
+          $("toast").textContent = msg;
+          $("toast").classList.add("show");
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(
+            () => $("toast").classList.remove("show"),
+            2200,
+          );
+        }
+        function esc(s) {
+          return String(s).replace(
+            /[&<>"']/g,
+            (ch) =>
+              ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;",
+              })[ch],
+          );
+        }
+        function evalCell(r, c, seen = new Set()) {
+          const k = key(r, c),
+            v = raw(r, c);
+          if (typeof v !== "string" || !v.startsWith("=")) return v;
+          if (seen.has(k)) return "#CYCLE!";
+          seen.add(k);
+          try {
+            let expr = v
+              .slice(1)
+              .replace(
+                /\b(SUM|AVERAGE|AVG|MIN|MAX|COUNT)\(\s*([A-Z]+\d+):([A-Z]+\d+)\s*\)/gi,
+                (_, fn, a, b) => {
+                  const p = parseRef(a),
+                    q = parseRef(b);
+                  if (!p || !q) return "NaN";
+                  let vals = [];
+                  for (
+                    let rr = Math.min(p.r, q.r);
+                    rr <= Math.max(p.r, q.r);
+                    rr++
+                  )
+                    for (
+                      let cc = Math.min(p.c, q.c);
+                      cc <= Math.max(p.c, q.c);
+                      cc++
+                    ) {
+                      const n = Number(evalCell(rr, cc, new Set(seen)));
+                      if (raw(rr, cc) !== "" && Number.isFinite(n))
+                        vals.push(n);
+                    }
+                  if (fn.toUpperCase() === "COUNT") return vals.length;
+                  if (fn.toUpperCase() === "MIN")
+                    return vals.length ? Math.min(...vals) : 0;
+                  if (fn.toUpperCase() === "MAX")
+                    return vals.length ? Math.max(...vals) : 0;
+                  const total = vals.reduce((a, b) => a + b, 0);
+                  return fn.toUpperCase() === "SUM"
+                    ? total
+                    : vals.length
+                      ? total / vals.length
+                      : 0;
+                },
+              );
+            expr = expr.replace(/\b([A-Z]+\d+)\b/g, (ref) => {
+              const p = parseRef(ref);
+              if (!p) return "0";
+              const n = Number(evalCell(p.r, p.c, new Set(seen)));
+              return Number.isFinite(n) ? String(n) : "0";
+            });
+            if (!/^[\d\s()+\-*/.,%]*$/.test(expr)) return "#ERROR!";
+            expr = expr.replace(/(\d+(?:\.\d+)?)%/g, "($1/100)");
+            return Function('"use strict";return (' + expr + ")")();
+          } catch (e) {
+            return "#ERROR!";
+          }
+        }
+        function display(v, r, c) {
+          const st = sheet().styles[key(r, c)] || {};
+          if (typeof v === "string" && v.startsWith("=")) v = evalCell(r, c);
+          if (v === "" || v === null || v === undefined) return "";
+          if (typeof v === "number" && Number.isFinite(v)) {
+            if (st.format === "currency")
+              return new Intl.NumberFormat("id-ID", {
+                style: "currency",
+                currency: "IDR",
+                maximumFractionDigits: 2,
+              }).format(v);
+            if (st.format === "percent")
+              return (
+                (v * 100).toLocaleString("id-ID", {
+                  maximumFractionDigits: 2,
+                }) + "%"
+              );
+            return Number(v.toFixed(8)).toLocaleString("id-ID");
+          }
+          return String(v);
+        }
+        function renderTabs() {
+          $("sheetTabs")
+            .querySelectorAll(".sheet-tab")
+            .forEach((x) => x.remove());
+          workbook.sheets.forEach((s, i) => {
+            const b = document.createElement("button");
+            b.className = "sheet-tab" + (i === activeSheet ? " active" : "");
+            b.textContent = s.name;
+            b.dataset.sheet = i;
+            b.onclick = () => {
+              activeSheet = i;
+              selected = { r: 0, c: 0 };
+              renderTabs();
+              renderGrid();
+            };
+            $("sheetTabs").insertBefore(b, $("addSheet"));
+          });
+        }
+        function renderGrid() {
+          const s = sheet(),
+            grid = $("sheetGrid");
+          let out = '<thead><tr><th class="corner"></th>';
+          for (let c = 0; c < s.cols; c++) out += "<th>" + colName(c) + "</th>";
+          out += "</tr></thead><tbody>";
+          for (let r = 0; r < s.rows; r++) {
+            out += '<tr><th class="rownum">' + (r + 1) + "</th>";
+            for (let c = 0; c < s.cols; c++) {
+              const k = key(r, c),
+                st = s.styles[k] || {},
+                sel = selected.r === r && selected.c === c,
+                rawv = raw(r, c),
+                val = display(rawv, r, c);
+              let cls = [];
+              if (sel) cls.push("selected");
+              if (st.bold) cls.push("bold");
+              if (st.italic) cls.push("italic");
+              if (st.align) cls.push(st.align);
+              out +=
+                '<td tabindex="0" data-r="' +
+                r +
+                '" data-c="' +
+                c +
+                '" class="' +
+                cls.join(" ") +
+                '" title="' +
+                esc(rawv) +
+                '">' +
+                esc(val) +
+                "</td>";
+            }
+            out += "</tr>";
+          }
+          out += "</tbody>";
+          grid.innerHTML = out;
+          grid.querySelectorAll("td").forEach((td) => {
+            td.addEventListener("click", () =>
+              selectCell(+td.dataset.r, +td.dataset.c),
+            );
+            td.addEventListener("dblclick", () => editInCell(td));
+            td.addEventListener("keydown", cellKeydown);
+          });
+          updateFormula();
+          $("cellCount").textContent =
+            (s.rows * s.cols).toLocaleString("id-ID") + " sel";
+          $("calcStatus").textContent = "Perhitungan otomatis aktif";
+        }
+        function selectCell(r, c) {
+          selected = { r, c };
+          $("sheetGrid")
+            .querySelectorAll("td.selected")
+            .forEach((x) => x.classList.remove("selected"));
+          const td = $("sheetGrid").querySelector(
+            'td[data-r="' + r + '"][data-c="' + c + '"]',
+          );
+          if (td) td.classList.add("selected");
+          updateFormula();
+        }
+        function updateFormula() {
+          const r = selected.r,
+            c = selected.c,
+            v = raw(r, c);
+          $("cellName").value = cellRef(r, c);
+          $("formulaInput").value = v;
+          $("selectionStatus").innerHTML =
+            "Sel <strong>" + cellRef(r, c) + "</strong>";
+          const st = sheet().styles[key(r, c)] || {};
+          $("formatSelect").value = st.format || "text";
+          $("boldBtn").classList.toggle("active", !!st.bold);
+          $("italicBtn").classList.toggle("active", !!st.italic);
+        }
+        function setCell(r, c, v) {
+          const k = key(r, c);
+          if (v === "") delete sheet().data[k];
+          else sheet().data[k] = v;
+          renderGrid();
+          selectCell(r, c);
+          save();
+        }
+        function commitFormula() {
+          snapshot();
+          setCell(selected.r, selected.c, $("formulaInput").value.trim());
+        }
+        function editInCell(td) {
+          const r = +td.dataset.r,
+            c = +td.dataset.c,
+            old = raw(r, c);
+          td.textContent = "";
+          const inp = document.createElement("input");
+          inp.value = old;
+          inp.style.cssText =
+            "width:100%;height:100%;border:0;outline:0;background:transparent;font:inherit";
+          td.appendChild(inp);
+          inp.focus();
+          inp.select();
+          const done = (saveIt) => {
+            if (!td.contains(inp)) return;
+            if (saveIt) {
+              snapshot();
+              sheet().data[key(r, c)] = inp.value;
+              if (!inp.value) delete sheet().data[key(r, c)];
+              save();
+            }
+            renderGrid();
+            selectCell(r, c);
+          };
+          inp.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              done(true);
+              if (r + 1 < sheet().rows) selectCell(r + 1, c);
+            } else if (e.key === "Escape") done(false);
+            else if (e.key === "Tab") {
+              e.preventDefault();
+              done(true);
+              selectCell(r, Math.min(sheet().cols - 1, c + 1));
+            }
+          });
+          inp.addEventListener("blur", () => done(true));
+        }
+        function cellKeydown(e) {
+          const r = +e.currentTarget.dataset.r,
+            c = +e.currentTarget.dataset.c;
+          if (e.key === "Enter" || e.key === "F2") {
+            e.preventDefault();
+            editInCell(e.currentTarget);
+            return;
+          }
+          let nr = r,
+            nc = c;
+          if (e.key === "ArrowDown") nr = Math.min(sheet().rows - 1, r + 1);
+          else if (e.key === "ArrowUp") nr = Math.max(0, r - 1);
+          else if (e.key === "ArrowRight")
+            nc = Math.min(sheet().cols - 1, c + 1);
+          else if (e.key === "ArrowLeft") nc = Math.max(0, c - 1);
+          else if (e.key === "Delete" || e.key === "Backspace") {
+            snapshot();
+            setCell(r, c, "");
+            return;
+          } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+            editInCell(e.currentTarget);
+            return;
+          } else return;
+          e.preventDefault();
+          selectCell(nr, nc);
+          const next = $("sheetGrid").querySelector(
+            'td[data-r="' + nr + '"][data-c="' + nc + '"]',
+          );
+          next?.focus();
+        }
+        function addRows(n = 10) {
+          snapshot();
+          sheet().rows += n;
+          renderGrid();
+          save();
+          toast(n + " baris ditambahkan");
+        }
+        function addCols(n = 1) {
+          snapshot();
+          sheet().cols += n;
+          renderGrid();
+          save();
+          toast(n + " kolom ditambahkan");
+        }
+        function modal(title, text, label, value, action, confirm) {
+          $("modalTitle").textContent = title;
+          $("modalText").textContent = text;
+          $("modalLabel").textContent = label;
+          $("modalInput").value = value;
+          $("modalConfirm").textContent = confirm;
+          modalAction = action;
+          $("modalBackdrop").classList.add("open");
+          $("modalInput").focus();
+          $("modalInput").select();
+        }
+        function closeModal() {
+          $("modalBackdrop").classList.remove("open");
+          modalAction = null;
+        }
+        $("modalCancel").onclick = closeModal;
+        $("modalBackdrop").addEventListener("click", (e) => {
+          if (e.target === $("modalBackdrop")) closeModal();
+        });
+        $("modalConfirm").onclick = () => {
+          const val = $("modalInput").value.trim();
+          if (!val) {
+            $("modalInput").focus();
+            return;
+          }
+          if (modalAction) modalAction(val);
+          closeModal();
+        };
+        $("workbookName").addEventListener("change", () => {
+          workbook.name =
+            $("workbookName").value.trim() || "Untitled spreadsheet";
+          $("workbookName").value = workbook.name;
+          save();
+        });
+        $("formulaInput").addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commitFormula();
+          }
+        });
+        $("cellName").addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            const p = parseRef(e.target.value);
+            if (p && p.r < sheet().rows && p.c < sheet().cols) {
+              selectCell(p.r, p.c);
+              $("sheetGrid")
+                .querySelector('td[data-r="' + p.r + '"][data-c="' + p.c + '"]')
+                ?.focus();
+            } else toast("Referensi sel tidak ditemukan");
+          }
+        });
+        $("addRow").onclick = $("addRowSide").onclick = () => addRows(10);
+        $("addCol").onclick = $("addColSide").onclick = () => addCols(1);
+        $("addSheet").onclick = () =>
+          modal(
+            "Tambah sheet",
+            "Buat tab baru dalam workbook ini.",
+            "Nama sheet",
+            "Sheet " + (workbook.sheets.length + 1),
+            (name) => {
+              workbook.sheets.push({
+                name,
+                rows: ROWS,
+                cols: COLS,
+                data: {},
+                styles: {},
+              });
+              activeSheet = workbook.sheets.length - 1;
+              selected = { r: 0, c: 0 };
+              renderTabs();
+              renderGrid();
+              save();
+              toast("Sheet dibuat");
+            },
+            "Tambah sheet",
+          );
+        $("newWorkbook").onclick = () =>
+          modal(
+            "Workbook baru",
+            "Workbook saat ini tetap tersimpan di browser.",
+            "Nama workbook",
+            "Untitled spreadsheet",
+            (name) => {
+              snapshot();
+              workbook = {
+                name,
+                sheets: [
+                  {
+                    name: "Sheet 1",
+                    rows: ROWS,
+                    cols: COLS,
+                    data: {},
+                    styles: {},
+                  },
+                ],
+              };
+              activeSheet = 0;
+              selected = { r: 0, c: 0 };
+              $("workbookName").value = name;
+              renderTabs();
+              renderGrid();
+              save();
+              toast("Workbook baru dibuat");
+            },
+            "Buat baru",
+          );
+        $("clearBtn").onclick = () =>
+          modal(
+            "Kosongkan sheet?",
+            "Semua nilai dan format pada sheet aktif akan dihapus.",
+            "Ketik CLEAR untuk konfirmasi",
+            "",
+            (v) => {
+              if (v !== "CLEAR") {
+                toast("Dibatalkan. Ketik CLEAR untuk menghapus.");
+                return;
+              }
+              snapshot();
+              sheet().data = {};
+              sheet().styles = {};
+              renderGrid();
+              save();
+              toast("Sheet dikosongkan");
+            },
+            "Kosongkan",
+          );
+        $("templatesBtn").onclick = () =>
+          modal(
+            "Pilih template",
+            "Gunakan contoh data untuk memulai lebih cepat.",
+            "Template: ketik budget atau tasks",
+            "budget",
+            (v) => {
+              snapshot();
+              let rows;
+              if (v.toLowerCase() === "tasks") {
+                rows = [
+                  ["Task", "PIC", "Status", "Prioritas"],
+                  ["Rancang alur", "Ayu", "Berjalan", "Tinggi"],
+                  ["Review desain", "Bima", "Belum mulai", "Sedang"],
+                  ["Uji coba", "Dina", "Belum mulai", "Tinggi"],
+                ];
+              } else {
+                rows = [
+                  ["Kategori", "Anggaran", "Aktual", "Selisih"],
+                  ["Operasional", 5000000, 4200000, "=B2-C2"],
+                  ["Marketing", 3000000, 2750000, "=B3-C3"],
+                  ["Tools", 1000000, 850000, "=B4-C4"],
+                  ["Total", "=SUM(B2:B4)", "=SUM(C2:C4)", "=SUM(D2:D4)"],
+                ];
+              }
+              sheet().data = {};
+              sheet().rows = Math.max(ROWS, rows.length);
+              sheet().cols = Math.max(COLS, rows[0].length);
+              rows.forEach((row, r) =>
+                row.forEach((x, c) => {
+                  if (x !== "") sheet().data[key(r, c)] = String(x);
+                }),
+              );
+              renderGrid();
+              save();
+              toast("Template diterapkan");
+            },
+            "Gunakan template",
+          );
+        $("recentBtn").onclick = () =>
+          toast("Workbook aktif: " + workbook.name);
+        $("shareInfo").onclick = () =>
+          toast(
+            "Untuk berbagi, ekspor CSV. Sinkronisasi online belum dikonfigurasi.",
+          );
+        $("boldBtn").onclick = () => toggleStyle("bold");
+        $("italicBtn").onclick = () => toggleStyle("italic");
+        function toggleStyle(prop) {
+          snapshot();
+          const k = key(selected.r, selected.c),
+            st = sheet().styles[k] || (sheet().styles[k] = {});
+          st[prop] = !st[prop];
+          renderGrid();
+          save();
+        }
+        ["alignLeft", "alignCenter", "alignRight"].forEach(
+          (id, i) =>
+            ($(id).onclick = () => {
+              snapshot();
+              const k = key(selected.r, selected.c),
+                st = sheet().styles[k] || (sheet().styles[k] = {});
+              st.align = ["", "center", "right"][i];
+              if (i === 0) delete st.align;
+              renderGrid();
+              save();
+            }),
+        );
+        $("formatSelect").onchange = (e) => {
+          snapshot();
+          const k = key(selected.r, selected.c),
+            st = sheet().styles[k] || (sheet().styles[k] = {});
+          if (e.target.value === "text") delete st.format;
+          else st.format = e.target.value;
+          renderGrid();
+          save();
+        };
+        $("sumBtn").onclick = () => {
+          const c = selected.c,
+            r = selected.r;
+          $("formulaInput").value =
+            "=SUM(" + colName(c) + "1:" + colName(c) + r + ")";
+          $("formulaInput").focus();
+        };
+        $("averageBtn").onclick = () => {
+          $("formulaInput").value =
+            "=AVERAGE(" +
+            colName(selected.c) +
+            "1:" +
+            colName(selected.c) +
+            selected.r +
+            ")";
+          $("formulaInput").focus();
+        };
+        $("undoBtn").onclick = () => {
+          if (!history.length) {
+            toast("Tidak ada perubahan untuk dibatalkan");
+            return;
+          }
+          future.push(JSON.stringify(workbook));
+          workbook = JSON.parse(history.pop());
+          activeSheet = Math.min(activeSheet, workbook.sheets.length - 1);
+          $("workbookName").value = workbook.name;
+          renderTabs();
+          renderGrid();
+          save();
+          toast("Perubahan dibatalkan");
+        };
+        $("redoBtn").onclick = () => {
+          if (!future.length) {
+            toast("Tidak ada perubahan untuk dipulihkan");
+            return;
+          }
+          history.push(JSON.stringify(workbook));
+          workbook = JSON.parse(future.pop());
+          $("workbookName").value = workbook.name;
+          renderTabs();
+          renderGrid();
+          save();
+          toast("Perubahan dipulihkan");
+        };
+        $("exportBtn").onclick = exportCSV;
+        $("importBtn").onclick = () => $("fileInput").click();
+        function exportCSV() {
+          const s = sheet(),
+            lines = [];
+          for (let r = 0; r < s.rows; r++) {
+            let row = [];
+            for (let c = 0; c < s.cols; c++) {
+              let v = display(raw(r, c), r, c);
+              if (typeof raw(r, c) === "string" && raw(r, c).startsWith("="))
+                v = evalCell(r, c);
+              v = String(v ?? "");
+              row.push('"' + v.replace(/"/g, '""') + '"');
+            }
+            while (row.length && row[row.length - 1] === '""') row.pop();
+            lines.push(row.join(","));
+          }
+          const blob = new Blob(["\ufeff" + lines.join("\r\n")], {
+              type: "text/csv;charset=utf-8;",
+            }),
+            url = URL.createObjectURL(blob),
+            a = document.createElement("a");
+          a.href = url;
+          a.download =
+            (workbook.name || "spreadsheet").replace(/[\\/:*?"<>|]/g, "_") +
+            "-" +
+            sheet().name.replace(/[\\/:*?"<>|]/g, "_") +
+            ".csv";
+          a.click();
+          URL.revokeObjectURL(url);
+          toast("CSV diekspor");
+        }
+        $("fileInput").onchange = async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          try {
+            const text = await file.text(),
+              rows = text
+                .replace(/^\ufeff/, "")
+                .split(/\r?\n/)
+                .filter(Boolean)
+                .map((line) => {
+                  const out = [];
+                  let cur = "",
+                    q = false;
+                  for (let i = 0; i < line.length; i++) {
+                    const ch = line[i];
+                    if (ch === '"' && q && line[i + 1] === '"') {
+                      cur += '"';
+                      i++;
+                    } else if (ch === '"') q = !q;
+                    else if (ch === "," && !q) {
+                      out.push(cur);
+                      cur = "";
+                    } else cur += ch;
+                  }
+                  out.push(cur);
+                  return out;
+                });
+            snapshot();
+            sheet().rows = Math.max(ROWS, rows.length);
+            sheet().cols = Math.max(COLS, ...rows.map((r) => r.length));
+            sheet().data = {};
+            rows.forEach((row, r) =>
+              row.forEach((v, c) => {
+                if (v !== "") sheet().data[key(r, c)] = v;
+              }),
+            );
+            renderGrid();
+            save();
+            toast("File berhasil diimpor");
+          } catch (err) {
+            toast("File tidak dapat dibaca");
+          }
+          e.target.value = "";
+        };
+        document.addEventListener("keydown", (e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+            e.preventDefault();
+            save();
+            toast("Tersimpan di browser");
+          }
+          if (e.key === "Escape") closeModal();
+        });
+        load();
+        renderTabs();
+        renderGrid();
+      })();
+    </script>
+  </body>
+</html>

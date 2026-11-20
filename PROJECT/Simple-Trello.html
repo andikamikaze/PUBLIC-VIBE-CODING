@@ -1,0 +1,1481 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#f5f6fa" />
+    <title>Simple Trello</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5f6fa;
+        --panel: #fff;
+        --ink: #202438;
+        --muted: #747b91;
+        --line: #e7e9f0;
+        --accent: #6558e8;
+        --accent2: #5144d2;
+        --soft: #eeecff;
+        --shadow: 0 8px 28px #25264a0b;
+        --danger: #c33e55;
+        --green: #238568;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+      }
+      body {
+        padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+      }
+      button,
+      input,
+      textarea,
+      select {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      textarea:focus-visible,
+      select:focus-visible {
+        outline: 3px solid #aaa3ff;
+        outline-offset: 2px;
+      }
+      .app {
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+      }
+      .topbar {
+        height: 70px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 0 26px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--line);
+        position: sticky;
+        top: 0;
+        z-index: 5;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 800;
+        letter-spacing: -0.6px;
+        font-size: 19px;
+        white-space: nowrap;
+      }
+      .brand-mark {
+        width: 34px;
+        height: 34px;
+        border-radius: 11px;
+        background: var(--accent);
+        display: grid;
+        place-items: center;
+        color: white;
+        font-size: 19px;
+        box-shadow: 0 5px 12px #6558e844;
+      }
+      .top-divider {
+        height: 28px;
+        width: 1px;
+        background: var(--line);
+        margin: 0 5px;
+      }
+      .top-label {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .top-spacer {
+        flex: 1;
+      }
+      .icon-btn,
+      .btn {
+        border: 0;
+        border-radius: 11px;
+        min-height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 0 13px;
+        font-weight: 650;
+        font-size: 13px;
+      }
+      .icon-btn {
+        background: transparent;
+        color: var(--muted);
+        width: 42px;
+        padding: 0;
+      }
+      .icon-btn:hover {
+        background: var(--bg);
+        color: var(--ink);
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: white;
+        box-shadow: 0 3px 8px #6558e822;
+      }
+      .btn-primary:hover {
+        background: var(--accent2);
+      }
+      .btn-secondary {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        color: var(--ink);
+      }
+      .btn-quiet {
+        background: transparent;
+        color: var(--muted);
+      }
+      .avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #f5d9cb;
+        color: #7b4d3b;
+        font-size: 12px;
+        font-weight: 800;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 230px minmax(0, 1fr);
+        flex: 1;
+        min-height: 0;
+      }
+      .sidebar {
+        padding: 25px 14px 20px 20px;
+        border-right: 1px solid var(--line);
+        background: #fafbfe;
+      }
+      .side-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 10px;
+        margin: 0 0 12px;
+        font-size: 11px;
+        letter-spacing: 1.1px;
+        color: #9298aa;
+        font-weight: 800;
+      }
+      .board-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .board-link {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        border: 0;
+        text-align: left;
+        background: transparent;
+        border-radius: 10px;
+        padding: 11px 10px;
+        color: #636a80;
+        font-size: 13px;
+        min-height: 43px;
+        width: 100%;
+      }
+      .board-link.active {
+        background: var(--soft);
+        color: var(--accent);
+        font-weight: 750;
+      }
+      .board-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 3px;
+        background: var(--dot, #a5a9bb);
+        flex-shrink: 0;
+      }
+      .board-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+      }
+      .board-count {
+        font-size: 11px;
+        color: #969bad;
+      }
+      .sidebar-bottom {
+        margin-top: 26px;
+        padding: 17px 10px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+      .local-note {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+      }
+      .local-note .shield {
+        color: var(--green);
+        font-size: 15px;
+      }
+      .main {
+        padding: 28px 30px 34px;
+        min-width: 0;
+        overflow: hidden;
+      }
+      .board-head {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      .board-head-main {
+        min-width: 0;
+        flex: 1;
+      }
+      .eyebrow {
+        font-size: 11px;
+        letter-spacing: 1.3px;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 800;
+        margin-bottom: 8px;
+      }
+      .board-title {
+        font-size: clamp(24px, 3vw, 32px);
+        line-height: 1.2;
+        letter-spacing: -1px;
+        margin: 0;
+        font-weight: 800;
+        overflow-wrap: anywhere;
+      }
+      .board-desc {
+        margin: 8px 0 0;
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      .head-actions {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+      .board-stats {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin: 0 0 21px;
+        flex-wrap: wrap;
+      }
+      .stat-pill {
+        display: flex;
+        gap: 7px;
+        align-items: center;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        border-radius: 9px;
+        padding: 8px 11px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .stat-pill strong {
+        color: var(--ink);
+        font-size: 12px;
+      }
+      .board-canvas {
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+        overflow-x: auto;
+        min-height: 280px;
+        padding: 2px 2px 18px;
+        scrollbar-width: thin;
+        scrollbar-color: #d7d9e4 transparent;
+      }
+      .list {
+        width: 275px;
+        min-width: 275px;
+        background: #eef0f6;
+        border: 1px solid #e8eaf1;
+        border-radius: 14px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-height: calc(100dvh - 275px);
+        min-height: 170px;
+        overflow-y: auto;
+        transition:
+          border-color 0.15s,
+          background 0.15s;
+      }
+      .list.drag-over {
+        border: 2px dashed var(--accent);
+        background: #f0eeff;
+      }
+      .list-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 2px 1px 3px;
+      }
+      .list-color {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--list-color, #7f84a1);
+      }
+      .list-title {
+        font-size: 13px;
+        font-weight: 800;
+        flex: 1;
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+      .list-count {
+        font-size: 11px;
+        color: var(--muted);
+        background: #e3e5ee;
+        border-radius: 7px;
+        padding: 3px 6px;
+      }
+      .list-menu {
+        width: 30px;
+        height: 30px;
+        border: 0;
+        background: transparent;
+        border-radius: 8px;
+        color: #858ba0;
+        font-size: 18px;
+      }
+      .list-menu:hover {
+        background: #e3e5ee;
+      }
+      .cards {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        min-height: 26px;
+      }
+      .task-card {
+        background: var(--panel);
+        border: 1px solid #e9eaf0;
+        border-radius: 11px;
+        padding: 13px 12px 11px;
+        box-shadow: 0 2px 4px #22243d05;
+        cursor: grab;
+        touch-action: pan-y;
+        overflow-wrap: anywhere;
+      }
+      .task-card:active {
+        cursor: grabbing;
+      }
+      .task-card.dragging {
+        opacity: 0.42;
+      }
+      .card-title {
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.45;
+        margin: 0 0 7px;
+        white-space: pre-wrap;
+      }
+      .card-desc {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.5;
+        margin: 0 0 10px;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+      .card-foot {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        flex-wrap: wrap;
+      }
+      .tag {
+        font-size: 10px;
+        font-weight: 750;
+        border-radius: 5px;
+        padding: 4px 7px;
+        background: #e5f6ef;
+        color: #287a61;
+      }
+      .tag.purple {
+        background: #eeebff;
+        color: #6656c8;
+      }
+      .tag.orange {
+        background: #fff0df;
+        color: #a66a22;
+      }
+      .tag.pink {
+        background: #ffe8ef;
+        color: #b24c70;
+      }
+      .card-date {
+        margin-left: auto;
+        font-size: 10px;
+        color: #9298aa;
+      }
+      .card-actions {
+        display: flex;
+        gap: 3px;
+        margin-left: auto;
+      }
+      .card-action {
+        border: 0;
+        background: transparent;
+        color: #8c92a4;
+        border-radius: 6px;
+        width: 28px;
+        height: 28px;
+      }
+      .card-action:hover {
+        background: #f0f1f7;
+        color: var(--ink);
+      }
+      .add-card {
+        border: 0;
+        background: transparent;
+        color: #777e92;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 7px;
+        border-radius: 8px;
+        text-align: left;
+        font-size: 12px;
+        font-weight: 650;
+        min-height: 38px;
+      }
+      .add-card:hover {
+        background: #e3e5ee;
+        color: var(--accent);
+      }
+      .add-list {
+        min-width: 180px;
+        width: 180px;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 8px;
+        padding: 0 14px;
+        border: 1px dashed #c9ccda;
+        background: #f8f9fc;
+        color: #747b91;
+        border-radius: 13px;
+        font-weight: 700;
+        font-size: 13px;
+      }
+      .add-list:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: #f0eeff;
+      }
+      .empty-board {
+        padding: 40px 24px;
+        text-align: center;
+        border: 1px dashed #d7d9e4;
+        border-radius: 14px;
+        background: #fafbfe;
+        color: var(--muted);
+        width: 100%;
+        max-width: 600px;
+      }
+      .empty-icon {
+        font-size: 28px;
+        margin-bottom: 12px;
+      }
+      .empty-board h2 {
+        font-size: 17px;
+        color: var(--ink);
+        margin: 0 0 7px;
+      }
+      .empty-board p {
+        font-size: 13px;
+        line-height: 1.6;
+        margin: 0 auto 17px;
+        max-width: 340px;
+      }
+      .toast {
+        position: fixed;
+        z-index: 30;
+        bottom: calc(22px + env(safe-area-inset-bottom));
+        left: 50%;
+        transform: translate(-50%, 20px);
+        opacity: 0;
+        pointer-events: none;
+        background: #24283a;
+        color: white;
+        padding: 11px 16px;
+        border-radius: 10px;
+        font-size: 13px;
+        box-shadow: var(--shadow);
+        transition:
+          opacity 0.18s,
+          transform 0.18s;
+        max-width: calc(100vw - 30px);
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        background: #171a2b75;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+        padding-top: calc(18px + env(safe-area-inset-top));
+        padding-bottom: calc(18px + env(safe-area-inset-bottom));
+      }
+      .modal-backdrop.open {
+        display: flex;
+      }
+      .modal {
+        width: min(100%, 440px);
+        max-height: 90dvh;
+        overflow-y: auto;
+        background: var(--panel);
+        border-radius: 18px;
+        padding: 23px;
+        box-shadow: 0 22px 70px #171a2b30;
+      }
+      .modal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      .modal-head h2 {
+        font-size: 19px;
+        letter-spacing: -0.4px;
+        margin: 0;
+      }
+      .close-btn {
+        width: 36px;
+        height: 36px;
+        border: 0;
+        background: var(--bg);
+        color: var(--muted);
+        border-radius: 10px;
+        font-size: 20px;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        margin-bottom: 16px;
+      }
+      .field label {
+        font-size: 12px;
+        font-weight: 750;
+        color: #555c71;
+      }
+      .field input,
+      .field textarea,
+      .field select {
+        width: 100%;
+        border: 1px solid #dfe2ec;
+        border-radius: 10px;
+        background: var(--panel);
+        color: var(--ink);
+        padding: 12px;
+        font-size: 14px;
+        min-height: 46px;
+      }
+      .field textarea {
+        resize: vertical;
+        min-height: 94px;
+        line-height: 1.5;
+      }
+      .field input::placeholder,
+      .field textarea::placeholder {
+        color: #a3a8b7;
+      }
+      .field-hint {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: -3px;
+      }
+      .modal-actions {
+        display: flex;
+        gap: 9px;
+        justify-content: flex-end;
+        margin-top: 21px;
+      }
+      .btn-danger {
+        background: #fff0f2;
+        color: var(--danger);
+      }
+      .hidden {
+        display: none !important;
+      }
+      .mobile-board-picker {
+        display: none;
+      }
+      .footer-note {
+        font-size: 11px;
+        color: #9a9fb0;
+        margin-top: 20px;
+        text-align: center;
+      }
+      @media (max-width: 800px) {
+        .topbar {
+          height: 62px;
+          padding: 0 16px;
+          gap: 10px;
+        }
+        .top-label,
+        .top-divider,
+        .avatar {
+          display: none;
+        }
+        .layout {
+          grid-template-columns: 1fr;
+        }
+        .sidebar {
+          display: none;
+        }
+        .main {
+          padding: 22px 16px 28px;
+        }
+        .board-head {
+          margin-bottom: 18px;
+        }
+        .board-title {
+          font-size: 26px;
+        }
+        .head-actions .btn {
+          padding: 0 11px;
+        }
+        .head-actions .desktop-label {
+          display: none;
+        }
+        .mobile-board-picker {
+          display: block;
+          margin-bottom: 18px;
+        }
+        .mobile-board-picker select {
+          width: 100%;
+          height: 44px;
+          border: 1px solid var(--line);
+          border-radius: 10px;
+          background: var(--panel);
+          padding: 0 12px;
+          color: var(--ink);
+          font-weight: 650;
+        }
+        .board-stats {
+          margin-bottom: 16px;
+        }
+        .board-canvas {
+          margin-right: -16px;
+          padding-right: 16px;
+          gap: 12px;
+          min-height: 230px;
+        }
+        .list {
+          width: min(82vw, 300px);
+          min-width: min(82vw, 300px);
+          max-height: calc(100dvh - 255px);
+        }
+        .add-list {
+          min-width: 150px;
+          width: 150px;
+        }
+        .brand {
+          font-size: 17px;
+        }
+        .topbar .btn {
+          min-height: 40px;
+        }
+        .board-desc {
+          max-width: 95%;
+        }
+        .modal {
+          padding: 20px;
+        }
+        .empty-board {
+          padding: 30px 18px;
+        }
+      }
+      @media (max-width: 380px) {
+        .main {
+          padding-left: 12px;
+          padding-right: 12px;
+        }
+        .topbar {
+          padding: 0 12px;
+        }
+        .brand {
+          font-size: 16px;
+          gap: 7px;
+        }
+        .brand-mark {
+          width: 31px;
+          height: 31px;
+        }
+        .head-actions {
+          gap: 5px;
+        }
+        .head-actions .btn {
+          padding: 0 9px;
+          font-size: 12px;
+        }
+        .board-canvas {
+          margin-right: -12px;
+          padding-right: 12px;
+        }
+        .list {
+          width: 82vw;
+          min-width: 82vw;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          scroll-behavior: auto !important;
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">▦</span
+          ><span>simple<span style="color: var(--accent)">.</span></span>
+        </div>
+        <div class="top-divider"></div>
+        <div class="top-label">Your personal workspace</div>
+        <div class="top-spacer"></div>
+        <button class="btn btn-primary" id="newBoardTop" type="button">
+          <span aria-hidden="true">＋</span> New board
+        </button>
+        <div class="avatar" aria-label="Local workspace">ME</div>
+      </header>
+      <div class="layout">
+        <aside class="sidebar" aria-label="Board navigation">
+          <div class="side-heading">
+            <span>YOUR BOARDS</span
+            ><button
+              class="icon-btn"
+              id="newBoardSide"
+              aria-label="Create board"
+              title="Create board"
+            >
+              ＋
+            </button>
+          </div>
+          <nav class="board-nav" id="boardNav"></nav>
+          <div class="sidebar-bottom">
+            <div class="local-note">
+              <span class="shield" aria-hidden="true">●</span
+              ><span
+                ><strong style="color: var(--ink)"
+                  >Your space, your data.</strong
+                ><br />Boards are saved locally on this device.</span
+              >
+            </div>
+          </div>
+        </aside>
+        <main class="main">
+          <div class="mobile-board-picker">
+            <select id="boardPicker" aria-label="Choose a board"></select>
+          </div>
+          <section class="board-head">
+            <div class="board-head-main">
+              <div class="eyebrow">
+                Workspace / <span id="boardCrumb">My boards</span>
+              </div>
+              <h1 class="board-title" id="boardTitle">My workspace</h1>
+              <p class="board-desc" id="boardDescription">
+                A little progress every day adds up.
+              </p>
+            </div>
+            <div class="head-actions">
+              <button class="btn btn-secondary" id="editBoard" type="button">
+                ✎ <span class="desktop-label">Edit board</span></button
+              ><button class="btn btn-primary" id="addListTop" type="button">
+                ＋ <span class="desktop-label">Add list</span>
+              </button>
+            </div>
+          </section>
+          <div class="board-stats" id="boardStats"></div>
+          <section
+            class="board-canvas"
+            id="boardCanvas"
+            aria-label="Board lists"
+          ></section>
+          <div class="footer-note">
+            Changes save automatically on this device.
+          </div>
+        </main>
+      </div>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="modal-backdrop" id="modalBackdrop" role="presentation">
+      <section
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modalTitle"
+      >
+        <div class="modal-head">
+          <h2 id="modalTitle">Add card</h2>
+          <button
+            class="close-btn"
+            id="modalClose"
+            type="button"
+            aria-label="Close dialog"
+          >
+            ×
+          </button>
+        </div>
+        <form id="modalForm">
+          <div id="modalFields"></div>
+          <div class="modal-actions" id="modalActions"></div>
+        </form>
+      </section>
+    </div>
+    <script>
+      (() => {
+        "use strict";
+        const STORAGE_KEY = "simple-trello-v1";
+        const $ = (s, root = document) => root.querySelector(s);
+        const uid = () =>
+          crypto && crypto.randomUUID
+            ? crypto.randomUUID()
+            : "id-" +
+              Date.now().toString(36) +
+              Math.random().toString(36).slice(2, 9);
+        const starter = () => {
+          const b = {
+            id: uid(),
+            name: "My first board",
+            description: "A little progress every day adds up.",
+            color: "#6558e8",
+            lists: [],
+          };
+          b.lists = [
+            {
+              id: uid(),
+              name: "To do",
+              color: "#8b83ed",
+              cards: [
+                {
+                  id: uid(),
+                  title: "Make this board yours",
+                  description:
+                    "Rename lists, add cards, and organize your week.",
+                  label: "Getting started",
+                  tone: "purple",
+                  due: "",
+                },
+                {
+                  id: uid(),
+                  title: "Write down your priorities",
+                  description: "Start with the one thing that matters most.",
+                  label: "Planning",
+                  tone: "orange",
+                  due: "",
+                },
+              ],
+            },
+            {
+              id: uid(),
+              name: "In progress",
+              color: "#e7a34c",
+              cards: [
+                {
+                  id: uid(),
+                  title: "Find your flow",
+                  description: "Move a card here when you start working on it.",
+                  label: "Focus",
+                  tone: "",
+                  due: "",
+                },
+              ],
+            },
+            { id: uid(), name: "Done", color: "#43a889", cards: [] },
+          ];
+          return { version: 1, activeBoardId: b.id, boards: [b] };
+        };
+        function validState(value) {
+          if (!value || !Array.isArray(value.boards)) return false;
+          value.boards = value.boards.filter(
+            (b) =>
+              b &&
+              typeof b.id === "string" &&
+              typeof b.name === "string" &&
+              Array.isArray(b.lists),
+          );
+          for (const b of value.boards) {
+            b.name = b.name.trim().slice(0, 80) || "Untitled board";
+            b.description =
+              typeof b.description === "string"
+                ? b.description.slice(0, 240)
+                : "";
+            b.color = typeof b.color === "string" ? b.color : "#6558e8";
+            b.lists = b.lists.filter(
+              (l) =>
+                l &&
+                typeof l.id === "string" &&
+                typeof l.name === "string" &&
+                Array.isArray(l.cards),
+            );
+            for (const l of b.lists) {
+              l.name = l.name.trim().slice(0, 80) || "Untitled list";
+              l.color = typeof l.color === "string" ? l.color : "#8b83ed";
+              l.cards = l.cards
+                .filter(
+                  (c) =>
+                    c &&
+                    typeof c.id === "string" &&
+                    typeof c.title === "string",
+                )
+                .map((c) => ({
+                  id: c.id,
+                  title: c.title.slice(0, 160),
+                  description:
+                    typeof c.description === "string"
+                      ? c.description.slice(0, 2000)
+                      : "",
+                  label:
+                    typeof c.label === "string" ? c.label.slice(0, 30) : "",
+                  tone: ["purple", "orange", "pink"].includes(c.tone)
+                    ? c.tone
+                    : "",
+                  due: typeof c.due === "string" ? c.due : "",
+                }));
+            }
+          }
+          if (!value.boards.length) return false;
+          if (!value.boards.some((b) => b.id === value.activeBoardId))
+            value.activeBoardId = value.boards[0].id;
+          return true;
+        }
+        function loadState() {
+          try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return starter();
+            const parsed = JSON.parse(raw);
+            return validState(parsed) ? parsed : starter();
+          } catch (e) {
+            return starter();
+          }
+        }
+        let state = loadState(),
+          toastTimer,
+          dragCardId = null;
+        const activeBoard = () =>
+          state.boards.find((b) => b.id === state.activeBoardId) ||
+          state.boards[0];
+        function save() {
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          } catch (e) {
+            showToast("Could not save. Check this browser’s storage settings.");
+          }
+        }
+        function esc(s) {
+          return String(s ?? "").replace(
+            /[&<>"']/g,
+            (c) =>
+              ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;",
+              })[c],
+          );
+        }
+        function showToast(message) {
+          const el = $("#toast");
+          el.textContent = message;
+          el.classList.add("show");
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
+        }
+        function render() {
+          const board = activeBoard();
+          if (!board) return;
+          $("#boardTitle").textContent = board.name;
+          $("#boardDescription").textContent =
+            board.description || "Keep everything moving, one card at a time.";
+          $("#boardCrumb").textContent = board.name;
+          $("#boardNav").innerHTML = state.boards
+            .map(
+              (b) =>
+                `<button class="board-link ${b.id === board.id ? "active" : ""}" data-board="${esc(b.id)}"><span class="board-dot" style="--dot:${esc(b.color)}"></span><span class="board-name">${esc(b.name)}</span><span class="board-count">${b.lists.reduce((n, l) => n + l.cards.length, 0)}</span></button>`,
+            )
+            .join("");
+          $("#boardPicker").innerHTML = state.boards
+            .map(
+              (b) =>
+                `<option value="${esc(b.id)}" ${b.id === board.id ? "selected" : ""}>${esc(b.name)}</option>`,
+            )
+            .join("");
+          const total = board.lists.reduce((n, l) => n + l.cards.length, 0),
+            done = board.lists
+              .filter((l) => /done|complete|finished/i.test(l.name))
+              .reduce((n, l) => n + l.cards.length, 0);
+          $("#boardStats").innerHTML =
+            `<div class="stat-pill"><strong>${board.lists.length}</strong> lists</div><div class="stat-pill"><strong>${total}</strong> ${total === 1 ? "card" : "cards"}</div><div class="stat-pill"><strong>${done}</strong> completed</div>`;
+          if (!board.lists.length) {
+            $("#boardCanvas").innerHTML =
+              `<div class="empty-board"><div class="empty-icon">▤</div><h2>A fresh start</h2><p>This board has no lists yet. Add your first list to start organizing your work.</p><button class="btn btn-primary" id="emptyAddList" type="button">＋ Add your first list</button></div>`;
+            $("#emptyAddList").addEventListener("click", () => openListModal());
+            return;
+          }
+          $("#boardCanvas").innerHTML =
+            board.lists
+              .map(
+                (list) => `
+      <section class="list" data-list="${esc(list.id)}" aria-label="${esc(list.name)} list">
+        <div class="list-head"><span class="list-color" style="--list-color:${esc(list.color)}"></span><div class="list-title">${esc(list.name)}</div><span class="list-count">${list.cards.length}</span><button class="list-menu" data-list-menu="${esc(list.id)}" aria-label="List options for ${esc(list.name)}" title="List options">···</button></div>
+        <div class="cards" data-cards="${esc(list.id)}">${list.cards
+          .map(
+            (card) => `
+          <article class="task-card" draggable="true" data-card="${esc(card.id)}" data-from-list="${esc(list.id)}" tabindex="0" aria-label="Card: ${esc(card.title)}. Press Enter to edit.">
+            <div class="card-title">${esc(card.title)}</div>${card.description ? `<p class="card-desc">${esc(card.description)}</p>` : ""}
+            <div class="card-foot">${card.label ? `<span class="tag ${esc(card.tone)}">${esc(card.label)}</span>` : ""}${card.due ? `<span class="card-date">◷ ${esc(formatDate(card.due))}</span>` : ""}<span class="card-actions"><button class="card-action" data-edit-card="${esc(card.id)}" data-card-list="${esc(list.id)}" aria-label="Edit ${esc(card.title)}" title="Edit card">✎</button></span></div>
+          </article>`,
+          )
+          .join("")}</div>
+        <button class="add-card" data-add-card="${esc(list.id)}" type="button"><span aria-hidden="true">＋</span> Add a card</button>
+      </section>`,
+              )
+              .join("") +
+            `<button class="add-list" id="addListCanvas" type="button"><span aria-hidden="true">＋</span> Add another list</button>`;
+          $("#addListCanvas").addEventListener("click", () => openListModal());
+          bindListEvents();
+        }
+        function formatDate(value) {
+          const d = new Date(value + "T12:00:00");
+          return Number.isNaN(d.getTime())
+            ? value
+            : d.toLocaleDateString(undefined, {
+                month: "short",
+                day: "numeric",
+              });
+        }
+        function bindListEvents() {
+          $("#boardCanvas")
+            .querySelectorAll("[data-add-card]")
+            .forEach((btn) =>
+              btn.addEventListener("click", () =>
+                openCardModal(btn.dataset.addCard),
+              ),
+            );
+          $("#boardCanvas")
+            .querySelectorAll("[data-list-menu]")
+            .forEach((btn) =>
+              btn.addEventListener("click", () =>
+                openListMenu(btn.dataset.listMenu),
+              ),
+            );
+          $("#boardCanvas")
+            .querySelectorAll("[data-edit-card]")
+            .forEach((btn) =>
+              btn.addEventListener("click", () =>
+                openCardModal(btn.dataset.cardList, btn.dataset.editCard),
+              ),
+            );
+          $("#boardCanvas")
+            .querySelectorAll(".task-card")
+            .forEach((card) => {
+              card.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" && e.target === card) {
+                  e.preventDefault();
+                  openCardModal(card.dataset.fromList, card.dataset.card);
+                }
+              });
+              card.addEventListener("dragstart", (e) => {
+                dragCardId = card.dataset.card;
+                card.classList.add("dragging");
+                e.dataTransfer.effectAllowed = "move";
+                e.dataTransfer.setData("text/plain", dragCardId);
+              });
+              card.addEventListener("dragend", () => {
+                dragCardId = null;
+                card.classList.remove("dragging");
+                $("#boardCanvas")
+                  .querySelectorAll(".drag-over")
+                  .forEach((el) => el.classList.remove("drag-over"));
+              });
+            });
+          $("#boardCanvas")
+            .querySelectorAll(".list")
+            .forEach((list) => {
+              list.addEventListener("dragover", (e) => {
+                if (!dragCardId) return;
+                e.preventDefault();
+                list.classList.add("drag-over");
+                e.dataTransfer.dropEffect = "move";
+              });
+              list.addEventListener("dragleave", (e) => {
+                if (!list.contains(e.relatedTarget))
+                  list.classList.remove("drag-over");
+              });
+              list.addEventListener("drop", (e) => {
+                e.preventDefault();
+                list.classList.remove("drag-over");
+                const cardId =
+                  e.dataTransfer.getData("text/plain") || dragCardId;
+                const target = e.target.closest(".task-card");
+                moveCard(
+                  cardId,
+                  list.dataset.list,
+                  target?.dataset.card || null,
+                );
+              });
+            });
+        }
+        function openModal(
+          title,
+          fields,
+          submitText,
+          onSubmit,
+          extraActions = [],
+        ) {
+          $("#modalTitle").textContent = title;
+          $("#modalFields").innerHTML = fields;
+          const actions = $("#modalActions");
+          actions.innerHTML = "";
+          for (const item of extraActions) {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className =
+              "btn " + (item.danger ? "btn-danger" : "btn-secondary");
+            b.textContent = item.label;
+            b.addEventListener("click", item.action);
+            actions.appendChild(b);
+          }
+          const cancel = document.createElement("button");
+          cancel.type = "button";
+          cancel.className = "btn btn-secondary";
+          cancel.textContent = "Cancel";
+          cancel.addEventListener("click", closeModal);
+          actions.appendChild(cancel);
+          const submit = document.createElement("button");
+          submit.type = "submit";
+          submit.className = "btn btn-primary";
+          submit.textContent = submitText;
+          actions.appendChild(submit);
+          $("#modalForm").onsubmit = (e) => {
+            e.preventDefault();
+            onSubmit(new FormData(e.currentTarget));
+          };
+          $("#modalBackdrop").classList.add("open");
+          setTimeout(
+            () =>
+              $(
+                "#modalFields input, #modalFields textarea, #modalFields select",
+              )?.focus(),
+            50,
+          );
+        }
+        function closeModal() {
+          $("#modalBackdrop").classList.remove("open");
+          $("#modalForm").onsubmit = null;
+        }
+        function openBoardModal(edit = false) {
+          const b = edit ? activeBoard() : null;
+          openModal(
+            edit ? "Edit board" : "Create a board",
+            `
+      <div class="field"><label for="boardNameInput">Board name</label><input id="boardNameInput" name="name" maxlength="80" required placeholder="e.g. Product launch" value="${esc(b?.name || "")}" autocomplete="off"></div>
+      <div class="field"><label for="boardDescInput">Description <span style="font-weight:400;color:var(--muted)">(optional)</span></label><textarea id="boardDescInput" name="description" maxlength="240" placeholder="What are you working toward?">${esc(b?.description || "")}</textarea></div>
+      <div class="field"><label for="boardColorInput">Board color</label><select id="boardColorInput" name="color"><option value="#6558e8" ${b?.color === "#6558e8" ? "selected" : ""}>Violet</option><option value="#258a77" ${b?.color === "#258a77" ? "selected" : ""}>Teal</option><option value="#d17b39" ${b?.color === "#d17b39" ? "selected" : ""}>Orange</option><option value="#d35477" ${b?.color === "#d35477" ? "selected" : ""}>Rose</option><option value="#397ac5" ${b?.color === "#397ac5" ? "selected" : ""}>Blue</option></select></div>`,
+            edit ? "Save changes" : "Create board",
+            (data) => {
+              const name = String(data.get("name") || "").trim();
+              if (!name) {
+                showToast("Enter a board name first.");
+                $("#boardNameInput").focus();
+                return;
+              }
+              if (edit) {
+                b.name = name;
+                b.description = String(data.get("description") || "").trim();
+                b.color = String(data.get("color") || "#6558e8");
+              } else {
+                const fresh = {
+                  id: uid(),
+                  name,
+                  description: String(data.get("description") || "").trim(),
+                  color: String(data.get("color") || "#6558e8"),
+                  lists: [],
+                };
+                state.boards.push(fresh);
+                state.activeBoardId = fresh.id;
+              }
+              save();
+              closeModal();
+              render();
+              showToast(edit ? "Board updated." : "Board created.");
+            },
+            edit
+              ? [
+                  {
+                    label: "Delete board",
+                    danger: true,
+                    action: () => confirmDeleteBoard(b.id),
+                  },
+                ]
+              : [],
+          );
+        }
+        function confirmDeleteBoard(id) {
+          const b = state.boards.find((x) => x.id === id);
+          if (!b) return;
+          openModal(
+            "Delete board?",
+            `<p style="font-size:13px;line-height:1.6;color:var(--muted)">Delete <strong style="color:var(--ink)">${esc(b.name)}</strong> and all its lists and cards? This cannot be undone.</p>`,
+            "Delete board",
+            () => {
+              state.boards = state.boards.filter((x) => x.id !== id);
+              if (!state.boards.length) {
+                const fresh = starter();
+                state.boards = fresh.boards;
+                state.activeBoardId = fresh.activeBoardId;
+              } else if (state.activeBoardId === id)
+                state.activeBoardId = state.boards[0].id;
+              save();
+              closeModal();
+              render();
+              showToast("Board deleted.");
+            },
+            [{ label: "Keep board", action: () => openBoardModal(true) }],
+          );
+        }
+        function openListModal(editListId = null) {
+          const board = activeBoard(),
+            list = board.lists.find((l) => l.id === editListId);
+          openModal(
+            list ? "Edit list" : "Add a list",
+            `<div class="field"><label for="listNameInput">List name</label><input id="listNameInput" name="name" maxlength="80" required placeholder="e.g. Up next" value="${esc(list?.name || "")}" autocomplete="off"></div>`,
+            list ? "Save list" : "Add list",
+            (data) => {
+              const name = String(data.get("name") || "").trim();
+              if (!name) {
+                showToast("Enter a list name first.");
+                $("#listNameInput").focus();
+                return;
+              }
+              if (list) list.name = name;
+              else
+                board.lists.push({
+                  id: uid(),
+                  name,
+                  color: ["#8b83ed", "#e7a34c", "#43a889", "#d77993"][
+                    board.lists.length % 4
+                  ],
+                  cards: [],
+                });
+              save();
+              closeModal();
+              render();
+              showToast(list ? "List updated." : "List added.");
+            },
+            list
+              ? [
+                  {
+                    label: "Delete list",
+                    danger: true,
+                    action: () => deleteList(list.id),
+                  },
+                ]
+              : [],
+          );
+        }
+        function deleteList(id) {
+          const board = activeBoard(),
+            list = board.lists.find((l) => l.id === id);
+          if (!list) return;
+          openModal(
+            "Delete list?",
+            `<p style="font-size:13px;line-height:1.6;color:var(--muted)">Delete <strong style="color:var(--ink)">${esc(list.name)}</strong> and its ${list.cards.length} ${list.cards.length === 1 ? "card" : "cards"}? This cannot be undone.</p>`,
+            "Delete list",
+            () => {
+              board.lists = board.lists.filter((l) => l.id !== id);
+              save();
+              closeModal();
+              render();
+              showToast("List deleted.");
+            },
+          );
+        }
+        function openListMenu(id) {
+          openListModal(id);
+        }
+        function openCardModal(listId, cardId = null) {
+          const board = activeBoard(),
+            list = board.lists.find((l) => l.id === listId);
+          if (!list) return;
+          const card = cardId ? list.cards.find((c) => c.id === cardId) : null;
+          const listOptions = board.lists
+            .map(
+              (l) =>
+                `<option value="${esc(l.id)}" ${l.id === listId ? "selected" : ""}>${esc(l.name)}</option>`,
+            )
+            .join("");
+          openModal(
+            card ? "Edit card" : "Add a card",
+            `
+      <div class="field"><label for="cardTitleInput">Title</label><input id="cardTitleInput" name="title" maxlength="160" required placeholder="What needs to get done?" value="${esc(card?.title || "")}" autocomplete="off"></div>
+      <div class="field"><label for="cardDescInput">Description <span style="font-weight:400;color:var(--muted)">(optional)</span></label><textarea id="cardDescInput" name="description" maxlength="2000" placeholder="Add a few details…">${esc(card?.description || "")}</textarea></div>
+      <div class="field"><label for="cardListInput">List</label><select id="cardListInput" name="listId">${listOptions}</select></div>
+      <div class="field"><label for="cardLabelInput">Label <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input id="cardLabelInput" name="label" maxlength="30" placeholder="e.g. Design" value="${esc(card?.label || "")}"></div>
+      <div class="field"><label for="cardToneInput">Label color</label><select id="cardToneInput" name="tone"><option value="" ${!card?.tone ? "selected" : ""}>Green</option><option value="purple" ${card?.tone === "purple" ? "selected" : ""}>Purple</option><option value="orange" ${card?.tone === "orange" ? "selected" : ""}>Orange</option><option value="pink" ${card?.tone === "pink" ? "selected" : ""}>Pink</option></select></div>
+      <div class="field"><label for="cardDueInput">Due date <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input id="cardDueInput" name="due" type="date" value="${esc(card?.due || "")}"></div>`,
+            card ? "Save card" : "Add card",
+            (data) => {
+              const title = String(data.get("title") || "").trim();
+              if (!title) {
+                showToast("A card title is required.");
+                $("#cardTitleInput").focus();
+                return;
+              }
+              const target = board.lists.find(
+                (l) => l.id === String(data.get("listId")),
+              );
+              if (!target) {
+                showToast("Choose a valid list.");
+                return;
+              }
+              const updated = {
+                id: card?.id || uid(),
+                title,
+                description: String(data.get("description") || "").trim(),
+                label: String(data.get("label") || "").trim(),
+                tone: String(data.get("tone") || ""),
+                due: String(data.get("due") || ""),
+              };
+              if (card) {
+                list.cards = list.cards.filter((c) => c.id !== card.id);
+                target.cards.push(updated);
+              } else target.cards.push(updated);
+              save();
+              closeModal();
+              render();
+              showToast(card ? "Card updated." : "Card added.");
+            },
+            card
+              ? [
+                  {
+                    label: "Delete card",
+                    danger: true,
+                    action: () => deleteCard(list.id, card.id),
+                  },
+                ]
+              : [],
+          );
+        }
+        function deleteCard(listId, cardId) {
+          const board = activeBoard(),
+            list = board.lists.find((l) => l.id === listId);
+          if (!list) return;
+          openModal(
+            "Delete card?",
+            `<p style="font-size:13px;line-height:1.6;color:var(--muted)">Delete this card permanently?</p>`,
+            "Delete card",
+            () => {
+              list.cards = list.cards.filter((c) => c.id !== cardId);
+              save();
+              closeModal();
+              render();
+              showToast("Card deleted.");
+            },
+          );
+        }
+        function moveCard(cardId, targetListId, beforeCardId = null) {
+          const board = activeBoard();
+          let source = null,
+            card = null;
+          for (const l of board.lists) {
+            const found = l.cards.find((c) => c.id === cardId);
+            if (found) {
+              source = l;
+              card = found;
+              break;
+            }
+          }
+          const target = board.lists.find((l) => l.id === targetListId);
+          if (!source || !card || !target) return;
+          source.cards = source.cards.filter((c) => c.id !== cardId);
+          let index = beforeCardId
+            ? target.cards.findIndex((c) => c.id === beforeCardId)
+            : -1;
+          if (index < 0) index = target.cards.length;
+          target.cards.splice(index, 0, card);
+          save();
+          render();
+        }
+        $("#boardNav").addEventListener("click", (e) => {
+          const btn = e.target.closest("[data-board]");
+          if (!btn) return;
+          state.activeBoardId = btn.dataset.board;
+          save();
+          render();
+        });
+        $("#boardPicker").addEventListener("change", (e) => {
+          if (state.boards.some((b) => b.id === e.target.value)) {
+            state.activeBoardId = e.target.value;
+            save();
+            render();
+          }
+        });
+        $("#newBoardTop").addEventListener("click", () =>
+          openBoardModal(false),
+        );
+        $("#newBoardSide").addEventListener("click", () =>
+          openBoardModal(false),
+        );
+        $("#editBoard").addEventListener("click", () => openBoardModal(true));
+        $("#addListTop").addEventListener("click", () => openListModal());
+        $("#modalClose").addEventListener("click", closeModal);
+        $("#modalBackdrop").addEventListener("click", (e) => {
+          if (e.target === $("#modalBackdrop")) closeModal();
+        });
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") closeModal();
+        });
+        render();
+      })();
+    </script>
+  </body>
+</html>

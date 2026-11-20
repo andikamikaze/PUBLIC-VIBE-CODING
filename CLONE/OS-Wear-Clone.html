@@ -1,0 +1,3213 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#08090d" />
+    <title>Pixel Watch 5 — Wear OS Browser Emulator</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,400;500;600;650;700&family=Roboto:wght@300;400;500;600;700&display=swap");
+      :root {
+        --bg: #08090d;
+        --panel: #11131a;
+        --panel-2: #191c25;
+        --line: rgba(255, 255, 255, 0.09);
+        --muted: #9297a5;
+        --text: #f4f3fa;
+        --lavender: #c7b9ff;
+        --mint: #a9e8cb;
+        --blue: #9bbcff;
+        --orange: #ffc58a;
+        --watch-size: 396px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        color-scheme: dark;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family: "Google Sans Flex", "Roboto", sans-serif;
+        background:
+          radial-gradient(
+            ellipse at 50% 37%,
+            rgba(71, 73, 107, 0.22),
+            transparent 35%
+          ),
+          radial-gradient(
+            ellipse at 50% 100%,
+            rgba(30, 39, 55, 0.28),
+            transparent 46%
+          ),
+          var(--bg);
+        overflow-x: hidden;
+      }
+      button {
+        font: inherit;
+      }
+      .app-shell {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .topbar {
+        height: 68px;
+        padding: 0 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.065);
+        background: rgba(8, 9, 13, 0.6);
+        backdrop-filter: blur(20px);
+        position: sticky;
+        top: 0;
+        z-index: 50;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        letter-spacing: -0.02em;
+        font-weight: 650;
+      }
+      .brand-mark {
+        width: 30px;
+        height: 30px;
+        border-radius: 11px;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(145deg, #e5dcff, #9b8bd5);
+        color: #272039;
+        box-shadow: 0 4px 18px #9e8bd833;
+      }
+      .brand small {
+        display: block;
+        color: #868b98;
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0.13em;
+        margin-top: 2px;
+      }
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+      }
+      .top-pill {
+        font-size: 11px;
+        color: #b9bdc8;
+        background: #171922;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 8px 12px;
+      }
+      .top-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #171922;
+        border: 1px solid var(--line);
+        color: #c9cbd4;
+      }
+      .main {
+        flex: 1;
+        width: min(1200px, 100%);
+        margin: 0 auto;
+        padding: 28px 28px 34px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 40px;
+        align-items: center;
+      }
+      .device-column {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .eyebrow {
+        font-size: 10px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: #9296a5;
+        font-weight: 600;
+        margin-bottom: 9px;
+      }
+      .section-title {
+        font-size: 23px;
+        letter-spacing: -0.055em;
+        font-weight: 550;
+        margin: 0 0 3px;
+      }
+      .section-subtitle {
+        font-size: 12px;
+        color: #8f94a2;
+        margin: 0;
+      }
+      .device-heading {
+        text-align: center;
+        margin-bottom: 14px;
+      }
+      .watch-stage {
+        width: 100%;
+        min-height: 680px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        isolation: isolate;
+        perspective: 1200px;
+      }
+      .watch-stage:before {
+        content: "";
+        position: absolute;
+        width: 500px;
+        height: 500px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(119, 116, 159, 0.12),
+          transparent 68%
+        );
+        z-index: -1;
+        filter: blur(8px);
+      }
+      .watch {
+        position: relative;
+        width: var(--watch-size);
+        height: 670px;
+        flex: none;
+        filter: drop-shadow(0 28px 38px rgba(0, 0, 0, 0.58));
+        transform-style: preserve-3d;
+        transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1);
+        will-change: transform;
+      }
+      .strap {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 142px;
+        height: 196px;
+        background: linear-gradient(
+          90deg,
+          #17191f 0%,
+          #343741 16%,
+          #252831 48%,
+          #101218 100%
+        );
+        border: 1px solid #51535d;
+        border-radius: 34px;
+        box-shadow:
+          inset 0 0 20px rgba(255, 255, 255, 0.07),
+          inset -9px 0 14px rgba(0, 0, 0, 0.32);
+        overflow: hidden;
+      }
+      .strap:before {
+        content: "";
+        position: absolute;
+        inset: 0 14px;
+        background: repeating-linear-gradient(
+          180deg,
+          transparent 0 13px,
+          rgba(255, 255, 255, 0.035) 14px,
+          transparent 15px
+        );
+        opacity: 0.6;
+      }
+      .strap:after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 62px;
+        height: 14px;
+        border-radius: 0 0 11px 11px;
+        background: #0b0c10;
+        top: 0;
+        box-shadow: 0 2px 2px rgba(255, 255, 255, 0.12);
+      }
+      .strap.top {
+        top: 0;
+        border-bottom: 0;
+        border-radius: 34px 34px 24px 24px;
+      }
+      .strap.bottom {
+        bottom: 0;
+        border-top: 0;
+        border-radius: 24px 24px 34px 34px;
+      }
+      .strap.bottom:after {
+        top: auto;
+        bottom: 0;
+        border-radius: 11px 11px 0 0;
+      }
+      .strap-hole {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: #0a0b0f;
+        border: 1px solid #555863;
+        box-shadow: inset 0 1px 3px #000;
+      }
+      .strap-hole:nth-child(1) {
+        top: 45px;
+      }
+      .strap-hole:nth-child(2) {
+        top: 73px;
+      }
+      .strap-hole:nth-child(3) {
+        top: 101px;
+      }
+      .strap-hole:nth-child(4) {
+        top: 129px;
+      }
+      .strap-hole:nth-child(5) {
+        top: 157px;
+      }
+      .watch-body {
+        position: absolute;
+        top: 137px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 396px;
+        height: 396px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 32% 18%,
+          #555861 0,
+          #282b33 18%,
+          #0a0b0f 63%,
+          #050609 100%
+        );
+        box-shadow:
+          inset 0 0 0 2px #696c76,
+          inset 0 0 0 5px #161820,
+          inset 0 0 0 8px #555862,
+          0 0 0 1px #030407,
+          0 13px 30px rgba(0, 0, 0, 0.62);
+      }
+      .watch-body:before {
+        content: "";
+        position: absolute;
+        inset: 7px;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        background: linear-gradient(
+          130deg,
+          rgba(255, 255, 255, 0.13),
+          transparent 22%,
+          transparent 69%,
+          rgba(255, 255, 255, 0.04)
+        );
+        pointer-events: none;
+        z-index: 4;
+      }
+      .watch-body:after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        box-shadow:
+          inset -10px -13px 25px rgba(0, 0, 0, 0.55),
+          inset 8px 8px 15px rgba(255, 255, 255, 0.035);
+        pointer-events: none;
+        z-index: 5;
+      }
+      .screen {
+        position: absolute;
+        inset: 15px;
+        border-radius: 50%;
+        overflow: hidden;
+        background: #050609;
+        color: #fff;
+        box-shadow:
+          inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+          0 0 13px rgba(0, 0, 0, 0.9);
+        z-index: 2;
+        touch-action: pan-y;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      .screen:after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        pointer-events: none;
+        background: linear-gradient(
+          145deg,
+          rgba(255, 255, 255, 0.1),
+          transparent 27%,
+          transparent 73%,
+          rgba(255, 255, 255, 0.055)
+        );
+        z-index: 20;
+      }
+      .crown {
+        position: absolute;
+        right: -14px;
+        top: 166px;
+        width: 28px;
+        height: 53px;
+        border-radius: 11px;
+        background: linear-gradient(
+          90deg,
+          #11131a,
+          #8a8d97 35%,
+          #3c3f48 61%,
+          #171920
+        );
+        border: 1px solid #8a8d96;
+        box-shadow:
+          inset 0 0 0 2px #292c34,
+          2px 2px 6px #000;
+        z-index: 8;
+        cursor: pointer;
+      }
+      .crown:before {
+        content: "";
+        position: absolute;
+        inset: 5px 7px;
+        border-radius: 5px;
+        background: repeating-linear-gradient(
+          180deg,
+          #9b9da5 0 1px,
+          #383b43 1px 3px
+        );
+        opacity: 0.75;
+      }
+      .side-button {
+        position: absolute;
+        right: -7px;
+        top: 234px;
+        width: 13px;
+        height: 30px;
+        border-radius: 5px;
+        background: linear-gradient(90deg, #1b1d24, #777a83, #24262d);
+        border: 1px solid #777a83;
+        z-index: 7;
+        cursor: pointer;
+      }
+      .crown:active,
+      .side-button:active {
+        filter: brightness(1.4);
+      }
+      /* Ripple effect */
+      .ripple {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.25);
+        pointer-events: none;
+        transform: scale(0);
+        animation: ripple-anim 0.6s ease-out;
+        z-index: 30;
+      }
+      @keyframes ripple-anim {
+        to {
+          transform: scale(2.5);
+          opacity: 0;
+        }
+      }
+      /* Watch face */
+      .face {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        transition:
+          opacity 0.35s ease,
+          transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1);
+        animation: face-enter 0.5s cubic-bezier(0.2, 0.9, 0.3, 1);
+      }
+      @keyframes face-enter {
+        from {
+          opacity: 0;
+          transform: scale(0.96);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      .face-main {
+        background: radial-gradient(
+          ellipse at 50% 48%,
+          #191a2b 0%,
+          #0a0b13 52%,
+          #030407 100%
+        );
+      }
+      .face-orbit {
+        position: absolute;
+        inset: 11px;
+        border-radius: 50%;
+        border: 1px solid rgba(194, 179, 255, 0.12);
+      }
+      .face-orbit:before,
+      .face-orbit:after {
+        content: "";
+        position: absolute;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        inset: 12px;
+      }
+      .face-orbit:after {
+        inset: 24px;
+        border-color: rgba(191, 173, 255, 0.07);
+      }
+      .face-status {
+        position: absolute;
+        top: 25px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: space-between;
+        padding: 0 34px;
+        font-size: 9px;
+        color: #c6c1dd;
+        z-index: 2;
+        letter-spacing: 0.03em;
+      }
+      .face-date {
+        position: absolute;
+        top: 57px;
+        display: flex;
+        gap: 7px;
+        align-items: center;
+        font-size: 10px;
+        letter-spacing: 0.13em;
+        color: #c7c2d9;
+        text-transform: uppercase;
+        z-index: 2;
+      }
+      .date-chip {
+        background: #252438;
+        border-radius: 7px;
+        padding: 4px 7px;
+        color: #efedff;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+      }
+      .digital-time {
+        font-size: 62px;
+        line-height: 1;
+        letter-spacing: -0.075em;
+        font-weight: 400;
+        color: #f1edff;
+        text-shadow: 0 0 24px rgba(185, 169, 255, 0.15);
+        margin-top: -2px;
+        z-index: 2;
+        font-variant-numeric: tabular-nums;
+      }
+      .digital-time .colon {
+        opacity: 0.82;
+        animation: blink 2s steps(2, start) infinite;
+      }
+      @keyframes blink {
+        to {
+          opacity: 0.35;
+        }
+      }
+      .face-greeting {
+        font-size: 10px;
+        color: #aaa6c0;
+        margin-top: 8px;
+        letter-spacing: 0.05em;
+        z-index: 2;
+      }
+      .complication {
+        position: absolute;
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        border: 1px solid rgba(202, 188, 255, 0.3);
+        background: rgba(22, 21, 39, 0.72);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #d7ceff;
+        z-index: 3;
+        cursor: pointer;
+        transition:
+          transform 0.18s,
+          border-color 0.18s,
+          background 0.18s;
+      }
+      .complication:hover {
+        transform: scale(1.07);
+        border-color: #bbaaff;
+        background: #29243f;
+      }
+      .complication .comp-value {
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1.05;
+      }
+      .complication .comp-label {
+        font-size: 7px;
+        color: #a8a2bf;
+        margin-top: 3px;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+      }
+      .complication .comp-icon {
+        font-size: 15px;
+        line-height: 1;
+        margin-bottom: 3px;
+      }
+      .complication.c1 {
+        left: 38px;
+        top: 107px;
+      }
+      .complication.c2 {
+        right: 38px;
+        top: 107px;
+      }
+      .complication.c3 {
+        left: 38px;
+        bottom: 91px;
+      }
+      .complication.c4 {
+        right: 38px;
+        bottom: 91px;
+      }
+      .ring-wrap {
+        position: absolute;
+        inset: 30px;
+        border-radius: 50%;
+        pointer-events: none;
+      }
+      .ring-svg {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+        overflow: visible;
+      }
+      .ring-bg {
+        fill: none;
+        stroke: rgba(190, 180, 255, 0.11);
+        stroke-width: 2.5;
+      }
+      .ring-progress {
+        fill: none;
+        stroke: #b9a8ff;
+        stroke-width: 2.5;
+        stroke-linecap: round;
+        stroke-dasharray: 290;
+        stroke-dashoffset: 83;
+        filter: drop-shadow(0 0 4px rgba(185, 168, 255, 0.5));
+        transition: stroke-dashoffset 1s ease;
+      }
+      .ring-dot {
+        position: absolute;
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: #e0d7ff;
+        top: 23px;
+        left: 50%;
+        box-shadow: 0 0 8px #c6b6ff;
+      }
+      .bottom-caption {
+        position: absolute;
+        bottom: 29px;
+        font-size: 8px;
+        letter-spacing: 0.18em;
+        color: #817b9f;
+        text-transform: uppercase;
+      }
+      .face-classic {
+        background: radial-gradient(circle at 50% 50%, #161a22, #040609 72%);
+        display: none;
+      }
+      .analog-dial {
+        position: absolute;
+        inset: 26px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 50%;
+        background: repeating-conic-gradient(
+          from 0deg,
+          rgba(207, 199, 255, 0.85) 0 1deg,
+          transparent 1deg 6deg
+        );
+        mask: radial-gradient(
+          circle,
+          transparent 0 67%,
+          #000 68% 70%,
+          transparent 71%
+        );
+      }
+      .analog-center {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #c7b9ff;
+        z-index: 3;
+      }
+      .hand {
+        position: absolute;
+        bottom: 50%;
+        left: calc(50% - 2px);
+        transform-origin: 50% 100%;
+        border-radius: 4px;
+        background: #e4e0ff;
+        z-index: 2;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .hand.hour {
+        width: 4px;
+        height: 64px;
+        transform: rotate(38deg);
+      }
+      .hand.minute {
+        width: 3px;
+        height: 92px;
+        transform: rotate(122deg);
+        background: #b9a8ff;
+      }
+      .hand.second {
+        width: 1px;
+        height: 105px;
+        transform: rotate(220deg);
+        background: #f4a8b7;
+        transition: transform 0.1s linear;
+      }
+      .classic-time {
+        position: absolute;
+        bottom: 56px;
+        font-size: 12px;
+        color: #d6d3e8;
+        letter-spacing: 0.12em;
+      }
+      .face-minimal {
+        display: none;
+        background: linear-gradient(155deg, #171829, #07080e 70%);
+      }
+      .minimal-time {
+        font-size: 75px;
+        font-weight: 350;
+        letter-spacing: -0.09em;
+        color: #d9d1ff;
+        line-height: 1;
+      }
+      .minimal-date {
+        font-size: 11px;
+        color: #aaa5c2;
+        letter-spacing: 0.18em;
+        margin-top: 13px;
+        text-transform: uppercase;
+      }
+      .minimal-weather {
+        position: absolute;
+        bottom: 58px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #c9c2e6;
+        font-size: 11px;
+      }
+      /* Bold digital face */
+      .face-bold {
+        display: none;
+        background: radial-gradient(circle at 50% 55%, #0f1320 0%, #05070d 70%);
+      }
+      .bold-time {
+        font-size: 86px;
+        font-weight: 700;
+        letter-spacing: -0.12em;
+        line-height: 0.95;
+        color: #fff;
+        background: linear-gradient(180deg, #ffffff 40%, #7a74b5 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-align: center;
+        position: relative;
+      }
+      .bold-seconds {
+        font-size: 14px;
+        color: #c7b9ff;
+        font-weight: 500;
+        letter-spacing: 0.2em;
+        margin-top: 4px;
+      }
+      .bold-date {
+        position: absolute;
+        top: 70px;
+        font-size: 11px;
+        color: #a9a3c2;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+      }
+      .bold-comp {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 10px;
+        color: #d7ceff;
+        padding: 6px 10px;
+        border-radius: 14px;
+        background: rgba(30, 28, 55, 0.8);
+        border: 1px solid rgba(202, 188, 255, 0.2);
+      }
+      .bold-comp.top {
+        top: 100px;
+      }
+      .bold-comp.bottom {
+        bottom: 80px;
+      }
+      .bold-comp .bold-icon {
+        font-size: 12px;
+      }
+      /* Circles face */
+      .face-circles {
+        display: none;
+        background: radial-gradient(circle at 50% 50%, #0c0e18 0%, #040508 80%);
+      }
+      .circle-ring {
+        position: absolute;
+        border-radius: 50%;
+        border: 2px solid;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform: rotate(-90deg);
+      }
+      .circle-ring.outer {
+        inset: 24px;
+        border-color: rgba(169, 232, 203, 0.2);
+      }
+      .circle-ring.middle {
+        inset: 44px;
+        border-color: rgba(155, 188, 255, 0.2);
+      }
+      .circle-ring.inner {
+        inset: 64px;
+        border-color: rgba(255, 197, 138, 0.2);
+      }
+      .circle-ring svg {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+      }
+      .circle-ring .ring-fill {
+        fill: none;
+        stroke-width: 3;
+        stroke-linecap: round;
+      }
+      .circle-ring.outer .ring-fill {
+        stroke: #a9e8cb;
+        stroke-dasharray: 1080;
+        stroke-dashoffset: 324;
+      }
+      .circle-ring.middle .ring-fill {
+        stroke: #9bbcff;
+        stroke-dasharray: 980;
+        stroke-dashoffset: 392;
+      }
+      .circle-ring.inner .ring-fill {
+        stroke: #ffc58a;
+        stroke-dasharray: 880;
+        stroke-dashoffset: 528;
+      }
+      .circle-center-time {
+        position: absolute;
+        font-size: 28px;
+        font-weight: 500;
+        letter-spacing: -0.03em;
+        color: #fff;
+        text-align: center;
+      }
+      .circle-center-date {
+        position: absolute;
+        top: 42px;
+        font-size: 9px;
+        color: #a9a3c2;
+        letter-spacing: 0.12em;
+      }
+      .circle-label {
+        position: absolute;
+        font-size: 9px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 3px 8px;
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.6);
+      }
+      .circle-label.l1 {
+        top: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #a9e8cb;
+      }
+      .circle-label.l2 {
+        right: 42px;
+        top: 50%;
+        transform: translateY(-50%) rotate(90deg);
+        color: #9bbcff;
+      }
+      .circle-label.l3 {
+        bottom: 36px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #ffc58a;
+      }
+      /* Weather focus face */
+      .face-weather {
+        display: none;
+        background: radial-gradient(circle at 50% 30%, #1a2438 0%, #050812 75%);
+        position: relative;
+      }
+      .weather-bg {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      .weather-sun {
+        position: absolute;
+        top: 25%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          #ffd27a 0%,
+          #ff9a4e 50%,
+          transparent 80%
+        );
+        filter: blur(8px);
+        animation: sun-glow 4s ease-in-out infinite;
+      }
+      @keyframes sun-glow {
+        0%,
+        100% {
+          opacity: 0.7;
+          transform: translateX(-50%) scale(1);
+        }
+        50% {
+          opacity: 1;
+          transform: translateX(-50%) scale(1.1);
+        }
+      }
+      .weather-temp {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 70px;
+        font-weight: 300;
+        color: #fff;
+        letter-spacing: -0.04em;
+        text-shadow: 0 0 30px rgba(255, 154, 78, 0.3);
+      }
+      .weather-temp sup {
+        font-size: 30px;
+        vertical-align: super;
+        margin-left: 2px;
+      }
+      .weather-location {
+        position: absolute;
+        top: 45px;
+        font-size: 10px;
+        color: #c9c5d9;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+      }
+      .weather-condition {
+        position: absolute;
+        bottom: 90px;
+        font-size: 12px;
+        color: #e8e4f5;
+        letter-spacing: 0.05em;
+      }
+      .weather-hilo {
+        position: absolute;
+        bottom: 55px;
+        font-size: 11px;
+        color: #a9a3c2;
+        letter-spacing: 0.1em;
+      }
+      .app-page,
+      .tile-page,
+      .shade,
+      .notification-page,
+      .app-detail,
+      .music-page,
+      .workout-page {
+        position: absolute;
+        inset: 0;
+        display: none;
+        z-index: 10;
+        overflow: hidden;
+        background: rgba(6, 7, 12, 0.98);
+        animation: page-in 0.35s cubic-bezier(0.2, 0.9, 0.3, 1);
+      }
+      @keyframes page-in {
+        from {
+          opacity: 0;
+          transform: translateY(8px) scale(0.98);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+      .page-scroll {
+        position: absolute;
+        inset: 0;
+        overflow-y: auto;
+        scrollbar-width: none;
+        padding: 30px 22px 26px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .page-scroll::-webkit-scrollbar {
+        display: none;
+      }
+      .page-title {
+        font-size: 20px;
+        font-weight: 550;
+        letter-spacing: -0.04em;
+        margin: 0 0 4px;
+      }
+      .page-kicker {
+        font-size: 10px;
+        color: #9994ae;
+        margin-bottom: 18px;
+      }
+      .app-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px 8px;
+        margin-top: 20px;
+      }
+      .app-icon {
+        border: 0;
+        background: transparent;
+        color: #e9e7f2;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        font-size: 9px;
+        transition: transform 0.15s;
+      }
+      .app-icon:active {
+        transform: scale(0.92);
+      }
+      .app-glyph {
+        width: 49px;
+        height: 49px;
+        border-radius: 17px;
+        display: grid;
+        place-items: center;
+        font-size: 21px;
+        background: #242431;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        transition: background 0.2s;
+      }
+      .app-icon:nth-child(3n + 1) .app-glyph {
+        background: #24263a;
+        color: #b9c7ff;
+      }
+      .app-icon:nth-child(3n + 2) .app-glyph {
+        background: #292438;
+        color: #d5c5ff;
+      }
+      .app-icon:nth-child(3n) .app-glyph {
+        background: #1e2c2b;
+        color: #a9e8cb;
+      }
+      .page-close {
+        position: absolute;
+        top: 15px;
+        right: 19px;
+        width: 27px;
+        height: 27px;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: #22232d;
+        color: #ddd;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        z-index: 4;
+      }
+      .tile-page {
+        background: #080a11;
+      }
+      .tile-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 15px;
+      }
+      .tile-icon {
+        width: 39px;
+        height: 39px;
+        border-radius: 14px;
+        background: #28243d;
+        display: grid;
+        place-items: center;
+        font-size: 18px;
+        color: #c5b7ff;
+      }
+      .tile-card {
+        background: linear-gradient(145deg, #1e2030, #12151e);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 23px;
+        padding: 16px;
+        margin: 12px 0;
+      }
+      .tile-label {
+        font-size: 10px;
+        color: #a8a7b9;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .tile-value {
+        font-size: 37px;
+        letter-spacing: -0.07em;
+        font-weight: 450;
+        margin: 6px 0 2px;
+        font-variant-numeric: tabular-nums;
+      }
+      .tile-unit {
+        font-size: 12px;
+        color: #aaa6ba;
+      }
+      .tile-meta {
+        font-size: 10px;
+        color: #a7a5b6;
+        margin-top: 8px;
+      }
+      .progress-track {
+        height: 7px;
+        border-radius: 10px;
+        background: #353542;
+        overflow: hidden;
+        margin-top: 15px;
+      }
+      .progress-fill {
+        height: 100%;
+        border-radius: 10px;
+        background: linear-gradient(90deg, #a99aff, #d0c6ff);
+        width: 72%;
+        animation: fill-progress 1.5s ease-out;
+      }
+      @keyframes fill-progress {
+        from {
+          width: 0;
+        }
+      }
+      .mini-bars {
+        height: 68px;
+        display: flex;
+        align-items: end;
+        gap: 5px;
+        margin-top: 14px;
+      }
+      .mini-bars span {
+        flex: 1;
+        border-radius: 5px 5px 2px 2px;
+        background: #8579c7;
+        opacity: 0.8;
+        animation: bar-grow 0.6s ease-out backwards;
+      }
+      @keyframes bar-grow {
+        from {
+          transform: scaleY(0);
+          transform-origin: bottom;
+        }
+      }
+      .stats-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+      }
+      .stat-box {
+        background: #171a24;
+        border-radius: 16px;
+        padding: 12px;
+      }
+      .stat-box strong {
+        display: block;
+        font-size: 19px;
+        font-weight: 550;
+        margin-top: 5px;
+      }
+      .stat-box small {
+        font-size: 9px;
+        color: #aaa6b7;
+      }
+      .shade {
+        padding: 30px 24px;
+        background: rgba(11, 12, 19, 0.97);
+      }
+      .shade-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .shade-time {
+        font-size: 29px;
+        letter-spacing: -0.06em;
+      }
+      .shade-date {
+        font-size: 10px;
+        color: #aaa5b8;
+        margin-top: 2px;
+      }
+      .settings-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+      }
+      .setting-tile {
+        border: 0;
+        border-radius: 18px;
+        min-height: 64px;
+        padding: 12px;
+        text-align: left;
+        background: #242631;
+        color: #eee;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.2s;
+      }
+      .setting-tile .s-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #383b48;
+        font-size: 14px;
+      }
+      .setting-tile b {
+        display: block;
+        font-size: 10px;
+        font-weight: 600;
+      }
+      .setting-tile small {
+        display: block;
+        color: #aaaebe;
+        font-size: 8px;
+        margin-top: 3px;
+      }
+      .setting-tile.active {
+        background: #d2c8ff;
+        color: #262136;
+      }
+      .setting-tile.active .s-icon {
+        background: #b0a1eb;
+        color: #211b35;
+      }
+      .setting-tile.active small {
+        color: #4e4568;
+      }
+      .brightness {
+        margin-top: 18px;
+        background: #292b37;
+        border-radius: 18px;
+        padding: 13px 14px;
+      }
+      .brightness-head {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10px;
+        color: #dad8e4;
+        margin-bottom: 10px;
+      }
+      input[type="range"] {
+        width: 100%;
+        accent-color: #c5b7ff;
+        height: 4px;
+      }
+      .battery-card {
+        margin-top: 12px;
+        background: #171a23;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 13px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 10px;
+        color: #c9c7d2;
+      }
+      .battery-card strong {
+        font-size: 16px;
+        color: #c9f2d9;
+      }
+      .notification-page {
+        padding: 32px 21px;
+        background: #090b12;
+      }
+      .notif-item {
+        display: flex;
+        gap: 10px;
+        padding: 13px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        cursor: pointer;
+        transition: background 0.2s;
+        border-radius: 8px;
+        padding-left: 6px;
+        padding-right: 6px;
+      }
+      .notif-item:hover {
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .notif-icon {
+        width: 33px;
+        height: 33px;
+        border-radius: 12px;
+        background: #29253c;
+        display: grid;
+        place-items: center;
+        flex: none;
+      }
+      .notif-copy b {
+        font-size: 10px;
+        font-weight: 600;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .notif-copy p {
+        font-size: 9px;
+        line-height: 1.5;
+        color: #aaa8b8;
+        margin: 0;
+      }
+      .notif-copy time {
+        font-size: 8px;
+        color: #797b89;
+        display: block;
+        margin-top: 5px;
+      }
+      .empty-notif {
+        text-align: center;
+        padding: 60px 8px;
+        color: #aaa6b6;
+        font-size: 11px;
+        line-height: 1.6;
+      }
+      .detail-content {
+        padding: 35px 24px 25px;
+        text-align: center;
+      }
+      .detail-symbol {
+        width: 68px;
+        height: 68px;
+        margin: 13px auto 17px;
+        border-radius: 23px;
+        background: #272439;
+        display: grid;
+        place-items: center;
+        font-size: 29px;
+        color: #c8baff;
+      }
+      .detail-value {
+        font-size: 47px;
+        letter-spacing: -0.08em;
+        font-weight: 450;
+        margin: 8px 0 0;
+      }
+      .detail-caption {
+        font-size: 10px;
+        color: #aaa7b9;
+        line-height: 1.5;
+        margin-top: 6px;
+      }
+      .detail-action {
+        border: 0;
+        border-radius: 19px;
+        padding: 11px 18px;
+        margin-top: 20px;
+        background: #c7baff;
+        color: #28213d;
+        font-size: 10px;
+        font-weight: 650;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .detail-action:hover {
+        background: #d4c9ff;
+        transform: translateY(-1px);
+      }
+      /* Music page */
+      .music-page {
+        background: linear-gradient(180deg, #1a1028 0%, #05060a 100%);
+      }
+      .music-art {
+        width: 160px;
+        height: 160px;
+        margin: 30px auto 20px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 30% 30%,
+          #8a7fd5,
+          #3e2b5c 60%,
+          #1a1028 100%
+        );
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        position: relative;
+        animation: spin-disc 8s linear infinite;
+      }
+      @keyframes spin-disc {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .music-art.paused {
+        animation-play-state: paused;
+      }
+      .music-art:before {
+        content: "";
+        position: absolute;
+        inset: 30%;
+        border-radius: 50%;
+        background: #000;
+        box-shadow: inset 0 0 0 2px #c7b9ff;
+      }
+      .music-art:after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: repeating-radial-gradient(
+          circle,
+          transparent 0 8px,
+          rgba(255, 255, 255, 0.03) 8px 9px
+        );
+      }
+      .music-info {
+        text-align: center;
+        padding: 0 24px;
+      }
+      .music-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #fff;
+        margin: 4px 0 2px;
+      }
+      .music-artist {
+        font-size: 11px;
+        color: #b0abc9;
+      }
+      .music-progress {
+        margin: 16px 30px 12px;
+        height: 3px;
+        background: #2a2040;
+        border-radius: 2px;
+        position: relative;
+        overflow: hidden;
+      }
+      .music-progress-bar {
+        position: absolute;
+        inset: 0;
+        width: 42%;
+        background: linear-gradient(90deg, #c7b9ff, #9bbcff);
+        border-radius: 2px;
+        transition: width 0.3s;
+      }
+      .music-times {
+        display: flex;
+        justify-content: space-between;
+        padding: 0 30px;
+        font-size: 8px;
+        color: #8a86a5;
+      }
+      .music-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 24px;
+        margin-top: 18px;
+      }
+      .music-btn {
+        border: 0;
+        background: transparent;
+        color: #fff;
+        font-size: 18px;
+        cursor: pointer;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        transition: all 0.2s;
+      }
+      .music-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+      .music-btn.play {
+        width: 52px;
+        height: 52px;
+        background: #c7b9ff;
+        color: #261f3d;
+        font-size: 22px;
+      }
+      .music-btn.play:hover {
+        background: #d4c9ff;
+        transform: scale(1.05);
+      }
+      /* Workout page */
+      .workout-page {
+        background: linear-gradient(180deg, #0a1a1f 0%, #05060a 100%);
+      }
+      .workout-hero {
+        text-align: center;
+        padding: 30px 20px;
+      }
+      .workout-type {
+        font-size: 10px;
+        color: #a9e8cb;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+      .workout-duration {
+        font-size: 54px;
+        font-weight: 300;
+        letter-spacing: -0.05em;
+        color: #fff;
+        font-variant-numeric: tabular-nums;
+      }
+      .workout-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin: 20px 20px;
+      }
+      .workout-stat {
+        background: rgba(20, 30, 40, 0.7);
+        border: 1px solid rgba(169, 232, 203, 0.15);
+        border-radius: 14px;
+        padding: 10px 6px;
+        text-align: center;
+      }
+      .workout-stat small {
+        display: block;
+        font-size: 8px;
+        color: #9ab0a8;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .workout-stat strong {
+        display: block;
+        font-size: 18px;
+        font-weight: 500;
+        margin-top: 4px;
+        color: #fff;
+      }
+      .workout-graph {
+        margin: 0 20px;
+        height: 60px;
+        display: flex;
+        align-items: end;
+        gap: 2px;
+        padding: 8px;
+        background: rgba(20, 30, 40, 0.5);
+        border-radius: 12px;
+      }
+      .workout-graph span {
+        flex: 1;
+        background: linear-gradient(180deg, #a9e8cb, #5ba88a);
+        border-radius: 2px 2px 0 0;
+        animation: bar-grow 0.6s ease-out backwards;
+      }
+      .workout-cta {
+        margin: 20px 20px 0;
+        display: flex;
+        gap: 8px;
+      }
+      .workout-cta button {
+        flex: 1;
+        border: 0;
+        border-radius: 20px;
+        padding: 12px;
+        font-size: 10px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .workout-cta .pause {
+        background: #2a3540;
+        color: #fff;
+      }
+      .workout-cta .end {
+        background: #d85757;
+        color: #fff;
+      }
+      .watch-hint {
+        position: absolute;
+        bottom: 4px;
+        left: 50%;
+        transform: translateX(-50%);
+        white-space: nowrap;
+        font-size: 9px;
+        color: #838795;
+        letter-spacing: 0.03em;
+      }
+      .emulator-panel {
+        align-self: center;
+        background: linear-gradient(
+          160deg,
+          rgba(27, 29, 39, 0.94),
+          rgba(15, 17, 23, 0.96)
+        );
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 24px;
+        padding: 21px 19px;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
+        max-height: 85vh;
+        overflow-y: auto;
+        scrollbar-width: thin;
+      }
+      .emulator-panel::-webkit-scrollbar {
+        width: 6px;
+      }
+      .emulator-panel::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+      }
+      .panel-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: #969aa8;
+        font-weight: 600;
+        margin-bottom: 14px;
+      }
+      .panel-section {
+        margin-bottom: 20px;
+      }
+      .panel-section:last-child {
+        margin-bottom: 0;
+      }
+      .panel-section h3 {
+        font-size: 12px;
+        font-weight: 600;
+        margin: 0 0 10px;
+        color: #e4e3ec;
+      }
+      .face-options {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
+      .face-option {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 13px;
+        background: #1b1d27;
+        color: #c8c8d2;
+        padding: 9px 4px 8px;
+        font-size: 9px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 7px;
+        transition: all 0.2s;
+      }
+      .face-option:hover {
+        border-color: rgba(193, 179, 255, 0.4);
+      }
+      .face-option.active {
+        border-color: #c1b3ff;
+        background: #29253b;
+        color: #e7e0ff;
+        box-shadow: 0 0 0 1px rgba(193, 179, 255, 0.12);
+      }
+      .face-preview {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        border: 2px solid #706a89;
+        background: radial-gradient(circle, #28243c, #06070a);
+        display: grid;
+        place-items: center;
+        color: #d2c7ff;
+        font-size: 9px;
+      }
+      .face-option:nth-child(2) .face-preview {
+        background: repeating-conic-gradient(
+          #a9a0d3 0 4deg,
+          #101116 4deg 12deg
+        );
+        border-color: #77718e;
+      }
+      .face-option:nth-child(3) .face-preview {
+        font-size: 14px;
+        font-weight: 300;
+      }
+      .face-option:nth-child(4) .face-preview {
+        font-size: 12px;
+        font-weight: 700;
+        background: radial-gradient(circle, #0f1320, #05070d);
+      }
+      .face-option:nth-child(5) .face-preview {
+        background: radial-gradient(circle, #1a2438 0%, #050812 80%);
+        border-color: #d89a6b;
+      }
+      .face-option:nth-child(6) .face-preview {
+        background: radial-gradient(circle, #0c0e18, #040508);
+      }
+      .control-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .control-btn {
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: #20222c;
+        color: #e0dfea;
+        border-radius: 13px;
+        padding: 10px 9px;
+        text-align: left;
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .control-btn span:first-child {
+        font-size: 14px;
+        width: 18px;
+        text-align: center;
+      }
+      .control-btn:hover {
+        background: #292b38;
+        border-color: rgba(255, 255, 255, 0.15);
+      }
+      .control-btn.full {
+        grid-column: 1/-1;
+      }
+      .panel-note {
+        font-size: 9px;
+        line-height: 1.6;
+        color: #888d9a;
+        margin-top: 13px;
+      }
+      .gesture-list {
+        display: grid;
+        gap: 9px;
+      }
+      .gesture {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 9px;
+        color: #b6b8c3;
+      }
+      .gesture-key {
+        width: 28px;
+        height: 28px;
+        border-radius: 9px;
+        background: #252733;
+        display: grid;
+        place-items: center;
+        color: #ccc3f4;
+        font-size: 12px;
+        flex: none;
+      }
+      .status-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #858997;
+        font-size: 9px;
+        margin-top: 16px;
+        padding-top: 13px;
+        border-top: 1px solid rgba(255, 255, 255, 0.07);
+      }
+      .live-dot {
+        width: 6px;
+        height: 6px;
+        background: #8cddb5;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+        box-shadow: 0 0 8px #8cddb5;
+        animation: pulse-dot 2s ease-in-out infinite;
+      }
+      @keyframes pulse-dot {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 25px;
+        transform: translate(-50%, 15px);
+        background: #ece7ff;
+        color: #262036;
+        padding: 10px 16px;
+        border-radius: 24px;
+        font-size: 11px;
+        font-weight: 600;
+        opacity: 0;
+        pointer-events: none;
+        transition: 0.25s;
+        z-index: 100;
+        box-shadow: 0 8px 30px #0008;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      .footer {
+        text-align: center;
+        color: #777c89;
+        font-size: 9px;
+        padding: 0 20px 20px;
+      }
+      /* Haptic pulse */
+      .haptic {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        pointer-events: none;
+        background: radial-gradient(
+          circle,
+          rgba(199, 185, 255, 0.15),
+          transparent 70%
+        );
+        opacity: 0;
+        z-index: 25;
+      }
+      .haptic.pulse {
+        animation: haptic-pulse 0.4s ease-out;
+      }
+      @keyframes haptic-pulse {
+        0% {
+          opacity: 1;
+          transform: scale(0.9);
+        }
+        100% {
+          opacity: 0;
+          transform: scale(1.1);
+        }
+      }
+      /* Swipe preview */
+      .swipe-preview {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(20, 22, 35, 0.85);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(199, 185, 255, 0.3);
+        border-radius: 20px;
+        padding: 14px 22px;
+        font-size: 11px;
+        color: #fff;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s;
+        z-index: 50;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+      }
+      .swipe-preview.show {
+        opacity: 1;
+      }
+      .swipe-preview .swipe-icon {
+        font-size: 22px;
+      }
+      .swipe-preview small {
+        font-size: 8px;
+        color: #a9a3c2;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      /* Crown indicator */
+      .crown-indicator {
+        position: absolute;
+        right: -50px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 24px;
+        height: 80px;
+        background: rgba(30, 32, 45, 0.9);
+        border: 1px solid rgba(199, 185, 255, 0.3);
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+        z-index: 100;
+      }
+      .crown-indicator.show {
+        opacity: 1;
+      }
+      .crown-indicator .crown-arrow {
+        font-size: 12px;
+        color: #c7b9ff;
+      }
+      /* Heart rate pulse on complication */
+      .heart-pulse {
+        animation: heart-pulse 1s ease-in-out infinite;
+      }
+      @keyframes heart-pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.15);
+        }
+      }
+      @media (max-width: 960px) {
+        .main {
+          grid-template-columns: 1fr;
+          gap: 12px;
+          padding: 22px 14px 30px;
+        }
+        .watch-stage {
+          min-height: 670px;
+        }
+        .emulator-panel {
+          width: min(430px, 100%);
+          max-height: none;
+        }
+        .topbar {
+          padding: 0 17px;
+        }
+        .top-pill {
+          display: none;
+        }
+      }
+      @media (max-width: 480px) {
+        :root {
+          --watch-size: 342px;
+        }
+        .watch {
+          height: 610px;
+          transform: scale(0.88);
+          transform-origin: center center;
+          margin: -35px 0;
+        }
+        .watch-stage {
+          min-height: 595px;
+          overflow: hidden;
+        }
+        .watch-body {
+          width: 342px;
+          height: 342px;
+          top: 134px;
+        }
+        .screen {
+          inset: 13px;
+        }
+        .crown {
+          top: 144px;
+          right: -14px;
+          height: 46px;
+        }
+        .side-button {
+          top: 203px;
+        }
+        .strap {
+          width: 126px;
+          height: 180px;
+        }
+        .strap.top {
+          top: 0;
+        }
+        .strap.bottom {
+          bottom: 0;
+        }
+        .digital-time {
+          font-size: 55px;
+        }
+        .complication {
+          width: 52px;
+          height: 52px;
+        }
+        .complication.c1 {
+          left: 31px;
+          top: 100px;
+        }
+        .complication.c2 {
+          right: 31px;
+          top: 100px;
+        }
+        .complication.c3 {
+          left: 31px;
+          bottom: 82px;
+        }
+        .complication.c4 {
+          right: 31px;
+          bottom: 82px;
+        }
+        .face-status {
+          padding: 0 29px;
+          top: 22px;
+        }
+        .face-date {
+          top: 51px;
+        }
+        .ring-wrap {
+          inset: 26px;
+        }
+        .bottom-caption {
+          bottom: 25px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *:before,
+        *:after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <circle
+                cx="12"
+                cy="12"
+                r="8.5"
+                stroke="currentColor"
+                stroke-width="2.4"
+              />
+              <path
+                d="M12 6v6l4 2"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+              />
+            </svg>
+          </div>
+          <div>Pixel Watch 5 <small>WEAR OS · BROWSER EMULATOR</small></div>
+        </div>
+        <div class="top-actions">
+          <span class="top-pill">41 mm · Obsidian / Active Band</span
+          ><span class="top-pill">UI Preview 02 · Enhanced</span>
+          <div class="top-icon" title="Pengaturan">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.7 2.94-.08-.02a1.7 1.7 0 0 0-1.74.25l-.07.05h-3.4l-.04-.08a1.7 1.7 0 0 0-1.5-1.01l-.09-.01-1.7-2.94.06-.07a1.7 1.7 0 0 0 .25-1.74l-.03-.09v-3.4l.08-.04a1.7 1.7 0 0 0 1.01-1.5l.01-.09 2.94-1.7.07.06a1.7 1.7 0 0 0 1.74.25l.09-.03h3.4l.04.08a1.7 1.7 0 0 0 1.5 1.01l.09.01 1.7 2.94-.06.07a1.7 1.7 0 0 0-.25 1.74l.03.09v3.4z"
+                transform="translate(-3 -3) scale(1.22)"
+              />
+            </svg>
+          </div>
+        </div>
+      </header>
+      <main class="main">
+        <section class="device-column">
+          <div class="device-heading">
+            <div class="eyebrow">Live device preview</div>
+            <h1 class="section-title">Your wrist, in the browser.</h1>
+            <p class="section-subtitle">
+              Coba navigasi Wear OS langsung dari layar jam.
+            </p>
+          </div>
+          <div class="watch-stage">
+            <div class="watch" id="watch">
+              <div class="strap top">
+                <i class="strap-hole"></i><i class="strap-hole"></i
+                ><i class="strap-hole"></i><i class="strap-hole"></i
+                ><i class="strap-hole"></i>
+              </div>
+              <div class="strap bottom">
+                <i class="strap-hole"></i><i class="strap-hole"></i
+                ><i class="strap-hole"></i><i class="strap-hole"></i
+                ><i class="strap-hole"></i>
+              </div>
+              <div class="watch-body">
+                <div class="screen" id="screen">
+                  <!-- Main face (At a Glance) -->
+                  <section class="face face-main" id="face-main">
+                    <div class="face-orbit"></div>
+                    <div class="face-status">
+                      <span id="face-status-day">TUE · 03</span
+                      ><span>◉ &nbsp;▰</span>
+                    </div>
+                    <div class="face-date">
+                      <span id="face-month">NOVEMBER</span
+                      ><span class="date-chip" id="face-daynum">03</span>
+                    </div>
+                    <div class="ring-wrap">
+                      <svg class="ring-svg" viewBox="0 0 300 300">
+                        <circle class="ring-bg" cx="150" cy="150" r="46" />
+                        <circle
+                          class="ring-progress"
+                          cx="150"
+                          cy="150"
+                          r="46"
+                        /></svg
+                      ><i class="ring-dot"></i>
+                    </div>
+                    <div class="digital-time" id="digital-time">
+                      09<span class="colon">:</span>41
+                    </div>
+                    <div class="face-greeting" id="face-greeting">
+                      A little progress, every day.
+                    </div>
+                    <button
+                      class="complication c1"
+                      data-detail="weather"
+                      aria-label="Cuaca"
+                    >
+                      <span class="comp-icon">☀</span
+                      ><span class="comp-value">28°</span
+                      ><span class="comp-label">Cuaca</span>
+                    </button>
+                    <button
+                      class="complication c2 heart-pulse"
+                      data-detail="heart"
+                      aria-label="Detak jantung"
+                    >
+                      <span class="comp-icon">♥</span
+                      ><span class="comp-value">72</span
+                      ><span class="comp-label">BPM</span>
+                    </button>
+                    <button
+                      class="complication c3"
+                      data-detail="steps"
+                      aria-label="Langkah"
+                    >
+                      <span class="comp-icon">⌁</span
+                      ><span class="comp-value">6.8k</span
+                      ><span class="comp-label">Langkah</span>
+                    </button>
+                    <button
+                      class="complication c4"
+                      data-detail="battery"
+                      aria-label="Baterai"
+                    >
+                      <span class="comp-icon">▰</span
+                      ><span class="comp-value">82%</span
+                      ><span class="comp-label">Baterai</span>
+                    </button>
+                    <div class="bottom-caption">PIXEL · HEALTH · DAILY</div>
+                  </section>
+                  <!-- Classic Analog -->
+                  <section class="face face-classic" id="face-classic">
+                    <div class="analog-dial"></div>
+                    <div class="hand hour" id="hour-hand"></div>
+                    <div class="hand minute" id="minute-hand"></div>
+                    <div class="hand second" id="second-hand"></div>
+                    <div class="analog-center"></div>
+                    <div class="classic-time" id="classic-time">09:41</div>
+                    <button class="complication c1" data-detail="weather">
+                      <span class="comp-icon">☀</span
+                      ><span class="comp-value">28°</span
+                      ><span class="comp-label">Weather</span>
+                    </button>
+                    <button class="complication c4" data-detail="steps">
+                      <span class="comp-icon">⌁</span
+                      ><span class="comp-value">6.8k</span
+                      ><span class="comp-label">Steps</span>
+                    </button>
+                  </section>
+                  <!-- Minimal -->
+                  <section class="face face-minimal" id="face-minimal">
+                    <div class="minimal-time" id="minimal-time">09:41</div>
+                    <div class="minimal-date" id="minimal-date">
+                      TUESDAY · NOV 03
+                    </div>
+                    <div class="minimal-weather">
+                      <span>☀</span><span>28° &nbsp; Malang</span><span>·</span
+                      ><span>Air quality Good</span>
+                    </div>
+                  </section>
+                  <!-- Bold Digital -->
+                  <section class="face face-bold" id="face-bold">
+                    <div class="bold-date" id="bold-date">
+                      WEDNESDAY · NOV 04
+                    </div>
+                    <div class="bold-time" id="bold-time">09:41</div>
+                    <div class="bold-seconds" id="bold-seconds">00 SECONDS</div>
+                    <div class="bold-comp top">
+                      <span class="bold-icon">♥</span><span>72 BPM</span>
+                    </div>
+                    <div class="bold-comp bottom">
+                      <span class="bold-icon">⌁</span><span>6.8k STEPS</span>
+                    </div>
+                  </section>
+                  <!-- Circles -->
+                  <section class="face face-circles" id="face-circles">
+                    <div class="circle-ring outer">
+                      <svg viewBox="0 0 300 300">
+                        <circle class="ring-fill" cx="150" cy="150" r="172" />
+                      </svg>
+                    </div>
+                    <div class="circle-ring middle">
+                      <svg viewBox="0 0 300 300">
+                        <circle class="ring-fill" cx="150" cy="150" r="156" />
+                      </svg>
+                    </div>
+                    <div class="circle-ring inner">
+                      <svg viewBox="0 0 300 300">
+                        <circle class="ring-fill" cx="150" cy="150" r="140" />
+                      </svg>
+                    </div>
+                    <div class="circle-center-time" id="circle-time">09:41</div>
+                    <div class="circle-center-date" id="circle-date">
+                      WED · NOV 04
+                    </div>
+                    <div class="circle-label l1">Move · 70%</div>
+                    <div class="circle-label l2">Exercise · 60%</div>
+                    <div class="circle-label l3">Stand · 40%</div>
+                  </section>
+                  <!-- Weather Focus -->
+                  <section class="face face-weather" id="face-weather">
+                    <div class="weather-bg">
+                      <div class="weather-sun"></div>
+                    </div>
+                    <div class="weather-location">MALANG · INDONESIA</div>
+                    <div class="weather-temp">28<sup>°</sup></div>
+                    <div class="weather-condition">Partly Cloudy</div>
+                    <div class="weather-hilo">H: 30° · L: 22°</div>
+                  </section>
+                  <!-- App launcher -->
+                  <section class="app-page" id="app-page">
+                    <button class="page-close" data-action="home">×</button>
+                    <div class="page-scroll">
+                      <h2 class="page-title">All apps</h2>
+                      <div class="page-kicker">Aplikasi di jam Anda</div>
+                      <div class="app-grid">
+                        <button class="app-icon" data-detail="assistant">
+                          <span class="app-glyph">✦</span>Gemini
+                        </button>
+                        <button class="app-icon" data-detail="fitness">
+                          <span class="app-glyph">◉</span>Fitbit
+                        </button>
+                        <button class="app-icon" data-detail="heart">
+                          <span class="app-glyph">♥</span>Heart rate
+                        </button>
+                        <button class="app-icon" data-detail="sleep">
+                          <span class="app-glyph">☾</span>Sleep
+                        </button>
+                        <button class="app-icon" data-detail="weather">
+                          <span class="app-glyph">☀</span>Weather
+                        </button>
+                        <button class="app-icon" data-detail="calendar">
+                          <span class="app-glyph">▦</span>Calendar
+                        </button>
+                        <button class="app-icon" data-detail="timer">
+                          <span class="app-glyph">◷</span>Timer
+                        </button>
+                        <button class="app-icon" data-detail="maps">
+                          <span class="app-glyph">⌖</span>Maps
+                        </button>
+                        <button class="app-icon" data-detail="wallet">
+                          <span class="app-glyph">▱</span>Wallet
+                        </button>
+                        <button class="app-icon" data-detail="settings">
+                          <span class="app-glyph">⚙</span>Settings
+                        </button>
+                        <button class="app-icon" data-detail="breathing">
+                          <span class="app-glyph">◎</span>Relax
+                        </button>
+                        <button class="app-icon" data-detail="phone">
+                          <span class="app-glyph">⌕</span>Phone
+                        </button>
+                        <button class="app-icon" data-detail="music">
+                          <span class="app-glyph">♫</span>Music
+                        </button>
+                        <button class="app-icon" data-detail="workout">
+                          <span class="app-glyph">♨</span>Workout
+                        </button>
+                        <button class="app-icon" data-detail="find">
+                          <span class="app-glyph">⌕</span>Find phone
+                        </button>
+                      </div>
+                    </div>
+                  </section>
+                  <!-- Tile page -->
+                  <section class="tile-page" id="tile-page">
+                    <button class="page-close" data-action="home">×</button>
+                    <div class="page-scroll" id="tile-content"></div>
+                  </section>
+                  <!-- Shade (quick settings) -->
+                  <section class="shade" id="shade">
+                    <div class="shade-top">
+                      <div>
+                        <div class="shade-time" id="shade-time">09:41</div>
+                        <div class="shade-date" id="shade-date">
+                          Selasa, 3 November
+                        </div>
+                      </div>
+                      <div style="font-size: 19px; color: #c9c0ef">⚙</div>
+                    </div>
+                    <div class="settings-grid">
+                      <button class="setting-tile active" data-toggle="wifi">
+                        <span class="s-icon">⌁</span
+                        ><span><b>Internet</b><small>Connected</small></span>
+                      </button>
+                      <button
+                        class="setting-tile active"
+                        data-toggle="bluetooth"
+                      >
+                        <span class="s-icon">ᛒ</span
+                        ><span><b>Bluetooth</b><small>On</small></span>
+                      </button>
+                      <button class="setting-tile" data-toggle="dnd">
+                        <span class="s-icon">⊖</span
+                        ><span><b>Do Not Disturb</b><small>Off</small></span>
+                      </button>
+                      <button class="setting-tile" data-toggle="theater">
+                        <span class="s-icon">◐</span
+                        ><span><b>Theater mode</b><small>Off</small></span>
+                      </button>
+                      <button class="setting-tile" data-toggle="battery-saver">
+                        <span class="s-icon">▰</span
+                        ><span><b>Battery Saver</b><small>Off</small></span>
+                      </button>
+                      <button class="setting-tile" data-toggle="airplane">
+                        <span class="s-icon">✈</span
+                        ><span><b>Airplane mode</b><small>Off</small></span>
+                      </button>
+                    </div>
+                    <div class="brightness">
+                      <div class="brightness-head">
+                        <span>Display brightness</span
+                        ><span id="brightness-value">75%</span>
+                      </div>
+                      <input
+                        id="brightness"
+                        type="range"
+                        min="10"
+                        max="100"
+                        value="75"
+                      />
+                    </div>
+                    <div class="battery-card">
+                      <span
+                        >Battery status<br /><small style="color: #878b99"
+                          >Estimated 21h remaining</small
+                        ></span
+                      ><strong>82%</strong>
+                    </div>
+                  </section>
+                  <!-- Notifications -->
+                  <section class="notification-page" id="notification-page">
+                    <button class="page-close" data-action="home">×</button>
+                    <h2 class="page-title">Notifications</h2>
+                    <div class="page-kicker" id="notification-count">
+                      3 recent notifications
+                    </div>
+                    <div id="notification-list">
+                      <div class="notif-item">
+                        <div class="notif-icon">✉</div>
+                        <div class="notif-copy">
+                          <b>Messages · Raka</b>
+                          <p>Oke, sampai ketemu nanti sore!</p>
+                          <time>2 min ago</time>
+                        </div>
+                      </div>
+                      <div class="notif-item">
+                        <div class="notif-icon">◉</div>
+                        <div class="notif-copy">
+                          <b>Fitbit · Daily readiness</b>
+                          <p>
+                            Your readiness score is looking good. Keep your day
+                            balanced.
+                          </p>
+                          <time>18 min ago</time>
+                        </div>
+                      </div>
+                      <div class="notif-item">
+                        <div class="notif-icon">▦</div>
+                        <div class="notif-copy">
+                          <b>Calendar · Reminder</b>
+                          <p>Project review starts at 14:30.</p>
+                          <time>1 hour ago</time>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      class="detail-action"
+                      style="width: 100%"
+                      id="clear-notifications"
+                    >
+                      Clear all
+                    </button>
+                  </section>
+                  <!-- Music -->
+                  <section class="music-page app-page" id="music-page">
+                    <button class="page-close" data-action="home">×</button>
+                    <div class="page-scroll">
+                      <div class="music-art" id="music-art"></div>
+                      <div class="music-info">
+                        <div class="music-title">Blinding Lights</div>
+                        <div class="music-artist">The Weeknd</div>
+                      </div>
+                      <div class="music-progress">
+                        <div class="music-progress-bar" id="music-bar"></div>
+                      </div>
+                      <div class="music-times">
+                        <span>1:24</span><span>3:20</span>
+                      </div>
+                      <div class="music-controls">
+                        <button class="music-btn" id="prev-btn">⏮</button>
+                        <button class="music-btn play" id="play-btn">▶</button>
+                        <button class="music-btn" id="next-btn">⏭</button>
+                      </div>
+                    </div>
+                  </section>
+                  <!-- Workout -->
+                  <section class="workout-page app-page" id="workout-page">
+                    <button class="page-close" data-action="home">×</button>
+                    <div class="page-scroll">
+                      <div class="workout-hero">
+                        <div class="workout-type">Outdoor Run · Active</div>
+                        <div class="workout-duration" id="workout-time">
+                          00:24:18
+                        </div>
+                      </div>
+                      <div class="workout-stats">
+                        <div class="workout-stat">
+                          <small>DISTANCE</small><strong>3.2 km</strong>
+                        </div>
+                        <div class="workout-stat">
+                          <small>PACE</small><strong>5:42</strong>
+                        </div>
+                        <div class="workout-stat">
+                          <small>CALORIES</small><strong>287</strong>
+                        </div>
+                      </div>
+                      <div class="workout-graph">
+                        <span style="height: 45%"></span>
+                        <span style="height: 60%"></span>
+                        <span style="height: 55%"></span>
+                        <span style="height: 72%"></span>
+                        <span style="height: 68%"></span>
+                        <span style="height: 85%"></span>
+                        <span style="height: 78%"></span>
+                        <span style="height: 65%"></span>
+                        <span style="height: 58%"></span>
+                        <span style="height: 70%"></span>
+                        <span style="height: 82%"></span>
+                        <span style="height: 75%"></span>
+                      </div>
+                      <div class="workout-cta">
+                        <button class="pause" id="pause-workout">Pause</button>
+                        <button class="end" id="end-workout">End</button>
+                      </div>
+                    </div>
+                  </section>
+                  <!-- App detail -->
+                  <section class="app-detail" id="app-detail">
+                    <button class="page-close" data-action="home">×</button>
+                    <div class="detail-content" id="detail-content"></div>
+                  </section>
+                  <!-- Haptic pulse overlay -->
+                  <div class="haptic" id="haptic"></div>
+                  <!-- Swipe preview -->
+                  <div class="swipe-preview" id="swipe-preview">
+                    <span class="swipe-icon">↑</span>
+                    <small>Notifications</small>
+                  </div>
+                </div>
+              </div>
+              <button
+                class="crown"
+                id="crown"
+                aria-label="Crown navigation"
+                title="Tekan crown untuk membuka aplikasi"
+              ></button
+              ><button
+                class="side-button"
+                id="side-button"
+                aria-label="Side button"
+                title="Buka aplikasi terakhir"
+              ></button>
+              <div class="crown-indicator" id="crown-indicator">
+                <span class="crown-arrow">▲</span>
+                <span class="crown-arrow">▼</span>
+              </div>
+            </div>
+            <div class="watch-hint">
+              SWIPE UNTUK MENJELAJAHI · TEKAN CROWN UNTUK APPS · HOVER UNTUK
+              TILT
+            </div>
+          </div>
+        </section>
+        <aside class="emulator-panel">
+          <div class="panel-label">Emulator controls</div>
+          <div class="panel-section">
+            <h3>Watch face</h3>
+            <div class="face-options">
+              <button class="face-option active" data-face="main">
+                <span class="face-preview">09:41</span>At a Glance
+              </button>
+              <button class="face-option" data-face="classic">
+                <span class="face-preview">◷</span>Analog
+              </button>
+              <button class="face-option" data-face="minimal">
+                <span class="face-preview">9:41</span>Minimal
+              </button>
+              <button class="face-option" data-face="bold">
+                <span class="face-preview">9:41</span>Bold
+              </button>
+              <button class="face-option" data-face="weather">
+                <span class="face-preview">☀</span>Weather
+              </button>
+              <button class="face-option" data-face="circles">
+                <span class="face-preview">◎</span>Circles
+              </button>
+            </div>
+          </div>
+          <div class="panel-section">
+            <h3>Quick actions</h3>
+            <div class="control-grid">
+              <button class="control-btn" data-open="shade">
+                <span>☷</span>Quick settings
+              </button>
+              <button class="control-btn" data-open="notification-page">
+                <span>▤</span>Notifications
+              </button>
+              <button class="control-btn" data-open="app-page">
+                <span>⠿</span>All apps
+              </button>
+              <button class="control-btn" data-open="music-page">
+                <span>♫</span>Music
+              </button>
+              <button class="control-btn" data-open="workout-page">
+                <span>♨</span>Workout
+              </button>
+              <button class="control-btn" data-tile="activity">
+                <span>◉</span>Activity tile
+              </button>
+              <button class="control-btn" data-tile="heart">
+                <span>♥</span>Heart tile
+              </button>
+              <button class="control-btn" data-tile="sleep">
+                <span>☾</span>Sleep tile
+              </button>
+              <button class="control-btn" data-tile="weather">
+                <span>☀</span>Weather tile
+              </button>
+              <button class="control-btn" data-tile="calendar">
+                <span>▦</span>Calendar tile
+              </button>
+              <button class="control-btn full" data-action="ambient">
+                <span>◐</span>Toggle always-on display
+              </button>
+              <button class="control-btn full" data-action="lift-wake">
+                <span>↑</span>Simulate lift-to-wake
+              </button>
+            </div>
+            <p class="panel-note">
+              Kontrol ini mengubah tampilan simulasi secara langsung. Fitur
+              sensor, konektivitas, dan data kesehatan menggunakan data contoh.
+              Coba <b>hover</b> mouse di atas jam untuk efek tilt 3D, atau
+              <b>scroll</b> saat mouse ada di atas jam untuk mensimulasikan
+              crown rotation.
+            </p>
+          </div>
+          <div class="panel-section">
+            <h3>Gesture guide</h3>
+            <div class="gesture-list">
+              <div class="gesture">
+                <span class="gesture-key">↓</span>Swipe down — Quick settings
+              </div>
+              <div class="gesture">
+                <span class="gesture-key">↑</span>Swipe up — Notifications
+              </div>
+              <div class="gesture">
+                <span class="gesture-key">← →</span>Swipe sideways — Tiles
+              </div>
+              <div class="gesture">
+                <span class="gesture-key">◉</span>Press crown — App launcher
+              </div>
+              <div class="gesture">
+                <span class="gesture-key">⟲</span>Tap complication — Detail view
+              </div>
+              <div class="gesture">
+                <span class="gesture-key">⎋</span>Esc / Backspace — Home
+              </div>
+              <div class="gesture">
+                <span class="gesture-key">⌖</span>Mouse hover — 3D tilt
+              </div>
+            </div>
+          </div>
+          <div class="status-footer">
+            <span><i class="live-dot"></i>Emulator running</span
+            ><span>Build 5.0.26 · Enhanced</span>
+          </div>
+        </aside>
+      </main>
+      <footer class="footer">
+        Unofficial browser UI concept · Not affiliated with Google · All watch
+        data is simulated
+      </footer>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+      (() => {
+        const $ = (s, root = document) => root.querySelector(s);
+        const $$ = (s, root = document) => [...root.querySelectorAll(s)];
+        const pages = [
+          "app-page",
+          "tile-page",
+          "shade",
+          "notification-page",
+          "app-detail",
+          "music-page",
+          "workout-page",
+        ];
+        const faces = [
+          "main",
+          "classic",
+          "minimal",
+          "bold",
+          "circles",
+          "weather",
+        ];
+        let activeFace = "main",
+          currentPage = null,
+          ambient = false,
+          lastTile = "activity",
+          musicPlaying = false,
+          workoutActive = true,
+          workoutSeconds = 1458;
+        let toastTimer;
+        const toggles = {
+          wifi: true,
+          bluetooth: true,
+          dnd: false,
+          theater: false,
+          "battery-saver": false,
+          airplane: false,
+        };
+        const now = () => new Date();
+        const pad = (n) => String(n).padStart(2, "0");
+        const timeText = () =>
+          `${pad(now().getHours())}:${pad(now().getMinutes())}`;
+        const weekdayShort = [
+          "MINGGU",
+          "SENIN",
+          "SELASA",
+          "RABU",
+          "KAMIS",
+          "JUMAT",
+          "SABTU",
+        ];
+        const weekdayLong = [
+          "Minggu",
+          "Senin",
+          "Selasa",
+          "Rabu",
+          "Kamis",
+          "Jumat",
+          "Sabtu",
+        ];
+        const monthLong = [
+          "JANUARI",
+          "FEBRUARI",
+          "MARET",
+          "APRIL",
+          "MEI",
+          "JUNI",
+          "JULI",
+          "AGUSTUS",
+          "SEPTEMBER",
+          "OKTOBER",
+          "NOVEMBER",
+          "DESEMBER",
+        ];
+        const monthShort = [
+          "JAN",
+          "FEB",
+          "MAR",
+          "APR",
+          "MEI",
+          "JUN",
+          "JUL",
+          "AGU",
+          "SEP",
+          "OKT",
+          "NOV",
+          "DES",
+        ];
+        function updateClock() {
+          const d = now(),
+            t = timeText();
+          $("#digital-time").innerHTML =
+            `${pad(d.getHours())}<span class="colon">:</span>${pad(d.getMinutes())}`;
+          $("#classic-time").textContent = t;
+          $("#minimal-time").textContent = t;
+          $("#shade-time").textContent = t;
+          $("#bold-time").textContent = t;
+          $("#circle-time").textContent = t;
+          $("#bold-seconds").textContent = `${pad(d.getSeconds())} SECONDS`;
+          $("#bold-date").textContent =
+            `${weekdayLong[d.getDay()]} · ${monthShort[d.getMonth()]} ${pad(d.getDate())}`;
+          $("#circle-date").textContent =
+            `${weekdayShort[d.getDay()].slice(0, 3)} · ${monthShort[d.getMonth()]} ${pad(d.getDate())}`;
+          $("#face-status-day").textContent =
+            `${weekdayShort[d.getDay()].slice(0, 3)} · ${pad(d.getDate())}`;
+          $("#face-month").textContent = monthLong[d.getMonth()];
+          $("#face-daynum").textContent = pad(d.getDate());
+          $("#minimal-date").textContent =
+            `${weekdayShort[d.getDay()]} · ${monthShort[d.getMonth()]} ${pad(d.getDate())}`;
+          $("#shade-date").textContent =
+            `${weekdayLong[d.getDay()]}, ${d.getDate()} ${monthLong[d.getMonth()].toLowerCase()}`;
+          const sec = d.getSeconds(),
+            min = d.getMinutes(),
+            hr = d.getHours() % 12;
+          $("#second-hand").style.transform = `rotate(${sec * 6}deg)`;
+          $("#minute-hand").style.transform =
+            `rotate(${min * 6 + sec * 0.1}deg)`;
+          $("#hour-hand").style.transform = `rotate(${hr * 30 + min * 0.5}deg)`;
+          // Workout timer
+          if (workoutActive && currentPage === "workout-page") {
+            workoutSeconds++;
+            const h = Math.floor(workoutSeconds / 3600);
+            const m = Math.floor((workoutSeconds % 3600) / 60);
+            const s = workoutSeconds % 60;
+            $("#workout-time").textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+          }
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+        function toast(message) {
+          const el = $("#toast");
+          el.textContent = message;
+          el.classList.add("show");
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(() => el.classList.remove("show"), 1800);
+        }
+        function triggerHaptic() {
+          const h = $("#haptic");
+          h.classList.remove("pulse");
+          void h.offsetWidth;
+          h.classList.add("pulse");
+        }
+        function ripple(e, container) {
+          const rect = container.getBoundingClientRect();
+          const size = Math.max(rect.width, rect.height);
+          const x =
+            (e.clientX ||
+              e.touches?.[0]?.clientX ||
+              rect.left + rect.width / 2) -
+            rect.left -
+            size / 2;
+          const y =
+            (e.clientY ||
+              e.touches?.[0]?.clientY ||
+              rect.top + rect.height / 2) -
+            rect.top -
+            size / 2;
+          const r = document.createElement("span");
+          r.className = "ripple";
+          r.style.width = r.style.height = size + "px";
+          r.style.left = x + "px";
+          r.style.top = y + "px";
+          container.appendChild(r);
+          setTimeout(() => r.remove(), 600);
+        }
+        function setPage(id) {
+          pages.forEach((p) => ($("#" + p).style.display = "none"));
+          faces.forEach((f) => ($("#face-" + f).style.display = "none"));
+          currentPage = id;
+          if (id) {
+            $("#" + id).style.display = "block";
+          } else {
+            $("#face-" + activeFace).style.display = "flex";
+          }
+        }
+        function home() {
+          setPage(null);
+        }
+        function setFace(face) {
+          activeFace = face;
+          home();
+          faces.forEach(
+            (f) =>
+              ($("#face-" + f).style.display = f === face ? "flex" : "none"),
+          );
+          $$(".face-option").forEach((b) =>
+            b.classList.toggle("active", b.dataset.face === face),
+          );
+          const names = {
+            main: "At a Glance",
+            classic: "Analog",
+            minimal: "Minimal",
+            bold: "Bold Digital",
+            weather: "Weather Focus",
+            circles: "Circles",
+          };
+          toast(`${names[face]} watch face`);
+          triggerHaptic();
+        }
+        $$(".face-option").forEach((b) =>
+          b.addEventListener("click", () => setFace(b.dataset.face)),
+        );
+        $$("[data-open]").forEach((b) =>
+          b.addEventListener("click", () => {
+            setPage(b.dataset.open);
+            triggerHaptic();
+          }),
+        );
+        $$('[data-action="home"]').forEach((b) =>
+          b.addEventListener("click", () => {
+            home();
+            triggerHaptic();
+          }),
+        );
+        $("#crown").addEventListener("click", (e) => {
+          ripple(e, $("#crown"));
+          if (currentPage) home();
+          else setPage("app-page");
+          triggerHaptic();
+        });
+        $("#side-button").addEventListener("click", (e) => {
+          ripple(e, $("#side-button"));
+          showTile("activity");
+          triggerHaptic();
+        });
+        $$("[data-toggle]").forEach((btn) =>
+          btn.addEventListener("click", () => {
+            const key = btn.dataset.toggle;
+            toggles[key] = !toggles[key];
+            btn.classList.toggle("active", toggles[key]);
+            const small = $("small", btn);
+            if (small) small.textContent = toggles[key] ? "On" : "Off";
+            if (key === "airplane" && toggles.airplane) {
+              toggles.wifi = false;
+              toggles.bluetooth = false;
+              $$('[data-toggle="wifi"],[data-toggle="bluetooth"]').forEach(
+                (x) => {
+                  x.classList.remove("active");
+                  $("small", x).textContent = "Off";
+                },
+              );
+            }
+            toast(
+              `${btn.querySelector("b").textContent}: ${toggles[key] ? "On" : "Off"}`,
+            );
+            triggerHaptic();
+          }),
+        );
+        $("#brightness").addEventListener("input", (e) => {
+          const v = e.target.value;
+          $("#brightness-value").textContent = v + "%";
+          $("#screen").style.filter = `brightness(${0.45 + (v / 100) * 0.55})`;
+        });
+        function showTile(type) {
+          lastTile = type;
+          const content = $("#tile-content");
+          let html = "";
+          if (type === "activity")
+            html = `<div class="tile-header"><div><h2 class="page-title">Your activity</h2><div class="page-kicker">${weekdayLong[now().getDay()]} · Daily progress</div></div><div class="tile-icon">◉</div></div><div class="tile-card"><div class="tile-label">Steps today</div><div class="tile-value">6,842</div><div class="tile-unit">of 10,000 steps</div><div class="progress-track"><div class="progress-fill" style="width:68%"></div></div><div class="tile-meta">You're 3,158 steps away from your goal.</div></div><div class="stats-row"><div class="stat-box"><small>ACTIVE ZONE MIN</small><strong>42 <small>min</small></strong></div><div class="stat-box"><small>CALORIES</small><strong>386 <small>kcal</small></strong></div></div><div class="tile-card"><div class="tile-label">Movement this week</div><div class="mini-bars">${[35, 55, 46, 72, 62, 88, 43].map((h, i) => `<span style="height:${h}%;animation-delay:${i * 0.05}s"></span>`).join("")}</div><div class="tile-meta">Your activity is trending up this week.</div></div>`;
+          if (type === "heart")
+            html = `<div class="tile-header"><div><h2 class="page-title">Heart rate</h2><div class="page-kicker">Live heart rate · Sample data</div></div><div class="tile-icon">♥</div></div><div class="tile-card" style="text-align:center;padding:25px 12px"><div style="font-size:24px;color:#f5a6bb" class="heart-pulse">♥</div><div class="tile-value">72 <span style="font-size:15px;letter-spacing:0">bpm</span></div><div class="tile-unit">Resting range · 60–100 bpm</div><div class="mini-bars" style="height:55px">${[35, 45, 40, 61, 56, 72, 54, 63, 49, 74, 58, 66, 45, 52, 39, 57].map((h, i) => `<span style="height:${h}%;background:#d58ca7;animation-delay:${i * 0.04}s"></span>`).join("")}</div></div><div class="stats-row"><div class="stat-box"><small>RESTING</small><strong>61 <small>bpm</small></strong></div><div class="stat-box"><small>DAILY HIGH</small><strong>118 <small>bpm</small></strong></div></div><div class="tile-meta" style="line-height:1.5;margin:14px 3px">Heart rate values are illustrative only and are not medical measurements.</div>`;
+          if (type === "sleep")
+            html = `<div class="tile-header"><div><h2 class="page-title">Sleep</h2><div class="page-kicker">Last night's sleep</div></div><div class="tile-icon">☾</div></div><div class="tile-card"><div class="tile-label">Sleep duration</div><div class="tile-value">7<span style="font-size:20px">h</span> 42<span style="font-size:20px">m</span></div><div class="tile-unit">Sleep score · 86 / 100</div><div class="progress-track"><div class="progress-fill" style="width:86%;background:linear-gradient(90deg,#8db7ec,#c3b7ff)"></div></div></div><div class="tile-card"><div class="tile-label">Sleep stages</div><div style="display:flex;height:13px;border-radius:9px;overflow:hidden;margin-top:13px"><span style="width:18%;background:#9c8bd3"></span><span style="width:49%;background:#7773b7"></span><span style="width:24%;background:#5b8ab0"></span><span style="width:9%;background:#d4a0c4"></span></div><div class="tile-meta">Deep 1h 23m · Light 3h 46m · REM 1h 51m</div></div><div class="tile-meta" style="line-height:1.5">Sleep metrics are demo values for this browser preview.</div>`;
+          if (type === "weather")
+            html = `<div class="tile-header"><div><h2 class="page-title">Weather</h2><div class="page-kicker">Malang, Indonesia</div></div><div class="tile-icon">☀</div></div><div class="tile-card" style="text-align:center;padding:25px 10px"><div style="font-size:48px">☀</div><div class="tile-value">28°</div><div class="tile-unit">Partly cloudy</div><div class="tile-meta">Feels like 30° · H: 30° L: 22°</div></div><div class="stats-row"><div class="stat-box"><small>HUMIDITY</small><strong>72%</strong></div><div class="stat-box"><small>UV INDEX</small><strong>4 <small>Moderate</small></strong></div></div><div class="tile-card"><div class="tile-label">Hourly forecast</div><div style="display:flex;gap:8px;margin-top:12px;justify-content:space-between;font-size:9px">${["Now", "14:00", "15:00", "16:00", "17:00"].map((t, i) => `<div style="text-align:center"><div>${t}</div><div style="font-size:16px;margin:4px 0">${i === 0 ? "☀" : i === 1 ? "☀" : i === 2 ? "⛅" : i === 3 ? "⛅" : "☁"}</div><div>${28 - i}°</div></div>`).join("")}</div></div>`;
+          if (type === "calendar")
+            html = `<div class="tile-header"><div><h2 class="page-title">Agenda</h2><div class="page-kicker">Today · ${pad(now().getDate())} ${monthLong[now().getMonth()].toLowerCase()}</div></div><div class="tile-icon">▦</div></div><div class="tile-card"><div class="tile-label">14:30 · Project review</div><div style="font-size:14px;margin-top:8px">Product design sync</div><div class="tile-meta">Meeting room · 45 minutes</div></div><div class="tile-card"><div class="tile-label">17:00 · Personal</div><div style="font-size:14px;margin-top:8px">Evening walk</div><div class="tile-meta">30 minutes · Outdoor</div></div><div class="tile-meta">No more events scheduled for today.</div>`;
+          $("#tile-content").innerHTML = html;
+          setPage("tile-page");
+          triggerHaptic();
+        }
+        $$("[data-tile]").forEach((b) =>
+          b.addEventListener("click", () => showTile(b.dataset.tile)),
+        );
+        function openDetail(key) {
+          const data = {
+            weather: [
+              "☀",
+              "28°",
+              "Partly cloudy in Malang. High 30° · Low 22°.",
+              "Open forecast",
+            ],
+            heart: [
+              "♥",
+              "72 bpm",
+              "Current sample heart rate. Resting range 60–100 bpm.",
+              "View heart rate",
+            ],
+            steps: [
+              "⌁",
+              "6,842",
+              "You have reached 68% of your daily step goal.",
+              "View activity",
+            ],
+            battery: [
+              "▰",
+              "82%",
+              "Estimated 21 hours remaining. Battery Saver is available in quick settings.",
+              "Battery settings",
+            ],
+            assistant: [
+              "✦",
+              "Gemini",
+              "Your AI assistant, ready to help with quick answers and everyday tasks.",
+              "Start a conversation",
+            ],
+            fitness: [
+              "◉",
+              "Today",
+              "6,842 steps · 42 active minutes · 386 kcal.",
+              "Open Fitbit",
+            ],
+            sleep: [
+              "☾",
+              "7h 42m",
+              "Sleep score 86. Sample data from last night.",
+              "View sleep",
+            ],
+            calendar: [
+              "▦",
+              "14:30",
+              "Next event: Product design sync. Meeting room · 45 min.",
+              "Open calendar",
+            ],
+            timer: [
+              "◷",
+              "00:00",
+              "Set a countdown timer for your next activity.",
+              "Start timer",
+            ],
+            maps: [
+              "⌖",
+              "Maps",
+              "Explore nearby places and get directions from your wrist.",
+              "Open maps",
+            ],
+            wallet: [
+              "▱",
+              "Wallet",
+              "Your cards and passes would appear here in a connected device.",
+              "Open wallet",
+            ],
+            settings: [
+              "⚙",
+              "Settings",
+              "Manage display, connectivity, accessibility, and system preferences.",
+              "Open settings",
+            ],
+            breathing: [
+              "◎",
+              "Breathe",
+              "Take a moment to reset with a guided breathing session.",
+              "Start breathing",
+            ],
+            phone: [
+              "⌕",
+              "Phone",
+              "Recent calls and contacts would appear here.",
+              "Open phone",
+            ],
+            music: [
+              "♫",
+              "Now Playing",
+              "Control your music directly from your wrist.",
+              "Open music",
+            ],
+            workout: [
+              "♨",
+              "Workout",
+              "Start tracking a new workout session.",
+              "Start workout",
+            ],
+            find: [
+              "⌕",
+              "Find phone",
+              "Make your paired phone ring, even if it's on silent.",
+              "Ring phone",
+            ],
+          };
+          const item = data[key] || data.assistant;
+          $("#detail-content").innerHTML =
+            `<div class="detail-symbol">${item[0]}</div><div class="page-kicker">PIXEL WATCH APP</div><h2 class="page-title" style="font-size:22px">${item[1]}</h2><p class="detail-caption">${item[2]}</p><button class="detail-action" id="detail-action">${item[3]}</button>`;
+          $("#detail-action").addEventListener("click", () =>
+            toast(`${item[3]} · Demo`),
+          );
+          setPage("app-detail");
+          triggerHaptic();
+        }
+        $$("[data-detail]").forEach((b) =>
+          b.addEventListener("click", () => openDetail(b.dataset.detail)),
+        );
+        $("#clear-notifications").addEventListener("click", () => {
+          $("#notification-list").innerHTML =
+            '<div class="empty-notif">You’re all caught up.<br>No new notifications.</div>';
+          $("#notification-count").textContent = "No notifications";
+          $("#clear-notifications").style.display = "none";
+          toast("Notifications cleared");
+          triggerHaptic();
+        });
+        // Music controls
+        const playBtn = $("#play-btn");
+        const musicArt = $("#music-art");
+        playBtn?.addEventListener("click", () => {
+          musicPlaying = !musicPlaying;
+          playBtn.textContent = musicPlaying ? "❚❚" : "▶";
+          musicArt.classList.toggle("paused", !musicPlaying);
+          toast(musicPlaying ? "Now playing" : "Paused");
+          triggerHaptic();
+        });
+        $("#prev-btn")?.addEventListener("click", () => {
+          toast("Previous track · Demo");
+          triggerHaptic();
+        });
+        $("#next-btn")?.addEventListener("click", () => {
+          toast("Next track · Demo");
+          triggerHaptic();
+        });
+        // Workout controls
+        $("#pause-workout")?.addEventListener("click", () => {
+          workoutActive = !workoutActive;
+          $("#pause-workout").textContent = workoutActive ? "Pause" : "Resume";
+          toast(workoutActive ? "Workout resumed" : "Workout paused");
+          triggerHaptic();
+        });
+        $("#end-workout")?.addEventListener("click", () => {
+          toast("Workout saved · 3.2 km");
+          home();
+          workoutSeconds = 0;
+          workoutActive = false;
+        });
+        let startX = 0,
+          startY = 0,
+          startTarget = null;
+        const screen = $("#screen");
+        const swipePreview = $("#swipe-preview");
+        screen.addEventListener("pointerdown", (e) => {
+          startX = e.clientX;
+          startY = e.clientY;
+          startTarget = e.target;
+        });
+        screen.addEventListener("pointermove", (e) => {
+          if (
+            !startX ||
+            (Math.abs(e.clientX - startX) < 20 &&
+              Math.abs(e.clientY - startY) < 20)
+          )
+            return;
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+          if (Math.abs(dy) > Math.abs(dx)) {
+            if (dy > 30) {
+              swipePreview.querySelector(".swipe-icon").textContent = "↓";
+              swipePreview.querySelector("small").textContent =
+                "Quick settings";
+              swipePreview.classList.add("show");
+            } else if (dy < -30) {
+              swipePreview.querySelector(".swipe-icon").textContent = "↑";
+              swipePreview.querySelector("small").textContent = "Notifications";
+              swipePreview.classList.add("show");
+            } else {
+              swipePreview.classList.remove("show");
+            }
+          } else {
+            if (dx < -30) {
+              swipePreview.querySelector(".swipe-icon").textContent = "←";
+              swipePreview.querySelector("small").textContent = "Activity tile";
+              swipePreview.classList.add("show");
+            } else if (dx > 30) {
+              swipePreview.querySelector(".swipe-icon").textContent = "→";
+              swipePreview.querySelector("small").textContent = "Weather tile";
+              swipePreview.classList.add("show");
+            } else {
+              swipePreview.classList.remove("show");
+            }
+          }
+        });
+        screen.addEventListener("pointerup", (e) => {
+          swipePreview.classList.remove("show");
+          if (startTarget?.closest("button")) return;
+          const dx = e.clientX - startX,
+            dy = e.clientY - startY;
+          if (Math.max(Math.abs(dx), Math.abs(dy)) < 45) {
+            // Tap - ripple
+            ripple(e, screen);
+            return;
+          }
+          if (Math.abs(dy) > Math.abs(dx)) {
+            if (dy > 0) setPage("shade");
+            else setPage("notification-page");
+          } else {
+            if (dx < 0) showTile("activity");
+            else showTile("weather");
+          }
+          triggerHaptic();
+          startX = 0;
+          startY = 0;
+        });
+        screen.addEventListener("pointerleave", () => {
+          swipePreview.classList.remove("show");
+        });
+        screen.addEventListener("dblclick", (e) => {
+          if (e.target === screen || e.target.classList.contains("face"))
+            setPage("app-page");
+        });
+        // Add ripple to all buttons in screen
+        screen.addEventListener("click", (e) => {
+          if (
+            e.target.closest(
+              "button, .app-icon, .complication, .notif-item, .setting-tile, .music-btn",
+            )
+          ) {
+            ripple(e, screen);
+          }
+        });
+        $$('[data-action="ambient"]').forEach((b) =>
+          b.addEventListener("click", () => {
+            ambient = !ambient;
+            $("#screen").style.filter = ambient
+              ? "brightness(.45) saturate(.55)"
+              : "brightness(1) saturate(1)";
+            if (ambient) {
+              $("#face-greeting").textContent = "ALWAYS ON DISPLAY";
+            } else {
+              $("#face-greeting").textContent = "A little progress, every day.";
+            }
+            toast(
+              ambient ? "Always-on display · Dimmed" : "Display fully awake",
+            );
+            triggerHaptic();
+          }),
+        );
+        $$('[data-action="lift-wake"]').forEach((b) =>
+          b.addEventListener("click", () => {
+            const watch = $("#watch");
+            watch.style.transition =
+              "transform 0.8s cubic-bezier(0.2, 0.9, 0.3, 1)";
+            watch.style.transform =
+              "rotateX(-20deg) translateY(30px) scale(0.92)";
+            $("#screen").style.transition = "opacity 0.4s, filter 0.4s";
+            $("#screen").style.opacity = "0";
+            setTimeout(() => {
+              watch.style.transform = "rotateX(0) translateY(0) scale(1)";
+              $("#screen").style.opacity = "1";
+              setFace(activeFace);
+              toast("Lift-to-wake activated");
+            }, 900);
+            setTimeout(() => {
+              watch.style.transition = "";
+              $("#screen").style.transition = "";
+            }, 1800);
+          }),
+        );
+        // 3D Tilt effect on hover
+        const watchStage = $(".watch-stage");
+        const watch = $("#watch");
+        watchStage.addEventListener("mousemove", (e) => {
+          const rect = watchStage.getBoundingClientRect();
+          const x = (e.clientX - rect.left) / rect.width - 0.5;
+          const y = (e.clientY - rect.top) / rect.height - 0.5;
+          const tiltX = y * -8;
+          const tiltY = x * 8;
+          watch.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+        });
+        watchStage.addEventListener("mouseleave", () => {
+          watch.style.transform = "rotateX(0) rotateY(0)";
+        });
+        // Crown scroll simulation
+        let crownIndicatorTimeout;
+        watch.addEventListener(
+          "wheel",
+          (e) => {
+            e.preventDefault();
+            const indicator = $("#crown-indicator");
+            indicator.classList.add("show");
+            clearTimeout(crownIndicatorTimeout);
+            crownIndicatorTimeout = setTimeout(() => {
+              indicator.classList.remove("show");
+            }, 800);
+            // Scroll app list or change face
+            if (currentPage === "app-page") {
+              const scrollEl = $("#app-page .page-scroll");
+              scrollEl.scrollTop += e.deltaY;
+            } else {
+              // Change watch face
+              const idx = faces.indexOf(activeFace);
+              if (e.deltaY > 0) {
+                const next = faces[(idx + 1) % faces.length];
+                setFace(next);
+              } else {
+                const prev = faces[(idx - 1 + faces.length) % faces.length];
+                setFace(prev);
+              }
+            }
+          },
+          { passive: false },
+        );
+        // Keyboard shortcuts
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" || e.key === "Backspace") {
+            home();
+          }
+          if (e.key.toLowerCase() === "a") setPage("app-page");
+          if (e.key.toLowerCase() === "q") setPage("shade");
+          if (e.key.toLowerCase() === "n") setPage("notification-page");
+          if (e.key.toLowerCase() === "m") setPage("music-page");
+          if (e.key.toLowerCase() === "w") setPage("workout-page");
+          if (e.key === "ArrowLeft") showTile("weather");
+          if (e.key === "ArrowRight") showTile("activity");
+          if (e.key === "ArrowUp") {
+            const idx = faces.indexOf(activeFace);
+            const next = faces[(idx - 1 + faces.length) % faces.length];
+            setFace(next);
+          }
+          if (e.key === "ArrowDown") {
+            const idx = faces.indexOf(activeFace);
+            const next = faces[(idx + 1) % faces.length];
+            setFace(next);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

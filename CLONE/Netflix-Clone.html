@@ -1,0 +1,2782 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#141414" />
+    <title>NETFLIX — Watch the stories you love</title>
+    <style>
+      :root {
+        --red: #e50914;
+        --red-dark: #b00710;
+        --bg: #141414;
+        --panel: #181818;
+        --text: #f5f5f1;
+        --muted: #b3b3b3;
+        --header-h: 68px;
+        --pixel-w: 380px;
+        --pixel-h: 800px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        background: #0a0a0a;
+      }
+      body {
+        margin: 0;
+        color: var(--text);
+        background: #0a0a0a;
+        font-family:
+          "Netflix Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        overflow-x: hidden;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:focus-visible,
+      a:focus-visible,
+      input:focus-visible {
+        outline: 2px solid #fff;
+        outline-offset: 3px;
+      }
+
+      /* ===========================================================
+         DEVICE SWITCHER (sticky bar)
+      =========================================================== */
+      .device-switcher {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 14px 20px;
+        background: linear-gradient(
+          180deg,
+          #0a0a0a 0%,
+          rgba(10, 10, 10, 0.92) 100%
+        );
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid #1f1f1f;
+      }
+      .device-switcher .label {
+        color: #aaa;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-weight: 600;
+      }
+      .switch-btn-group {
+        display: flex;
+        background: #1a1a1a;
+        border-radius: 999px;
+        padding: 4px;
+        border: 1px solid #2a2a2a;
+      }
+      .switch-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 18px;
+        border: 0;
+        background: transparent;
+        color: #999;
+        font-size: 13px;
+        font-weight: 600;
+        border-radius: 999px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .switch-btn svg {
+        width: 18px;
+        height: 18px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+      }
+      .switch-btn.active {
+        background: var(--red);
+        color: #fff;
+        box-shadow: 0 4px 14px rgba(229, 9, 20, 0.45);
+      }
+
+      /* ===========================================================
+         VIEWPORT CONTAINER
+      =========================================================== */
+      .viewport {
+        position: relative;
+        min-height: calc(100vh - 60px);
+        background: var(--bg);
+        transition: background 0.4s ease;
+      }
+      .viewport[data-mode="mobile"] {
+        background: radial-gradient(ellipse at center, #1a1a1a 0%, #000 70%);
+        padding: 40px 0 80px;
+      }
+      .desktop-view,
+      .mobile-view {
+        transition:
+          opacity 0.5s ease,
+          transform 0.5s ease;
+      }
+      .desktop-view {
+        opacity: 1;
+        transform: none;
+      }
+      .mobile-view {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 20px;
+        opacity: 0;
+        transform: translateY(30px);
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      .viewport[data-mode="mobile"] .desktop-view {
+        opacity: 0;
+        transform: scale(0.96);
+        pointer-events: none;
+        position: absolute;
+        inset: 0;
+      }
+      .viewport[data-mode="mobile"] .mobile-view {
+        opacity: 1;
+        transform: translateY(0);
+        position: relative;
+        pointer-events: auto;
+      }
+
+      /* ===========================================================
+         PIXEL PHONE FRAME
+      =========================================================== */
+      .pixel-frame {
+        position: relative;
+        width: var(--pixel-w);
+        height: var(--pixel-h);
+        background: linear-gradient(
+          135deg,
+          #2a2a2a 0%,
+          #0a0a0a 50%,
+          #1a1a1a 100%
+        );
+        border-radius: 54px;
+        padding: 14px;
+        box-shadow:
+          0 50px 100px -20px rgba(0, 0, 0, 0.9),
+          0 30px 60px -30px rgba(0, 0, 0, 0.8),
+          0 0 0 2px #1a1a1a,
+          0 0 0 4px #333,
+          inset 0 0 2px rgba(255, 255, 255, 0.1);
+        flex-shrink: 0;
+      }
+      .pixel-frame::before {
+        /* Power button */
+        content: "";
+        position: absolute;
+        right: -4px;
+        top: 140px;
+        width: 4px;
+        height: 64px;
+        background: linear-gradient(90deg, #222, #444, #222);
+        border-radius: 0 4px 4px 0;
+      }
+      .pixel-frame::after {
+        /* Volume buttons */
+        content: "";
+        position: absolute;
+        left: -4px;
+        top: 120px;
+        width: 4px;
+        height: 140px;
+        background: linear-gradient(270deg, #222, #444, #222);
+        border-radius: 4px 0 0 4px;
+        box-shadow: 0 60px 0 0 #333;
+      }
+      .pixel-screen {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background: var(--bg);
+        border-radius: 42px;
+        overflow: hidden;
+        box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.4);
+      }
+      .pixel-screen::before {
+        /* Punch-hole camera */
+        content: "";
+        position: absolute;
+        top: 11px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 11px;
+        height: 11px;
+        background: radial-gradient(circle, #000 40%, #111 60%, #000 80%);
+        border-radius: 50%;
+        z-index: 60;
+        box-shadow: 0 0 0 2px rgba(30, 30, 30, 0.8);
+      }
+      .pixel-screen::after {
+        /* Camera reflection */
+        content: "";
+        position: absolute;
+        top: 13px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 3px;
+        height: 3px;
+        background: radial-gradient(
+          circle,
+          rgba(100, 150, 255, 0.6),
+          transparent
+        );
+        border-radius: 50%;
+        z-index: 61;
+        pointer-events: none;
+      }
+      .pixel-status-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 34px;
+        padding: 0 22px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        z-index: 50;
+        font-size: 12px;
+        font-weight: 700;
+        color: #fff;
+      }
+      .pixel-status-bar .time {
+        letter-spacing: 0.5px;
+      }
+      .pixel-status-bar .icons {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .pixel-status-bar .icons svg {
+        width: 14px;
+        height: 14px;
+        fill: #fff;
+      }
+      .pixel-status-bar .battery {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .pixel-status-bar .battery-icon {
+        width: 20px;
+        height: 10px;
+        border: 1.5px solid #fff;
+        border-radius: 2px;
+        position: relative;
+        display: inline-block;
+      }
+      .pixel-status-bar .battery-icon::before {
+        content: "";
+        position: absolute;
+        left: 2px;
+        top: 1.5px;
+        bottom: 1.5px;
+        width: 75%;
+        background: #46d369;
+        border-radius: 1px;
+      }
+      .pixel-status-bar .battery-icon::after {
+        content: "";
+        position: absolute;
+        right: -3px;
+        top: 2px;
+        bottom: 2px;
+        width: 2px;
+        background: #fff;
+        border-radius: 0 1px 1px 0;
+      }
+      .pixel-home-indicator {
+        position: absolute;
+        bottom: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 110px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.6);
+        border-radius: 2px;
+        z-index: 50;
+      }
+
+      /* ===========================================================
+         TOPBAR (Netflix)
+      =========================================================== */
+      .topbar {
+        position: absolute;
+        z-index: 30;
+        inset: 0 0 auto;
+        height: var(--header-h);
+        display: flex;
+        align-items: center;
+        gap: 34px;
+        padding: 0 4.1%;
+        background: linear-gradient(
+          180deg,
+          rgba(0, 0, 0, 0.88),
+          rgba(0, 0, 0, 0.48) 70%,
+          transparent
+        );
+        transition:
+          background 0.25s,
+          box-shadow 0.25s;
+      }
+      .topbar.solid {
+        background: #141414;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.22);
+      }
+      .brand {
+        color: var(--red);
+        font-size: 29px;
+        font-weight: 900;
+        letter-spacing: -1.7px;
+        text-decoration: none;
+        line-height: 1;
+        flex: 0 0 auto;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      }
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+      .nav-link {
+        border: 0;
+        padding: 7px 0;
+        color: #e5e5e5;
+        background: none;
+        font-size: 13px;
+        white-space: nowrap;
+        transition: color 0.2s;
+      }
+      .nav-link:hover,
+      .nav-link.active {
+        color: #fff;
+        font-weight: 700;
+      }
+      .nav-right {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 19px;
+      }
+      .icon-btn {
+        display: grid;
+        place-items: center;
+        border: 0;
+        padding: 5px;
+        color: #fff;
+        background: transparent;
+      }
+      .icon-btn svg {
+        width: 21px;
+        height: 21px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+      }
+      .search-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .search-input {
+        width: 0;
+        opacity: 0;
+        pointer-events: none;
+        color: #fff;
+        background: rgba(0, 0, 0, 0.78);
+        border: 1px solid transparent;
+        padding: 8px 0;
+        transition:
+          width 0.25s,
+          opacity 0.2s,
+          padding 0.25s;
+      }
+      .search-wrap.open .search-input {
+        width: 205px;
+        opacity: 1;
+        pointer-events: auto;
+        padding: 8px 10px;
+        border-color: #aaa;
+      }
+      .kids {
+        font-size: 12px;
+        color: #f4f4f4;
+        white-space: nowrap;
+      }
+      .profile-wrap {
+        position: relative;
+      }
+      .profile-button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0;
+        border: 0;
+        background: none;
+        color: white;
+      }
+      .avatar {
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 4px;
+        background: linear-gradient(140deg, #f5b44c, #9e372d);
+        font-size: 18px;
+        overflow: hidden;
+      }
+      .caret {
+        width: 8px;
+        height: 8px;
+        border-right: 1.5px solid white;
+        border-bottom: 1.5px solid white;
+        transform: rotate(45deg) translateY(-2px);
+        transition: transform 0.2s;
+      }
+      .profile-wrap.open .caret {
+        transform: rotate(225deg) translate(-2px, -1px);
+      }
+      .profile-menu {
+        position: absolute;
+        right: 0;
+        top: 43px;
+        min-width: 180px;
+        padding: 10px 0;
+        background: rgba(0, 0, 0, 0.94);
+        border: 1px solid #444;
+        display: none;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      }
+      .profile-wrap.open .profile-menu {
+        display: block;
+      }
+      .profile-menu button {
+        width: 100%;
+        text-align: left;
+        border: 0;
+        color: #eee;
+        background: transparent;
+        padding: 10px 15px;
+        font-size: 12px;
+      }
+      .profile-menu button:hover {
+        text-decoration: underline;
+      }
+
+      /* ===========================================================
+         HERO SECTION
+      =========================================================== */
+      .hero {
+        position: relative;
+        height: min(790px, 88vh);
+        min-height: 570px;
+        width: 100%;
+        background: #222;
+        overflow: hidden;
+      }
+      .hero-bg {
+        position: absolute;
+        inset: 0;
+        background-size: cover;
+        background-position: center 36%;
+        transform: scale(1.01);
+        transition:
+          background-image 0.6s ease,
+          opacity 0.6s ease;
+      }
+      .hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        background:
+          linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.92) 0%,
+            rgba(0, 0, 0, 0.6) 34%,
+            rgba(0, 0, 0, 0.08) 70%
+          ),
+          linear-gradient(
+            0deg,
+            #141414 1%,
+            rgba(20, 20, 20, 0.05) 36%,
+            rgba(0, 0, 0, 0.25) 100%
+          );
+      }
+      .hero-content {
+        position: absolute;
+        z-index: 2;
+        top: 27%;
+        left: 4.1%;
+        width: min(570px, 48vw);
+        animation: fadeInUp 0.8s ease-out;
+      }
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 14px;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 5px;
+      }
+      .n-mark {
+        color: var(--red);
+        font-size: 27px;
+        font-weight: 900;
+        letter-spacing: -3px;
+      }
+      .hero-title {
+        margin: 0 0 17px;
+        max-width: 590px;
+        font-size: clamp(42px, 5.2vw, 76px);
+        line-height: 0.98;
+        letter-spacing: -2.4px;
+        font-weight: 900;
+        text-shadow: 0 2px 15px rgba(0, 0, 0, 0.6);
+      }
+      .hero-meta {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        color: #eee;
+        font-size: 14px;
+        margin-bottom: 14px;
+      }
+      .match {
+        color: #46d369;
+        font-weight: 700;
+      }
+      .quality {
+        border: 1px solid #aaa;
+        border-radius: 2px;
+        padding: 1px 5px;
+        font-size: 10px;
+        font-weight: 700;
+      }
+      .hd-badge {
+        border: 1px solid #aaa;
+        border-radius: 2px;
+        padding: 1px 4px;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+      }
+      .hero-description {
+        max-width: 520px;
+        font-size: 16px;
+        line-height: 1.55;
+        margin: 0 0 23px;
+        color: #f0f0f0;
+        text-shadow: 0 1px 3px #000;
+      }
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 11px;
+      }
+      .action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        min-height: 42px;
+        padding: 0 22px;
+        border: 0;
+        border-radius: 4px;
+        font-size: 15px;
+        font-weight: 700;
+        transition:
+          background 0.2s,
+          transform 0.2s;
+      }
+      .action-btn:hover {
+        transform: scale(1.03);
+      }
+      .action-btn svg {
+        width: 21px;
+        height: 21px;
+        fill: currentColor;
+        stroke: none;
+      }
+      .action-btn.primary {
+        color: #111;
+        background: #fff;
+      }
+      .action-btn.primary:hover {
+        background: rgba(255, 255, 255, 0.78);
+      }
+      .action-btn.secondary {
+        color: #fff;
+        background: rgba(109, 109, 110, 0.72);
+      }
+      .action-btn.secondary:hover {
+        background: rgba(109, 109, 110, 0.48);
+      }
+      .maturity {
+        position: absolute;
+        z-index: 2;
+        right: 0;
+        bottom: 21%;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 145px;
+        height: 36px;
+        padding-left: 13px;
+        background: rgba(51, 51, 51, 0.55);
+        border-left: 3px solid #dcdcdc;
+        font-size: 14px;
+      }
+      .maturity span {
+        border: 1px solid rgba(255, 255, 255, 0.65);
+        padding: 3px 6px;
+        font-size: 11px;
+      }
+      .hero-dots {
+        position: absolute;
+        z-index: 2;
+        right: 4%;
+        bottom: 26%;
+        display: flex;
+        gap: 5px;
+      }
+      .hero-dots button {
+        width: 18px;
+        height: 3px;
+        border: 0;
+        padding: 0;
+        background: rgba(255, 255, 255, 0.36);
+        transition: background 0.2s;
+      }
+      .hero-dots button.active {
+        background: #fff;
+      }
+
+      /* ===========================================================
+         SHELVES & CARDS
+      =========================================================== */
+      main {
+        position: relative;
+        z-index: 4;
+        margin-top: -105px;
+        padding-bottom: 55px;
+      }
+      .shelf {
+        position: relative;
+        margin: 0 0 34px;
+        padding-left: 4.1%;
+      }
+      .shelf-heading {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        margin: 0 0 12px;
+        padding-right: 4.1%;
+      }
+      .shelf-heading h2 {
+        margin: 0;
+        font-size: 20px;
+        line-height: 1.25;
+        font-weight: 700;
+      }
+      .explore {
+        color: #54b9c5;
+        font-size: 11px;
+        font-weight: 700;
+        opacity: 0;
+        transform: translateX(-7px);
+        transition: all 0.2s;
+      }
+      .shelf:hover .explore {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      .rail-wrap {
+        position: relative;
+      }
+      .rail {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        overflow-y: visible;
+        scroll-behavior: smooth;
+        scrollbar-width: none;
+        padding: 0 4.1% 15px 0;
+      }
+      .rail::-webkit-scrollbar {
+        display: none;
+      }
+      .movie-card {
+        position: relative;
+        flex: 0 0 16.2%;
+        min-width: 165px;
+        aspect-ratio: 16/9;
+        border-radius: 4px;
+        overflow: visible;
+        background: #262626;
+        isolation: isolate;
+        transition:
+          transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+          z-index 0.2s;
+        cursor: pointer;
+      }
+      .movie-card img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 4px;
+        transition: filter 0.25s;
+      }
+      .movie-card:hover {
+        z-index: 10;
+        transform: scale(1.18) translateY(-6px);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.7);
+      }
+      .movie-card:hover img {
+        filter: brightness(0.64);
+      }
+      .card-info {
+        position: absolute;
+        inset: auto 0 0;
+        padding: 25px 10px 9px;
+        opacity: 0;
+        transition: opacity 0.25s;
+        background: linear-gradient(0deg, rgba(0, 0, 0, 0.95), transparent);
+        border-radius: 0 0 4px 4px;
+      }
+      .movie-card:hover .card-info {
+        opacity: 1;
+      }
+      .card-title {
+        margin: 0 0 5px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .card-meta {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        color: #ddd;
+        font-size: 10px;
+      }
+      .card-rating {
+        color: #46d369;
+        font-weight: 700;
+      }
+      .card-controls {
+        display: flex;
+        gap: 5px;
+        margin-bottom: 6px;
+      }
+      .mini-btn {
+        display: grid;
+        place-items: center;
+        width: 26px;
+        height: 26px;
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: 50%;
+        color: white;
+        background: rgba(30, 30, 30, 0.72);
+      }
+      .mini-btn:hover {
+        border-color: #fff;
+        background: rgba(80, 80, 80, 0.9);
+      }
+      .mini-btn svg {
+        width: 12px;
+        height: 12px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+      }
+      .mini-btn.play svg {
+        fill: currentColor;
+        stroke: none;
+      }
+      .rail-arrow {
+        position: absolute;
+        z-index: 12;
+        top: 0;
+        bottom: 15px;
+        width: 42px;
+        display: grid;
+        place-items: center;
+        border: 0;
+        color: white;
+        opacity: 0;
+        background: rgba(0, 0, 0, 0.55);
+        transition: opacity 0.2s;
+      }
+      .rail-wrap:hover .rail-arrow {
+        opacity: 1;
+      }
+      .rail-arrow:hover {
+        background: rgba(0, 0, 0, 0.82);
+      }
+      .rail-arrow svg {
+        width: 27px;
+        height: 27px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2.5;
+      }
+      .rail-arrow.left {
+        left: 0;
+        border-radius: 0 4px 4px 0;
+      }
+      .rail-arrow.right {
+        right: 0;
+        border-radius: 4px 0 0 4px;
+      }
+
+      .top-ten .movie-card {
+        flex-basis: 18%;
+        aspect-ratio: 16/9;
+        overflow: visible;
+        background: transparent;
+      }
+      .rank-wrap {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        align-items: flex-end;
+      }
+      .rank {
+        flex: 0 0 36%;
+        height: 100%;
+        display: flex;
+        align-items: flex-end;
+        justify-content: flex-end;
+        padding-right: 3px;
+        color: #111;
+        font-size: clamp(80px, 10vw, 145px);
+        font-weight: 900;
+        line-height: 0.76;
+        letter-spacing: -11px;
+        -webkit-text-stroke: 3px #777;
+        text-shadow: 0 0 5px #777;
+        font-family: "Arial Black", sans-serif;
+        font-style: italic;
+      }
+      .rank-wrap img {
+        width: 64%;
+        height: 88%;
+        object-fit: cover;
+        border-radius: 3px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+      }
+      .top-ten .card-info {
+        left: 36%;
+      }
+      .empty-search {
+        display: none;
+        padding: 40px 4.1%;
+        color: #bbb;
+        font-size: 18px;
+      }
+
+      /* ===========================================================
+         FOOTER
+      =========================================================== */
+      .footer {
+        padding: 25px 4.1% 20px;
+        color: #808080;
+        font-size: 12px;
+      }
+      .socials {
+        display: flex;
+        gap: 19px;
+        margin-bottom: 20px;
+      }
+      .socials svg {
+        width: 19px;
+        height: 19px;
+        fill: #aaa;
+      }
+      .footer-links {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 13px 25px;
+        max-width: 850px;
+        margin-bottom: 22px;
+      }
+      .footer-links a {
+        color: #808080;
+        text-decoration: none;
+      }
+      .footer-links a:hover {
+        text-decoration: underline;
+      }
+      .service-code {
+        padding: 7px 9px;
+        border: 1px solid #808080;
+        color: #808080;
+        background: transparent;
+        font-size: 11px;
+        margin-bottom: 18px;
+      }
+      .copyright {
+        font-size: 10px;
+      }
+
+      /* ===========================================================
+         MODAL / PLAYBACK
+      =========================================================== */
+      .modal-backdrop {
+        position: fixed;
+        z-index: 60;
+        inset: 0;
+        display: none;
+        align-items: flex-start;
+        justify-content: center;
+        overflow-y: auto;
+        padding: 5vh 16px;
+        background: rgba(0, 0, 0, 0.74);
+      }
+      .modal-backdrop.show {
+        display: flex;
+      }
+      .detail-modal {
+        position: relative;
+        width: min(850px, 100%);
+        overflow: hidden;
+        border-radius: 7px;
+        background: #181818;
+        box-shadow: 0 15px 60px rgba(0, 0, 0, 0.7);
+        animation: rise 0.22s ease-out;
+      }
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(14px) scale(0.99);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      .modal-hero {
+        position: relative;
+        height: 390px;
+        background-size: cover;
+        background-position: center 35%;
+      }
+      .modal-hero::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(0deg, #181818 0%, transparent 65%),
+          linear-gradient(90deg, rgba(0, 0, 0, 0.35), transparent 80%);
+      }
+      .modal-logo {
+        position: absolute;
+        z-index: 2;
+        left: 7%;
+        bottom: 65px;
+        font-size: clamp(35px, 6vw, 62px);
+        font-weight: 900;
+        letter-spacing: -2px;
+        text-shadow: 0 3px 20px #000;
+      }
+      .modal-close {
+        position: absolute;
+        z-index: 5;
+        top: 15px;
+        right: 15px;
+        display: grid;
+        place-items: center;
+        width: 35px;
+        height: 35px;
+        border: 0;
+        border-radius: 50%;
+        color: white;
+        background: #181818;
+        font-size: 24px;
+        line-height: 1;
+      }
+      .modal-body {
+        display: grid;
+        grid-template-columns: 1.7fr 1fr;
+        gap: 35px;
+        padding: 0 7% 35px;
+        margin-top: -25px;
+        position: relative;
+        z-index: 2;
+      }
+      .modal-actions {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+      .modal-actions .action-btn {
+        min-height: 38px;
+        padding: 0 17px;
+        font-size: 13px;
+      }
+      .modal-meta {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 12px;
+        color: #ddd;
+        font-size: 13px;
+      }
+      .modal-description {
+        margin: 0;
+        color: #eee;
+        font-size: 14px;
+        line-height: 1.55;
+      }
+      .modal-side {
+        color: #aaa;
+        font-size: 12px;
+        line-height: 1.8;
+      }
+      .modal-side strong {
+        color: #ddd;
+        font-weight: 400;
+      }
+      .playback {
+        position: fixed;
+        z-index: 70;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: #000;
+      }
+      .playback.show {
+        display: flex;
+      }
+      .playback-inner {
+        text-align: center;
+        color: #ddd;
+      }
+      .playback-inner .big-play {
+        display: grid;
+        place-items: center;
+        width: 74px;
+        height: 74px;
+        margin: 0 auto 18px;
+        border: 2px solid #ddd;
+        border-radius: 50%;
+        font-size: 30px;
+      }
+      .playback-inner h3 {
+        font-weight: 500;
+      }
+      .playback-inner p {
+        color: #888;
+        font-size: 13px;
+      }
+      .playback-close {
+        position: absolute;
+        top: 25px;
+        right: 35px;
+        color: #fff;
+        background: transparent;
+        border: 0;
+        font-size: 30px;
+      }
+      .toast {
+        position: fixed;
+        z-index: 90;
+        left: 50%;
+        bottom: 25px;
+        transform: translate(-50%, 20px);
+        padding: 11px 17px;
+        border-radius: 4px;
+        color: #111;
+        background: #f2f2f2;
+        font-size: 13px;
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.25s;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+
+      /* ===========================================================
+         MOBILE NETFLIX (inside Pixel)
+      =========================================================== */
+      .mobile-view .netflix-app {
+        position: absolute;
+        inset: 34px 0 22px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: none;
+        color: var(--text);
+        background: var(--bg);
+      }
+      .mobile-view .netflix-app::-webkit-scrollbar {
+        display: none;
+      }
+
+      .mobile-topbar {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        display: flex;
+        align-items: center;
+        padding: 10px 16px;
+        background: rgba(20, 20, 20, 0.94);
+        backdrop-filter: blur(8px);
+      }
+      .mobile-topbar .brand {
+        font-size: 22px;
+        letter-spacing: -1.3px;
+      }
+      .mobile-topbar .nav-right {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .mobile-topbar .icon-btn svg {
+        width: 20px;
+        height: 20px;
+      }
+      .mobile-topbar .avatar {
+        width: 28px;
+        height: 28px;
+        font-size: 15px;
+      }
+      .mobile-menu-btn {
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        background: transparent;
+        border: 0;
+        color: #fff;
+      }
+      .mobile-menu-btn span {
+        display: block;
+        width: 20px;
+        height: 2px;
+        background: #fff;
+        position: relative;
+      }
+      .mobile-menu-btn span::before,
+      .mobile-menu-btn span::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: #fff;
+      }
+      .mobile-menu-btn span::before {
+        top: -6px;
+      }
+      .mobile-menu-btn span::after {
+        bottom: -6px;
+      }
+
+      /* Mobile Drawer */
+      .mobile-drawer {
+        position: absolute;
+        top: 54px;
+        left: 0;
+        right: 0;
+        background: rgba(18, 18, 18, 0.98);
+        backdrop-filter: blur(12px);
+        padding: 0;
+        max-height: 0;
+        overflow: hidden;
+        transition:
+          max-height 0.35s ease,
+          padding 0.35s ease;
+        z-index: 25;
+      }
+      .mobile-drawer.open {
+        max-height: 400px;
+        padding: 10px 0;
+        border-bottom: 1px solid #2a2a2a;
+      }
+      .mobile-drawer button {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 14px 22px;
+        background: transparent;
+        border: 0;
+        color: #e5e5e5;
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .mobile-drawer button.active {
+        color: #fff;
+        font-weight: 700;
+        background: rgba(229, 9, 20, 0.1);
+      }
+
+      /* Mobile Hero */
+      .mobile-hero {
+        position: relative;
+        height: 58vh;
+        min-height: 380px;
+        background-size: cover;
+        background-position: center 30%;
+      }
+      .mobile-hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          0deg,
+          var(--bg) 0%,
+          rgba(20, 20, 20, 0.6) 50%,
+          rgba(0, 0, 0, 0.4) 100%
+        );
+      }
+      .mobile-hero-content {
+        position: absolute;
+        bottom: 24px;
+        left: 16px;
+        right: 16px;
+        z-index: 2;
+      }
+      .mobile-hero-title {
+        font-size: 28px;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -1px;
+        margin: 0 0 14px;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+      }
+      .mobile-hero-actions {
+        display: flex;
+        gap: 8px;
+      }
+      .mobile-hero-actions .action-btn {
+        min-height: 36px;
+        padding: 0 14px;
+        font-size: 13px;
+        flex: 1;
+      }
+
+      /* Mobile Shelf */
+      .mobile-shelf {
+        padding: 16px 0 4px 16px;
+      }
+      .mobile-shelf h3 {
+        font-size: 16px;
+        font-weight: 700;
+        margin: 0 0 10px;
+        color: #fff;
+      }
+      .mobile-rail {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        padding-right: 16px;
+        padding-bottom: 4px;
+      }
+      .mobile-rail::-webkit-scrollbar {
+        display: none;
+      }
+      .mobile-card {
+        flex: 0 0 auto;
+        width: 110px;
+        aspect-ratio: 2/3;
+        border-radius: 4px;
+        overflow: hidden;
+        background: #262626;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+      .mobile-card:active {
+        transform: scale(0.96);
+      }
+      .mobile-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .mobile-top-ten {
+        padding: 16px 0 4px 16px;
+      }
+      .mobile-top-ten h3 {
+        font-size: 16px;
+        font-weight: 700;
+        margin: 0 0 10px;
+        color: #fff;
+      }
+      .mobile-top-rail {
+        display: flex;
+        gap: 4px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        padding-right: 16px;
+        padding-bottom: 4px;
+      }
+      .mobile-top-rail::-webkit-scrollbar {
+        display: none;
+      }
+      .mobile-top-card {
+        flex: 0 0 auto;
+        width: 130px;
+        aspect-ratio: 16/10;
+        display: flex;
+        align-items: flex-end;
+        background: transparent;
+        cursor: pointer;
+      }
+      .mobile-top-card .m-rank {
+        font-size: 80px;
+        font-weight: 900;
+        font-style: italic;
+        color: #111;
+        -webkit-text-stroke: 2px #777;
+        line-height: 0.7;
+        padding-right: 2px;
+        margin-left: -6px;
+        z-index: 1;
+      }
+      .mobile-top-card img {
+        width: 78%;
+        height: 90%;
+        object-fit: cover;
+        border-radius: 3px;
+        z-index: 2;
+      }
+
+      /* Bottom nav */
+      .mobile-bottom-nav {
+        position: sticky;
+        bottom: 0;
+        background: rgba(20, 20, 20, 0.96);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid #2a2a2a;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        padding: 8px 0 10px;
+        z-index: 20;
+      }
+      .mobile-bottom-nav button {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        background: transparent;
+        border: 0;
+        color: #777;
+        font-size: 9px;
+        font-weight: 500;
+        padding: 4px 0;
+      }
+      .mobile-bottom-nav button svg {
+        width: 20px;
+        height: 20px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+      }
+      .mobile-bottom-nav button.active {
+        color: #fff;
+      }
+      .mobile-bottom-nav button.active svg {
+        fill: currentColor;
+        stroke: currentColor;
+      }
+
+      /* Mobile Modal (sheet) */
+      .mobile-modal {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 40;
+        display: none;
+        align-items: flex-end;
+      }
+      .mobile-modal.show {
+        display: flex;
+      }
+      .mobile-modal-content {
+        width: 100%;
+        max-height: 85%;
+        background: #181818;
+        border-radius: 12px 12px 0 0;
+        overflow-y: auto;
+        scrollbar-width: none;
+        animation: slideUp 0.3s ease;
+      }
+      .mobile-modal-content::-webkit-scrollbar {
+        display: none;
+      }
+      @keyframes slideUp {
+        from {
+          transform: translateY(100%);
+        }
+        to {
+          transform: translateY(0);
+        }
+      }
+      .mobile-modal-hero {
+        height: 200px;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+      }
+      .mobile-modal-hero::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(0deg, #181818, transparent 70%);
+      }
+      .mobile-modal-close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.7);
+        color: #fff;
+        border: 0;
+        font-size: 18px;
+        z-index: 2;
+      }
+      .mobile-modal-body {
+        padding: 14px 16px 30px;
+      }
+      .mobile-modal-body h3 {
+        font-size: 20px;
+        font-weight: 800;
+        margin: 0 0 8px;
+      }
+      .mobile-modal-meta {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 11px;
+        color: #ccc;
+        margin-bottom: 10px;
+      }
+      .mobile-modal-actions {
+        display: flex;
+        gap: 8px;
+        margin: 14px 0;
+      }
+      .mobile-modal-actions .action-btn {
+        flex: 1;
+        min-height: 38px;
+        font-size: 12px;
+        padding: 0 12px;
+      }
+      .mobile-modal-desc {
+        font-size: 12px;
+        color: #ddd;
+        line-height: 1.5;
+        margin: 0;
+      }
+
+      /* ===========================================================
+         RESPONSIVE (for actual device screen)
+      =========================================================== */
+      @media (max-width: 900px) {
+        .desktop-view .topbar {
+          gap: 22px;
+          padding: 0 3.5%;
+        }
+        .desktop-view .brand {
+          font-size: 25px;
+        }
+        .desktop-view .kids {
+          display: none;
+        }
+      }
+      @media (max-width: 500px) {
+        .device-switcher {
+          flex-wrap: wrap;
+          padding: 10px;
+          gap: 8px;
+        }
+        .device-switcher .label {
+          display: none;
+        }
+        .pixel-frame {
+          width: calc(100vw - 32px);
+          max-width: 380px;
+          height: calc((100vw - 32px) * 2.1);
+          max-height: 800px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- DEVICE SWITCHER -->
+    <div class="device-switcher">
+      <span class="label">Tampilan:</span>
+      <div class="switch-btn-group" role="tablist">
+        <button
+          class="switch-btn active"
+          data-mode="desktop"
+          role="tab"
+          aria-selected="true"
+        >
+          <svg viewBox="0 0 24 24">
+            <rect x="2" y="3" width="20" height="14" rx="2" />
+            <path d="M8 21h8M12 17v4" />
+          </svg>
+          Desktop
+        </button>
+        <button
+          class="switch-btn"
+          data-mode="mobile"
+          role="tab"
+          aria-selected="false"
+        >
+          <svg viewBox="0 0 24 24">
+            <rect x="6" y="2" width="12" height="20" rx="2.5" />
+            <path d="M11 18h2" />
+          </svg>
+          Mobile
+        </button>
+      </div>
+    </div>
+
+    <div class="viewport" id="viewport" data-mode="desktop">
+      <!-- ====================== DESKTOP VIEW ====================== -->
+      <div class="desktop-view">
+        <header class="topbar" id="topbar">
+          <a class="brand" href="#home" aria-label="Netflix home">NETFLIX</a>
+          <nav class="nav-links" aria-label="Navigasi utama">
+            <button class="nav-link active" data-nav="Beranda">Beranda</button>
+            <button class="nav-link" data-nav="Serial TV">Serial TV</button>
+            <button class="nav-link" data-nav="Film">Film</button>
+            <button class="nav-link" data-nav="Baru & Populer">
+              Baru &amp; Populer
+            </button>
+            <button class="nav-link" data-nav="Daftar Saya">Daftar Saya</button>
+          </nav>
+          <div class="nav-right">
+            <div class="search-wrap" id="searchWrap">
+              <button
+                class="icon-btn"
+                id="searchToggle"
+                aria-label="Buka pencarian"
+              >
+                <svg viewBox="0 0 24 24">
+                  <circle cx="10.8" cy="10.8" r="6.8" />
+                  <path d="m16 16 5 5" />
+                </svg>
+              </button>
+              <input
+                class="search-input"
+                id="searchInput"
+                type="search"
+                placeholder="Judul, orang, genre"
+                aria-label="Cari judul"
+              />
+            </div>
+            <span class="kids">Anak-anak</span>
+            <button
+              class="icon-btn"
+              aria-label="Notifikasi"
+              id="notificationBtn"
+            >
+              <svg viewBox="0 0 24 24">
+                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+                <path d="M10 21h4" />
+              </svg>
+            </button>
+            <div class="profile-wrap" id="profileWrap">
+              <button
+                class="profile-button"
+                id="profileButton"
+                aria-label="Menu profil"
+              >
+                <span class="avatar">👨🏻‍🚀</span><i class="caret"></i>
+              </button>
+              <div class="profile-menu">
+                <button>👨🏻‍🚀 &nbsp; Profil</button>
+                <button>Kelola Profil</button>
+                <button>Pusat Bantuan</button>
+                <button>Keluar dari Netflix</button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <section class="hero" id="home" aria-label="Featured title">
+          <div class="hero-bg" id="heroBg"></div>
+          <div class="hero-content">
+            <div class="eyebrow">
+              <span class="n-mark">N</span> SERIES ORIGINAL
+            </div>
+            <h1 class="hero-title" id="heroTitle">THE<br />LAST FRONTIER</h1>
+            <div class="hero-meta">
+              <span class="match">98% Cocok</span><span>2026</span
+              ><span>1 Season</span><span class="quality">4K UHD</span>
+            </div>
+            <p class="hero-description" id="heroDescription">
+              Di ujung dunia yang tak tersentuh, sebuah misi penyelamatan
+              berubah menjadi pertarungan untuk bertahan hidup. Ketika rahasia
+              lama terungkap, tak ada yang bisa dipercaya.
+            </p>
+            <div class="hero-actions">
+              <button class="action-btn primary" id="heroPlay">
+                <svg viewBox="0 0 24 24">
+                  <path
+                    d="M6 3.5c0-.8.9-1.3 1.6-.9l13 8c.7.4.7 1.4 0 1.8l-13 8c-.7.4-1.6-.1-1.6-.9z"
+                  />
+                </svg>
+                Putar
+              </button>
+              <button class="action-btn secondary" id="heroMore">
+                <svg viewBox="0 0 24 24">
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="9"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  />
+                  <path
+                    d="M12 11v6M12 7.2v.2"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  />
+                </svg>
+                Info Selengkapnya
+              </button>
+            </div>
+          </div>
+          <div class="maturity"><span>16+</span> Batas Usia</div>
+          <div class="hero-dots" id="heroDots">
+            <button class="active" aria-label="Slide 1"></button>
+            <button aria-label="Slide 2"></button>
+            <button aria-label="Slide 3"></button>
+          </div>
+        </section>
+
+        <main id="catalog">
+          <div id="shelves"></div>
+          <div class="empty-search" id="emptySearch">
+            Tidak ada judul yang cocok dengan pencarianmu.
+          </div>
+        </main>
+
+        <footer class="footer">
+          <div class="socials" aria-label="Media sosial">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M13.5 21v-8h2.7l.4-3.1h-3.1v-2c0-.9.3-1.6 1.6-1.6h1.7V3.5c-.3 0-1.4-.1-2.6-.1-2.6 0-4.3 1.6-4.3 4.5v2H7v3.1h2.9v8z"
+              />
+            </svg>
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M22 5.9a8 8 0 0 1-2.4.7 4.2 4.2 0 0 0 1.8-2.3 8.3 8.3 0 0 1-2.7 1 4.1 4.1 0 0 0-7 3.7A11.7 11.7 0 0 1 3.2 4.7a4.1 4.1 0 0 0 1.3 5.5 4 4 0 0 1-1.9-.5v.1a4.1 4.1 0 0 0 3.3 4 4 4 0 0 1-1.9.1 4.1 4.1 0 0 0 3.8 2.8A8.2 8.2 0 0 1 2 18.4a11.6 11.6 0 0 0 6.3 1.8c7.5 0 11.6-6.2 11.6-11.6v-.5A8 8 0 0 0 22 5.9z"
+              />
+            </svg>
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm5.4 6.1h-2.1c-.2-1.1-.6-2.2-1-3.1 1.3.7 2.4 1.8 3.1 3.1zM12 4.1c.6.9 1.1 2.4 1.4 4h-2.8c.3-1.6.8-3.1 1.4-4zM4.3 14.1a8 8 0 0 1 0-4.2h2.9a13 13 0 0 0 0 4.2zm.9 2h2.1c.2 1.1.6 2.2 1 3.1a8 8 0 0 1-3.1-3.1zM7.3 8.1H5.2a8 8 0 0 1 3.1-3.1c-.4.9-.8 2-1 3.1zM12 19.9c-.6-.9-1.1-2.4-1.4-4h2.8c-.3 1.6-.8 3.1-1.4 4zm1.7-5.8h-3.4a11 11 0 0 1 0-4.2h3.4a11 11 0 0 1 0 4.2zm.6 5.1c.4-.9.8-2 1-3.1h2.1a8 8 0 0 1-3.1 3.1zm1.4-5.1a13 13 0 0 0 0-4.2h2.9a8 8 0 0 1 0 4.2z"
+              />
+            </svg>
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm4.5 7h-1.7c-.2.6-.4 1.3-.5 2h2.2a8 8 0 0 1 0 2h-2.2c.1.7.3 1.4.5 2h1.7v2H15l-.4-1.2a6 6 0 0 1-5.2 0L9 17H7.5v-2h1.7c.2-.6.4-1.3.5-2h-2a8 8 0 0 1 0-2h2c-.1-.7-.3-1.4-.5-2H7.5V7H9l.4 1.2a6 6 0 0 1 5.2 0L15 7h1.5v2zm-3.7 2c-.2-.5-.5-1-.8-1.5.3-.5.6-1 .8-1.5.2.5.5 1 .8 1.5-.3.5-.6 1-.8 1.5zM12 15c-.3-.5-.6-1-.8-1.5h1.6c-.2.5-.5 1-.8 1.5zm.8-4.5h-1.6c.2-.5.5-1 .8-1.5.3.5.6 1 .8 1.5zM10.4 13c-.3-.5-.4-1-.5-1.5h1.3c-.1.5-.3 1-.5 1.5-.1 0-.2 0-.3 0zm3.2 0h-.3c-.2-.5-.4-1-.5-1.5h1.3c-.1.5-.3 1-.5 1.5z"
+              />
+            </svg>
+          </div>
+          <div class="footer-links">
+            <a href="#">Audio dan Subtitle</a><a href="#">Pusat Bantuan</a
+            ><a href="#">Kartu Hadiah</a><a href="#">Pusat Media</a>
+            <a href="#">Investor Relations</a><a href="#">Lowongan</a
+            ><a href="#">Ketentuan Penggunaan</a><a href="#">Privasi</a>
+            <a href="#">Informasi Legal</a><a href="#">Preferensi Cookie</a
+            ><a href="#">Informasi Perusahaan</a><a href="#">Hubungi Kami</a>
+          </div>
+          <button class="service-code">Kode Layanan</button>
+          <div class="copyright">© 1997–2026 Netflix, Inc.</div>
+        </footer>
+      </div>
+
+      <!-- ====================== MOBILE VIEW (inside Pixel) ====================== -->
+      <div class="mobile-view">
+        <div class="pixel-frame" role="img" aria-label="Pixel phone frame">
+          <div class="pixel-screen">
+            <!-- Status bar -->
+            <div class="pixel-status-bar">
+              <div class="time" id="pixelTime">9:41</div>
+              <div class="icons">
+                <!-- Signal -->
+                <svg viewBox="0 0 16 16">
+                  <rect x="1" y="11" width="2" height="4" />
+                  <rect x="4" y="8" width="2" height="7" />
+                  <rect x="7" y="5" width="2" height="10" />
+                  <rect x="10" y="2" width="2" height="13" />
+                </svg>
+                <!-- WiFi -->
+                <svg viewBox="0 0 16 16">
+                  <path
+                    d="M8 11.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM2.5 7.3C5 4.8 11 4.8 13.5 7.3l-1.4 1.4C10.3 6.9 5.7 6.9 3.9 8.7z"
+                  />
+                  <path
+                    d="M5 9.8c1.7-1.7 4.3-1.7 6 0l-1.4 1.4c-1-.9-2.2-.9-3.2 0z"
+                  />
+                </svg>
+                <!-- Battery -->
+                <div class="battery">
+                  <span>87</span>
+                  <span class="battery-icon"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Netflix app -->
+            <div class="netflix-app" id="mobileApp">
+              <!-- Mobile topbar -->
+              <div class="mobile-topbar">
+                <button
+                  class="mobile-menu-btn"
+                  id="mobileMenuBtn"
+                  aria-label="Menu"
+                >
+                  <span></span>
+                </button>
+                <div style="flex: 1; display: flex; justify-content: center">
+                  <a class="brand" href="#">NETFLIX</a>
+                </div>
+                <div class="nav-right">
+                  <button
+                    class="icon-btn"
+                    id="mobileSearchBtn"
+                    aria-label="Cari"
+                  >
+                    <svg viewBox="0 0 24 24">
+                      <circle cx="10.8" cy="10.8" r="6.8" />
+                      <path d="m16 16 5 5" />
+                    </svg>
+                  </button>
+                  <span class="avatar">👨🏻‍🚀</span>
+                </div>
+              </div>
+
+              <!-- Mobile drawer -->
+              <div class="mobile-drawer" id="mobileDrawer">
+                <button class="active" data-nav="Beranda">Beranda</button>
+                <button data-nav="Serial TV">Serial TV</button>
+                <button data-nav="Film">Film</button>
+                <button data-nav="Baru & Populer">Baru &amp; Populer</button>
+                <button data-nav="Daftar Saya">Daftar Saya</button>
+                <button>Kelola Profil</button>
+                <button>Pengaturan</button>
+              </div>
+
+              <!-- Mobile Hero -->
+              <section class="mobile-hero" id="mobileHero">
+                <div class="mobile-hero-content">
+                  <div
+                    class="eyebrow"
+                    style="
+                      font-size: 10px;
+                      letter-spacing: 3px;
+                      margin-bottom: 8px;
+                    "
+                  >
+                    <span class="n-mark" style="font-size: 18px">N</span> SERIES
+                  </div>
+                  <h2 class="mobile-hero-title" id="mobileHeroTitle">
+                    The Last Frontier
+                  </h2>
+                  <div class="mobile-hero-actions">
+                    <button class="action-btn primary" id="mobilePlay">
+                      <svg viewBox="0 0 24 24">
+                        <path
+                          d="M6 3.5c0-.8.9-1.3 1.6-.9l13 8c.7.4.7 1.4 0 1.8l-13 8c-.7.4-1.6-.1-1.6-.9z"
+                        />
+                      </svg>
+                      Putar
+                    </button>
+                    <button class="action-btn secondary" id="mobileInfo">
+                      <svg viewBox="0 0 24 24">
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="9"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        />
+                        <path
+                          d="M12 11v6M12 7.2v.2"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                        />
+                      </svg>
+                      Lainnya
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              <div id="mobileShelves"></div>
+
+              <!-- Bottom nav -->
+              <nav class="mobile-bottom-nav" aria-label="Navigasi bawah">
+                <button class="active" data-tab="home">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M3 12L12 3l9 9" />
+                    <path d="M5 10v10h14V10" />
+                  </svg>
+                  Beranda
+                </button>
+                <button data-tab="search">
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="m20 20-3-3" />
+                  </svg>
+                  Pencarian
+                </button>
+                <button data-tab="coming">
+                  <svg viewBox="0 0 24 24">
+                    <rect x="3" y="4" width="18" height="18" rx="2" />
+                    <path d="M16 2v4M8 2v4M3 10h18" />
+                  </svg>
+                  Segera Hadir
+                </button>
+                <button data-tab="new">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                  </svg>
+                  Baru &amp; Viral
+                </button>
+                <button data-tab="downloads">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <path d="M7 10l5 5 5-5M12 15V3" />
+                  </svg>
+                  Unduhan
+                </button>
+              </nav>
+            </div>
+
+            <!-- Mobile modal -->
+            <div class="mobile-modal" id="mobileModal">
+              <div class="mobile-modal-content">
+                <div class="mobile-modal-hero" id="mobileModalHero">
+                  <button
+                    class="mobile-modal-close"
+                    id="mobileModalClose"
+                    aria-label="Tutup"
+                  >
+                    ×
+                  </button>
+                </div>
+                <div class="mobile-modal-body">
+                  <h3 id="mobileModalTitle">Title</h3>
+                  <div class="mobile-modal-meta">
+                    <span class="match">98% Cocok</span>
+                    <span>2026</span>
+                    <span class="hd-badge">HD</span>
+                    <span>16+</span>
+                  </div>
+                  <div class="mobile-modal-actions">
+                    <button class="action-btn primary">
+                      <svg
+                        viewBox="0 0 24 24"
+                        style="width: 16px; height: 16px"
+                      >
+                        <path
+                          d="M6 3.5c0-.8.9-1.3 1.6-.9l13 8c.7.4.7 1.4 0 1.8l-13 8c-.7.4-1.6-.1-1.6-.9z"
+                        />
+                      </svg>
+                      Putar
+                    </button>
+                    <button class="mini-btn" aria-label="Download">
+                      <svg viewBox="0 0 24 24">
+                        <path
+                          d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"
+                        />
+                      </svg>
+                    </button>
+                    <button class="mini-btn" aria-label="Like">
+                      <svg viewBox="0 0 24 24">
+                        <path
+                          d="M7 10v11M15 5l-1 5h6a2 2 0 0 1 2 2.3l-1 7a2 2 0 0 1-2 1.7H7V10l4-7a3 3 0 0 1 3 3v4"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                  <p class="mobile-modal-desc" id="mobileModalDesc">
+                    Description
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Home indicator -->
+            <div class="pixel-home-indicator"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DESKTOP MODAL / PLAYBACK -->
+    <div
+      class="modal-backdrop"
+      id="detailBackdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Detail film"
+    >
+      <div class="detail-modal">
+        <div class="modal-hero" id="modalHero">
+          <button class="modal-close" id="modalClose" aria-label="Tutup">
+            ×
+          </button>
+          <div class="modal-logo" id="modalTitle">THE LAST FRONTIER</div>
+        </div>
+        <div class="modal-body">
+          <div>
+            <div class="modal-actions">
+              <button class="action-btn primary" id="modalPlay">
+                <svg viewBox="0 0 24 24">
+                  <path
+                    d="M6 3.5c0-.8.9-1.3 1.6-.9l13 8c.7.4.7 1.4 0 1.8l-13 8c-.7.4-1.6-.1-1.6-.9z"
+                  />
+                </svg>
+                Putar
+              </button>
+              <button
+                class="mini-btn"
+                id="modalAdd"
+                aria-label="Tambah ke daftar saya"
+              >
+                <svg viewBox="0 0 24 24"><path d="M12 4v16M4 12h16" /></svg>
+              </button>
+            </div>
+            <div class="modal-meta">
+              <span class="match">98% Cocok</span><span>2026</span
+              ><span class="quality">4K UHD</span><span>16+</span>
+            </div>
+            <p class="modal-description" id="modalDescription"></p>
+          </div>
+          <div class="modal-side">
+            <div>
+              <strong>Pemeran:</strong> Alex Morgan, Maya Hart, Daniel Reed
+            </div>
+            <div><strong>Genre:</strong> Petualangan, Drama, Misteri</div>
+            <div>
+              <strong>Suasana:</strong> Menegangkan, Epik, Penuh teka-teki
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="playback" id="playback">
+      <button
+        class="playback-close"
+        id="playbackClose"
+        aria-label="Tutup pemutar"
+      >
+        ×
+      </button>
+      <div class="playback-inner">
+        <div class="big-play">▶</div>
+        <h3 id="playbackTitle">THE LAST FRONTIER</h3>
+        <p>Pratinjau pemutar — demo UI frontend</p>
+      </div>
+    </div>
+    <div class="toast" id="toast" role="status"></div>
+
+    <script>
+      /* ============================================================
+         DATA
+      ============================================================ */
+      const photo = (id, width = 900) =>
+        `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${width}&q=82`;
+
+      // Portrait images for mobile cards
+      const portrait = (id, w = 400) =>
+        `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${w}&h=${w * 1.5}&q=82`;
+
+      const titles = [
+        {
+          id: 1,
+          title: "The Last Frontier",
+          genre: "Petualangan • Misteri",
+          year: "2026",
+          rating: "98%",
+          image: photo("photo-1519681393784-d120267933ba", 1200),
+          portrait: portrait("photo-1519681393784-d120267933ba"),
+          backdrop: photo("photo-1464822759023-fed622ff2c3b", 1800),
+          description:
+            "Di ujung dunia yang tak tersentuh, sebuah misi penyelamatan berubah menjadi pertarungan untuk bertahan hidup. Ketika rahasia lama terungkap, tak ada yang bisa dipercaya.",
+          category: ["Trending Now", "Originals", "Adventure"],
+        },
+        {
+          id: 2,
+          title: "Into the Deep",
+          genre: "Thriller • Survival",
+          year: "2025",
+          rating: "96%",
+          image: photo("photo-1518837695005-2083093ee35b", 700),
+          portrait: portrait("photo-1518837695005-2083093ee35b"),
+          backdrop: photo("photo-1500375592092-40eb2168fd21", 1600),
+          description:
+            "Sebuah ekspedisi laut dalam menemukan sesuatu yang seharusnya tetap tersembunyi di dasar samudra.",
+          category: ["Trending Now", "Top 10", "Adventure"],
+        },
+        {
+          id: 3,
+          title: "City of Shadows",
+          genre: "Crime • Drama",
+          year: "2026",
+          rating: "95%",
+          image: photo("photo-1519608487953-e999c86e7455", 700),
+          portrait: portrait("photo-1519608487953-e999c86e7455"),
+          backdrop: photo("photo-1519608487953-e999c86e7455", 1600),
+          description:
+            "Di kota yang tidak pernah tidur, seorang detektif mengejar kebenaran di balik jaringan rahasia.",
+          category: ["Trending Now", "Originals"],
+        },
+        {
+          id: 4,
+          title: "The Silent Mountain",
+          genre: "Drama • Adventure",
+          year: "2024",
+          rating: "94%",
+          image: photo("photo-1464822759023-fed622ff2c3b", 700),
+          portrait: portrait("photo-1464822759023-fed622ff2c3b"),
+          backdrop: photo("photo-1464822759023-fed622ff2c3b", 1600),
+          description:
+            "Dua pendaki terjebak badai di pegunungan terpencil dan menemukan bahwa perjalanan pulang adalah ujian sesungguhnya.",
+          category: ["Because You Watched", "Adventure"],
+        },
+        {
+          id: 5,
+          title: "Parallel",
+          genre: "Sci-Fi • Mystery",
+          year: "2026",
+          rating: "99%",
+          image: photo("photo-1534796636912-3b95b3ab5986", 700),
+          portrait: portrait("photo-1534796636912-3b95b3ab5986"),
+          backdrop: photo("photo-1534796636912-3b95b3ab5986", 1600),
+          description:
+            "Satu keputusan kecil membuka pintu ke semesta lain. Kini, setiap versi dirinya menginginkan masa depan yang berbeda.",
+          category: ["Trending Now", "Originals"],
+        },
+        {
+          id: 6,
+          title: "Wild Horizon",
+          genre: "Nature • Documentary",
+          year: "2025",
+          rating: "97%",
+          image: photo("photo-1470770841072-f978cf4d019e", 700),
+          portrait: portrait("photo-1470770841072-f978cf4d019e"),
+          backdrop: photo("photo-1470770841072-f978cf4d019e", 1600),
+          description:
+            "Menjelajahi lanskap paling liar di planet ini dan kisah luar biasa makhluk yang menyebutnya rumah.",
+          category: ["Because You Watched", "Documentary"],
+        },
+        {
+          id: 7,
+          title: "After the Rain",
+          genre: "Romance • Drama",
+          year: "2025",
+          rating: "93%",
+          image: photo("photo-1470252649378-9c29740c9fa8", 700),
+          portrait: portrait("photo-1470252649378-9c29740c9fa8"),
+          backdrop: photo("photo-1470252649378-9c29740c9fa8", 1600),
+          description:
+            "Pertemuan tak terduga di sebuah kota kecil membuat dua orang asing mempertanyakan arah hidup mereka.",
+          category: ["Because You Watched", "Drama"],
+        },
+        {
+          id: 8,
+          title: "Redline",
+          genre: "Action • Thriller",
+          year: "2026",
+          rating: "98%",
+          image: photo("photo-1500530855697-b586d89ba3ee", 700),
+          portrait: portrait("photo-1500530855697-b586d89ba3ee"),
+          backdrop: photo("photo-1500530855697-b586d89ba3ee", 1600),
+          description:
+            "Seorang pembalap jalanan menerima satu pekerjaan terakhir yang berubah menjadi perlombaan melawan waktu.",
+          category: ["Trending Now", "Top 10"],
+        },
+        {
+          id: 9,
+          title: "The Forgotten",
+          genre: "Mystery • Thriller",
+          year: "2024",
+          rating: "92%",
+          image: photo("photo-1511497584788-876760111969", 700),
+          portrait: portrait("photo-1511497584788-876760111969"),
+          backdrop: photo("photo-1511497584788-876760111969", 1600),
+          description:
+            "Sebuah desa menghapus ingatan tentang satu malam. Seorang jurnalis datang untuk mengingat semuanya.",
+          category: ["Originals", "Mystery"],
+        },
+        {
+          id: 10,
+          title: "Golden Hour",
+          genre: "Drama • Romance",
+          year: "2025",
+          rating: "95%",
+          image: photo("photo-1500534623283-312aade485b7", 700),
+          portrait: portrait("photo-1500534623283-312aade485b7"),
+          backdrop: photo("photo-1500534623283-312aade485b7", 1600),
+          description:
+            "Di antara matahari terbenam dan kesempatan kedua, sebuah keluarga belajar memulai kembali.",
+          category: ["Because You Watched", "Drama"],
+        },
+        {
+          id: 11,
+          title: "Nocturne",
+          genre: "Horror • Mystery",
+          year: "2026",
+          rating: "91%",
+          image: photo("photo-1500534314209-a25ddb2bd429", 700),
+          portrait: portrait("photo-1500534314209-a25ddb2bd429"),
+          backdrop: photo("photo-1500534314209-a25ddb2bd429", 1600),
+          description:
+            "Setiap malam, suara piano terdengar dari rumah kosong di ujung jalan. Malam ini, seseorang menjawab.",
+          category: ["New Releases", "Horror"],
+        },
+        {
+          id: 12,
+          title: "Beyond Earth",
+          genre: "Sci-Fi • Adventure",
+          year: "2025",
+          rating: "96%",
+          image: photo("photo-1446776811953-b23d57bd21aa", 700),
+          portrait: portrait("photo-1446776811953-b23d57bd21aa"),
+          backdrop: photo("photo-1446776811953-b23d57bd21aa", 1600),
+          description:
+            "Misi antarbintang pertama umat manusia menghadapi pilihan yang akan menentukan masa depan bumi.",
+          category: ["New Releases", "Originals"],
+        },
+        {
+          id: 13,
+          title: "Frozen Kingdom",
+          genre: "Fantasy • Adventure",
+          year: "2024",
+          rating: "94%",
+          image: photo("photo-1517299321609-52687d1bc55a", 700),
+          portrait: portrait("photo-1517299321609-52687d1bc55a"),
+          backdrop: photo("photo-1517299321609-52687d1bc55a", 1600),
+          description:
+            "Di kerajaan yang membeku dalam waktu, seorang penjaga muda menemukan kekuatan yang terlupakan.",
+          category: ["Adventure", "Fantasy"],
+        },
+        {
+          id: 14,
+          title: "Blue Planet",
+          genre: "Documentary • Nature",
+          year: "2026",
+          rating: "99%",
+          image: photo("photo-1484291470158-b8f8d608850d", 700),
+          portrait: portrait("photo-1484291470158-b8f8d608850d"),
+          backdrop: photo("photo-1484291470158-b8f8d608850d", 1600),
+          description:
+            "Kisah visual tentang lautan, kehidupan yang tersembunyi, dan hubungan manusia dengan air.",
+          category: ["Documentary", "New Releases"],
+        },
+        {
+          id: 15,
+          title: "The Heist",
+          genre: "Crime • Action",
+          year: "2025",
+          rating: "97%",
+          image: photo("photo-1519608487953-e999c86e7455", 700),
+          portrait: portrait("photo-1519608487953-e999c86e7455"),
+          backdrop: photo("photo-1519608487953-e999c86e7455", 1600),
+          description:
+            "Tim pencuri terbaik merencanakan satu aksi mustahil di tengah kota yang dijaga ketat.",
+          category: ["Top 10", "Action"],
+        },
+        {
+          id: 16,
+          title: "Wild Hearts",
+          genre: "Family • Adventure",
+          year: "2025",
+          rating: "95%",
+          image: photo("photo-1500534623283-312aade485b7", 700),
+          portrait: portrait("photo-1500534623283-312aade485b7"),
+          backdrop: photo("photo-1500534623283-312aade485b7", 1600),
+          description:
+            "Persahabatan seorang anak dan satwa liar langka mengubah cara sebuah komunitas menjaga alam.",
+          category: ["Family", "Adventure"],
+        },
+      ];
+
+      const shelvesData = [
+        { title: "Sedang Tren", filter: "Trending Now" },
+        {
+          title: "10 Teratas di Indonesia Hari Ini",
+          filter: "Top 10",
+          top: true,
+        },
+        { title: "Netflix Originals", filter: "Originals" },
+        { title: "Karena Kamu Menonton", filter: "Because You Watched" },
+        { title: "Rilis Terbaru", filter: "New Releases" },
+        { title: "Petualangan Seru", filter: "Adventure" },
+      ];
+
+      const heroIds = [1, 5, 12];
+      let currentHero = titles[0];
+      let activeTitle = titles[0];
+      let myList = new Set([4, 9]);
+      let searchTerm = "";
+      let activeFilter = "Beranda";
+      let toastTimer;
+
+      const icon = {
+        left: '<svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>',
+        right: '<svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>',
+        plus: '<svg viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></svg>',
+        check: '<svg viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></svg>',
+        play: '<svg viewBox="0 0 24 24"><path d="M6 3.5c0-.8.9-1.3 1.6-.9l13 8c.7.4.7 1.4 0 1.8l-13 8c-.7.4-1.6-.1-1.6-.9z"/></svg>',
+      };
+
+      /* ============================================================
+         DEVICE SWITCHER LOGIC
+      ============================================================ */
+      const viewport = document.getElementById("viewport");
+      const switchBtns = document.querySelectorAll(".switch-btn");
+      switchBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const mode = btn.dataset.mode;
+          viewport.dataset.mode = mode;
+          switchBtns.forEach((b) => {
+            b.classList.toggle("active", b === btn);
+            b.setAttribute("aria-selected", b === btn);
+          });
+          // Scroll to top when switching
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      });
+
+      /* ============================================================
+         PIXEL CLOCK
+      ============================================================ */
+      function updatePixelClock() {
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2, "0");
+        const m = String(now.getMinutes()).padStart(2, "0");
+        const el = document.getElementById("pixelTime");
+        if (el) el.textContent = `${h}:${m}`;
+      }
+      updatePixelClock();
+      setInterval(updatePixelClock, 30000);
+
+      /* ============================================================
+         DESKTOP RENDER
+      ============================================================ */
+      function cardMarkup(movie, topIndex = 0, top = false) {
+        const image = top
+          ? `<div class="rank-wrap"><div class="rank">${topIndex}</div><img src="${movie.image}" alt="${movie.title}" loading="lazy"></div>`
+          : `<img src="${movie.image}" alt="${movie.title}" loading="lazy">`;
+        return `<article class="movie-card" tabindex="0" role="button" data-id="${movie.id}" aria-label="Lihat ${movie.title}">
+          ${image}
+          <div class="card-info">
+            <div class="card-controls">
+              <button class="mini-btn play" data-action="play" data-id="${movie.id}" aria-label="Putar ${movie.title}">${icon.play}</button>
+              <button class="mini-btn" data-action="list" data-id="${movie.id}" aria-label="Tambah ke daftar">${myList.has(movie.id) ? icon.check : icon.plus}</button>
+              <button class="mini-btn" data-action="detail" data-id="${movie.id}" aria-label="Info selengkapnya"><svg viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></svg></button>
+            </div>
+            <h3 class="card-title">${movie.title}</h3>
+            <div class="card-meta"><span class="card-rating">${movie.rating} Cocok</span><span>${movie.year}</span><span>16+</span></div>
+          </div>
+        </article>`;
+      }
+
+      function renderShelves() {
+        const root = document.getElementById("shelves");
+        const filtered = titles.filter((t) =>
+          `${t.title} ${t.genre} ${t.year}`.toLowerCase().includes(searchTerm),
+        );
+        const useFiltered = Boolean(searchTerm);
+        let sections;
+        if (useFiltered) {
+          sections = [
+            { title: `Hasil pencarian untuk "${searchTerm}"`, items: filtered },
+          ];
+        } else if (activeFilter === "Daftar Saya") {
+          sections = [
+            {
+              title: "Daftar Saya",
+              items: titles.filter((t) => myList.has(t.id)),
+            },
+          ];
+        } else {
+          sections = shelvesData.map((s) => ({
+            ...s,
+            items: titles.filter((t) => t.category.includes(s.filter)),
+          }));
+        }
+        root.innerHTML = "";
+        let visible = 0;
+        sections.forEach((section, index) => {
+          if (!section.items.length) return;
+          visible += section.items.length;
+          const shelf = document.createElement("section");
+          shelf.className = `shelf ${section.top ? "top-ten" : ""}`;
+          const id = `rail-${index}`;
+          shelf.innerHTML = `<div class="shelf-heading"><h2>${section.title}</h2><span class="explore">Jelajahi Semua ›</span></div>
+            <div class="rail-wrap">
+              <button class="rail-arrow left" aria-label="Geser ke kiri">${icon.left}</button>
+              <div class="rail" id="${id}">${section.items.map((m, i) => cardMarkup(m, i + 1, section.top)).join("")}</div>
+              <button class="rail-arrow right" aria-label="Geser ke kanan">${icon.right}</button>
+            </div>`;
+          root.appendChild(shelf);
+        });
+        document.getElementById("emptySearch").style.display = visible
+          ? "none"
+          : "block";
+        document.querySelectorAll(".rail-arrow").forEach((btn) =>
+          btn.addEventListener("click", () => {
+            const rail = btn.parentElement.querySelector(".rail");
+            rail.scrollBy({
+              left:
+                (btn.classList.contains("right") ? 1 : -1) *
+                rail.clientWidth *
+                0.82,
+              behavior: "smooth",
+            });
+          }),
+        );
+      }
+
+      function setHero(movie, dotIndex = 0) {
+        currentHero = movie;
+        document.getElementById("heroBg").style.backgroundImage =
+          `url('${movie.backdrop}')`;
+        document.getElementById("heroTitle").innerHTML = movie.title
+          .toUpperCase()
+          .replace(" ", "<br>");
+        document.getElementById("heroDescription").textContent =
+          movie.description;
+        document
+          .querySelectorAll("#heroDots button")
+          .forEach((b, i) => b.classList.toggle("active", i === dotIndex));
+      }
+
+      function toast(message) {
+        const el = document.getElementById("toast");
+        el.textContent = message;
+        el.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.remove("show"), 2300);
+      }
+
+      function openDetail(movie) {
+        activeTitle = movie;
+        document.getElementById("modalHero").style.backgroundImage =
+          `url('${movie.backdrop}')`;
+        document.getElementById("modalTitle").textContent =
+          movie.title.toUpperCase();
+        document.getElementById("modalDescription").textContent =
+          movie.description;
+        document.getElementById("modalAdd").innerHTML = myList.has(movie.id)
+          ? icon.check
+          : icon.plus;
+        document.getElementById("detailBackdrop").classList.add("show");
+        document.body.style.overflow = "hidden";
+      }
+      function closeDetail() {
+        document.getElementById("detailBackdrop").classList.remove("show");
+        document.body.style.overflow = "";
+      }
+      function playMovie(movie) {
+        closeDetail();
+        document.getElementById("playbackTitle").textContent =
+          movie.title.toUpperCase();
+        document.getElementById("playback").classList.add("show");
+        document.body.style.overflow = "hidden";
+      }
+      function closePlayback() {
+        document.getElementById("playback").classList.remove("show");
+        document.body.style.overflow = "";
+      }
+      function toggleList(id) {
+        const movie = titles.find((t) => t.id === id);
+        if (myList.has(id)) {
+          myList.delete(id);
+          toast(`${movie.title} dihapus dari Daftar Saya`);
+        } else {
+          myList.add(id);
+          toast(`${movie.title} ditambahkan ke Daftar Saya`);
+        }
+        renderShelves();
+        renderMobileShelves();
+        if (activeTitle.id === id)
+          document.getElementById("modalAdd").innerHTML = myList.has(id)
+            ? icon.check
+            : icon.plus;
+      }
+
+      /* ============================================================
+         MOBILE RENDER
+      ============================================================ */
+      function renderMobileShelves() {
+        const root = document.getElementById("mobileShelves");
+        let sections;
+        if (activeFilter === "Daftar Saya") {
+          sections = [
+            {
+              title: "Daftar Saya",
+              items: titles.filter((t) => myList.has(t.id)),
+            },
+          ];
+        } else {
+          sections = shelvesData.map((s) => ({
+            ...s,
+            items: titles.filter((t) => t.category.includes(s.filter)),
+          }));
+        }
+        root.innerHTML = "";
+        sections.forEach((s) => {
+          if (!s.items.length) return;
+          const el = document.createElement("div");
+          if (s.top) {
+            el.className = "mobile-top-ten";
+            el.innerHTML = `<h3>${s.title}</h3>
+              <div class="mobile-top-rail">${s.items
+                .slice(0, 10)
+                .map(
+                  (m, i) => `
+                <div class="mobile-top-card" data-id="${m.id}">
+                  <div class="m-rank">${i + 1}</div>
+                  <img src="${m.image}" alt="${m.title}" loading="lazy">
+                </div>`,
+                )
+                .join("")}
+              </div>`;
+          } else {
+            el.className = "mobile-shelf";
+            el.innerHTML = `<h3>${s.title}</h3>
+              <div class="mobile-rail">${s.items
+                .map(
+                  (m) => `
+                <div class="mobile-card" data-id="${m.id}">
+                  <img src="${m.portrait}" alt="${m.title}" loading="lazy">
+                </div>`,
+                )
+                .join("")}
+              </div>`;
+          }
+          root.appendChild(el);
+        });
+      }
+
+      function setMobileHero(movie) {
+        currentHero = movie;
+        document.getElementById("mobileHero").style.backgroundImage =
+          `url('${movie.backdrop}')`;
+        document.getElementById("mobileHeroTitle").textContent = movie.title;
+      }
+
+      function openMobileModal(movie) {
+        activeTitle = movie;
+        document.getElementById("mobileModalHero").style.backgroundImage =
+          `url('${movie.backdrop}')`;
+        document.getElementById("mobileModalTitle").textContent = movie.title;
+        document.getElementById("mobileModalDesc").textContent =
+          movie.description;
+        document.getElementById("mobileModal").classList.add("show");
+      }
+      function closeMobileModal() {
+        document.getElementById("mobileModal").classList.remove("show");
+      }
+
+      /* ============================================================
+         EVENT BINDINGS
+      ============================================================ */
+      // Init
+      setHero(titles[0], 0);
+      renderShelves();
+      setMobileHero(titles[0]);
+      renderMobileShelves();
+
+      document.getElementById("heroBg").style.backgroundImage =
+        `url('${currentHero.backdrop}')`;
+
+      document.getElementById("heroDots").addEventListener("click", (e) => {
+        if (e.target.tagName !== "BUTTON") return;
+        const i = [...e.currentTarget.children].indexOf(e.target);
+        setHero(titles[heroIds[i] - 1], i);
+        setMobileHero(titles[heroIds[i] - 1]);
+      });
+
+      // Auto-rotate hero
+      let heroIdx = 0;
+      setInterval(() => {
+        if (document.visibilityState === "visible") {
+          heroIdx = (heroIdx + 1) % heroIds.length;
+          setHero(titles[heroIds[heroIdx] - 1], heroIdx);
+          setMobileHero(titles[heroIds[heroIdx] - 1]);
+        }
+      }, 8000);
+
+      document
+        .getElementById("heroPlay")
+        .addEventListener("click", () => playMovie(currentHero));
+      document
+        .getElementById("heroMore")
+        .addEventListener("click", () => openDetail(currentHero));
+      document
+        .getElementById("modalClose")
+        .addEventListener("click", closeDetail);
+      document
+        .getElementById("detailBackdrop")
+        .addEventListener("click", (e) => {
+          if (e.target.id === "detailBackdrop") closeDetail();
+        });
+      document
+        .getElementById("modalPlay")
+        .addEventListener("click", () => playMovie(activeTitle));
+      document
+        .getElementById("modalAdd")
+        .addEventListener("click", () => toggleList(activeTitle.id));
+      document
+        .getElementById("playbackClose")
+        .addEventListener("click", closePlayback);
+
+      document.getElementById("searchToggle").addEventListener("click", () => {
+        const wrap = document.getElementById("searchWrap");
+        wrap.classList.toggle("open");
+        if (wrap.classList.contains("open"))
+          document.getElementById("searchInput").focus();
+        else {
+          document.getElementById("searchInput").value = "";
+          searchTerm = "";
+          renderShelves();
+        }
+      });
+      document.getElementById("searchInput").addEventListener("input", (e) => {
+        searchTerm = e.target.value.trim().toLowerCase();
+        renderShelves();
+      });
+
+      document
+        .getElementById("profileButton")
+        .addEventListener("click", () =>
+          document.getElementById("profileWrap").classList.toggle("open"),
+        );
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest("#profileWrap"))
+          document.getElementById("profileWrap").classList.remove("open");
+      });
+      document
+        .getElementById("notificationBtn")
+        .addEventListener("click", () =>
+          toast("Kamu tidak memiliki notifikasi baru."),
+        );
+      document.querySelector(".profile-menu").addEventListener("click", (e) => {
+        if (e.target.tagName === "BUTTON")
+          toast("Menu demo — fitur akun tidak terhubung.");
+      });
+
+      // Desktop nav
+      document.querySelector(".nav-links").addEventListener("click", (e) => {
+        const btn = e.target.closest(".nav-link");
+        if (!btn) return;
+        document
+          .querySelectorAll(".nav-link")
+          .forEach((n) => n.classList.toggle("active", n === btn));
+        activeFilter = btn.dataset.nav;
+        searchTerm = "";
+        document.getElementById("searchInput").value = "";
+        if (activeFilter === "Daftar Saya") {
+          renderShelves();
+          document
+            .getElementById("shelves")
+            .scrollIntoView({ behavior: "smooth", block: "start" });
+          return;
+        }
+        if (
+          activeFilter === "Serial TV" ||
+          activeFilter === "Film" ||
+          activeFilter === "Baru & Populer"
+        ) {
+          const wanted =
+            activeFilter === "Serial TV"
+              ? ["Originals", "Adventure"]
+              : activeFilter === "Film"
+                ? ["Action", "Drama", "Mystery"]
+                : ["New Releases", "Top 10"];
+          const list = titles.filter((t) =>
+            t.category.some((c) => wanted.includes(c)),
+          );
+          document.getElementById("shelves").innerHTML =
+            `<section class="shelf"><div class="shelf-heading"><h2>${activeFilter}</h2></div><div class="rail">${list.map((m) => cardMarkup(m)).join("")}</div></section>`;
+        } else renderShelves();
+      });
+
+      // Mobile drawer
+      document.getElementById("mobileMenuBtn").addEventListener("click", () => {
+        document.getElementById("mobileDrawer").classList.toggle("open");
+      });
+      document.getElementById("mobileDrawer").addEventListener("click", (e) => {
+        const btn = e.target.closest("button");
+        if (!btn || !btn.dataset.nav) return;
+        document
+          .querySelectorAll("#mobileDrawer button")
+          .forEach((b) => b.classList.toggle("active", b === btn));
+        activeFilter = btn.dataset.nav;
+        document.getElementById("mobileDrawer").classList.remove("open");
+        if (
+          activeFilter === "Serial TV" ||
+          activeFilter === "Film" ||
+          activeFilter === "Baru & Populer"
+        ) {
+          const wanted =
+            activeFilter === "Serial TV"
+              ? ["Originals", "Adventure"]
+              : activeFilter === "Film"
+                ? ["Action", "Drama", "Mystery"]
+                : ["New Releases", "Top 10"];
+          const list = titles.filter((t) =>
+            t.category.some((c) => wanted.includes(c)),
+          );
+          const root = document.getElementById("mobileShelves");
+          root.innerHTML = `<div class="mobile-shelf"><h3>${activeFilter}</h3>
+            <div class="mobile-rail">${list.map((m) => `<div class="mobile-card" data-id="${m.id}"><img src="${m.portrait}" alt="${m.title}"></div>`).join("")}</div>
+          </div>`;
+        } else {
+          renderMobileShelves();
+        }
+      });
+
+      // Mobile bottom nav
+      document
+        .querySelector(".mobile-bottom-nav")
+        .addEventListener("click", (e) => {
+          const btn = e.target.closest("button");
+          if (!btn) return;
+          document
+            .querySelectorAll(".mobile-bottom-nav button")
+            .forEach((b) => b.classList.toggle("active", b === btn));
+          if (btn.dataset.tab === "search") toast("Pencarian — demo UI");
+          else if (btn.dataset.tab === "coming")
+            toast("Segera Hadir — demo UI");
+          else if (btn.dataset.tab === "new") toast("Baru & Viral — demo UI");
+          else if (btn.dataset.tab === "downloads") toast("Unduhan — demo UI");
+        });
+
+      // Mobile card / top card click
+      document
+        .getElementById("mobileShelves")
+        .addEventListener("click", (e) => {
+          const card = e.target.closest(".mobile-card, .mobile-top-card");
+          if (!card) return;
+          const movie = titles.find((t) => t.id === Number(card.dataset.id));
+          if (movie) openMobileModal(movie);
+        });
+
+      document
+        .getElementById("mobileModalClose")
+        .addEventListener("click", closeMobileModal);
+      document.getElementById("mobileModal").addEventListener("click", (e) => {
+        if (e.target.id === "mobileModal") closeMobileModal();
+      });
+
+      document
+        .getElementById("mobilePlay")
+        .addEventListener("click", () => playMovie(currentHero));
+      document
+        .getElementById("mobileInfo")
+        .addEventListener("click", () => openMobileModal(currentHero));
+
+      document
+        .getElementById("mobileSearchBtn")
+        .addEventListener("click", () => {
+          toast("Pencarian — demo UI mobile");
+        });
+
+      // Global card / action clicks (desktop)
+      document.addEventListener("click", (e) => {
+        const action = e.target.closest("[data-action]");
+        if (action) {
+          e.stopPropagation();
+          const movie = titles.find((t) => t.id === Number(action.dataset.id));
+          if (action.dataset.action === "play") playMovie(movie);
+          if (action.dataset.action === "detail") openDetail(movie);
+          if (action.dataset.action === "list") toggleList(movie.id);
+          return;
+        }
+        const card = e.target.closest(".movie-card");
+        if (card) {
+          const movie = titles.find((t) => t.id === Number(card.dataset.id));
+          if (movie) openDetail(movie);
+        }
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          closeDetail();
+          closePlayback();
+          closeMobileModal();
+          document.getElementById("profileWrap").classList.remove("open");
+        }
+        if (
+          (e.key === "Enter" || e.key === " ") &&
+          e.target.classList.contains("movie-card")
+        ) {
+          e.preventDefault();
+          const movie = titles.find(
+            (t) => t.id === Number(e.target.dataset.id),
+          );
+          openDetail(movie);
+        }
+      });
+
+      window.addEventListener(
+        "scroll",
+        () =>
+          document
+            .getElementById("topbar")
+            .classList.toggle("solid", window.scrollY > 35),
+        { passive: true },
+      );
+    </script>
+  </body>
+</html>

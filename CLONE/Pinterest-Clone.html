@@ -1,0 +1,2704 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>Pinspire — Temukan inspirasi</title>
+    <style>
+      :root {
+        --red: #e60023;
+        --red-dark: #ad081b;
+        --red-hover: #cc001f;
+        --ink: #111111;
+        --muted: #767676;
+        --line: #e9e9e9;
+        --surface: #ffffff;
+        --soft: #efefef;
+        --hover: #e2e2e2;
+        --shadow: 0 8px 30px rgba(0, 0, 0, 0.14);
+        --bg: #f5f5f5;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        min-height: 100vh;
+      }
+      button,
+      input,
+      textarea {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      img {
+        max-width: 100%;
+      }
+
+      /* ============ DEVICE SWITCHER TOOLBAR ============ */
+      .device-toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 16px;
+        padding: 18px 20px;
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(14px);
+        border-bottom: 1px solid var(--line);
+      }
+      .device-toolbar h1 {
+        font-size: 14px;
+        font-weight: 700;
+        margin: 0;
+        color: var(--muted);
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+      }
+      .switcher {
+        display: inline-flex;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 4px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      }
+      .switcher button {
+        border: 0;
+        background: transparent;
+        padding: 10px 22px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #555;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.22s ease;
+      }
+      .switcher button svg {
+        width: 16px;
+        height: 16px;
+      }
+      .switcher button:hover {
+        color: #111;
+      }
+      .switcher button.active {
+        background: var(--ink);
+        color: #fff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+      }
+      .device-hint {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      /* ============ VIEW CONTAINERS ============ */
+      .view-container {
+        display: none;
+        animation: fadeIn 0.4s ease;
+      }
+      .view-container.active {
+        display: block;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* ============ DESKTOP VIEW (Pinterest web) ============ */
+      .app-shell {
+        min-height: 100vh;
+        background: #fff;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        width: 80px;
+        z-index: 30;
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        gap: 10px;
+        padding: 18px 0 16px;
+        background: #fff;
+        border-right: 1px solid rgba(0, 0, 0, 0.04);
+      }
+      .brand-mark {
+        width: 48px;
+        height: 48px;
+        display: grid;
+        place-items: center;
+        color: var(--red);
+        border-radius: 50%;
+        margin-bottom: 8px;
+        transition: background 0.18s ease;
+      }
+      .brand-mark:hover {
+        background: #f7f7f7;
+      }
+      .brand-mark svg {
+        width: 30px;
+        height: 30px;
+      }
+      .side-link {
+        position: relative;
+        width: 48px;
+        height: 48px;
+        display: grid;
+        place-items: center;
+        border: 0;
+        border-radius: 50%;
+        color: #222;
+        background: transparent;
+        transition: background 0.18s ease;
+      }
+      .side-link:hover {
+        background: var(--soft);
+      }
+      .side-link.active {
+        color: #fff;
+        background: #111;
+      }
+      .side-link svg {
+        width: 23px;
+        height: 23px;
+        stroke-width: 2.1;
+      }
+      .side-spacer {
+        flex: 1;
+      }
+      .side-tooltip {
+        position: absolute;
+        left: 58px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: #111;
+        color: white;
+        padding: 7px 10px;
+        border-radius: 7px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s;
+      }
+      .side-link:hover .side-tooltip {
+        opacity: 1;
+      }
+      .avatar-mini {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 1px #ddd;
+      }
+
+      /* Main area */
+      .main-area {
+        margin-left: 80px;
+        min-height: 100vh;
+      }
+      .topbar {
+        height: 84px;
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 30px;
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(12px);
+      }
+      .mobile-brand {
+        display: none;
+      }
+      .search-wrap {
+        height: 52px;
+        flex: 1;
+        min-width: 120px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 18px;
+        background: #efefef;
+        border: 2px solid transparent;
+        border-radius: 28px;
+        transition:
+          background 0.15s,
+          border-color 0.15s;
+      }
+      .search-wrap:hover {
+        background: #e8e8e8;
+      }
+      .search-wrap:focus-within {
+        background: white;
+        border-color: #8c8c8c;
+      }
+      .search-wrap svg {
+        width: 21px;
+        height: 21px;
+        color: #5f5f5f;
+        flex: 0 0 auto;
+      }
+      .search-wrap input {
+        width: 100%;
+        min-width: 0;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        font-size: 16px;
+        color: #333;
+      }
+      .search-wrap input::placeholder {
+        color: #767676;
+      }
+      .top-action {
+        width: 44px;
+        height: 44px;
+        border: 0;
+        background: transparent;
+        color: #5f5f5f;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        transition: background 0.15s;
+      }
+      .top-action:hover {
+        background: var(--soft);
+      }
+      .top-action svg {
+        width: 24px;
+        height: 24px;
+      }
+      .profile-trigger {
+        border: 0;
+        padding: 4px;
+        background: transparent;
+        border-radius: 50%;
+      }
+      .profile-trigger img {
+        display: block;
+        width: 34px;
+        height: 34px;
+        object-fit: cover;
+        border-radius: 50%;
+      }
+      .chevron {
+        width: 17px;
+        height: 17px;
+        color: #767676;
+        margin-left: -9px;
+      }
+      .profile-menu {
+        display: none;
+        position: absolute;
+        right: 25px;
+        top: 72px;
+        width: 230px;
+        padding: 8px;
+        border-radius: 18px;
+        background: white;
+        box-shadow: var(--shadow);
+        border: 1px solid #eee;
+        z-index: 40;
+      }
+      .profile-menu.open {
+        display: block;
+      }
+      .profile-menu .menu-head {
+        padding: 12px;
+        border-bottom: 1px solid #eee;
+        margin-bottom: 5px;
+      }
+      .profile-menu strong {
+        display: block;
+        font-size: 14px;
+      }
+      .profile-menu small {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .profile-menu button {
+        display: block;
+        width: 100%;
+        text-align: left;
+        border: 0;
+        background: transparent;
+        padding: 11px 12px;
+        border-radius: 10px;
+        font-size: 14px;
+      }
+      .profile-menu button:hover {
+        background: #f5f5f5;
+      }
+
+      /* Feed */
+      .feed {
+        max-width: 1740px;
+        padding: 3px 31px 60px;
+        margin: 0 auto;
+      }
+      .feed-tabs {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin: 2px 0 23px;
+      }
+      .feed-tab {
+        background: transparent;
+        border: 0;
+        padding: 11px 12px 12px;
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        position: relative;
+        border-radius: 10px;
+      }
+      .feed-tab:hover {
+        background: #f5f5f5;
+      }
+      .feed-tab.active::after {
+        content: "";
+        height: 3px;
+        width: 28px;
+        border-radius: 3px;
+        background: var(--ink);
+        position: absolute;
+        left: 50%;
+        bottom: 2px;
+        transform: translateX(-50%);
+      }
+      .section-note {
+        text-align: center;
+        color: #767676;
+        font-size: 13px;
+        margin: -8px 0 20px;
+        display: none;
+      }
+      .masonry {
+        column-count: 5;
+        column-gap: 16px;
+      }
+      .pin-card {
+        display: inline-block;
+        width: 100%;
+        margin: 0 0 25px;
+        break-inside: avoid;
+        vertical-align: top;
+        border-radius: 17px;
+        overflow: visible;
+        position: relative;
+        cursor: zoom-in;
+      }
+      .pin-image-wrap {
+        width: 100%;
+        border-radius: 17px;
+        overflow: hidden;
+        position: relative;
+        background: #eee;
+        isolation: isolate;
+      }
+      .pin-image {
+        display: block;
+        width: 100%;
+        height: auto;
+        min-height: 125px;
+        object-fit: cover;
+        transition: transform 0.28s ease;
+      }
+      .pin-card:hover .pin-image {
+        transform: scale(1.025);
+      }
+      .pin-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 12px;
+        opacity: 0;
+        transition: opacity 0.17s;
+        background: linear-gradient(
+          180deg,
+          rgba(0, 0, 0, 0.28),
+          transparent 34%,
+          transparent 63%,
+          rgba(0, 0, 0, 0.18)
+        );
+      }
+      .pin-card:hover .pin-overlay,
+      .pin-card:focus-within .pin-overlay {
+        opacity: 1;
+      }
+      .overlay-top {
+        display: flex;
+        justify-content: flex-end;
+      }
+      .save-btn {
+        background: var(--red);
+        color: #fff;
+        border: 0;
+        border-radius: 22px;
+        padding: 12px 17px;
+        font-size: 14px;
+        font-weight: 700;
+        min-width: 73px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition:
+          background 0.15s,
+          transform 0.15s;
+      }
+      .save-btn:hover {
+        background: var(--red-dark);
+        transform: scale(1.03);
+      }
+      .save-btn.saved {
+        background: #111;
+      }
+      .overlay-bottom {
+        display: flex;
+        justify-content: flex-end;
+        gap: 7px;
+      }
+      .round-action {
+        border: 0;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.94);
+        color: #111;
+        display: grid;
+        place-items: center;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+      }
+      .round-action:hover {
+        background: #fff;
+        transform: scale(1.05);
+      }
+      .round-action svg {
+        width: 17px;
+        height: 17px;
+      }
+      .pin-meta {
+        padding: 8px 3px 0;
+      }
+      .pin-title {
+        font-size: 14px;
+        line-height: 1.35;
+        font-weight: 600;
+        margin: 0 0 7px;
+        letter-spacing: -0.1px;
+      }
+      .pin-creator {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        color: #767676;
+        font-size: 12px;
+      }
+      .creator-avatar {
+        width: 23px;
+        height: 23px;
+        object-fit: cover;
+        border-radius: 50%;
+      }
+      .empty-state {
+        display: none;
+        text-align: center;
+        padding: 80px 20px;
+        color: #555;
+      }
+      .empty-state strong {
+        display: block;
+        color: #111;
+        font-size: 20px;
+        margin-bottom: 8px;
+      }
+
+      /* Toast */
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 28px;
+        transform: translate(-50%, 20px);
+        color: #fff;
+        background: #222;
+        padding: 13px 18px;
+        border-radius: 30px;
+        font-size: 14px;
+        font-weight: 600;
+        box-shadow: var(--shadow);
+        opacity: 0;
+        pointer-events: none;
+        z-index: 100;
+        transition:
+          opacity 0.22s,
+          transform 0.22s;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+
+      /* Modals */
+      .modal-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        padding: 24px;
+        background: rgba(0, 0, 0, 0.46);
+        align-items: center;
+        justify-content: center;
+      }
+      .modal-backdrop.open {
+        display: flex;
+      }
+      .modal {
+        width: min(900px, 100%);
+        max-height: min(850px, 92vh);
+        overflow: auto;
+        background: white;
+        border-radius: 26px;
+        box-shadow: 0 18px 70px rgba(0, 0, 0, 0.25);
+        position: relative;
+      }
+      .modal-close {
+        position: absolute;
+        right: 17px;
+        top: 17px;
+        z-index: 3;
+        width: 40px;
+        height: 40px;
+        border: 0;
+        background: rgba(255, 255, 255, 0.92);
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+      }
+      .modal-close:hover {
+        background: #eee;
+      }
+      .modal-close svg {
+        width: 21px;
+        height: 21px;
+      }
+      .detail-layout {
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        min-height: 500px;
+      }
+      .detail-image {
+        min-height: 420px;
+        background: #eee;
+        border-radius: 26px 0 0 26px;
+        overflow: hidden;
+        display: grid;
+        place-items: center;
+      }
+      .detail-image img {
+        display: block;
+        max-width: 100%;
+        max-height: 78vh;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .detail-content {
+        padding: 44px 35px 30px;
+      }
+      .detail-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 25px;
+      }
+      .detail-more {
+        display: flex;
+        gap: 9px;
+      }
+      .detail-content h2 {
+        font-size: 27px;
+        line-height: 1.2;
+        margin: 0 0 12px;
+        letter-spacing: -0.7px;
+      }
+      .detail-content p {
+        line-height: 1.55;
+        color: #555;
+        font-size: 15px;
+        margin: 0 0 25px;
+      }
+      .detail-author {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .detail-author img {
+        width: 38px;
+        height: 38px;
+        object-fit: cover;
+        border-radius: 50%;
+      }
+      .create-modal {
+        width: min(760px, 100%);
+        padding: 29px 34px 34px;
+      }
+      .create-modal h2 {
+        margin: 3px 0 7px;
+        font-size: 25px;
+        letter-spacing: -0.5px;
+      }
+      .create-modal .sub {
+        margin: 0 0 24px;
+        color: #767676;
+        font-size: 14px;
+      }
+      .create-grid {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 28px;
+      }
+      .upload-box {
+        min-height: 300px;
+        border: 2px dashed #c9c9c9;
+        border-radius: 17px;
+        background: #f7f7f7;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+        text-align: center;
+        cursor: pointer;
+        overflow: hidden;
+        position: relative;
+      }
+      .upload-box:hover {
+        background: #f0f0f0;
+        border-color: #999;
+      }
+      .upload-box svg {
+        width: 35px;
+        height: 35px;
+        color: #555;
+        margin-bottom: 13px;
+      }
+      .upload-box strong {
+        font-size: 14px;
+      }
+      .upload-box small {
+        display: block;
+        color: #777;
+        font-size: 12px;
+        margin-top: 7px;
+        line-height: 1.4;
+      }
+      .upload-box img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: none;
+      }
+      .upload-box.has-image img {
+        display: block;
+      }
+      .upload-box.has-image .upload-copy {
+        display: none;
+      }
+      .form-fields label {
+        display: block;
+        font-size: 13px;
+        font-weight: 700;
+        margin: 0 0 8px;
+      }
+      .form-fields input,
+      .form-fields textarea {
+        width: 100%;
+        border: 1px solid #cdcdcd;
+        border-radius: 12px;
+        padding: 13px 14px;
+        outline: 0;
+        margin-bottom: 18px;
+        font-size: 14px;
+        color: #222;
+        background: #fff;
+      }
+      .form-fields input:focus,
+      .form-fields textarea:focus {
+        border: 2px solid #333;
+        padding: 12px 13px;
+      }
+      .form-fields textarea {
+        min-height: 100px;
+        resize: vertical;
+      }
+      .publish-row {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 2px;
+      }
+      .publish-btn {
+        background: var(--red);
+        color: #fff;
+        border: 0;
+        border-radius: 24px;
+        padding: 13px 22px;
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .publish-btn:hover {
+        background: var(--red-dark);
+      }
+      .publish-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      @media (max-width: 1400px) {
+        .masonry {
+          column-count: 4;
+        }
+      }
+      @media (max-width: 1100px) {
+        .topbar {
+          padding: 13px 22px;
+        }
+        .feed {
+          padding-left: 22px;
+          padding-right: 22px;
+        }
+        .masonry {
+          column-count: 3;
+        }
+      }
+
+      /* ============ MOBILE VIEW (Pixel Frame) ============ */
+      .mobile-view-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 40px 20px 60px;
+        min-height: calc(100vh - 80px);
+      }
+
+      /* Pixel Phone Frame */
+      .pixel-frame {
+        position: relative;
+        width: 393px;
+        height: 852px;
+        background: #1a1a1a;
+        border-radius: 55px;
+        padding: 14px;
+        box-shadow:
+          0 0 0 2px #2a2a2a,
+          0 0 0 4px #0a0a0a,
+          0 40px 80px rgba(0, 0, 0, 0.35),
+          0 15px 40px rgba(0, 0, 0, 0.25),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+      }
+
+      /* Side buttons */
+      .pixel-frame::before {
+        content: "";
+        position: absolute;
+        left: -3px;
+        top: 150px;
+        width: 3px;
+        height: 50px;
+        background: #0a0a0a;
+        border-radius: 3px 0 0 3px;
+      }
+      .pixel-frame::after {
+        content: "";
+        position: absolute;
+        left: -3px;
+        top: 220px;
+        width: 3px;
+        height: 85px;
+        background: #0a0a0a;
+        border-radius: 3px 0 0 3px;
+      }
+      .power-btn {
+        position: absolute;
+        right: -3px;
+        top: 180px;
+        width: 3px;
+        height: 95px;
+        background: #0a0a0a;
+        border-radius: 0 3px 3px 0;
+      }
+
+      .screen {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background: #fff;
+        border-radius: 42px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Status bar */
+      .status-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 44px;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 26px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #111;
+        background: transparent;
+        pointer-events: none;
+      }
+      .status-left {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .status-right {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .status-right svg {
+        width: 16px;
+        height: 16px;
+      }
+      .status-time {
+        font-weight: 700;
+        font-size: 15px;
+      }
+
+      /* Punch hole camera */
+      .punch-hole {
+        position: absolute;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 12px;
+        height: 12px;
+        background: #000;
+        border-radius: 50%;
+        z-index: 51;
+        box-shadow:
+          inset 0 0 0 1px #222,
+          0 0 0 2px rgba(0, 0, 0, 0.1);
+      }
+      .punch-hole::after {
+        content: "";
+        position: absolute;
+        inset: 3px;
+        background: radial-gradient(circle at 30% 30%, #2a3a5a, #000);
+        border-radius: 50%;
+      }
+
+      /* Mobile app content */
+      .mobile-app {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-top: 44px;
+        background: #fff;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .mobile-app::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* Mobile top bar */
+      .mobile-topbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px 14px;
+        background: #fff;
+        position: sticky;
+        top: 0;
+        z-index: 20;
+      }
+      .mobile-logo {
+        width: 32px;
+        height: 32px;
+        display: grid;
+        place-items: center;
+        color: var(--red);
+        flex: 0 0 auto;
+      }
+      .mobile-logo svg {
+        width: 24px;
+        height: 24px;
+      }
+      .mobile-search {
+        flex: 1;
+        height: 42px;
+        background: #efefef;
+        border-radius: 22px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 14px;
+        border: 1.5px solid transparent;
+        transition: all 0.15s;
+      }
+      .mobile-search:focus-within {
+        background: #fff;
+        border-color: #8c8c8c;
+      }
+      .mobile-search svg {
+        width: 18px;
+        height: 18px;
+        color: #5f5f5f;
+        flex: 0 0 auto;
+      }
+      .mobile-search input {
+        flex: 1;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        font-size: 14px;
+        color: #333;
+      }
+      .mobile-search input::placeholder {
+        color: #767676;
+      }
+      .mobile-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex: 0 0 auto;
+      }
+
+      /* Mobile tabs */
+      .mobile-tabs {
+        display: flex;
+        gap: 6px;
+        padding: 4px 14px 10px;
+        overflow-x: auto;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .mobile-tabs::-webkit-scrollbar {
+        display: none;
+      }
+      .mobile-tab {
+        border: 0;
+        background: #f0f0f0;
+        padding: 8px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #333;
+        white-space: nowrap;
+        transition: all 0.15s;
+      }
+      .mobile-tab.active {
+        background: #111;
+        color: #fff;
+      }
+
+      /* Mobile masonry */
+      .mobile-feed {
+        padding: 4px 8px 120px;
+      }
+      .mobile-masonry {
+        column-count: 2;
+        column-gap: 8px;
+      }
+      .mobile-pin-card {
+        display: inline-block;
+        width: 100%;
+        margin-bottom: 8px;
+        break-inside: avoid;
+        vertical-align: top;
+        border-radius: 16px;
+        overflow: visible;
+        position: relative;
+        cursor: pointer;
+      }
+      .mobile-pin-image-wrap {
+        width: 100%;
+        border-radius: 16px;
+        overflow: hidden;
+        position: relative;
+        background: #eee;
+      }
+      .mobile-pin-image {
+        display: block;
+        width: 100%;
+        height: auto;
+        min-height: 100px;
+        object-fit: cover;
+      }
+      .mobile-pin-overlay {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        z-index: 2;
+      }
+      .mobile-save-btn {
+        background: var(--red);
+        color: #fff;
+        border: 0;
+        border-radius: 18px;
+        padding: 8px 13px;
+        font-size: 13px;
+        font-weight: 700;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+      }
+      .mobile-save-btn.saved {
+        background: #111;
+      }
+      .mobile-pin-meta {
+        padding: 7px 4px 4px;
+      }
+      .mobile-pin-title {
+        font-size: 12px;
+        line-height: 1.3;
+        font-weight: 500;
+        margin: 0 0 5px;
+        color: #111;
+        display: -webkit-box;
+        line-clamp: 2;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .mobile-pin-creator {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        color: #767676;
+        font-size: 11px;
+      }
+      .mobile-creator-avatar {
+        width: 18px;
+        height: 18px;
+        object-fit: cover;
+        border-radius: 50%;
+      }
+
+      /* Mobile bottom nav */
+      .mobile-bottom-nav {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 70px;
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(14px);
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        padding: 0 10px;
+        padding-bottom: 8px;
+        z-index: 30;
+      }
+      .mobile-nav-item {
+        display: grid;
+        place-items: center;
+        width: 48px;
+        height: 48px;
+        border: 0;
+        background: transparent;
+        color: #111;
+        border-radius: 50%;
+        transition: background 0.15s;
+        position: relative;
+      }
+      .mobile-nav-item:hover {
+        background: #f0f0f0;
+      }
+      .mobile-nav-item.active {
+        color: var(--red);
+      }
+      .mobile-nav-item svg {
+        width: 24px;
+        height: 24px;
+      }
+      .mobile-nav-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid transparent;
+      }
+      .mobile-nav-item.active .mobile-nav-avatar {
+        border-color: var(--red);
+      }
+      .create-fab {
+        background: var(--red);
+        color: #fff;
+      }
+      .create-fab:hover {
+        background: var(--red-dark);
+      }
+      .create-fab svg {
+        width: 22px;
+        height: 22px;
+      }
+
+      /* Home indicator */
+      .home-indicator {
+        position: absolute;
+        bottom: 6px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 120px;
+        height: 5px;
+        background: #000;
+        border-radius: 5px;
+        z-index: 40;
+      }
+
+      /* Mobile modals */
+      .mobile-modal-backdrop {
+        display: none;
+        position: absolute;
+        inset: 0;
+        z-index: 60;
+        background: rgba(0, 0, 0, 0.55);
+        align-items: flex-end;
+        justify-content: center;
+      }
+      .mobile-modal-backdrop.open {
+        display: flex;
+      }
+      .mobile-modal {
+        width: 100%;
+        max-height: 90%;
+        background: #fff;
+        border-radius: 24px 24px 0 0;
+        overflow: hidden;
+        animation: slideUp 0.3s ease;
+        position: relative;
+      }
+      @keyframes slideUp {
+        from {
+          transform: translateY(100%);
+        }
+        to {
+          transform: translateY(0);
+        }
+      }
+      .mobile-modal-close {
+        position: absolute;
+        right: 14px;
+        top: 14px;
+        width: 34px;
+        height: 34px;
+        border: 0;
+        background: rgba(255, 255, 255, 0.92);
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        z-index: 5;
+      }
+      .mobile-modal-close svg {
+        width: 18px;
+        height: 18px;
+      }
+      .mobile-detail-img {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .mobile-detail-content {
+        padding: 16px 18px 30px;
+      }
+      .mobile-detail-content h2 {
+        font-size: 20px;
+        line-height: 1.25;
+        margin: 0 0 10px;
+      }
+      .mobile-detail-content p {
+        line-height: 1.5;
+        color: #555;
+        font-size: 14px;
+        margin: 0 0 18px;
+      }
+      .mobile-detail-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+      .mobile-detail-save {
+        background: var(--red);
+        color: #fff;
+        border: 0;
+        border-radius: 22px;
+        padding: 11px 22px;
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .mobile-detail-save.saved {
+        background: #111;
+      }
+
+      /* Mobile toast */
+      .mobile-toast {
+        position: absolute;
+        left: 50%;
+        bottom: 90px;
+        transform: translate(-50%, 20px);
+        color: #fff;
+        background: #222;
+        padding: 10px 16px;
+        border-radius: 24px;
+        font-size: 13px;
+        font-weight: 600;
+        box-shadow: var(--shadow);
+        opacity: 0;
+        pointer-events: none;
+        z-index: 100;
+        transition:
+          opacity 0.22s,
+          transform 0.22s;
+        white-space: nowrap;
+      }
+      .mobile-toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+
+      /* Device info card */
+      .device-info {
+        max-width: 393px;
+        margin: 30px auto 0;
+        padding: 14px 18px;
+        background: #fff;
+        border-radius: 12px;
+        font-size: 12px;
+        color: #555;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      }
+      .device-info strong {
+        color: #111;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ============ DEVICE SWITCHER TOOLBAR ============ -->
+    <div class="device-toolbar">
+      <h1>Pinspire Preview</h1>
+      <div class="switcher">
+        <button id="switchDesktop" class="active">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="2" y="3" width="20" height="14" rx="2" />
+            <line x1="8" y1="21" x2="16" y2="21" />
+            <line x1="12" y1="17" x2="12" y2="21" />
+          </svg>
+          Desktop
+        </button>
+        <button id="switchMobile">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="5" y="2" width="14" height="20" rx="2.5" />
+            <line x1="12" y1="18" x2="12" y2="18" stroke-linecap="round" />
+          </svg>
+          Mobile (Pixel)
+        </button>
+      </div>
+      <span class="device-hint" id="deviceHint">Viewing: Desktop Web</span>
+    </div>
+
+    <!-- ============ DESKTOP VIEW ============ -->
+    <div class="view-container active" id="desktopView">
+      <div class="app-shell">
+        <aside class="sidebar" aria-label="Navigasi utama">
+          <button
+            class="brand-mark"
+            aria-label="Pinspire beranda"
+            data-nav="Beranda"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path
+                d="M12 0C5.37 0 0 5.37 0 12c0 4.93 2.98 9.16 7.23 11-.03-.72-.01-1.58.18-2.36l1.32-5.59s-.33-.66-.33-1.63c0-1.53.89-2.67 2-2.67.94 0 1.4.71 1.4 1.55 0 .94-.6 2.35-.91 3.65-.26 1.09.55 1.98 1.63 1.98 1.95 0 3.45-2.06 3.45-5.03 0-2.63-1.89-4.47-4.59-4.47-3.13 0-4.97 2.35-4.97 4.78 0 .95.36 1.97.81 2.52.09.11.1.21.07.32l-.3 1.22c-.05.2-.16.24-.37.15-1.37-.64-2.23-2.64-2.23-4.25 0-3.46 2.52-6.63 7.27-6.63 3.82 0 6.79 2.72 6.79 6.35 0 3.79-2.39 6.84-5.7 6.84-1.11 0-2.15-.58-2.51-1.27l-.68 2.59c-.25.95-.93 2.14-1.39 2.87.98.3 2.01.46 3.08.46 6.63 0 12-5.37 12-12S18.63 0 12 0Z"
+              />
+            </svg>
+          </button>
+          <button
+            class="side-link active"
+            data-nav="Beranda"
+            aria-label="Beranda"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"
+              />
+            </svg>
+            <span class="side-tooltip">Beranda</span>
+          </button>
+          <button class="side-link" data-nav="Jelajahi" aria-label="Jelajahi">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="11" cy="11" r="7.5" />
+              <path d="m16.5 16.5 4 4M13.8 8.2l-1.6 4-4 1.6 1.6-4z" />
+            </svg>
+            <span class="side-tooltip">Jelajahi</span>
+          </button>
+          <button class="side-link" id="createNav" aria-label="Buat pin">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            <span class="side-tooltip">Buat Pin</span>
+          </button>
+          <button
+            class="side-link"
+            data-nav="Notifikasi"
+            aria-label="Notifikasi"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"
+              />
+            </svg>
+            <span class="side-tooltip">Notifikasi</span>
+          </button>
+          <button class="side-link" data-nav="Pesan" aria-label="Pesan">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z"
+              />
+            </svg>
+            <span class="side-tooltip">Pesan</span>
+          </button>
+          <div class="side-spacer"></div>
+          <button
+            class="side-link settings-link"
+            data-nav="Pengaturan"
+            aria-label="Pengaturan"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="m19.4 15 .1.1 1.1.9-1.1 1.9-1.3-.5a8 8 0 0 1-1.7 1l-.2 1.4h-2.2l-.2-1.4a8 8 0 0 1-1.9-1l-1.3.5-1.1-1.9 1.1-.9a7 7 0 0 1 0-2l-1.1-.9 1.1-1.9 1.3.5a8 8 0 0 1 1.9-1l.2-1.4h2.2l.2 1.4a8 8 0 0 1 1.7 1l1.3-.5 1.1 1.9-1.1.9a7 7 0 0 1 0 2z"
+                transform="translate(-1 -1)"
+              />
+            </svg>
+            <span class="side-tooltip">Pengaturan</span>
+          </button>
+          <button class="side-link" data-nav="Profil" aria-label="Profil">
+            <img
+              class="avatar-mini"
+              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces"
+              alt="Foto profil"
+            />
+            <span class="side-tooltip">Profil</span>
+          </button>
+        </aside>
+
+        <main class="main-area">
+          <header class="topbar">
+            <div class="mobile-brand" aria-label="Pinspire">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  d="M12 0C5.37 0 0 5.37 0 12c0 4.93 2.98 9.16 7.23 11-.03-.72-.01-1.58.18-2.36l1.32-5.59s-.33-.66-.33-1.63c0-1.53.89-2.67 2-2.67.94 0 1.4.71 1.4 1.55 0 .94-.6 2.35-.91 3.65-.26 1.09.55 1.98 1.63 1.98 1.95 0 3.45-2.06 3.45-5.03 0-2.63-1.89-4.47-4.59-4.47-3.13 0-4.97 2.35-4.97 4.78 0 .95.36 1.97.81 2.52.09.11.1.21.07.32l-.3 1.22c-.05.2-.16.24-.37.15-1.37-.64-2.23-2.64-2.23-4.25 0-3.46 2.52-6.63 7.27-6.63 3.82 0 6.79 2.72 6.79 6.35 0 3.79-2.39 6.84-5.7 6.84-1.11 0-2.15-.58-2.51-1.27l-.68 2.59c-.25.95-.93 2.14-1.39 2.87.98.3 2.01.46 3.08.46 6.63 0 12-5.37 12-12S18.63 0 12 0Z"
+                />
+              </svg>
+            </div>
+            <label class="search-wrap" for="searchInput">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              >
+                <circle cx="11" cy="11" r="7.5" />
+                <path d="m16.5 16.5 4 4" />
+              </svg>
+              <input
+                id="searchInput"
+                type="search"
+                placeholder="Cari ide, inspirasi, dan lainnya"
+                autocomplete="off"
+              />
+            </label>
+            <button
+              class="top-action"
+              id="notificationBtn"
+              aria-label="Notifikasi"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.9"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"
+                />
+              </svg>
+            </button>
+            <button class="top-action" id="messageBtn" aria-label="Pesan">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.9"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z"
+                />
+              </svg>
+            </button>
+            <button
+              class="profile-trigger"
+              id="profileTrigger"
+              aria-label="Menu profil"
+              aria-expanded="false"
+            >
+              <img
+                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces"
+                alt="Profil"
+              />
+            </button>
+            <svg
+              class="chevron"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+            >
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+            <div class="profile-menu" id="profileMenu">
+              <div class="menu-head">
+                <strong>Alex Morgan</strong>
+                <small>@alexmorgan · Personal</small>
+              </div>
+              <button data-menu="Profil">Lihat profil</button>
+              <button data-menu="Papan tersimpan">Papan tersimpan</button>
+              <button data-menu="Pengaturan">Pengaturan</button>
+              <button data-menu="Bantuan">Pusat bantuan</button>
+            </div>
+          </header>
+
+          <section class="feed" aria-label="Inspirasi">
+            <nav class="feed-tabs" aria-label="Pilihan feed">
+              <button class="feed-tab active" data-feed="Untuk Anda">
+                Untuk Anda
+              </button>
+              <button class="feed-tab" data-feed="Mengikuti">Mengikuti</button>
+            </nav>
+            <p class="section-note" id="sectionNote">
+              Ide pilihan yang mungkin Anda sukai
+            </p>
+            <section class="masonry" id="masonry" aria-live="polite"></section>
+            <div class="empty-state" id="emptyState">
+              <strong>Tidak ada pin yang ditemukan</strong>
+              Coba kata kunci lain untuk menemukan inspirasi.
+            </div>
+          </section>
+        </main>
+      </div>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+      <!-- Pin detail -->
+      <div
+        class="modal-backdrop"
+        id="detailBackdrop"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Detail pin"
+      >
+        <div class="modal" id="detailModal">
+          <button class="modal-close" data-close="detail" aria-label="Tutup">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="m18 6-12 12M6 6l12 12" />
+            </svg>
+          </button>
+          <div class="detail-layout">
+            <div class="detail-image"><img id="detailImg" src="" alt="" /></div>
+            <div class="detail-content">
+              <div class="detail-actions">
+                <div class="detail-more">
+                  <button
+                    class="round-action"
+                    id="detailShare"
+                    aria-label="Bagikan"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    >
+                      <circle cx="18" cy="5" r="3" />
+                      <circle cx="6" cy="12" r="3" />
+                      <circle cx="18" cy="19" r="3" />
+                      <path d="m8.6 10.7 6.8-4.4M8.6 13.3l6.8 4.4" />
+                    </svg>
+                  </button>
+                  <button
+                    class="round-action"
+                    id="detailMore"
+                    aria-label="Lainnya"
+                  >
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="5" cy="12" r="1.7" />
+                      <circle cx="12" cy="12" r="1.7" />
+                      <circle cx="19" cy="12" r="1.7" />
+                    </svg>
+                  </button>
+                </div>
+                <button class="save-btn" id="detailSave">Simpan</button>
+              </div>
+              <h2 id="detailTitle"></h2>
+              <p id="detailDescription"></p>
+              <div class="detail-author">
+                <img id="detailAvatar" src="" alt="" />
+                <span id="detailCreator"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Create pin -->
+      <div
+        class="modal-backdrop"
+        id="createBackdrop"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="createTitle"
+      >
+        <div class="modal create-modal">
+          <button class="modal-close" data-close="create" aria-label="Tutup">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="m18 6-12 12M6 6l12 12" />
+            </svg>
+          </button>
+          <h2 id="createTitle">Buat Pin</h2>
+          <p class="sub">Bagikan ide dan inspirasi Anda kepada dunia.</p>
+          <form id="createForm">
+            <div class="create-grid">
+              <label class="upload-box" id="uploadBox" for="imageUpload">
+                <div class="upload-copy">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M12 16V4m-5 5 5-5 5 5" />
+                    <path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
+                  </svg>
+                  <strong>Pilih gambar</strong>
+                  <small>Rekomendasi: gunakan gambar berkualitas tinggi</small>
+                </div>
+                <img id="uploadPreview" alt="Pratinjau gambar" />
+                <input id="imageUpload" type="file" accept="image/*" hidden />
+              </label>
+              <div class="form-fields">
+                <label for="pinTitleInput">Judul</label>
+                <input
+                  id="pinTitleInput"
+                  type="text"
+                  maxlength="90"
+                  placeholder="Tambahkan judul"
+                  required
+                />
+                <label for="pinDescriptionInput">Deskripsi</label>
+                <textarea
+                  id="pinDescriptionInput"
+                  maxlength="400"
+                  placeholder="Ceritakan tentang Pin Anda"
+                ></textarea>
+                <label for="pinLinkInput">Tautan tujuan (opsional)</label>
+                <input id="pinLinkInput" type="url" placeholder="https://..." />
+                <label for="pinBoardInput">Papan</label>
+                <input id="pinBoardInput" type="text" value="Ide favorit" />
+              </div>
+            </div>
+            <div class="publish-row">
+              <button
+                class="publish-btn"
+                id="publishBtn"
+                type="submit"
+                disabled
+              >
+                Terbitkan
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ MOBILE VIEW (Pixel Phone Frame) ============ -->
+    <div class="view-container" id="mobileView">
+      <div class="mobile-view-wrap">
+        <div class="pixel-frame">
+          <div class="power-btn"></div>
+          <div class="screen">
+            <!-- Status bar -->
+            <div class="status-bar">
+              <div class="status-left">
+                <span class="status-time" id="statusTime">9:41</span>
+              </div>
+              <div class="punch-hole"></div>
+              <div class="status-right">
+                <svg viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M1 10h2v3H1zm4-2h2v5H5zm4-2h2v7H9zm4-2h2v9h-2z" />
+                </svg>
+                <svg viewBox="0 0 16 16" fill="currentColor">
+                  <path
+                    d="M8 3C5.5 3 3.2 4 1.5 5.7l1 1.1C3.9 5.4 5.9 4.5 8 4.5s4.1.9 5.5 2.3l1-1.1C12.8 4 10.5 3 8 3zm0 3c-1.7 0-3.2.7-4.3 1.7l1 1.1C5.5 8.1 6.7 7.5 8 7.5s2.5.6 3.3 1.3l1-1.1C11.2 6.7 9.7 6 8 6zm0 3c-.9 0-1.8.4-2.4 1l1 1.1c.4-.3.9-.6 1.4-.6s1 .3 1.4.6l1-1.1c-.6-.6-1.5-1-2.4-1zm0 2.5c-.4 0-.7.3-.7.7s.3.7.7.7.7-.3.7-.7-.3-.7-.7-.7z"
+                  />
+                </svg>
+                <svg viewBox="0 0 24 12" fill="currentColor">
+                  <rect
+                    x="0"
+                    y="0"
+                    width="22"
+                    height="12"
+                    rx="3"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1"
+                  />
+                  <rect x="2" y="2" width="18" height="8" rx="1.5" />
+                  <rect x="23" y="3.5" width="1.5" height="5" rx="0.5" />
+                </svg>
+              </div>
+            </div>
+
+            <!-- Mobile app -->
+            <div class="mobile-app">
+              <div class="mobile-topbar">
+                <div class="mobile-logo">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                      d="M12 0C5.37 0 0 5.37 0 12c0 4.93 2.98 9.16 7.23 11-.03-.72-.01-1.58.18-2.36l1.32-5.59s-.33-.66-.33-1.63c0-1.53.89-2.67 2-2.67.94 0 1.4.71 1.4 1.55 0 .94-.6 2.35-.91 3.65-.26 1.09.55 1.98 1.63 1.98 1.95 0 3.45-2.06 3.45-5.03 0-2.63-1.89-4.47-4.59-4.47-3.13 0-4.97 2.35-4.97 4.78 0 .95.36 1.97.81 2.52.09.11.1.21.07.32l-.3 1.22c-.05.2-.16.24-.37.15-1.37-.64-2.23-2.64-2.23-4.25 0-3.46 2.52-6.63 7.27-6.63 3.82 0 6.79 2.72 6.79 6.35 0 3.79-2.39 6.84-5.7 6.84-1.11 0-2.15-.58-2.51-1.27l-.68 2.59c-.25.95-.93 2.14-1.39 2.87.98.3 2.01.46 3.08.46 6.63 0 12-5.37 12-12S18.63 0 12 0Z"
+                    />
+                  </svg>
+                </div>
+                <label class="mobile-search">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  >
+                    <circle cx="11" cy="11" r="7.5" />
+                    <path d="m16.5 16.5 4 4" />
+                  </svg>
+                  <input
+                    id="mobileSearchInput"
+                    type="search"
+                    placeholder="Cari di Pinspire"
+                    autocomplete="off"
+                  />
+                </label>
+                <img
+                  class="mobile-avatar"
+                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces"
+                  alt=""
+                />
+              </div>
+
+              <div class="mobile-tabs">
+                <button class="mobile-tab active" data-feed="Semua">
+                  Semua
+                </button>
+                <button class="mobile-tab" data-feed="Interior">
+                  Interior
+                </button>
+                <button class="mobile-tab" data-feed="Travel">Travel</button>
+                <button class="mobile-tab" data-feed="Fashion">Fashion</button>
+                <button class="mobile-tab" data-feed="Nature">Nature</button>
+              </div>
+
+              <div class="mobile-feed">
+                <div class="mobile-masonry" id="mobileMasonry"></div>
+              </div>
+            </div>
+
+            <!-- Bottom nav -->
+            <div class="mobile-bottom-nav">
+              <button class="mobile-nav-item active" aria-label="Beranda">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z" />
+                </svg>
+              </button>
+              <button class="mobile-nav-item" aria-label="Jelajahi">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="11" cy="11" r="7.5" />
+                  <path d="m16.5 16.5 4 4" />
+                </svg>
+              </button>
+              <button
+                class="mobile-nav-item create-fab"
+                id="mobileCreateBtn"
+                aria-label="Buat"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                >
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </button>
+              <button class="mobile-nav-item" aria-label="Notifikasi">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"
+                  />
+                </svg>
+              </button>
+              <button class="mobile-nav-item" aria-label="Profil">
+                <img
+                  class="mobile-nav-avatar"
+                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces"
+                  alt=""
+                />
+              </button>
+            </div>
+
+            <!-- Home indicator -->
+            <div class="home-indicator"></div>
+
+            <!-- Mobile detail modal -->
+            <div class="mobile-modal-backdrop" id="mobileDetailBackdrop">
+              <div class="mobile-modal">
+                <button
+                  class="mobile-modal-close"
+                  id="mobileModalClose"
+                  aria-label="Tutup"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                  >
+                    <path d="m18 6-12 12M6 6l12 12" />
+                  </svg>
+                </button>
+                <img
+                  id="mobileDetailImg"
+                  class="mobile-detail-img"
+                  src=""
+                  alt=""
+                />
+                <div class="mobile-detail-content">
+                  <div class="mobile-detail-actions">
+                    <div style="display: flex; gap: 8px">
+                      <button class="round-action" aria-label="Bagikan">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                        >
+                          <circle cx="18" cy="5" r="3" />
+                          <circle cx="6" cy="12" r="3" />
+                          <circle cx="18" cy="19" r="3" />
+                          <path d="m8.6 10.7 6.8-4.4M8.6 13.3l6.8 4.4" />
+                        </svg>
+                      </button>
+                      <button class="round-action" aria-label="Lainnya">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                          <circle cx="5" cy="12" r="1.7" />
+                          <circle cx="12" cy="12" r="1.7" />
+                          <circle cx="19" cy="12" r="1.7" />
+                        </svg>
+                      </button>
+                    </div>
+                    <button class="mobile-detail-save" id="mobileDetailSave">
+                      Simpan
+                    </button>
+                  </div>
+                  <h2 id="mobileDetailTitle"></h2>
+                  <p id="mobileDetailDescription"></p>
+                  <div class="detail-author" style="margin-top: 12px">
+                    <img
+                      id="mobileDetailAvatar"
+                      src=""
+                      alt=""
+                      style="width: 34px; height: 34px"
+                    />
+                    <span id="mobileDetailCreator"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mobile toast -->
+            <div
+              class="mobile-toast"
+              id="mobileToast"
+              role="status"
+              aria-live="polite"
+            ></div>
+          </div>
+        </div>
+      </div>
+      <div class="device-info">
+        <strong>Pixel 8 Pro</strong> — 393 × 852px · 20:9 · Android 14
+      </div>
+    </div>
+
+    <script>
+      // ============ DATA ============
+      const avatar =
+        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces";
+      const pins = [
+        {
+          id: 1,
+          title: "Sudut nyaman untuk membaca dan bersantai",
+          description:
+            "Inspirasi sudut baca yang hangat dengan cahaya alami, tekstur kayu, dan sentuhan tanaman hijau.",
+          creator: "Maya Studio",
+          image:
+            "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=900&auto=format&fit=crop&q=85",
+          tags: "interior home decor ruang baca cozy minimalis",
+          height: "portrait",
+        },
+        {
+          id: 2,
+          title: "A quiet morning by the sea",
+          description:
+            "Palet warna biru yang menenangkan dan pemandangan laut untuk memulai hari dengan lebih pelan.",
+          creator: "Sofia Lee",
+          image:
+            "https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=900&auto=format&fit=crop&q=85",
+          tags: "ocean beach travel sea blue nature",
+          height: "landscape",
+        },
+        {
+          id: 3,
+          title: "Minimal workspace inspiration",
+          description:
+            "Meja kerja minimalis yang rapi, fungsional, dan penuh cahaya.",
+          creator: "Studio North",
+          image:
+            "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=900&auto=format&fit=crop&q=85",
+          tags: "workspace desk office minimal technology",
+          height: "landscape",
+        },
+        {
+          id: 4,
+          title: "A little color, a lot of joy",
+          description:
+            "Bunga segar dan warna lembut untuk mempercantik ruang di rumah.",
+          creator: "The Floral Edit",
+          image:
+            "https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=900&auto=format&fit=crop&q=85",
+          tags: "flowers floral garden spring aesthetic",
+          height: "portrait",
+        },
+        {
+          id: 5,
+          title: "Architecture with a softer edge",
+          description:
+            "Bentuk arsitektur modern dengan permainan garis, cahaya, dan bayangan.",
+          creator: "ArchDaily Mood",
+          image:
+            "https://images.unsplash.com/photo-1511818966892-d7d671e672a2?w=900&auto=format&fit=crop&q=85",
+          tags: "architecture building design modern concrete",
+          height: "portrait",
+        },
+        {
+          id: 6,
+          title: "Weekend escape to the mountains",
+          description:
+            "Pemandangan pegunungan untuk inspirasi perjalanan berikutnya.",
+          creator: "Wander Often",
+          image:
+            "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=900&auto=format&fit=crop&q=85",
+          tags: "mountain travel nature landscape adventure",
+          height: "portrait",
+        },
+        {
+          id: 7,
+          title: "Effortless everyday outfit",
+          description:
+            "Inspirasi gaya kasual dengan siluet sederhana dan warna netral.",
+          creator: "Nina K.",
+          image:
+            "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=900&auto=format&fit=crop&q=85",
+          tags: "fashion outfit style streetwear clothing",
+          height: "portrait",
+        },
+        {
+          id: 8,
+          title: "Warm minimal living room",
+          description:
+            "Ruang keluarga dengan palet warna natural, dekorasi sederhana, dan suasana yang nyaman.",
+          creator: "Atelier Home",
+          image:
+            "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=900&auto=format&fit=crop&q=85",
+          tags: "living room interior decor home beige",
+          height: "landscape",
+        },
+        {
+          id: 9,
+          title: "Golden hour in the countryside",
+          description: "Cahaya sore yang lembut menyentuh hamparan alam.",
+          creator: "June Journal",
+          image:
+            "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=900&auto=format&fit=crop&q=85",
+          tags: "nature landscape travel sunset countryside",
+          height: "portrait",
+        },
+        {
+          id: 10,
+          title: "A fresh take on everyday details",
+          description:
+            "Detail kecil yang bisa membuat hari terasa lebih istimewa.",
+          creator: "Elena Rose",
+          image:
+            "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=900&auto=format&fit=crop&q=85",
+          tags: "decor home lifestyle books aesthetic",
+          height: "landscape",
+        },
+        {
+          id: 11,
+          title: "Green corner goals",
+          description:
+            "Koleksi tanaman indoor untuk membuat sudut rumah terasa lebih hidup.",
+          creator: "Plant People",
+          image:
+            "https://images.unsplash.com/photo-1497250681960-ef046c08a56e?w=900&auto=format&fit=crop&q=85",
+          tags: "plants green indoor garden home",
+          height: "portrait",
+        },
+        {
+          id: 12,
+          title: "Creative color palette",
+          description:
+            "Warna-warna cerah sebagai awal dari proyek kreatif berikutnya.",
+          creator: "Color Theory",
+          image:
+            "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=900&auto=format&fit=crop&q=85",
+          tags: "color art design creative palette",
+          height: "portrait",
+        },
+        {
+          id: 13,
+          title: "A small café with big character",
+          description: "Inspirasi desain kafe yang hangat dan mengundang.",
+          creator: "Sunday Spaces",
+          image:
+            "https://images.unsplash.com/photo-1445116572660-236099ec97a0?w=900&auto=format&fit=crop&q=85",
+          tags: "cafe coffee interior restaurant travel",
+          height: "landscape",
+        },
+        {
+          id: 14,
+          title: "Simple details, timeless style",
+          description:
+            "Referensi fashion minimalis yang mudah dipadukan sehari-hari.",
+          creator: "Lena Wardrobe",
+          image:
+            "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=900&auto=format&fit=crop&q=85",
+          tags: "fashion style outfit minimal clothing",
+          height: "portrait",
+        },
+        {
+          id: 15,
+          title: "Dreamy coastline",
+          description:
+            "Warna air laut dan langit yang menjadi inspirasi palet musim panas.",
+          creator: "Coastline Club",
+          image:
+            "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=900&auto=format&fit=crop&q=85",
+          tags: "beach ocean summer travel sea",
+          height: "landscape",
+        },
+        {
+          id: 16,
+          title: "The art of slow living",
+          description:
+            "Ruang sederhana, secangkir kopi, dan waktu untuk diri sendiri.",
+          creator: "Ava Living",
+          image:
+            "https://images.unsplash.com/photo-1511920170033-f8396924c348?w=900&auto=format&fit=crop&q=85",
+          tags: "coffee slow living lifestyle morning",
+          height: "portrait",
+        },
+        {
+          id: 17,
+          title: "Soft tones for a calm bedroom",
+          description:
+            "Paduan linen, tekstur natural, dan warna lembut untuk kamar tidur.",
+          creator: "Room Notes",
+          image:
+            "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=900&auto=format&fit=crop&q=85",
+          tags: "bedroom interior decor neutral home",
+          height: "landscape",
+        },
+        {
+          id: 18,
+          title: "A view worth remembering",
+          description:
+            "Lanskap indah yang mengingatkan kita untuk selalu menjelajah.",
+          creator: "Miles Away",
+          image:
+            "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=900&auto=format&fit=crop&q=85",
+          tags: "travel lake landscape mountains nature",
+          height: "portrait",
+        },
+      ];
+
+      let savedIds = new Set();
+      let selectedPin = null;
+      let uploadedImageData = "";
+      let toastTimer;
+      let mobileToastTimer;
+
+      // ============ ELEMENTS ============
+      const masonry = document.getElementById("masonry");
+      const mobileMasonry = document.getElementById("mobileMasonry");
+      const searchInput = document.getElementById("searchInput");
+      const mobileSearchInput = document.getElementById("mobileSearchInput");
+      const toastEl = document.getElementById("toast");
+      const mobileToastEl = document.getElementById("mobileToast");
+
+      const iconShare =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.7 6.8-4.4M8.6 13.3l6.8 4.4"/></svg>';
+      const iconMore =
+        '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>';
+
+      function escapeHtml(value) {
+        return String(value).replace(
+          /[&<>"']/g,
+          (ch) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[ch],
+        );
+      }
+
+      // ============ TOASTS ============
+      function showToast(message) {
+        toastEl.textContent = message;
+        toastEl.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2300);
+      }
+      function showMobileToast(message) {
+        mobileToastEl.textContent = message;
+        mobileToastEl.classList.add("show");
+        clearTimeout(mobileToastTimer);
+        mobileToastTimer = setTimeout(
+          () => mobileToastEl.classList.remove("show"),
+          2300,
+        );
+      }
+
+      // ============ DESKTOP RENDER ============
+      function renderPins(query = "") {
+        const q = query.trim().toLowerCase();
+        const filtered = pins.filter(
+          (pin) =>
+            !q ||
+            `${pin.title} ${pin.description} ${pin.creator} ${pin.tags || ""}`
+              .toLowerCase()
+              .includes(q),
+        );
+        masonry.innerHTML = filtered
+          .map(
+            (pin) => `
+          <article class="pin-card" data-id="${pin.id}" tabindex="0" aria-label="${escapeHtml(pin.title)}">
+            <div class="pin-image-wrap">
+              <img class="pin-image" src="${pin.image}" alt="${escapeHtml(pin.title)}" loading="lazy"/>
+              <div class="pin-overlay">
+                <div class="overlay-top">
+                  <button class="save-btn ${savedIds.has(pin.id) ? "saved" : ""}" data-save="${pin.id}">
+                    ${savedIds.has(pin.id) ? "Tersimpan" : "Simpan"}
+                  </button>
+                </div>
+                <div class="overlay-bottom">
+                  <button class="round-action" data-share="${pin.id}" aria-label="Bagikan Pin">${iconShare}</button>
+                  <button class="round-action" data-more="${pin.id}" aria-label="Opsi lainnya">${iconMore}</button>
+                </div>
+              </div>
+            </div>
+            <div class="pin-meta">
+              <p class="pin-title">${escapeHtml(pin.title)}</p>
+              <div class="pin-creator">
+                <img class="creator-avatar" src="${avatar}" alt="" loading="lazy"/>
+                <span>${escapeHtml(pin.creator)}</span>
+              </div>
+            </div>
+          </article>
+        `,
+          )
+          .join("");
+        document.getElementById("emptyState").style.display = filtered.length
+          ? "none"
+          : "block";
+        masonry.style.display = filtered.length ? "block" : "none";
+      }
+
+      // ============ MOBILE RENDER ============
+      function renderMobilePins(query = "") {
+        const q = query.trim().toLowerCase();
+        const filtered = pins.filter(
+          (pin) =>
+            !q ||
+            `${pin.title} ${pin.description} ${pin.creator} ${pin.tags || ""}`
+              .toLowerCase()
+              .includes(q),
+        );
+        mobileMasonry.innerHTML = filtered
+          .map(
+            (pin) => `
+          <article class="mobile-pin-card" data-id="${pin.id}">
+            <div class="mobile-pin-image-wrap">
+              <img class="mobile-pin-image" src="${pin.image}" alt="${escapeHtml(pin.title)}" loading="lazy"/>
+              <div class="mobile-pin-overlay">
+                <button class="mobile-save-btn ${savedIds.has(pin.id) ? "saved" : ""}" data-mobile-save="${pin.id}">
+                  ${savedIds.has(pin.id) ? "Tersimpan" : "Simpan"}
+                </button>
+              </div>
+            </div>
+            <div class="mobile-pin-meta">
+              <p class="mobile-pin-title">${escapeHtml(pin.title)}</p>
+              <div class="mobile-pin-creator">
+                <img class="mobile-creator-avatar" src="${avatar}" alt=""/>
+                <span>${escapeHtml(pin.creator)}</span>
+              </div>
+            </div>
+          </article>
+        `,
+          )
+          .join("");
+      }
+
+      // ============ DETAIL ============
+      function openDetail(id) {
+        selectedPin = pins.find((p) => p.id === Number(id));
+        if (!selectedPin) return;
+        document.getElementById("detailImg").src = selectedPin.image;
+        document.getElementById("detailImg").alt = selectedPin.title;
+        document.getElementById("detailTitle").textContent = selectedPin.title;
+        document.getElementById("detailDescription").textContent =
+          selectedPin.description || "Inspirasi untuk koleksi ide Anda.";
+        document.getElementById("detailCreator").textContent =
+          selectedPin.creator;
+        document.getElementById("detailAvatar").src = avatar;
+        const save = document.getElementById("detailSave");
+        save.textContent = savedIds.has(selectedPin.id)
+          ? "Tersimpan"
+          : "Simpan";
+        save.classList.toggle("saved", savedIds.has(selectedPin.id));
+        document.getElementById("detailBackdrop").classList.add("open");
+        document.body.style.overflow = "hidden";
+      }
+
+      function openMobileDetail(id) {
+        selectedPin = pins.find((p) => p.id === Number(id));
+        if (!selectedPin) return;
+        document.getElementById("mobileDetailImg").src = selectedPin.image;
+        document.getElementById("mobileDetailTitle").textContent =
+          selectedPin.title;
+        document.getElementById("mobileDetailDescription").textContent =
+          selectedPin.description || "Inspirasi untuk koleksi ide Anda.";
+        document.getElementById("mobileDetailCreator").textContent =
+          selectedPin.creator;
+        document.getElementById("mobileDetailAvatar").src = avatar;
+        const save = document.getElementById("mobileDetailSave");
+        save.textContent = savedIds.has(selectedPin.id)
+          ? "Tersimpan"
+          : "Simpan";
+        save.classList.toggle("saved", savedIds.has(selectedPin.id));
+        document.getElementById("mobileDetailBackdrop").classList.add("open");
+      }
+
+      function closeModal(which) {
+        document.getElementById(which + "Backdrop").classList.remove("open");
+        if (!document.querySelector(".modal-backdrop.open"))
+          document.body.style.overflow = "";
+      }
+
+      function toggleSave(id) {
+        id = Number(id);
+        if (savedIds.has(id)) {
+          savedIds.delete(id);
+          showToast("Pin dihapus dari papan tersimpan");
+          showMobileToast("Pin dihapus dari tersimpan");
+        } else {
+          savedIds.add(id);
+          showToast("Pin berhasil disimpan");
+          showMobileToast("Pin berhasil disimpan");
+        }
+        renderPins(searchInput.value);
+        renderMobilePins(mobileSearchInput.value);
+        if (selectedPin && selectedPin.id === id) {
+          const dBtn = document.getElementById("detailSave");
+          dBtn.textContent = savedIds.has(id) ? "Tersimpan" : "Simpan";
+          dBtn.classList.toggle("saved", savedIds.has(id));
+          const mBtn = document.getElementById("mobileDetailSave");
+          mBtn.textContent = savedIds.has(id) ? "Tersimpan" : "Simpan";
+          mBtn.classList.toggle("saved", savedIds.has(id));
+        }
+      }
+
+      // ============ DESKTOP EVENTS ============
+      masonry.addEventListener("click", (event) => {
+        const save = event.target.closest("[data-save]");
+        const share = event.target.closest("[data-share]");
+        const more = event.target.closest("[data-more]");
+        const card = event.target.closest(".pin-card");
+        if (save) {
+          event.stopPropagation();
+          toggleSave(save.dataset.save);
+          return;
+        }
+        if (share) {
+          event.stopPropagation();
+          showToast("Tautan Pin disalin");
+          return;
+        }
+        if (more) {
+          event.stopPropagation();
+          showToast("Opsi Pin lainnya");
+          return;
+        }
+        if (card) openDetail(card.dataset.id);
+      });
+      masonry.addEventListener("keydown", (event) => {
+        if (
+          (event.key === "Enter" || event.key === " ") &&
+          event.target.classList.contains("pin-card")
+        ) {
+          event.preventDefault();
+          openDetail(event.target.dataset.id);
+        }
+      });
+      searchInput.addEventListener("input", () =>
+        renderPins(searchInput.value),
+      );
+
+      document.querySelectorAll(".feed-tab").forEach((tab) =>
+        tab.addEventListener("click", () => {
+          document
+            .querySelectorAll(".feed-tab")
+            .forEach((t) => t.classList.remove("active"));
+          tab.classList.add("active");
+          const following = tab.dataset.feed === "Mengikuti";
+          document.getElementById("sectionNote").style.display = following
+            ? "block"
+            : "none";
+          document.getElementById("sectionNote").textContent = following
+            ? "Pin terbaru dari kreator yang Anda ikuti"
+            : "Ide pilihan yang mungkin Anda sukai";
+          showToast(
+            following
+              ? "Menampilkan inspirasi dari kreator pilihan"
+              : "Menampilkan rekomendasi untuk Anda",
+          );
+        }),
+      );
+
+      function openCreate() {
+        document.getElementById("createBackdrop").classList.add("open");
+        document.body.style.overflow = "hidden";
+      }
+      document
+        .getElementById("createNav")
+        .addEventListener("click", openCreate);
+      document
+        .querySelectorAll("[data-close]")
+        .forEach((btn) =>
+          btn.addEventListener("click", () => closeModal(btn.dataset.close)),
+        );
+      document.querySelectorAll(".modal-backdrop").forEach((backdrop) =>
+        backdrop.addEventListener("click", (e) => {
+          if (e.target === backdrop)
+            closeModal(backdrop.id === "detailBackdrop" ? "detail" : "create");
+        }),
+      );
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          closeModal("detail");
+          closeModal("create");
+          document.getElementById("profileMenu").classList.remove("open");
+        }
+      });
+
+      document
+        .getElementById("detailSave")
+        .addEventListener(
+          "click",
+          () => selectedPin && toggleSave(selectedPin.id),
+        );
+      document
+        .getElementById("detailShare")
+        .addEventListener("click", () => showToast("Tautan Pin disalin"));
+      document
+        .getElementById("detailMore")
+        .addEventListener("click", () => showToast("Opsi Pin lainnya"));
+
+      const profileTrigger = document.getElementById("profileTrigger");
+      const profileMenu = document.getElementById("profileMenu");
+      profileTrigger.addEventListener("click", () => {
+        profileMenu.classList.toggle("open");
+        profileTrigger.setAttribute(
+          "aria-expanded",
+          profileMenu.classList.contains("open"),
+        );
+      });
+      document.addEventListener("click", (e) => {
+        if (
+          !profileMenu.contains(e.target) &&
+          !profileTrigger.contains(e.target)
+        )
+          profileMenu.classList.remove("open");
+      });
+      profileMenu.querySelectorAll("[data-menu]").forEach((btn) =>
+        btn.addEventListener("click", () => {
+          profileMenu.classList.remove("open");
+          showToast(`${btn.dataset.menu} — demo frontend`);
+        }),
+      );
+      document.querySelectorAll("[data-nav]").forEach((btn) =>
+        btn.addEventListener("click", () => {
+          const label = btn.dataset.nav;
+          if (label === "Beranda") {
+            searchInput.value = "";
+            renderPins();
+          }
+          if (label === "Jelajahi") searchInput.focus();
+          if (label !== "Beranda" && label !== "Jelajahi")
+            showToast(`${label} — demo frontend`);
+          document
+            .querySelectorAll(".side-link")
+            .forEach((link) => link.classList.remove("active"));
+          btn.classList.add("active");
+        }),
+      );
+      document
+        .getElementById("notificationBtn")
+        .addEventListener("click", () =>
+          showToast("Belum ada notifikasi baru"),
+        );
+      document
+        .getElementById("messageBtn")
+        .addEventListener("click", () =>
+          showToast("Kotak pesan — demo frontend"),
+        );
+
+      const imageUpload = document.getElementById("imageUpload");
+      const uploadBox = document.getElementById("uploadBox");
+      const uploadPreview = document.getElementById("uploadPreview");
+      const publishBtn = document.getElementById("publishBtn");
+      imageUpload.addEventListener("change", () => {
+        const file = imageUpload.files && imageUpload.files[0];
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
+          showToast("Pilih file gambar yang valid");
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          uploadedImageData = e.target.result;
+          uploadPreview.src = uploadedImageData;
+          uploadBox.classList.add("has-image");
+          updatePublishState();
+        };
+        reader.readAsDataURL(file);
+      });
+      document
+        .getElementById("pinTitleInput")
+        .addEventListener("input", updatePublishState);
+      function updatePublishState() {
+        publishBtn.disabled = !(
+          uploadedImageData &&
+          document.getElementById("pinTitleInput").value.trim()
+        );
+      }
+      document.getElementById("createForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const title = document.getElementById("pinTitleInput").value.trim();
+        const description = document
+          .getElementById("pinDescriptionInput")
+          .value.trim();
+        if (!title || !uploadedImageData) return;
+        const newPin = {
+          id: Date.now(),
+          title,
+          description,
+          creator: "Alex Morgan",
+          image: uploadedImageData,
+          tags: `${title} ${description}`.toLowerCase(),
+          height: "portrait",
+        };
+        pins.unshift(newPin);
+        renderPins(searchInput.value);
+        renderMobilePins(mobileSearchInput.value);
+        closeModal("create");
+        showToast("Pin Anda berhasil diterbitkan");
+        document.getElementById("createForm").reset();
+        uploadedImageData = "";
+        uploadPreview.src = "";
+        uploadBox.classList.remove("has-image");
+        publishBtn.disabled = true;
+      });
+
+      // ============ MOBILE EVENTS ============
+      mobileMasonry.addEventListener("click", (event) => {
+        const save = event.target.closest("[data-mobile-save]");
+        const card = event.target.closest(".mobile-pin-card");
+        if (save) {
+          event.stopPropagation();
+          toggleSave(save.dataset["mobileSave"]);
+          return;
+        }
+        if (card) openMobileDetail(card.dataset.id);
+      });
+      mobileSearchInput.addEventListener("input", () =>
+        renderMobilePins(mobileSearchInput.value),
+      );
+
+      document
+        .getElementById("mobileModalClose")
+        .addEventListener("click", () => {
+          document
+            .getElementById("mobileDetailBackdrop")
+            .classList.remove("open");
+        });
+      document
+        .getElementById("mobileDetailBackdrop")
+        .addEventListener("click", (e) => {
+          if (e.target === e.currentTarget)
+            document
+              .getElementById("mobileDetailBackdrop")
+              .classList.remove("open");
+        });
+      document
+        .getElementById("mobileDetailSave")
+        .addEventListener(
+          "click",
+          () => selectedPin && toggleSave(selectedPin.id),
+        );
+
+      document.querySelectorAll(".mobile-tab").forEach((tab) =>
+        tab.addEventListener("click", () => {
+          document
+            .querySelectorAll(".mobile-tab")
+            .forEach((t) => t.classList.remove("active"));
+          tab.classList.add("active");
+          const filter = tab.dataset.feed;
+          if (filter === "Semua") {
+            mobileSearchInput.value = "";
+            renderMobilePins();
+          } else {
+            mobileSearchInput.value = filter;
+            renderMobilePins(filter);
+          }
+          showMobileToast(`Kategori: ${filter}`);
+        }),
+      );
+
+      document.querySelectorAll(".mobile-nav-item").forEach((item, i) => {
+        if (item.id === "mobileCreateBtn") {
+          item.addEventListener("click", () => {
+            openCreate();
+            showMobileToast("Buka modal buat pin");
+          });
+        } else {
+          item.addEventListener("click", () => {
+            document
+              .querySelectorAll(".mobile-nav-item")
+              .forEach((n) => n.classList.remove("active"));
+            item.classList.add("active");
+            const labels = [
+              "Beranda",
+              "Jelajahi",
+              "Buat",
+              "Notifikasi",
+              "Profil",
+            ];
+            showMobileToast(`${labels[i]} — demo mobile`);
+          });
+        }
+      });
+
+      document
+        .getElementById("mobileCreateBtn")
+        .addEventListener("click", (e) => {
+          e.stopPropagation();
+          openCreate();
+          showMobileToast("Buka modal buat pin");
+        });
+
+      // ============ DEVICE SWITCHER ============
+      const switchDesktop = document.getElementById("switchDesktop");
+      const switchMobile = document.getElementById("switchMobile");
+      const desktopView = document.getElementById("desktopView");
+      const mobileView = document.getElementById("mobileView");
+      const deviceHint = document.getElementById("deviceHint");
+
+      switchDesktop.addEventListener("click", () => {
+        switchDesktop.classList.add("active");
+        switchMobile.classList.remove("active");
+        desktopView.classList.add("active");
+        mobileView.classList.remove("active");
+        deviceHint.textContent = "Viewing: Desktop Web";
+      });
+      switchMobile.addEventListener("click", () => {
+        switchMobile.classList.add("active");
+        switchDesktop.classList.remove("active");
+        mobileView.classList.add("active");
+        desktopView.classList.remove("active");
+        deviceHint.textContent = "Viewing: Pixel 8 Pro · Mobile App";
+      });
+
+      // ============ STATUS BAR CLOCK ============
+      function updateClock() {
+        const now = new Date();
+        const h = now.getHours();
+        const m = String(now.getMinutes()).padStart(2, "0");
+        document.getElementById("statusTime").textContent = `${h}:${m}`;
+      }
+      updateClock();
+      setInterval(updateClock, 30000);
+
+      // Initial render
+      renderPins();
+      renderMobilePins();
+    </script>
+  </body>
+</html>

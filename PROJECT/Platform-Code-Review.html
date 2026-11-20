@@ -1,0 +1,2589 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Platform Code Review</title>
+    <meta
+      name="description"
+      content="Review pull requests, inspect findings, and manage repository quality."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #fafafa;
+        --surface: #ffffff;
+        --text-primary: #0f172a;
+        --text-secondary: #64748b;
+        --border: #e2e8f0;
+        --accent: #4f46e5;
+        --accent-soft: #eef2ff;
+        --success: #10b981;
+        --success-soft: #ecfdf5;
+        --warning: #f59e0b;
+        --warning-soft: #fffbeb;
+        --danger: #ef4444;
+        --danger-soft: #fef2f2;
+        --radius: 12px;
+        --shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 4px 12px rgba(0, 0, 0, 0.03);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text-primary);
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      button,
+      input,
+      select,
+      textarea {
+        font-family: inherit;
+      }
+      button {
+        cursor: pointer;
+        border: none;
+        background: none;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      textarea:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      /* Layout */
+      .app {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 260px minmax(0, 1fr);
+      }
+
+      /* Sidebar */
+      .sidebar {
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+        padding: 32px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 700;
+        font-size: 17px;
+        letter-spacing: -0.5px;
+        color: var(--text-primary);
+      }
+      .brandmark {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: var(--accent);
+        display: grid;
+        place-items: center;
+        color: #fff;
+      }
+      .brandmark svg {
+        width: 18px;
+        height: 18px;
+      }
+      .workspace-label,
+      .nav-caption {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-secondary);
+        font-weight: 600;
+        margin: 0 0 8px;
+      }
+      .workspace-select {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 12px;
+        width: 100%;
+        background: var(--surface);
+        text-align: left;
+        color: var(--text-primary);
+        font-weight: 500;
+        font-size: 14px;
+        transition: border-color 0.2s;
+      }
+      .workspace-select:hover {
+        border-color: var(--text-secondary);
+      }
+      .repo-avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        display: grid;
+        place-items: center;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 11px;
+        flex-shrink: 0;
+      }
+      .navgroup {
+        display: grid;
+        gap: 4px;
+      }
+      .navitem {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        color: var(--text-secondary);
+        font-weight: 500;
+        font-size: 14px;
+        text-align: left;
+        width: 100%;
+        transition: all 0.2s ease;
+      }
+      .navitem svg {
+        width: 18px;
+        height: 18px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+      }
+      .navitem:hover {
+        background: var(--bg);
+        color: var(--text-primary);
+      }
+      .navitem.active {
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .navcount {
+        margin-left: auto;
+        font-size: 11px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 2px 6px;
+        color: var(--text-secondary);
+        font-weight: 600;
+      }
+      .sidebar-bottom {
+        margin-top: auto;
+      }
+      .usage {
+        background: var(--bg);
+        padding: 16px;
+        border-radius: var(--radius);
+        margin-bottom: 16px;
+      }
+      .usage-head {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .usage p {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin: 0 0 10px;
+      }
+      .progress {
+        height: 6px;
+        background: #e2e8f0;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .progress span {
+        display: block;
+        width: 64%;
+        height: 100%;
+        background: var(--accent);
+        border-radius: 6px;
+      }
+      .profile {
+        border-top: 1px solid var(--border);
+        padding-top: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .avatar {
+        width: 36px;
+        height: 36px;
+        display: grid;
+        place-items: center;
+        background: var(--success-soft);
+        color: var(--success);
+        border-radius: 50%;
+        font-weight: 700;
+        font-size: 12px;
+      }
+      .profile-meta {
+        flex: 1;
+        min-width: 0;
+      }
+      .profile-meta strong {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .profile-meta span {
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+
+      /* Main Content */
+      .main {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .topbar {
+        height: 72px;
+        background: rgba(255, 255, 255, 0.8);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 48px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        backdrop-filter: blur(12px);
+      }
+      .crumbs {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text-secondary);
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .crumbs strong {
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .icon-btn {
+        width: 38px;
+        height: 38px;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--text-secondary);
+        transition: all 0.2s ease;
+      }
+      .icon-btn:hover {
+        background: var(--bg);
+        color: var(--text-primary);
+        border-color: var(--text-secondary);
+      }
+      .icon-btn svg {
+        width: 18px;
+        height: 18px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+      }
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text-primary);
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 14px;
+        white-space: nowrap;
+        transition: all 0.2s ease;
+      }
+      .button:hover {
+        background: var(--bg);
+        border-color: var(--text-secondary);
+      }
+      .button.primary {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+      }
+      .button.primary:hover {
+        background: #4338ca;
+      }
+      .button svg {
+        width: 16px;
+        height: 16px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2;
+      }
+
+      .content {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 48px 64px 64px;
+        width: 100%;
+      }
+      .page-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 40px;
+      }
+      .eyebrow {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+      }
+      .page-head h1 {
+        font-size: 28px;
+        line-height: 1.2;
+        letter-spacing: -0.8px;
+        margin: 0 0 8px;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+      .page-head p {
+        color: var(--text-secondary);
+        margin: 0;
+        font-size: 15px;
+        max-width: 600px;
+      }
+      .head-actions {
+        display: flex;
+        gap: 12px;
+        flex-shrink: 0;
+      }
+
+      /* Stats */
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 24px;
+        margin-bottom: 40px;
+      }
+      .stat {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 24px;
+        transition:
+          box-shadow 0.2s ease,
+          transform 0.2s ease;
+      }
+      .stat:hover {
+        box-shadow: var(--shadow);
+        transform: translateY(-2px);
+      }
+      .stat-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: var(--text-secondary);
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .stat-icon {
+        width: 32px;
+        height: 32px;
+        display: grid;
+        place-items: center;
+        background: var(--bg);
+        border-radius: 8px;
+        color: var(--text-secondary);
+      }
+      .stat-icon svg {
+        width: 16px;
+        height: 16px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+      }
+      .stat-value {
+        font-size: 32px;
+        font-weight: 700;
+        letter-spacing: -1px;
+        margin: 12px 0 4px;
+        color: var(--text-primary);
+      }
+      .stat-foot {
+        font-size: 13px;
+        color: var(--text-secondary);
+      }
+      .positive {
+        color: var(--success);
+        font-weight: 600;
+      }
+
+      /* Dashboard Grid */
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1.6fr 1fr;
+        gap: 32px;
+        align-items: start;
+      }
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        min-width: 0;
+        overflow: hidden;
+      }
+      .panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border);
+        gap: 12px;
+      }
+      .panel-title {
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: -0.2px;
+        color: var(--text-primary);
+      }
+      .panel-sub {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin-top: 4px;
+      }
+      .text-link {
+        border: 0;
+        background: transparent;
+        color: var(--accent);
+        font-weight: 600;
+        font-size: 13px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        transition: background 0.2s;
+      }
+      .text-link:hover {
+        background: var(--accent-soft);
+      }
+
+      /* Review Tools & List */
+      .review-tools {
+        display: flex;
+        gap: 12px;
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--border);
+        flex-wrap: wrap;
+      }
+      .search {
+        position: relative;
+        flex: 1;
+        min-width: 200px;
+      }
+      .search svg {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 16px;
+        height: 16px;
+        stroke: var(--text-secondary);
+        fill: none;
+        stroke-width: 1.8;
+      }
+      .search input {
+        width: 100%;
+        padding: 10px 12px 10px 36px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+        font-size: 14px;
+        color: var(--text-primary);
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+      .search input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-soft);
+      }
+      .filter {
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--text-primary);
+        font-size: 14px;
+        cursor: pointer;
+      }
+      .review-list {
+        display: grid;
+      }
+      .review-row {
+        padding: 20px 24px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 16px;
+        border-bottom: 1px solid var(--border);
+        cursor: pointer;
+        transition:
+          background 0.15s ease,
+          border-left 0.15s ease;
+        border-left: 3px solid transparent;
+      }
+      .review-row:last-child {
+        border-bottom: 0;
+      }
+      .review-row:hover {
+        background: var(--bg);
+      }
+      .review-row.selected {
+        background: var(--accent-soft);
+        border-left-color: var(--accent);
+      }
+      .review-main {
+        min-width: 0;
+      }
+      .review-title {
+        font-size: 14px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        color: var(--text-primary);
+      }
+      .pr-number {
+        color: var(--text-secondary);
+        font-weight: 500;
+        font-size: 13px;
+      }
+      .review-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin-top: 6px;
+      }
+      .repo-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--text-primary);
+        font-weight: 500;
+      }
+      .tiny-avatar {
+        width: 18px;
+        height: 18px;
+        border-radius: 4px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        display: grid;
+        place-items: center;
+        font-size: 9px;
+        font-weight: 700;
+      }
+      .dotsep {
+        color: var(--border);
+      }
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 6px;
+        padding: 4px 10px;
+        white-space: nowrap;
+        height: fit-content;
+      }
+      .status-pill:before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      .status-pill.reviewed {
+        background: var(--success-soft);
+        color: var(--success);
+      }
+      .status-pill.reviewing {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .status-pill.action {
+        background: var(--warning-soft);
+        color: var(--warning);
+      }
+      .status-pill.failed {
+        background: var(--danger-soft);
+        color: var(--danger);
+      }
+      .finding-count {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-left: auto;
+      }
+
+      /* Right Stack */
+      .right-stack {
+        display: grid;
+        gap: 24px;
+      }
+      .health {
+        padding: 24px;
+      }
+      .health-line {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      .health-score {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: conic-gradient(var(--success) 0 92%, #e2e8f0 92%);
+        position: relative;
+        flex-shrink: 0;
+      }
+      .health-score:after {
+        content: "";
+        position: absolute;
+        inset: 6px;
+        border-radius: 50%;
+        background: var(--surface);
+      }
+      .health-score strong {
+        z-index: 1;
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+      .health-copy strong {
+        display: block;
+        font-size: 15px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      .health-copy span {
+        font-size: 13px;
+        color: var(--text-secondary);
+      }
+      .health-breakdown {
+        display: grid;
+        gap: 12px;
+      }
+      .break-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+      }
+      .break-row .label {
+        flex: 1;
+        color: var(--text-secondary);
+      }
+      .break-row .count {
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+      .bullet {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+      .bullet.red {
+        background: var(--danger);
+      }
+      .bullet.amber {
+        background: var(--warning);
+      }
+      .bullet.green {
+        background: var(--success);
+      }
+
+      .divider {
+        height: 1px;
+        background: var(--border);
+        margin: 20px 0;
+      }
+
+      /* Activity */
+      .activity-list {
+        padding: 8px 24px 20px;
+      }
+      .activity {
+        display: flex;
+        gap: 14px;
+        padding: 14px 0;
+      }
+      .activity-icon {
+        width: 32px;
+        height: 32px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        flex-shrink: 0;
+      }
+      .activity-icon svg {
+        width: 16px;
+        height: 16px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2;
+      }
+      .activity-icon.purple {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .activity-icon.green {
+        background: var(--success-soft);
+        color: var(--success);
+      }
+      .activity-icon.orange {
+        background: var(--warning-soft);
+        color: var(--warning);
+      }
+      .activity-text {
+        font-size: 14px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+      }
+      .activity-text strong {
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+      .activity-time {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 4px;
+      }
+
+      /* Detail Panel */
+      .detail-panel {
+        margin-top: 32px;
+        display: none;
+      }
+      .detail-panel.open {
+        display: block;
+        animation: fadeIn 0.3s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .detail-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 24px;
+        border-bottom: 1px solid var(--border);
+      }
+      .detail-top h3 {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0 0 6px;
+        color: var(--text-primary);
+      }
+      .detail-top p {
+        font-size: 14px;
+        color: var(--text-secondary);
+        margin: 0;
+      }
+      .detail-tabs {
+        display: flex;
+        gap: 24px;
+        padding: 0 24px;
+        border-bottom: 1px solid var(--border);
+      }
+      .detail-tab {
+        padding: 16px 0;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        background: none;
+        color: var(--text-secondary);
+        font-size: 14px;
+        font-weight: 500;
+        transition:
+          color 0.2s,
+          border-color 0.2s;
+      }
+      .detail-tab:hover {
+        color: var(--text-primary);
+      }
+      .detail-tab.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+        font-weight: 600;
+      }
+      .finding {
+        padding: 24px;
+        border-bottom: 1px solid var(--border);
+      }
+      .finding:last-child {
+        border-bottom: 0;
+      }
+      .finding-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+      .finding h4 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+      .finding p {
+        font-size: 14px;
+        color: var(--text-secondary);
+        max-width: 800px;
+        margin: 0 0 16px;
+        line-height: 1.7;
+      }
+      .file-ref {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: var(--text-secondary);
+        background: var(--bg);
+        padding: 4px 8px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+      }
+      .codebox {
+        background: #1e293b;
+        color: #e2e8f0;
+        border-radius: 8px;
+        padding: 16px;
+        font-family: "JetBrains Mono", "Fira Code", monospace;
+        font-size: 13px;
+        line-height: 1.7;
+        margin: 16px 0;
+        overflow-x: auto;
+      }
+      .codebox .minus {
+        color: #fca5a5;
+      }
+      .codebox .plus {
+        color: #86efac;
+      }
+      .empty {
+        padding: 48px 24px;
+        text-align: center;
+        color: var(--text-secondary);
+        font-size: 14px;
+      }
+
+      /* Page Views */
+      .page-view {
+        display: none;
+      }
+      .page-view.active {
+        display: block;
+        animation: fadeIn 0.3s ease;
+      }
+
+      /* Repositories */
+      .repo-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px;
+      }
+      .repo-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 24px;
+        transition:
+          box-shadow 0.2s,
+          transform 0.2s;
+      }
+      .repo-card:hover {
+        box-shadow: var(--shadow);
+        transform: translateY(-2px);
+      }
+      .repo-card-head {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .repo-card h3 {
+        font-size: 15px;
+        font-weight: 600;
+        margin: 0;
+        color: var(--text-primary);
+      }
+      .repo-card p {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin: 4px 0 0;
+      }
+      .repo-card .repo-stats {
+        display: flex;
+        gap: 24px;
+        border-top: 1px solid var(--border);
+        margin-top: 20px;
+        padding-top: 16px;
+        font-size: 13px;
+        color: var(--text-secondary);
+      }
+      .repo-stats strong {
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+
+      /* Settings & Forms */
+      .settings-form {
+        max-width: 720px;
+        padding: 32px;
+      }
+      .field {
+        margin-bottom: 28px;
+      }
+      .field label {
+        display: block;
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 8px;
+        color: var(--text-primary);
+      }
+      .field p {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin: 0 0 10px;
+        line-height: 1.5;
+      }
+      .field input,
+      .field textarea,
+      .field select {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 14px;
+        background: var(--surface);
+        color: var(--text-primary);
+        font-size: 14px;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+      .field textarea {
+        min-height: 100px;
+        resize: vertical;
+      }
+      .field input:focus,
+      .field textarea:focus,
+      .field select:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-soft);
+      }
+      .toggle-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 20px 0;
+        border-top: 1px solid var(--border);
+      }
+      .toggle-row strong {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: block;
+        margin-bottom: 4px;
+      }
+      .toggle-row p {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin: 0;
+        line-height: 1.5;
+      }
+      .toggle {
+        appearance: none;
+        width: 44px;
+        height: 24px;
+        background: #cbd5e1;
+        border-radius: 24px;
+        position: relative;
+        flex-shrink: 0;
+        cursor: pointer;
+        transition: background 0.2s ease;
+        margin-top: 2px;
+      }
+      .toggle:after {
+        content: "";
+        position: absolute;
+        width: 18px;
+        height: 18px;
+        left: 3px;
+        top: 3px;
+        background: #ffffff;
+        border-radius: 50%;
+        transition: transform 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      .toggle:checked {
+        background: var(--accent);
+      }
+      .toggle:checked:after {
+        transform: translateX(20px);
+      }
+
+      /* Risk Badges */
+      .risk {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+      .risk.high {
+        background: var(--danger-soft);
+        color: var(--danger);
+      }
+      .risk.medium {
+        background: var(--warning-soft);
+        color: var(--warning);
+      }
+      .risk.low {
+        background: var(--success-soft);
+        color: var(--success);
+      }
+
+      /* Toast */
+      .toast {
+        position: fixed;
+        right: 32px;
+        bottom: 32px;
+        background: var(--text-primary);
+        color: #ffffff;
+        padding: 14px 20px;
+        border-radius: 8px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        font-size: 14px;
+        font-weight: 500;
+        opacity: 0;
+        transform: translateY(12px);
+        pointer-events: none;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 100;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* Mobile */
+      .mobile-menu {
+        display: none;
+      }
+      @media (max-width: 1024px) {
+        .app {
+          grid-template-columns: 1fr;
+        }
+        .sidebar {
+          position: fixed;
+          z-index: 50;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          width: 280px;
+          transform: translateX(-100%);
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 10px 0 40px rgba(0, 0, 0, 0.1);
+        }
+        .sidebar.open {
+          transform: translateX(0);
+        }
+        .mobile-menu {
+          display: grid;
+        }
+        .topbar {
+          padding: 0 24px;
+        }
+        .content {
+          padding: 32px 24px;
+        }
+        .stats {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .dashboard-grid {
+          grid-template-columns: 1fr;
+        }
+        .repo-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (max-width: 640px) {
+        .stats {
+          grid-template-columns: 1fr;
+        }
+        .page-head {
+          flex-direction: column;
+        }
+        .head-actions {
+          width: 100%;
+        }
+        .head-actions .button {
+          flex: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar" id="sidebar">
+        <a class="brand" href="#" data-page="overview">
+          <span class="brandmark">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="m5 5 6 7-6 7M13 19h6" />
+            </svg>
+          </span>
+          Code Review Platform
+        </a>
+
+        <div class="workspace">
+          <p class="workspace-label">Workspace</p>
+          <button class="workspace-select" id="workspaceBtn">
+            <span class="repo-avatar">AC</span>
+            <span>Acme Engineering</span>
+            <span style="margin-left: auto; color: var(--text-secondary)"
+              >⌄</span
+            >
+          </button>
+        </div>
+
+        <div class="navgroup">
+          <p class="nav-caption">Workspace</p>
+          <button class="navitem active" data-page="overview">
+            <svg viewBox="0 0 24 24">
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="14" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+            </svg>
+            Overview
+          </button>
+          <button class="navitem" data-page="reviews">
+            <svg viewBox="0 0 24 24">
+              <path d="M8 6h13M8 12h13M8 18h13" />
+              <path d="m3 6 1 1 2-2M3 12l1 1 2-2M3 18l1 1 2-2" />
+            </svg>
+            Code reviews <span class="navcount">12</span>
+          </button>
+          <button class="navitem" data-page="repositories">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21.5z"
+              />
+              <path d="M4 4.5v17M8 6h8M8 10h7" />
+            </svg>
+            Repositories
+          </button>
+          <button class="navitem" data-page="rules">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 3 4 6v5c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z" />
+              <path d="m9 12 2 2 4-4" />
+            </svg>
+            Review rules
+          </button>
+        </div>
+
+        <div class="navgroup">
+          <p class="nav-caption">Manage</p>
+          <button class="navitem" data-page="activity">
+            <svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4" /></svg>
+            Activity
+          </button>
+          <button class="navitem" data-page="settings">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="m19.4 15 .1.1 1.4 1.1-1.5 2.6-1.7-.6a8 8 0 0 1-1.8 1l-.3 1.8h-3l-.3-1.8a8 8 0 0 1-1.8-1l-1.7.6-1.5-2.6 1.4-1.1A7 7 0 0 1 8.5 13l-1.7-.8v-3l1.7-.7a7 7 0 0 1 .7-1.7L7.8 5.4l1.5-2.6 1.7.6a8 8 0 0 1 1.8-1l.3-1.8h3l.3 1.8a8 8 0 0 1 1.8 1l1.7-.6 1.5 2.6L20 6.5a7 7 0 0 1 .7 1.7l1.7.7v3l-1.7.8a7 7 0 0 1-1.3 2.3Z"
+                transform="translate(-2 1) scale(.92)"
+              />
+            </svg>
+            Settings
+          </button>
+        </div>
+
+        <div class="sidebar-bottom">
+          <div class="usage">
+            <div class="usage-head">
+              <span>AI review usage</span>
+              <span>64%</span>
+            </div>
+            <p>640 of 1,000 reviews this month</p>
+            <div class="progress"><span></span></div>
+          </div>
+          <div class="profile">
+            <div class="avatar">WP</div>
+            <div class="profile-meta">
+              <strong>Workspace admin</strong>
+              <span>admin@acme.dev</span>
+            </div>
+            <button
+              class="icon-btn"
+              aria-label="Profile options"
+              id="profileBtn"
+              style="width: 32px; height: 32px"
+            >
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="1" />
+                <circle cx="12" cy="5" r="1" />
+                <circle cx="12" cy="19" r="1" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div class="crumbs">
+            <button
+              class="icon-btn mobile-menu"
+              id="mobileMenu"
+              aria-label="Open navigation"
+            >
+              <svg viewBox="0 0 24 24">
+                <path d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <span>Workspace</span>
+            <span style="color: var(--border)">/</span>
+            <strong id="crumbCurrent">Overview</strong>
+          </div>
+          <div class="top-actions">
+            <button class="icon-btn" id="helpBtn" aria-label="Help">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M9.5 9a2.5 2.5 0 1 1 4.5 1.5c-1 1-2 1-2 3M12 17h.01" />
+              </svg>
+            </button>
+            <button
+              class="icon-btn"
+              id="notificationsBtn"
+              aria-label="Notifications"
+            >
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"
+                />
+              </svg>
+            </button>
+            <button class="button primary" id="newReviewBtn">
+              <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+              New review
+            </button>
+          </div>
+        </header>
+
+        <div class="content">
+          <!-- Overview Page -->
+          <section class="page-view active" id="page-overview">
+            <div class="page-head">
+              <div>
+                <div class="eyebrow">Monday, October 26, 2026</div>
+                <h1>Code review overview</h1>
+                <p>
+                  Monitor code quality and stay on top of your team's pull
+                  requests.
+                </p>
+              </div>
+              <div class="head-actions">
+                <button class="button" id="exportBtn">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4" />
+                  </svg>
+                  Export report
+                </button>
+                <button class="button primary" id="connectBtn">
+                  <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+                  Connect repository
+                </button>
+              </div>
+            </div>
+
+            <div class="stats">
+              <div class="stat">
+                <div class="stat-top">
+                  <span>Pull requests reviewed</span>
+                  <span class="stat-icon"
+                    ><svg viewBox="0 0 24 24">
+                      <path d="M8 6h13M8 12h13M8 18h13" />
+                      <path d="m3 6 1 1 2-2M3 12l1 1 2-2M3 18l1 1 2-2" /></svg
+                  ></span>
+                </div>
+                <div class="stat-value">284</div>
+                <div class="stat-foot">
+                  <span class="positive">↑ 18.6%</span> vs. last month
+                </div>
+              </div>
+              <div class="stat">
+                <div class="stat-top">
+                  <span>Issues detected</span>
+                  <span class="stat-icon"
+                    ><svg viewBox="0 0 24 24">
+                      <path d="M12 3 2.8 20h18.4z" />
+                      <path d="M12 9v5m0 3h.01" /></svg
+                  ></span>
+                </div>
+                <div class="stat-value">76</div>
+                <div class="stat-foot">
+                  <span class="positive">↓ 12.4%</span> unresolved findings
+                </div>
+              </div>
+              <div class="stat">
+                <div class="stat-top">
+                  <span>Avg. review time</span>
+                  <span class="stat-icon"
+                    ><svg viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="9" />
+                      <path d="M12 7v5l3 2" /></svg
+                  ></span>
+                </div>
+                <div class="stat-value">1m 42s</div>
+                <div class="stat-foot">
+                  <span class="positive">↓ 24s</span> faster this month
+                </div>
+              </div>
+              <div class="stat">
+                <div class="stat-top">
+                  <span>Risk score</span>
+                  <span class="stat-icon"
+                    ><svg viewBox="0 0 24 24">
+                      <path d="m3 17 6-6 4 3 8-9" />
+                      <path d="M15 5h6v6" /></svg
+                  ></span>
+                </div>
+                <div class="stat-value">Low</div>
+                <div class="stat-foot">
+                  Across <strong>18 repositories</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="dashboard-grid">
+              <div class="panel">
+                <div class="panel-head">
+                  <div>
+                    <div class="panel-title">Pull request reviews</div>
+                    <div class="panel-sub">
+                      Recent activity across your repositories
+                    </div>
+                  </div>
+                  <button class="text-link" data-goto="reviews">
+                    View all reviews →
+                  </button>
+                </div>
+                <div class="review-tools">
+                  <div class="search">
+                    <svg viewBox="0 0 24 24">
+                      <circle cx="10.8" cy="10.8" r="6.8" />
+                      <path d="m16 16 5 5" />
+                    </svg>
+                    <input
+                      id="reviewSearch"
+                      placeholder="Search pull requests..."
+                      aria-label="Search pull requests"
+                    />
+                  </div>
+                  <select
+                    class="filter"
+                    id="statusFilter"
+                    aria-label="Filter by status"
+                  >
+                    <option value="all">All statuses</option>
+                    <option value="reviewed">Reviewed</option>
+                    <option value="reviewing">Reviewing</option>
+                    <option value="action">Needs action</option>
+                  </select>
+                </div>
+                <div class="review-list" id="reviewList">
+                  <div
+                    class="review-row selected"
+                    data-status="action"
+                    data-search="fix token refresh race condition api gateway"
+                    data-review="1"
+                  >
+                    <div class="review-main">
+                      <div class="review-title">
+                        Fix token refresh race condition
+                        <span class="pr-number">#482</span>
+                      </div>
+                      <div class="review-meta">
+                        <span class="repo-chip"
+                          ><span class="tiny-avatar">AG</span> api-gateway</span
+                        >
+                        <span class="dotsep">·</span><span>maya-chen</span>
+                        <span class="dotsep">·</span><span>12 min ago</span>
+                        <span class="finding-count">3 findings</span>
+                      </div>
+                    </div>
+                    <span class="status-pill action">Needs action</span>
+                  </div>
+                  <div
+                    class="review-row"
+                    data-status="reviewed"
+                    data-search="add pagination users endpoint backend services"
+                    data-review="2"
+                  >
+                    <div class="review-main">
+                      <div class="review-title">
+                        Add pagination to users endpoint
+                        <span class="pr-number">#479</span>
+                      </div>
+                      <div class="review-meta">
+                        <span class="repo-chip"
+                          ><span
+                            class="tiny-avatar"
+                            style="
+                              background: var(--success-soft);
+                              color: var(--success);
+                            "
+                            >BS</span
+                          >
+                          backend-services</span
+                        >
+                        <span class="dotsep">·</span><span>james-wu</span>
+                        <span class="dotsep">·</span><span>38 min ago</span>
+                        <span class="finding-count">1 finding</span>
+                      </div>
+                    </div>
+                    <span class="status-pill reviewed">Reviewed</span>
+                  </div>
+                  <div
+                    class="review-row"
+                    data-status="reviewing"
+                    data-search="update checkout validation storefront web"
+                    data-review="3"
+                  >
+                    <div class="review-main">
+                      <div class="review-title">
+                        Update checkout validation
+                        <span class="pr-number">#216</span>
+                      </div>
+                      <div class="review-meta">
+                        <span class="repo-chip"
+                          ><span
+                            class="tiny-avatar"
+                            style="
+                              background: var(--warning-soft);
+                              color: var(--warning);
+                            "
+                            >SF</span
+                          >
+                          storefront</span
+                        >
+                        <span class="dotsep">·</span><span>alex-rivera</span>
+                        <span class="dotsep">·</span><span>1 hr ago</span>
+                      </div>
+                    </div>
+                    <span class="status-pill reviewing">Reviewing</span>
+                  </div>
+                  <div
+                    class="review-row"
+                    data-status="reviewed"
+                    data-search="refactor cache invalidation core platform"
+                    data-review="4"
+                  >
+                    <div class="review-main">
+                      <div class="review-title">
+                        Refactor cache invalidation
+                        <span class="pr-number">#731</span>
+                      </div>
+                      <div class="review-meta">
+                        <span class="repo-chip"
+                          ><span
+                            class="tiny-avatar"
+                            style="background: #dbeafe; color: #2563eb"
+                            >CP</span
+                          >
+                          core-platform</span
+                        >
+                        <span class="dotsep">·</span><span>sam-patel</span>
+                        <span class="dotsep">·</span><span>2 hrs ago</span>
+                        <span class="finding-count">2 findings</span>
+                      </div>
+                    </div>
+                    <span class="status-pill reviewed">Reviewed</span>
+                  </div>
+                  <div
+                    class="review-row"
+                    data-status="action"
+                    data-search="add webhook retry handling notifications service"
+                    data-review="5"
+                  >
+                    <div class="review-main">
+                      <div class="review-title">
+                        Add webhook retry handling
+                        <span class="pr-number">#193</span>
+                      </div>
+                      <div class="review-meta">
+                        <span class="repo-chip"
+                          ><span
+                            class="tiny-avatar"
+                            style="background: #fce7f3; color: #db2777"
+                            >NS</span
+                          >
+                          notifications</span
+                        >
+                        <span class="dotsep">·</span><span>priya-shah</span>
+                        <span class="dotsep">·</span><span>3 hrs ago</span>
+                        <span class="finding-count">4 findings</span>
+                      </div>
+                    </div>
+                    <span class="status-pill action">Needs action</span>
+                  </div>
+                </div>
+                <div class="empty" id="noReviews" hidden>
+                  No pull requests match your search.
+                </div>
+              </div>
+
+              <div class="right-stack">
+                <div class="panel">
+                  <div class="panel-head">
+                    <div>
+                      <div class="panel-title">Code health</div>
+                      <div class="panel-sub">Across connected repositories</div>
+                    </div>
+                    <button
+                      class="icon-btn"
+                      aria-label="Code health options"
+                      id="healthMenu"
+                      style="width: 32px; height: 32px"
+                    >
+                      <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="1" />
+                        <circle cx="12" cy="5" r="1" />
+                        <circle cx="12" cy="19" r="1" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="health">
+                    <div class="health-line">
+                      <div class="health-score"><strong>92</strong></div>
+                      <div class="health-copy">
+                        <strong>Healthy codebase</strong>
+                        <span>Score improved by 4 points this month</span>
+                      </div>
+                    </div>
+                    <div class="health-breakdown">
+                      <div class="break-row">
+                        <span class="bullet red"></span>
+                        <span class="label">High severity</span>
+                        <span class="count">4</span>
+                      </div>
+                      <div class="break-row">
+                        <span class="bullet amber"></span>
+                        <span class="label">Medium severity</span>
+                        <span class="count">18</span>
+                      </div>
+                      <div class="break-row">
+                        <span class="bullet green"></span>
+                        <span class="label">Low severity</span>
+                        <span class="count">54</span>
+                      </div>
+                    </div>
+                    <div class="divider"></div>
+                    <button
+                      class="button"
+                      style="width: 100%"
+                      data-goto="reviews"
+                    >
+                      Inspect findings
+                    </button>
+                  </div>
+                </div>
+
+                <div class="panel">
+                  <div class="panel-head">
+                    <div>
+                      <div class="panel-title">Recent activity</div>
+                      <div class="panel-sub">Latest updates from your team</div>
+                    </div>
+                    <button class="text-link" data-goto="activity">
+                      See all
+                    </button>
+                  </div>
+                  <div class="activity-list">
+                    <div class="activity">
+                      <div class="activity-icon purple">
+                        <svg viewBox="0 0 24 24">
+                          <path d="m5 12 4 4L19 6" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div class="activity-text">
+                          <strong>AI review completed</strong> for
+                          <strong>api-gateway #482</strong>
+                        </div>
+                        <div class="activity-time">12 minutes ago</div>
+                      </div>
+                    </div>
+                    <div class="activity">
+                      <div class="activity-icon green">
+                        <svg viewBox="0 0 24 24">
+                          <path d="m5 12 4 4L19 6" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div class="activity-text">
+                          <strong>Finding resolved</strong> in
+                          <strong>backend-services #474</strong>
+                        </div>
+                        <div class="activity-time">46 minutes ago</div>
+                      </div>
+                    </div>
+                    <div class="activity">
+                      <div class="activity-icon orange">
+                        <svg viewBox="0 0 24 24">
+                          <path d="M12 3 2.8 20h18.4z" />
+                          <path d="M12 9v5" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div class="activity-text">
+                          <strong>High-risk issue detected</strong> in
+                          <strong>notifications #193</strong>
+                        </div>
+                        <div class="activity-time">3 hours ago</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel detail-panel open" id="reviewDetail">
+              <div class="detail-top">
+                <div>
+                  <h3 id="detailTitle">
+                    Fix token refresh race condition
+                    <span class="pr-number">#482</span>
+                  </h3>
+                  <p id="detailMeta">
+                    api-gateway · maya-chen · Updated 12 minutes ago
+                  </p>
+                </div>
+                <div class="head-actions">
+                  <button class="button" id="dismissBtn">Dismiss all</button>
+                  <button class="button primary" id="resolveBtn">
+                    Mark resolved
+                  </button>
+                </div>
+              </div>
+              <div class="detail-tabs">
+                <button class="detail-tab active" data-tab="findings">
+                  Findings (3)
+                </button>
+                <button class="detail-tab" data-tab="diff">Code diff</button>
+                <button class="detail-tab" data-tab="summary">
+                  AI summary
+                </button>
+              </div>
+              <div id="detailContent">
+                <div class="finding">
+                  <div class="finding-head">
+                    <span class="risk high">HIGH</span>
+                    <h4>Refresh token can be reused concurrently</h4>
+                    <span class="file-ref">src/auth/refresh.ts:84</span>
+                  </div>
+                  <p>
+                    Two simultaneous requests can both pass the token validity
+                    check before either rotation completes. This creates a
+                    window where the old refresh token remains usable and can
+                    issue multiple access tokens.
+                  </p>
+                  <div class="codebox">
+                    <div>
+                      <span class="minus"
+                        >- const session = await getSession(token)</span
+                      >
+                    </div>
+                    <div>
+                      <span class="plus"
+                        >+ const session = await
+                        rotateTokenAtomically(token)</span
+                      >
+                    </div>
+                    <div>if (!session) return unauthorized()</div>
+                  </div>
+                  <div style="display: flex; gap: 12px; margin-top: 16px">
+                    <button class="button" data-action="fix">
+                      View suggested fix
+                    </button>
+                    <button class="button" data-action="copy">
+                      Copy finding
+                    </button>
+                  </div>
+                </div>
+                <div class="finding">
+                  <div class="finding-head">
+                    <span class="risk medium">MEDIUM</span>
+                    <h4>Missing rate limit on refresh endpoint</h4>
+                    <span class="file-ref">src/auth/refresh.ts:52</span>
+                  </div>
+                  <p>
+                    The refresh endpoint does not apply the shared auth rate
+                    limiter. Repeated requests may increase database load and
+                    make token abuse easier.
+                  </p>
+                </div>
+                <div class="finding">
+                  <div class="finding-head">
+                    <span class="risk low">LOW</span>
+                    <h4>Token rotation event is not logged</h4>
+                    <span class="file-ref">src/auth/refresh.ts:91</span>
+                  </div>
+                  <p>
+                    Consider recording successful and rejected rotation attempts
+                    to improve incident investigation without logging token
+                    values.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Reviews Page -->
+          <section class="page-view" id="page-reviews">
+            <div class="page-head">
+              <div>
+                <div class="eyebrow">Quality Workflow</div>
+                <h1>Code reviews</h1>
+                <p>
+                  Review findings and track AI analysis across pull requests.
+                </p>
+              </div>
+              <div class="head-actions">
+                <button class="button primary" id="newReviewBtn2">
+                  <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+                  New review
+                </button>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <div class="panel-title">All pull requests</div>
+                  <div class="panel-sub">
+                    5 recent pull requests shown in this demo workspace
+                  </div>
+                </div>
+              </div>
+              <div class="review-tools">
+                <div class="search">
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="10.8" cy="10.8" r="6.8" />
+                    <path d="m16 16 5 5" />
+                  </svg>
+                  <input
+                    id="allSearch"
+                    placeholder="Search title or repository..."
+                    aria-label="Search all reviews"
+                  />
+                </div>
+                <select class="filter" id="allStatus">
+                  <option value="all">All statuses</option>
+                  <option value="reviewed">Reviewed</option>
+                  <option value="reviewing">Reviewing</option>
+                  <option value="action">Needs action</option>
+                </select>
+              </div>
+              <div class="review-list" id="allReviewList"></div>
+            </div>
+          </section>
+
+          <!-- Repositories Page -->
+          <section class="page-view" id="page-repositories">
+            <div class="page-head">
+              <div>
+                <div class="eyebrow">Connected Sources</div>
+                <h1>Repositories</h1>
+                <p>
+                  Manage repositories that AI Code Review Platform can inspect.
+                </p>
+              </div>
+              <button class="button primary" id="addRepoBtn">
+                <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+                Connect repository
+              </button>
+            </div>
+            <div class="repo-grid" id="repoGrid">
+              <article class="repo-card">
+                <div class="repo-card-head">
+                  <span class="repo-avatar">AG</span>
+                  <div>
+                    <h3>acme/api-gateway</h3>
+                    <p>GitHub · TypeScript</p>
+                  </div>
+                  <span class="status-pill reviewed" style="margin-left: auto"
+                    >Connected</span
+                  >
+                </div>
+                <div class="repo-stats">
+                  <span><strong>42</strong> reviews</span>
+                  <span><strong>3</strong> open findings</span>
+                  <span><strong>Today</strong> last scan</span>
+                </div>
+              </article>
+              <article class="repo-card">
+                <div class="repo-card-head">
+                  <span
+                    class="repo-avatar"
+                    style="
+                      background: var(--success-soft);
+                      color: var(--success);
+                    "
+                    >BS</span
+                  >
+                  <div>
+                    <h3>acme/backend-services</h3>
+                    <p>GitHub · Go</p>
+                  </div>
+                  <span class="status-pill reviewed" style="margin-left: auto"
+                    >Connected</span
+                  >
+                </div>
+                <div class="repo-stats">
+                  <span><strong>87</strong> reviews</span>
+                  <span><strong>8</strong> open findings</span>
+                  <span><strong>Today</strong> last scan</span>
+                </div>
+              </article>
+              <article class="repo-card">
+                <div class="repo-card-head">
+                  <span
+                    class="repo-avatar"
+                    style="
+                      background: var(--warning-soft);
+                      color: var(--warning);
+                    "
+                    >SF</span
+                  >
+                  <div>
+                    <h3>acme/storefront</h3>
+                    <p>GitHub · TypeScript</p>
+                  </div>
+                  <span class="status-pill reviewed" style="margin-left: auto"
+                    >Connected</span
+                  >
+                </div>
+                <div class="repo-stats">
+                  <span><strong>64</strong> reviews</span>
+                  <span><strong>5</strong> open findings</span>
+                  <span><strong>Yesterday</strong> last scan</span>
+                </div>
+              </article>
+              <article class="repo-card">
+                <div class="repo-card-head">
+                  <span
+                    class="repo-avatar"
+                    style="background: #dbeafe; color: #2563eb"
+                    >CP</span
+                  >
+                  <div>
+                    <h3>acme/core-platform</h3>
+                    <p>GitLab · Python</p>
+                  </div>
+                  <span class="status-pill reviewed" style="margin-left: auto"
+                    >Connected</span
+                  >
+                </div>
+                <div class="repo-stats">
+                  <span><strong>91</strong> reviews</span>
+                  <span><strong>2</strong> open findings</span>
+                  <span><strong>Yesterday</strong> last scan</span>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <!-- Rules Page -->
+          <section class="page-view" id="page-rules">
+            <div class="page-head">
+              <div>
+                <div class="eyebrow">Customize Analysis</div>
+                <h1>Review rules</h1>
+                <p>
+                  Set the standards AI Code Review Platform uses when analyzing
+                  your repositories.
+                </p>
+              </div>
+              <button class="button primary" id="saveRules">
+                Save changes
+              </button>
+            </div>
+            <div class="panel settings-form">
+              <div class="field">
+                <label for="ruleName">Rule set name</label>
+                <p>A descriptive name for this team's review policy.</p>
+                <input id="ruleName" value="Acme Engineering Standards" />
+              </div>
+              <div class="field">
+                <label for="ruleNotes">Additional review instructions</label>
+                <p>
+                  Give the AI context about your conventions, architecture, or
+                  risk tolerance.
+                </p>
+                <textarea id="ruleNotes">
+Prefer explicit error handling. Avoid logging secrets or personal data. Flag breaking API changes and missing authorization checks. Follow existing patterns before suggesting new abstractions.</textarea
+                >
+              </div>
+              <div class="toggle-row">
+                <div>
+                  <strong>Security vulnerabilities</strong>
+                  <p>
+                    Flag authorization gaps, injection risks, secrets, and
+                    unsafe data handling.
+                  </p>
+                </div>
+                <input class="toggle" type="checkbox" checked />
+              </div>
+              <div class="toggle-row">
+                <div>
+                  <strong>Correctness and edge cases</strong>
+                  <p>
+                    Identify race conditions, null handling, and incorrect
+                    business logic.
+                  </p>
+                </div>
+                <input class="toggle" type="checkbox" checked />
+              </div>
+              <div class="toggle-row">
+                <div>
+                  <strong>Performance regressions</strong>
+                  <p>
+                    Look for inefficient queries, unnecessary work, and scaling
+                    issues.
+                  </p>
+                </div>
+                <input class="toggle" type="checkbox" checked />
+              </div>
+              <div class="toggle-row">
+                <div>
+                  <strong>Style-only comments</strong>
+                  <p>
+                    Skip low-value style suggestions unless they violate
+                    configured standards.
+                  </p>
+                </div>
+                <input class="toggle" type="checkbox" />
+              </div>
+            </div>
+          </section>
+
+          <!-- Activity Page -->
+          <section class="page-view" id="page-activity">
+            <div class="page-head">
+              <div>
+                <div class="eyebrow">Audit Trail</div>
+                <h1>Activity</h1>
+                <p>A timeline of reviews, findings, and workspace changes.</p>
+              </div>
+              <button class="button" id="activityExport">
+                Export activity
+              </button>
+            </div>
+            <div class="panel">
+              <div class="panel-head">
+                <div class="panel-title">Recent events</div>
+                <span class="status-pill reviewed">Live demo data</span>
+              </div>
+              <div class="activity-list">
+                <div class="activity">
+                  <div class="activity-icon purple">
+                    <svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></svg>
+                  </div>
+                  <div>
+                    <div class="activity-text">
+                      <strong>AI review completed</strong> for
+                      <strong>api-gateway #482</strong> — 3 findings identified.
+                    </div>
+                    <div class="activity-time">
+                      12 minutes ago · Review engine
+                    </div>
+                  </div>
+                </div>
+                <div class="activity">
+                  <div class="activity-icon green">
+                    <svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></svg>
+                  </div>
+                  <div>
+                    <div class="activity-text">
+                      <strong>Finding resolved</strong> in
+                      <strong>backend-services #474</strong> by james-wu.
+                    </div>
+                    <div class="activity-time">
+                      46 minutes ago · GitHub integration
+                    </div>
+                  </div>
+                </div>
+                <div class="activity">
+                  <div class="activity-icon orange">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M12 3 2.8 20h18.4z" />
+                      <path d="M12 9v5" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div class="activity-text">
+                      <strong>High-risk issue detected</strong> in
+                      <strong>notifications #193</strong>.
+                    </div>
+                    <div class="activity-time">3 hours ago · Review engine</div>
+                  </div>
+                </div>
+                <div class="activity">
+                  <div class="activity-icon purple">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M3 12h4l3-8 4 16 3-8h4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div class="activity-text">
+                      <strong>Repository connected</strong>:
+                      <strong>acme/core-platform</strong>.
+                    </div>
+                    <div class="activity-time">Yesterday · Workspace admin</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Settings Page -->
+          <section class="page-view" id="page-settings">
+            <div class="page-head">
+              <div>
+                <div class="eyebrow">Workspace Preferences</div>
+                <h1>Settings</h1>
+                <p>Configure review behavior and workspace notifications.</p>
+              </div>
+              <button class="button primary" id="saveSettings">
+                Save settings
+              </button>
+            </div>
+            <div class="panel settings-form">
+              <div class="field">
+                <label for="workspaceName">Workspace name</label>
+                <p>Shown to members in your review dashboard.</p>
+                <input id="workspaceName" value="Acme Engineering" />
+              </div>
+              <div class="field">
+                <label for="provider">Git provider</label>
+                <p>Choose the provider for new repository connections.</p>
+                <select id="provider">
+                  <option>GitHub</option>
+                  <option>GitLab</option>
+                  <option>Bitbucket</option>
+                </select>
+              </div>
+              <div class="toggle-row">
+                <div>
+                  <strong>Review pull requests automatically</strong>
+                  <p>
+                    Start an AI review whenever a pull request is opened or
+                    updated.
+                  </p>
+                </div>
+                <input class="toggle" type="checkbox" checked />
+              </div>
+              <div class="toggle-row">
+                <div>
+                  <strong>Notify on high-severity findings</strong>
+                  <p>
+                    Show a notification when a review finds a high-risk issue.
+                  </p>
+                </div>
+                <input class="toggle" type="checkbox" checked />
+              </div>
+              <div class="toggle-row">
+                <div>
+                  <strong>Include suggested fixes</strong>
+                  <p>Provide actionable code suggestions alongside findings.</p>
+                </div>
+                <input class="toggle" type="checkbox" checked />
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      const $ = (s) => document.querySelector(s),
+        $$ = (s) => [...document.querySelectorAll(s)];
+      const toastEl = $("#toast");
+      let toastTimer;
+
+      function toast(message) {
+        toastEl.textContent = message;
+        toastEl.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2600);
+      }
+
+      function navigate(page) {
+        $$(".page-view").forEach((v) =>
+          v.classList.toggle("active", v.id === "page-" + page),
+        );
+        $$(".navitem").forEach((b) =>
+          b.classList.toggle("active", b.dataset.page === page),
+        );
+        $("#crumbCurrent").textContent =
+          {
+            overview: "Overview",
+            reviews: "Code reviews",
+            repositories: "Repositories",
+            rules: "Review rules",
+            activity: "Activity",
+            settings: "Settings",
+          }[page] || "Overview";
+        $("#sidebar").classList.remove("open");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        if (page === "reviews") renderAllReviews();
+      }
+
+      $$("[data-page]").forEach((b) =>
+        b.addEventListener("click", (e) => {
+          e.preventDefault();
+          navigate(b.dataset.page);
+        }),
+      );
+
+      $$("[data-goto]").forEach((b) =>
+        b.addEventListener("click", () => navigate(b.dataset.goto)),
+      );
+
+      $("#mobileMenu").addEventListener("click", () =>
+        $("#sidebar").classList.toggle("open"),
+      );
+
+      $("#workspaceBtn").addEventListener("click", () =>
+        toast("You are viewing the Acme Engineering workspace."),
+      );
+      $("#profileBtn").addEventListener("click", () =>
+        toast("Signed in as admin@acme.dev."),
+      );
+      $("#helpBtn").addEventListener("click", () =>
+        toast(
+          "Help center: review findings, repository setup, and workspace rules.",
+        ),
+      );
+      $("#notificationsBtn").addEventListener("click", () =>
+        toast("You have 2 unresolved high-priority review items."),
+      );
+      $("#healthMenu").addEventListener("click", () =>
+        toast("Code health is calculated from recent findings and severity."),
+      );
+
+      const reviewData = [
+        {
+          title: "Fix token refresh race condition",
+          num: "#482",
+          repo: "api-gateway",
+          author: "maya-chen",
+          age: "12 min ago",
+          status: "action",
+          findings: 3,
+        },
+        {
+          title: "Add pagination to users endpoint",
+          num: "#479",
+          repo: "backend-services",
+          author: "james-wu",
+          age: "38 min ago",
+          status: "reviewed",
+          findings: 1,
+        },
+        {
+          title: "Update checkout validation",
+          num: "#216",
+          repo: "storefront",
+          author: "alex-rivera",
+          age: "1 hr ago",
+          status: "reviewing",
+          findings: 0,
+        },
+        {
+          title: "Refactor cache invalidation",
+          num: "#731",
+          repo: "core-platform",
+          author: "sam-patel",
+          age: "2 hrs ago",
+          status: "reviewed",
+          findings: 2,
+        },
+        {
+          title: "Add webhook retry handling",
+          num: "#193",
+          repo: "notifications",
+          author: "priya-shah",
+          age: "3 hrs ago",
+          status: "action",
+          findings: 4,
+        },
+      ];
+
+      function statusLabel(s) {
+        return (
+          {
+            action: "Needs action",
+            reviewed: "Reviewed",
+            reviewing: "Reviewing",
+            failed: "Failed",
+          }[s] || s
+        );
+      }
+
+      function renderRows(container, query = "", status = "all") {
+        let rows = reviewData.filter(
+          (r) =>
+            (status === "all" || r.status === status) &&
+            (r.title + " " + r.repo + " " + r.author + " " + r.num)
+              .toLowerCase()
+              .includes(query.toLowerCase()),
+        );
+        container.innerHTML = rows.length
+          ? rows
+              .map(
+                (r) =>
+                  `<div class="review-row" data-status="${r.status}" data-review="${reviewData.indexOf(r)}">
+                    <div class="review-main">
+                      <div class="review-title">${r.title} <span class="pr-number">${r.num}</span></div>
+                      <div class="review-meta">
+                        <span class="repo-chip"><span class="tiny-avatar">${r.repo.slice(0, 2).toUpperCase()}</span> ${r.repo}</span>
+                        <span class="dotsep">·</span><span>${r.author}</span>
+                        <span class="dotsep">·</span><span>${r.age}</span>
+                        ${r.findings ? `<span class="finding-count">${r.findings} finding${r.findings > 1 ? "s" : ""}</span>` : ""}
+                      </div>
+                    </div>
+                    <span class="status-pill ${r.status}">${statusLabel(r.status)}</span>
+                  </div>`,
+              )
+              .join("")
+          : '<div class="empty">No pull requests match your search.</div>';
+
+        container
+          .querySelectorAll(".review-row")
+          .forEach((row) =>
+            row.addEventListener("click", () =>
+              selectReview(Number(row.dataset.review)),
+            ),
+          );
+      }
+
+      function renderAllReviews() {
+        renderRows(
+          $("#allReviewList"),
+          $("#allSearch")?.value || "",
+          $("#allStatus")?.value || "all",
+        );
+      }
+
+      function selectReview(i) {
+        let r = reviewData[i];
+        if (!r) return;
+        $$(".review-row").forEach((x) =>
+          x.classList.toggle("selected", Number(x.dataset.review) === i),
+        );
+        $("#reviewDetail").classList.add("open");
+        $("#detailTitle").innerHTML =
+          `${r.title} <span class="pr-number">${r.num}</span>`;
+        $("#detailMeta").textContent =
+          `${r.repo} · ${r.author} · Updated ${r.age}`;
+
+        const content = $("#detailContent");
+        if (i === 0) {
+          content.innerHTML = `
+            <div class="finding">
+              <div class="finding-head">
+                <span class="risk high">HIGH</span>
+                <h4>Refresh token can be reused concurrently</h4>
+                <span class="file-ref">src/auth/refresh.ts:84</span>
+              </div>
+              <p>Two simultaneous requests can both pass the token validity check before either rotation completes. This creates a window where the old refresh token remains usable and can issue multiple access tokens.</p>
+              <div class="codebox">
+                <div><span class="minus">- const session = await getSession(token)</span></div>
+                <div><span class="plus">+ const session = await rotateTokenAtomically(token)</span></div>
+              </div>
+              <div style="display: flex; gap: 12px; margin-top: 16px;">
+                <button class="button" data-action="fix">View suggested fix</button>
+                <button class="button" data-action="copy">Copy finding</button>
+              </div>
+            </div>
+            <div class="finding">
+              <div class="finding-head">
+                <span class="risk medium">MEDIUM</span>
+                <h4>Missing rate limit on refresh endpoint</h4>
+              </div>
+              <p>Apply the shared authentication rate limiter to reduce abuse and unexpected database load.</p>
+            </div>
+            <div class="finding">
+              <div class="finding-head">
+                <span class="risk low">LOW</span>
+                <h4>Token rotation event is not logged</h4>
+              </div>
+              <p>Record successful and rejected rotation attempts without logging token values.</p>
+            </div>`;
+        } else {
+          content.innerHTML = `
+            <div class="finding">
+              <div class="finding-head">
+                <span class="risk ${i === 4 ? "high" : "medium"}">${i === 4 ? "HIGH" : "MEDIUM"}</span>
+                <h4>${r.findings ? r.findings + " potential issue" + (r.findings > 1 ? "s" : "") + " detected" : "Review is in progress"}</h4>
+              </div>
+              <p>${r.status === "reviewing" ? "AI analysis is currently checking the changed files, dependencies, and repository rules." : r.findings ? "The review identified potential edge cases and maintainability concerns. Inspect each finding and confirm it against your project context before merging." : "No actionable findings were reported in this example review."}</p>
+              <button class="button" data-action="copy" style="margin-top: 16px;">Copy review summary</button>
+            </div>`;
+        }
+
+        $$(".detail-tab").forEach((t) =>
+          t.classList.toggle("active", t.dataset.tab === "findings"),
+        );
+
+        $$("[data-action]").forEach((b) =>
+          b.addEventListener("click", () => {
+            if (b.dataset.action === "fix")
+              toast(
+                "Suggested fix: rotate the token atomically and reject reused tokens.",
+              );
+            else toast("Finding summary copied to your review notes.");
+          }),
+        );
+      }
+
+      $("#reviewSearch").addEventListener("input", () => {
+        let q = $("#reviewSearch").value.toLowerCase(),
+          s = $("#statusFilter").value,
+          n = 0;
+        $$("#reviewList .review-row").forEach((r) => {
+          let show =
+            r.dataset.search.includes(q) &&
+            (s === "all" || r.dataset.status === s);
+          r.style.display = show ? "grid" : "none";
+          if (show) n++;
+        });
+        $("#noReviews").hidden = n > 0;
+      });
+
+      $("#statusFilter").addEventListener("change", () =>
+        $("#reviewSearch").dispatchEvent(new Event("input")),
+      );
+      $("#allSearch").addEventListener("input", renderAllReviews);
+      $("#allStatus").addEventListener("change", renderAllReviews);
+
+      $$(".detail-tab").forEach((t) =>
+        t.addEventListener("click", () => {
+          $$(".detail-tab").forEach((x) =>
+            x.classList.toggle("active", x === t),
+          );
+          let c = $("#detailContent");
+          if (t.dataset.tab === "findings") {
+            selectReview(
+              Number($$(".review-row.selected")[0]?.dataset.review || 0),
+            );
+            return;
+          }
+          if (t.dataset.tab === "diff") {
+            c.innerHTML =
+              '<div class="finding"><div class="finding-head"><span class="file-ref">src/auth/refresh.ts</span><span class="risk medium">2 changed files</span></div><div class="codebox"><div>@@ -80,7 +80,8 @@ async function refreshToken</div><div><span class="minus">- const session = await getSession(token)</span></div><div><span class="plus">+ const session = await rotateTokenAtomically(token)</span></div><div>  if (!session) return unauthorized()</div></div><p>Example diff preview. Connect a Git provider to load real changes.</p></div>';
+          } else {
+            c.innerHTML =
+              '<div class="finding"><h4>AI review summary</h4><p>This change updates the refresh-token flow. The primary risk is concurrent token rotation, which can allow reuse of an older token. Consider an atomic rotation operation, rate limiting, and security event logging.</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;"><span class="risk high">1 high</span><span class="risk medium">1 medium</span><span class="risk low">1 low</span></div></div>';
+          }
+        }),
+      );
+
+      $("#resolveBtn").addEventListener("click", () => {
+        let row = $$(".review-row.selected")[0];
+        if (row) {
+          row.dataset.status = "reviewed";
+          let pill = row.querySelector(".status-pill");
+          if (pill) {
+            pill.className = "status-pill reviewed";
+            pill.textContent = "Reviewed";
+          }
+          let idx = Number(row.dataset.review);
+          if (reviewData[idx]) reviewData[idx].status = "reviewed";
+          toast("Review marked as resolved.");
+        } else {
+          toast("Review marked as resolved.");
+        }
+      });
+
+      $("#dismissBtn").addEventListener("click", () => {
+        if (confirm("Dismiss all findings for this pull request?")) {
+          $("#detailContent").innerHTML =
+            '<div class="empty">All findings dismissed for this review.</div>';
+          toast("Findings dismissed.");
+        }
+      });
+
+      function newReview() {
+        const repo = prompt(
+          "Enter repository name (for example, acme/api-gateway):",
+          "acme/api-gateway",
+        );
+        if (repo === null) return;
+        if (!repo.trim()) {
+          toast("Repository name is required.");
+          return;
+        }
+        toast(
+          "Review queued for " +
+            repo.trim() +
+            ". Connect a Git provider to run a live review.",
+        );
+      }
+
+      $("#newReviewBtn").addEventListener("click", newReview);
+      $("#newReviewBtn2").addEventListener("click", newReview);
+      $("#connectBtn").addEventListener("click", () =>
+        navigate("repositories"),
+      );
+
+      $("#addRepoBtn").addEventListener("click", () => {
+        const name = prompt("Repository name (for example, acme/payments):");
+        if (!name) return;
+        const card = document.createElement("article");
+        card.className = "repo-card";
+        card.innerHTML = `
+          <div class="repo-card-head">
+            <span class="repo-avatar">${name.split("/").pop().slice(0, 2).toUpperCase()}</span>
+            <div><h3></h3><p>Pending connection · Git provider</p></div>
+            <span class="status-pill reviewing" style="margin-left:auto">Pending</span>
+          </div>
+          <div class="repo-stats">
+            <span><strong>0</strong> reviews</span>
+            <span><strong>0</strong> open findings</span>
+            <span>Awaiting authorization</span>
+          </div>`;
+        card.querySelector("h3").textContent = name;
+        $("#repoGrid").append(card);
+        toast("Repository added to pending connections.");
+      });
+
+      $("#exportBtn").addEventListener("click", () =>
+        downloadCSV("code-review-report.csv", [
+          ["Pull request", "Repository", "Author", "Status", "Findings"],
+          ...reviewData.map((r) => [
+            r.title,
+            r.repo,
+            r.author,
+            statusLabel(r.status),
+            r.findings,
+          ]),
+        ]),
+      );
+
+      $("#activityExport").addEventListener("click", () =>
+        downloadCSV("review-activity.csv", [
+          ["Event", "Details"],
+          ["AI review completed", "api-gateway #482"],
+          ["Finding resolved", "backend-services #474"],
+          ["High-risk issue detected", "notifications #193"],
+        ]),
+      );
+
+      function downloadCSV(name, rows) {
+        const csv = rows
+          .map((r) =>
+            r.map((v) => '"' + String(v).replaceAll('"', '""') + '"').join(","),
+          )
+          .join("\r\n");
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(
+          new Blob([csv], { type: "text/csv;charset=utf-8;" }),
+        );
+        a.download = name;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        toast("Report exported.");
+      }
+
+      $("#saveRules").addEventListener("click", () =>
+        toast("Review rules saved in this demo session."),
+      );
+      $("#saveSettings").addEventListener("click", () =>
+        toast("Workspace settings saved in this demo session."),
+      );
+
+      $("#reviewList").addEventListener("click", (e) => {
+        const row = e.target.closest(".review-row");
+        if (row) selectReview(Number(row.dataset.review));
+      });
+    </script>
+  </body>
+</html>

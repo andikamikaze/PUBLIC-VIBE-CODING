@@ -1,0 +1,3408 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0a0b0d" />
+    <title>Uber Clone — Desktop & Mobile (Pixel Frame)</title>
+    <style>
+      /* ============ DESIGN TOKENS ============ */
+      :root {
+        --ink: #000;
+        --ink2: #14161a;
+        --mut: #545454;
+        --mut2: #6b6b6b;
+        --line: #e6e6e6;
+        --soft: #f6f6f6;
+        --soft2: #eef0f1;
+        --blue: #276ef1;
+        --green: #0a8a44;
+        --bg: #0a0b0d;
+        --font: "Uber Move", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        font-family: var(--font);
+        color: var(--ink);
+        background: var(--bg);
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      button,
+      input {
+        font: inherit;
+        color: inherit;
+      }
+      button {
+        cursor: pointer;
+        border: 0;
+        background: none;
+      }
+      ::selection {
+        background: #000;
+        color: #fff;
+      }
+
+      /* ============ AMBIENT BACKGROUND (jalan malam) ============ */
+      .bg-scene {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        overflow: hidden;
+      }
+      .bg-scene svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+      .lane {
+        fill: none;
+        stroke: #fff;
+        stroke-linecap: round;
+        animation: dashflow linear infinite;
+      }
+      .l1 {
+        opacity: 0.05;
+        stroke-width: 2;
+        stroke-dasharray: 3 90;
+        animation-duration: 9s;
+      }
+      .l2 {
+        opacity: 0.04;
+        stroke-width: 2;
+        stroke-dasharray: 3 130;
+        animation-duration: 14s;
+      }
+      .l3 {
+        opacity: 0.06;
+        stroke-width: 1.5;
+        stroke-dasharray: 2 70;
+        animation-duration: 7s;
+      }
+      @keyframes dashflow {
+        to {
+          stroke-dashoffset: -1000;
+        }
+      }
+      .glow {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(10px);
+        animation: breathe 11s ease-in-out infinite alternate;
+      }
+      .g1 {
+        width: 55vw;
+        height: 42vh;
+        left: -12vw;
+        top: -14vh;
+        background: radial-gradient(
+          closest-side,
+          rgba(39, 110, 241, 0.13),
+          transparent 70%
+        );
+      }
+      .g2 {
+        width: 48vw;
+        height: 40vh;
+        right: -10vw;
+        bottom: -12vh;
+        background: radial-gradient(
+          closest-side,
+          rgba(245, 200, 66, 0.09),
+          transparent 70%
+        );
+        animation-delay: -5s;
+      }
+      @keyframes breathe {
+        from {
+          opacity: 0.55;
+          transform: translateY(-12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(14px);
+        }
+      }
+      .bg-word {
+        position: fixed;
+        right: -2vw;
+        bottom: -9vh;
+        font-size: 21vw;
+        font-weight: 800;
+        letter-spacing: -0.06em;
+        color: rgba(255, 255, 255, 0.026);
+        user-select: none;
+        line-height: 1;
+      }
+
+      /* ============ SWITCH BAR ============ */
+      .switchbar {
+        position: fixed;
+        top: 18px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 300;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: #000;
+        color: #fff;
+        padding: 8px 10px 8px 20px;
+        border-radius: 999px;
+        border: 1px solid #ffffff1c;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6);
+        animation: dropIn 0.7s var(--ease) both;
+      }
+      @keyframes dropIn {
+        from {
+          opacity: 0;
+          transform: translate(-50%, -22px);
+        }
+        to {
+          opacity: 1;
+          transform: translate(-50%, 0);
+        }
+      }
+      .brand {
+        display: flex;
+        align-items: baseline;
+        gap: 9px;
+      }
+      .brand b {
+        font-size: 21px;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+      }
+      .brand small {
+        font-size: 10px;
+        font-weight: 600;
+        color: #8b8f94;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .seg {
+        display: flex;
+        background: #1b1d21;
+        border-radius: 999px;
+        padding: 3px;
+        gap: 2px;
+      }
+      .seg-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 16px;
+        border-radius: 999px;
+        color: #c8cbcf;
+        font-size: 12.5px;
+        font-weight: 700;
+        transition: all 0.25s var(--ease);
+      }
+      .seg-btn svg {
+        display: block;
+      }
+      .seg-btn:hover {
+        color: #fff;
+      }
+      .seg-btn.active {
+        background: #fff;
+        color: #000;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+      }
+      .kbd-hint {
+        font-size: 10.5px;
+        color: #7d8288;
+        letter-spacing: 0.06em;
+      }
+      .kbd-hint kbd {
+        border: 1px solid #33363c;
+        border-bottom-width: 2px;
+        border-radius: 4px;
+        padding: 1px 5px;
+        font-family: inherit;
+        font-size: 10px;
+        color: #c8cbcf;
+        margin: 0 1px;
+      }
+
+      /* ============ VIEW SWITCHING ============ */
+      .stage {
+        position: relative;
+        z-index: 1;
+        height: 100vh;
+      }
+      .view {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transform: translateY(18px) scale(0.985);
+        pointer-events: none;
+        transition:
+          opacity 0.5s var(--ease),
+          transform 0.5s var(--ease);
+        overflow: auto;
+        padding: 86px 20px 30px;
+      }
+      .view.active {
+        opacity: 1;
+        transform: none;
+        pointer-events: auto;
+      }
+
+      /* ============ BROWSER CHROME (desktop) ============ */
+      .browser {
+        width: min(1300px, 96vw);
+        height: min(790px, calc(100vh - 118px));
+        min-height: 560px;
+        background: #fff;
+        border-radius: 14px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        box-shadow:
+          0 40px 90px rgba(0, 0, 0, 0.6),
+          0 0 0 1px #ffffff14;
+      }
+      .chrome {
+        flex: 0 0 42px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #eceef1;
+        padding: 0 14px;
+        border-bottom: 1px solid #dde0e4;
+      }
+      .cdot {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+      }
+      .cdot.r {
+        background: #ff5f57;
+      }
+      .cdot.y {
+        background: #febc2e;
+      }
+      .cdot.g {
+        background: #28c840;
+      }
+      .urlbar {
+        margin-left: 14px;
+        flex: 0 1 380px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        background: #fff;
+        border: 1px solid #e0e3e7;
+        border-radius: 999px;
+        padding: 5px 14px;
+        font-size: 12px;
+        color: #3c4043;
+      }
+      .urlbar svg {
+        flex: 0 0 auto;
+        color: #5f6368;
+      }
+      .chrome-hint {
+        margin-left: auto;
+        font-size: 10.5px;
+        color: #9aa0a6;
+      }
+
+      /* ---- Uber desktop header ---- */
+      .ub-header {
+        flex: 0 0 58px;
+        background: #000;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 26px;
+        padding: 0 22px;
+      }
+      .ub-logo {
+        font-size: 23px;
+        font-weight: 800;
+        letter-spacing: -0.05em;
+      }
+      .ub-nav {
+        display: flex;
+        gap: 4px;
+      }
+      .ub-nav button {
+        color: #e6e6e6;
+        font-size: 13.5px;
+        font-weight: 600;
+        padding: 8px 13px;
+        border-radius: 999px;
+        position: relative;
+        transition: background 0.2s;
+      }
+      .ub-nav button:hover {
+        background: #ffffff26;
+      }
+      .ub-nav button.on {
+        background: #ffffff33;
+      }
+      .ub-nav button.on::after {
+        content: "";
+        position: absolute;
+        left: 13px;
+        right: 13px;
+        bottom: 2px;
+        height: 2px;
+        background: #fff;
+        border-radius: 2px;
+      }
+      .ub-hr {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .ub-hbtn {
+        color: #fff;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 8px 13px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        transition: background 0.2s;
+      }
+      .ub-hbtn:hover {
+        background: #ffffff26;
+      }
+      .ub-hbtn.solid {
+        background: #fff;
+        color: #000;
+      }
+      .ub-hbtn.solid:hover {
+        background: #e8e8e8;
+      }
+
+      /* ---- Desktop layout ---- */
+      .ub-main {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 436px minmax(0, 1fr);
+        min-height: 0;
+      }
+      .ub-panel {
+        border-right: 1px solid #ededed;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        background: #fff;
+      }
+      .panel-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding: 28px 30px 12px;
+      }
+      .panel-scroll::-webkit-scrollbar {
+        width: 8px;
+      }
+      .panel-scroll::-webkit-scrollbar-thumb {
+        background: #ddd;
+        border-radius: 8px;
+      }
+      .eyebrow {
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #8c8c8c;
+        margin-bottom: 10px;
+      }
+      .panel-title {
+        font-size: 33px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.06;
+        margin-bottom: 8px;
+      }
+      .panel-sub {
+        font-size: 13.5px;
+        color: var(--mut2);
+        margin-bottom: 24px;
+      }
+
+      /* route inputs */
+      .route-box {
+        position: relative;
+        margin-bottom: 16px;
+      }
+      .rail {
+        position: absolute;
+        left: 16px;
+        top: 24px;
+        bottom: 24px;
+        width: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .rail::before {
+        content: "";
+        position: absolute;
+        top: 12px;
+        bottom: 12px;
+        left: 4.5px;
+        border-left: 1.5px dashed #b5b5b5;
+      }
+      .rail .p-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #000;
+        z-index: 1;
+      }
+      .rail .p-sq {
+        width: 9px;
+        height: 9px;
+        background: #000;
+        z-index: 1;
+      }
+      .ri-field {
+        position: relative;
+      }
+      .ri-field + .ri-field {
+        margin-top: 9px;
+      }
+      .ri-input {
+        width: 100%;
+        height: 56px;
+        border: 0;
+        background: var(--soft);
+        padding: 0 46px 0 38px;
+        font-size: 14.5px;
+        outline: 2px solid transparent;
+        outline-offset: -2px;
+        border-radius: 2px;
+        transition:
+          background 0.15s,
+          outline-color 0.15s;
+      }
+      .ri-input::placeholder {
+        color: #8a8a8a;
+      }
+      .ri-field:focus-within .ri-input {
+        background: #fff;
+        outline-color: #000;
+      }
+      .ri-clear {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        color: #666;
+        font-size: 17px;
+        display: grid;
+        place-items: center;
+        opacity: 0;
+        transition: 0.15s;
+      }
+      .ri-field.has-val .ri-clear {
+        opacity: 1;
+      }
+      .ri-clear:hover {
+        background: #e6e6e6;
+      }
+      .ri-swap {
+        position: absolute;
+        right: -13px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 4;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #fff;
+        border: 1px solid #e3e3e3;
+        display: grid;
+        place-items: center;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.09);
+        transition: 0.2s var(--ease);
+      }
+      .ri-swap:hover {
+        background: #f2f2f2;
+        transform: translateY(-50%) rotate(180deg);
+      }
+      .suggest {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: -8px;
+        right: -8px;
+        z-index: 40;
+        background: #fff;
+        border: 1px solid #efefef;
+        box-shadow: 0 18px 44px rgba(0, 0, 0, 0.16);
+        padding: 6px;
+        display: none;
+        border-radius: 4px;
+      }
+      .suggest.show {
+        display: block;
+        animation: popUp 0.22s var(--ease);
+      }
+      @keyframes popUp {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+      }
+      .sg {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        text-align: left;
+        padding: 11px 10px;
+        border-radius: 4px;
+        transition: background 0.12s;
+      }
+      .sg:hover {
+        background: #f5f5f5;
+      }
+      .sg-ico {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #eef0f1;
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+      }
+      .sg b {
+        display: block;
+        font-size: 13.5px;
+        font-weight: 700;
+      }
+      .sg span {
+        display: block;
+        font-size: 11.5px;
+        color: #7a7a7a;
+        margin-top: 2px;
+      }
+
+      /* option row */
+      .opt-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+        margin: 4px 0 26px;
+      }
+      .opt {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        background: var(--soft);
+        padding: 13px 14px;
+        min-height: 48px;
+        font-size: 12.5px;
+        font-weight: 700;
+        border-radius: 2px;
+        transition: background 0.15s;
+        text-align: left;
+      }
+      .opt:hover {
+        background: #ececec;
+      }
+      .opt .chev {
+        margin-left: auto;
+        color: #8a8a8a;
+      }
+
+      /* rides */
+      .zone-h {
+        font-size: 17px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      .zone-p {
+        font-size: 12px;
+        color: #7a7a7a;
+        margin: 3px 0 12px;
+      }
+      .empty {
+        border: 1.5px dashed #ddd;
+        border-radius: 6px;
+        padding: 26px 18px;
+        text-align: center;
+        color: #8a8a8a;
+        font-size: 12.5px;
+        line-height: 1.6;
+      }
+      .empty svg {
+        display: block;
+        margin: 0 auto 12px;
+        opacity: 0.85;
+      }
+      .ride {
+        display: grid;
+        grid-template-columns: 86px minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+        width: 100%;
+        padding: 11px 12px;
+        border: 2px solid transparent;
+        border-radius: 6px;
+        text-align: left;
+        background: #fff;
+        transition:
+          background 0.15s,
+          border-color 0.15s;
+        animation: riseIn 0.5s var(--ease) both;
+      }
+      @keyframes riseIn {
+        from {
+          opacity: 0;
+          transform: translateY(14px);
+        }
+      }
+      .ride:hover {
+        background: #fafafa;
+      }
+      .ride.sel {
+        background: #f3f3f3;
+        border-color: #000;
+      }
+      .ride .car {
+        display: grid;
+        place-items: center;
+      }
+      .ride b {
+        font-size: 14.5px;
+        font-weight: 800;
+      }
+      .ride .cap {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        font-size: 11px;
+        color: #555;
+        margin-left: 7px;
+        font-weight: 600;
+      }
+      .ride .desc {
+        display: block;
+        font-size: 11px;
+        color: #787878;
+        margin-top: 3px;
+      }
+      .ride .price {
+        font-size: 14px;
+        font-weight: 800;
+        text-align: right;
+      }
+      .ride .eta {
+        display: block;
+        font-size: 10.5px;
+        color: #8a8a8a;
+        font-weight: 600;
+        margin-top: 3px;
+      }
+      .pillx {
+        display: inline-block;
+        font-size: 8.5px;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        background: #e8f5ec;
+        color: #1d5b38;
+        padding: 3px 6px;
+        border-radius: 3px;
+        vertical-align: 2px;
+        margin-left: 6px;
+      }
+
+      /* panel footer / request */
+      .panel-foot {
+        border-top: 1px solid #efefef;
+        padding: 14px 30px 18px;
+        background: #fff;
+      }
+      .pay-row {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 12.5px;
+        font-weight: 700;
+        margin-bottom: 12px;
+        color: #333;
+      }
+      .pay-row .chev {
+        margin-left: auto;
+        color: #8a8a8a;
+      }
+      .cta {
+        width: 100%;
+        height: 54px;
+        background: #000;
+        color: #fff;
+        font-size: 15px;
+        font-weight: 800;
+        border-radius: 4px;
+        transition:
+          background 0.18s,
+          transform 0.12s,
+          opacity 0.2s;
+        letter-spacing: 0.01em;
+      }
+      .cta:hover:not(:disabled) {
+        background: #262626;
+      }
+      .cta:active:not(:disabled) {
+        transform: scale(0.985);
+      }
+      .cta:disabled {
+        opacity: 0.32;
+        cursor: not-allowed;
+      }
+      .fine {
+        font-size: 10px;
+        color: #909090;
+        text-align: center;
+        margin-top: 10px;
+        line-height: 1.5;
+      }
+
+      /* driver card (desktop) */
+      .driver-card {
+        background: #fafafa;
+        border: 1px solid #ececec;
+        border-radius: 8px;
+        padding: 18px;
+        animation: riseIn 0.5s var(--ease) both;
+      }
+      .dc-top {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+      .dc-live {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 12px;
+        font-weight: 800;
+      }
+      .dc-live i {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #0a8a44;
+        animation: blink 1.4s infinite;
+      }
+      @keyframes blink {
+        50% {
+          opacity: 0.25;
+        }
+      }
+      .dc-eta {
+        margin-left: auto;
+        font-size: 12px;
+        font-weight: 800;
+        background: #000;
+        color: #fff;
+        padding: 5px 10px;
+        border-radius: 999px;
+      }
+      .dc-person {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .avatar {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        background: #111;
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        font-size: 14px;
+        flex: 0 0 auto;
+      }
+      .dc-person b {
+        font-size: 14.5px;
+        display: block;
+      }
+      .dc-person .rate {
+        font-size: 11.5px;
+        color: #666;
+      }
+      .dc-person .carline {
+        font-size: 12px;
+        color: #666;
+        margin-top: 2px;
+      }
+      .plate {
+        margin-left: auto;
+        background: #fff;
+        border: 2px solid #000;
+        border-radius: 4px;
+        padding: 6px 10px;
+        font-weight: 800;
+        font-size: 13px;
+        letter-spacing: 0.06em;
+      }
+      .dc-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .otp {
+        font-size: 11.5px;
+        color: #555;
+        font-weight: 600;
+      }
+      .otp b {
+        font-size: 15px;
+        letter-spacing: 0.2em;
+        color: #000;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 3px 8px;
+        margin-left: 4px;
+      }
+      .dc-actions {
+        margin-left: auto;
+        display: flex;
+        gap: 8px;
+      }
+      .rbtn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #fff;
+        border: 1px solid #e2e2e2;
+        display: grid;
+        place-items: center;
+        transition: 0.15s;
+      }
+      .rbtn:hover {
+        background: #eee;
+      }
+      .dc-bar {
+        height: 4px;
+        background: #e4e4e4;
+        border-radius: 4px;
+        margin: 14px 0;
+        overflow: hidden;
+      }
+      .dc-bar i {
+        display: block;
+        height: 100%;
+        background: #000;
+        width: 0;
+        transition: width 1s linear;
+      }
+      .dc-done {
+        width: 100%;
+        height: 44px;
+        background: #fff;
+        border: 1.5px solid #000;
+        border-radius: 4px;
+        font-weight: 800;
+        font-size: 13px;
+        transition: 0.15s;
+      }
+      .dc-done:hover {
+        background: #000;
+        color: #fff;
+      }
+
+      /* ---- Desktop map ---- */
+      .ub-mapbox {
+        position: relative;
+        overflow: hidden;
+        background: #e9eae4;
+      }
+      .mzoom {
+        width: 100%;
+        height: 100%;
+        transition: transform 0.45s var(--ease);
+        will-change: transform;
+      }
+      .msvg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .map-ui-top {
+        position: absolute;
+        left: 22px;
+        top: 18px;
+        display: flex;
+        gap: 8px;
+      }
+      .mchip {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        background: #fff;
+        padding: 10px 14px;
+        border-radius: 999px;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.13);
+        font-size: 12px;
+        font-weight: 700;
+        transition: background 0.15s;
+      }
+      .mchip:hover {
+        background: #f3f3f3;
+      }
+      .map-status {
+        position: absolute;
+        right: 22px;
+        top: 18px;
+        background: #ffffffee;
+        border-radius: 999px;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+        padding: 9px 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: #3f423b;
+      }
+      .map-status i {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #22a06b;
+        animation: blink 2s infinite;
+      }
+      .map-tools {
+        position: absolute;
+        right: 22px;
+        bottom: 26px;
+        display: grid;
+        gap: 8px;
+      }
+      .mtool {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #fff;
+        display: grid;
+        place-items: center;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.16);
+        transition: 0.15s;
+      }
+      .mtool:hover {
+        background: #f2f2f2;
+        transform: translateY(-1px);
+      }
+      .map-attr {
+        position: absolute;
+        left: 12px;
+        bottom: 8px;
+        font-size: 9.5px;
+        color: #6d7168;
+        background: #ffffffb8;
+        padding: 3px 7px;
+        border-radius: 3px;
+      }
+
+      /* map svg life */
+      .pulse {
+        transform-box: fill-box;
+        transform-origin: center;
+        animation: pulse 2.4s ease-out infinite;
+      }
+      @keyframes pulse {
+        0% {
+          transform: scale(0.35);
+          opacity: 0.55;
+        }
+        100% {
+          transform: scale(2.5);
+          opacity: 0;
+        }
+      }
+      .pin-anim {
+        transform-box: fill-box;
+        transform-origin: 50% 100%;
+      }
+      .pin-anim.drop {
+        animation: pinDrop 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.35);
+      }
+      @keyframes pinDrop {
+        0% {
+          transform: translateY(-46px);
+          opacity: 0;
+        }
+        70% {
+          transform: translateY(3px);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(0);
+        }
+      }
+      .routepath {
+        stroke-linecap: round;
+      }
+
+      /* ============ MOBILE VIEW — PIXEL ============ */
+      .phone-box {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 0;
+      }
+      .phone {
+        position: relative;
+        width: 398px;
+        height: 846px;
+        border-radius: 56px;
+        flex: 0 0 auto;
+        background: linear-gradient(
+          150deg,
+          #4a4e55 0%,
+          #23262b 22%,
+          #101114 60%,
+          #2c2f34 100%
+        );
+        padding: 11px;
+        box-shadow:
+          0 60px 120px rgba(0, 0, 0, 0.65),
+          0 0 0 1px #ffffff12,
+          inset 0 0 4px rgba(255, 255, 255, 0.25);
+      }
+      .phone::before,
+      .phone::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.14);
+      }
+      .phone::before {
+        top: 64px;
+      }
+      .phone::after {
+        bottom: 64px;
+      }
+      .p-btn {
+        position: absolute;
+        border-radius: 3px;
+        background: #3a3d43;
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25);
+      }
+      .p-btn.power {
+        right: -4px;
+        top: 206px;
+        width: 5px;
+        height: 64px;
+      }
+      .p-btn.vol {
+        right: -4px;
+        top: 300px;
+        width: 5px;
+        height: 104px;
+      }
+      .screen {
+        position: absolute;
+        inset: 11px;
+        border-radius: 46px;
+        overflow: hidden;
+        background: #fff;
+        user-select: none;
+      }
+      .p-camera {
+        position: absolute;
+        top: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background: #050608;
+        z-index: 90;
+        box-shadow: inset 0 0 3px 1.5px #1d2530;
+      }
+      .p-status {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 80;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 13px 26px 0 30px;
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #0d0e10;
+        pointer-events: none;
+      }
+      .p-ics {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .p-gesture {
+        position: absolute;
+        bottom: 7px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 120px;
+        height: 4.5px;
+        border-radius: 4px;
+        background: #000;
+        opacity: 0.85;
+        z-index: 85;
+      }
+      .map-wrap {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* scenes */
+      .m-scene {
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(16px);
+        transition:
+          opacity 0.38s var(--ease),
+          transform 0.38s var(--ease);
+      }
+      .m-scene.on {
+        opacity: 1;
+        pointer-events: auto;
+        transform: none;
+      }
+
+      /* home */
+      .sc-top {
+        position: absolute;
+        top: 52px;
+        left: 14px;
+        right: 14px;
+        display: flex;
+        justify-content: space-between;
+      }
+      .icobtn {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+        display: grid;
+        place-items: center;
+        transition: 0.15s;
+      }
+      .icobtn:active {
+        transform: scale(0.92);
+      }
+      .home-card {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #fff;
+        border-radius: 22px 22px 0 0;
+        padding: 18px 16px 26px;
+        box-shadow: 0 -14px 40px rgba(0, 0, 0, 0.14);
+      }
+      .m-search {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: var(--soft);
+        border-radius: 10px;
+        padding: 15px 16px;
+        font-size: 16.5px;
+        font-weight: 700;
+        transition: background 0.15s;
+        text-align: left;
+      }
+      .m-search:hover {
+        background: #efefef;
+      }
+      .m-search .later {
+        margin-left: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: #fff;
+        border-radius: 999px;
+        padding: 6px 11px;
+        font-size: 11px;
+        font-weight: 700;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      }
+      .m-chips {
+        display: flex;
+        gap: 8px;
+        margin: 13px 0 16px;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .m-chips::-webkit-scrollbar {
+        display: none;
+      }
+      .chip {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--soft);
+        border-radius: 999px;
+        padding: 10px 15px;
+        font-size: 12.5px;
+        font-weight: 700;
+        transition: 0.15s;
+      }
+      .chip:hover {
+        background: #ececec;
+      }
+      .chip .cic {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: #111;
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+      }
+      .m-saved-h {
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #8a8a8a;
+        margin-bottom: 6px;
+      }
+      .saved {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        width: 100%;
+        text-align: left;
+        padding: 11px 4px;
+        border-radius: 8px;
+      }
+      .saved:hover {
+        background: #f7f7f7;
+      }
+      .saved b {
+        display: block;
+        font-size: 13.5px;
+        font-weight: 700;
+      }
+      .saved span {
+        display: block;
+        font-size: 11px;
+        color: #818181;
+        margin-top: 2px;
+      }
+      .saved .chev {
+        margin-left: auto;
+        color: #bbb;
+      }
+
+      /* search scene */
+      .sc-search {
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+      }
+      .s-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 60px 16px 12px;
+      }
+      .s-head input {
+        flex: 1;
+        height: 48px;
+        background: var(--soft);
+        border: 0;
+        border-radius: 8px;
+        padding: 0 16px;
+        font-size: 15px;
+        outline: 2px solid transparent;
+      }
+      .s-head input:focus {
+        outline-color: #000;
+        background: #fff;
+      }
+      .s-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 4px 12px 30px;
+      }
+
+      /* rides scene */
+      .r-head {
+        position: absolute;
+        top: 52px;
+        left: 14px;
+        right: 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .r-dest {
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+        padding: 10px 15px;
+        min-width: 0;
+      }
+      .r-dest b {
+        display: block;
+        font-size: 13.5px;
+        font-weight: 800;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .r-dest span {
+        font-size: 10.5px;
+        color: #777;
+      }
+      .r-sheet {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #fff;
+        border-radius: 22px 22px 0 0;
+        padding: 10px 0 24px;
+        box-shadow: 0 -14px 40px rgba(0, 0, 0, 0.14);
+      }
+      .grabber {
+        width: 38px;
+        height: 4px;
+        border-radius: 4px;
+        background: #dedede;
+        margin: 2px auto 12px;
+      }
+      .r-cards {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding: 2px 16px 14px;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+      }
+      .r-cards::-webkit-scrollbar {
+        display: none;
+      }
+      .rc {
+        flex: 0 0 200px;
+        scroll-snap-align: start;
+        border: 2px solid #ececec;
+        border-radius: 14px;
+        padding: 13px 14px;
+        text-align: left;
+        background: #fff;
+        transition:
+          border-color 0.15s,
+          background 0.15s,
+          transform 0.2s var(--ease);
+      }
+      .rc:hover {
+        transform: translateY(-3px);
+      }
+      .rc.sel {
+        border-color: #000;
+        background: #f7f7f7;
+      }
+      .rc .row1 {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .rc b {
+        font-size: 14.5px;
+        font-weight: 800;
+      }
+      .rc .eta {
+        font-size: 10.5px;
+        font-weight: 700;
+        color: #777;
+        background: #efefef;
+        border-radius: 999px;
+        padding: 3px 8px;
+      }
+      .rc .desc {
+        font-size: 11px;
+        color: #7d7d7d;
+        margin: 5px 0 9px;
+        line-height: 1.4;
+      }
+      .rc .price {
+        font-size: 15px;
+        font-weight: 800;
+      }
+      .r-pay {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 2px 16px 13px;
+        padding: 11px 12px;
+        background: #fafafa;
+        border-radius: 10px;
+        font-size: 12.5px;
+        font-weight: 700;
+      }
+      .r-pay .chev {
+        margin-left: auto;
+        color: #999;
+      }
+      .m-cta {
+        width: calc(100% - 32px);
+        margin: 0 16px;
+        height: 52px;
+        background: #000;
+        color: #fff;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 800;
+        transition: 0.15s;
+      }
+      .m-cta:active {
+        transform: scale(0.98);
+      }
+
+      /* searching scene */
+      .f-sheet {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #fff;
+        border-radius: 22px 22px 0 0;
+        padding: 26px 20px 30px;
+        text-align: center;
+        box-shadow: 0 -14px 40px rgba(0, 0, 0, 0.14);
+      }
+      .radar {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 16px;
+      }
+      .radar i {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        border: 2px solid #000;
+        opacity: 0;
+        animation: ring 2.1s ease-out infinite;
+      }
+      .radar i:nth-child(2) {
+        animation-delay: 0.7s;
+      }
+      .radar i:nth-child(3) {
+        animation-delay: 1.4s;
+      }
+      @keyframes ring {
+        0% {
+          transform: scale(0.28);
+          opacity: 0.75;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 0;
+        }
+      }
+      .radar .core {
+        position: absolute;
+        inset: 34px;
+        background: #f3f3f3;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+      }
+      .f-sheet h3 {
+        font-size: 17px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      .f-sheet p {
+        font-size: 12px;
+        color: #7a7a7a;
+        margin: 5px 0 18px;
+      }
+      .m-ghost {
+        width: 100%;
+        height: 48px;
+        border: 1.5px solid #e0e0e0;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 13px;
+        transition: 0.15s;
+      }
+      .m-ghost:hover {
+        border-color: #000;
+      }
+
+      /* driver scene */
+      .dr-sheet {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #fff;
+        border-radius: 22px 22px 0 0;
+        padding: 18px 16px 24px;
+        box-shadow: 0 -14px 40px rgba(0, 0, 0, 0.18);
+      }
+      .dr-top {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 13px;
+      }
+      .dr-eta b {
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        display: block;
+        line-height: 1;
+      }
+      .dr-eta span {
+        font-size: 10.5px;
+        color: #777;
+        font-weight: 700;
+      }
+      .dr-bar {
+        flex: 1;
+        height: 4px;
+        background: #ececec;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .dr-bar i {
+        display: block;
+        height: 100%;
+        background: #000;
+        width: 0;
+        transition: width 1s linear;
+      }
+      .dr-share {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #f2f2f2;
+        display: grid;
+        place-items: center;
+      }
+      .dr-main {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 4px 0 13px;
+        border-bottom: 1px solid #f0f0f0;
+      }
+      .dr-main b {
+        font-size: 14.5px;
+        font-weight: 800;
+      }
+      .dr-main .rate {
+        font-size: 11px;
+        color: #666;
+        margin-left: 6px;
+        font-weight: 600;
+      }
+      .dr-main .carline {
+        font-size: 11.5px;
+        color: #6b6b6b;
+        margin-top: 2px;
+      }
+      .dr-otp-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 0 4px;
+      }
+      .dr-otp-row .lbl {
+        font-size: 11px;
+        color: #666;
+        font-weight: 600;
+      }
+      .otp-big {
+        font-size: 17px;
+        font-weight: 800;
+        letter-spacing: 0.28em;
+        background: #f6f6f6;
+        border-radius: 6px;
+        padding: 6px 10px;
+      }
+      .dr-act {
+        margin-left: auto;
+        display: flex;
+        gap: 8px;
+      }
+      .dr-done {
+        width: 100%;
+        height: 48px;
+        margin-top: 12px;
+        background: #fff;
+        border: 1.5px solid #000;
+        border-radius: 10px;
+        font-weight: 800;
+        font-size: 13.5px;
+        transition: 0.15s;
+      }
+      .dr-done:hover {
+        background: #000;
+        color: #fff;
+      }
+
+      /* annotations samping phone */
+      .ann {
+        position: absolute;
+        color: #9aa0a6;
+        font-size: 10.5px;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        opacity: 0;
+        transition: opacity 0.6s ease 0.5s;
+      }
+      .view.active .ann {
+        opacity: 1;
+      }
+      .ann i {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12);
+        flex: 0 0 auto;
+      }
+      .ann::after {
+        content: "";
+        height: 1px;
+        width: 52px;
+        background: linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.35),
+          transparent
+        );
+      }
+      .ann.right::after {
+        order: -1;
+        background: linear-gradient(
+          270deg,
+          rgba(255, 255, 255, 0.35),
+          transparent
+        );
+      }
+      .ann.a1 {
+        top: 120px;
+        right: calc(100% + 26px);
+      }
+      .ann.a2 {
+        top: 330px;
+        right: calc(100% + 26px);
+      }
+      .ann.a3 {
+        top: 200px;
+        left: calc(100% + 26px);
+      }
+      .ann.a4 {
+        top: 560px;
+        left: calc(100% + 26px);
+      }
+      .ann.a5 {
+        top: 806px;
+        right: calc(100% + 26px);
+      }
+      .caption {
+        position: absolute;
+        bottom: -6px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 11px;
+        color: #8b8f94;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      /* toast & modal */
+      .toast {
+        position: fixed;
+        z-index: 400;
+        bottom: 28px;
+        left: 50%;
+        transform: translate(-50%, 18px);
+        opacity: 0;
+        pointer-events: none;
+        background: #111;
+        color: #fff;
+        padding: 13px 20px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 600;
+        box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+        transition: all 0.3s var(--ease);
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      .modal-bk {
+        position: fixed;
+        inset: 0;
+        z-index: 350;
+        background: rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(2px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .modal-bk.show {
+        display: flex;
+      }
+      .modal {
+        width: min(430px, 100%);
+        background: #fff;
+        border-radius: 10px;
+        padding: 28px;
+        position: relative;
+        animation: popUp 0.35s var(--ease);
+      }
+      .modal-x {
+        position: absolute;
+        right: 14px;
+        top: 14px;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #f2f2f2;
+        font-size: 17px;
+      }
+      .modal .ok {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #f0f0f0;
+        display: grid;
+        place-items: center;
+        font-size: 20px;
+        margin-bottom: 6px;
+      }
+      .modal h2 {
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        margin: 8px 0 6px;
+      }
+      .modal p {
+        font-size: 13px;
+        color: #666;
+        line-height: 1.55;
+      }
+      .modal .routebox {
+        background: var(--soft);
+        border-radius: 8px;
+        margin: 18px 0;
+        padding: 15px 16px;
+        font-size: 12.5px;
+        line-height: 2;
+      }
+      .modal .routebox strong {
+        font-size: 13px;
+      }
+      .modal .mdone {
+        width: 100%;
+        height: 50px;
+        background: #000;
+        color: #fff;
+        border-radius: 6px;
+        font-weight: 800;
+        font-size: 14px;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
+      @media (max-width: 1240px) {
+        .ann {
+          display: none;
+        }
+      }
+      @media (max-width: 1050px) {
+        .ub-main {
+          grid-template-columns: 400px minmax(0, 1fr);
+        }
+      }
+      @media (max-width: 900px) {
+        .ub-nav button:not(.on) {
+          display: none;
+        }
+        .ub-main {
+          grid-template-columns: minmax(340px, 42%) minmax(0, 1fr);
+        }
+        .kbd-hint,
+        .chrome-hint {
+          display: none;
+        }
+      }
+      @media (max-height: 940px) {
+        .phone {
+          transform: scale(0.86);
+          transform-origin: center;
+        }
+      }
+      @media (max-height: 800px) {
+        .phone {
+          transform: scale(0.74);
+        }
+      }
+      @media (max-height: 680px) {
+        .phone {
+          transform: scale(0.62);
+        }
+      }
+      @media (max-width: 560px) {
+        .switchbar {
+          width: calc(100% - 24px);
+          justify-content: space-between;
+          padding-left: 16px;
+        }
+        .brand small {
+          display: none;
+        }
+        .view {
+          padding-top: 96px;
+        }
+        .browser {
+          border-radius: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ambient -->
+    <div class="bg-scene" aria-hidden="true">
+      <div class="glow g1"></div>
+      <div class="glow g2"></div>
+      <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+        <path class="lane l1" d="M-60 700 C 300 610 760 760 1520 640" />
+        <path class="lane l2" d="M-60 780 C 360 700 820 830 1520 720" />
+        <path class="lane l3" d="M-60 160 C 400 240 900 120 1520 210" />
+      </svg>
+      <div class="bg-word" aria-hidden="true">Uber</div>
+    </div>
+
+    <!-- switch bar -->
+    <header class="switchbar">
+      <div class="brand"><b>Uber</b><small>Clone&nbsp;UI</small></div>
+      <div class="seg" role="tablist" aria-label="Pilih tampilan">
+        <button
+          class="seg-btn active"
+          id="segDesk"
+          onclick="setMode('desktop')"
+        >
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <rect x="3" y="4" width="18" height="12" rx="2" />
+            <path d="M8 20h8M12 16v4" />
+          </svg>
+          Desktop
+        </button>
+        <button class="seg-btn" id="segMob" onclick="setMode('mobile')">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <rect x="7" y="2" width="10" height="20" rx="2.5" />
+            <path d="M11 18.5h2" />
+          </svg>
+          Pixel
+        </button>
+      </div>
+      <div class="kbd-hint"><kbd>D</kbd> / <kbd>M</kbd></div>
+    </header>
+
+    <main class="stage">
+      <!-- ================= DESKTOP VIEW ================= -->
+      <section class="view active" id="view-desktop">
+        <div class="browser">
+          <div class="chrome">
+            <span class="cdot r"></span><span class="cdot y"></span
+            ><span class="cdot g"></span>
+            <div class="urlbar">
+              <svg
+                width="11"
+                height="11"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <rect x="5" y="11" width="14" height="9" rx="2" />
+                <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+              </svg>
+              uber.com/id/ride
+            </div>
+            <span class="chrome-hint"
+              >Klon antarmuka — bukan situs resmi Uber</span
+            >
+          </div>
+
+          <header class="ub-header">
+            <span class="ub-logo">Uber</span>
+            <nav class="ub-nav">
+              <button class="on">Perjalanan</button>
+              <button onclick="toast('Mode Berkendara — demo UI.')">
+                Berkendara
+              </button>
+              <button onclick="toast('Uber for Business — demo UI.')">
+                Bisnis
+              </button>
+              <button onclick="toast('Tentang Uber — demo UI.')">
+                Tentang
+              </button>
+            </nav>
+            <div class="ub-hr">
+              <button class="ub-hbtn" onclick="toast('Bahasa: Indonesia')">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path
+                    d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"
+                  />
+                </svg>
+                ID
+              </button>
+              <button
+                class="ub-hbtn"
+                onclick="toast('Pusat bantuan — demo UI.')"
+              >
+                Bantuan
+              </button>
+              <button class="ub-hbtn" onclick="toast('Masuk — demo UI.')">
+                Masuk
+              </button>
+              <button
+                class="ub-hbtn solid"
+                onclick="toast('Daftar akun — demo UI.')"
+              >
+                Daftar
+              </button>
+            </div>
+          </header>
+
+          <div class="ub-main">
+            <!-- panel -->
+            <aside class="ub-panel">
+              <div class="panel-scroll">
+                <p class="eyebrow">Perjalanan · Kota Malang</p>
+                <h1 class="panel-title">Mau ke&nbsp;mana?</h1>
+                <p class="panel-sub">
+                  Pilih tujuan untuk melihat estimasi tarif dan kendaraan.
+                </p>
+
+                <div class="route-box">
+                  <div class="rail" aria-hidden="true">
+                    <span class="p-dot"></span><span class="p-sq"></span>
+                  </div>
+
+                  <div class="ri-field has-val" id="dPickupWrap">
+                    <input
+                      class="ri-input"
+                      id="dPickup"
+                      value="Lokasi saat ini"
+                      autocomplete="off"
+                      aria-label="Lokasi penjemputan"
+                    />
+                    <button
+                      class="ri-clear"
+                      onclick="clearD('dPickup')"
+                      aria-label="Bersihkan"
+                    >
+                      ×
+                    </button>
+                    <div class="suggest" id="dPickupSug"></div>
+                  </div>
+
+                  <button
+                    class="ri-swap"
+                    onclick="swapD()"
+                    aria-label="Tukar lokasi"
+                  >
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="m7 7 3-3 3 3M10 4v12M17 17l-3 3-3-3M14 20V8" />
+                    </svg>
+                  </button>
+
+                  <div class="ri-field" id="dDestWrap">
+                    <input
+                      class="ri-input"
+                      id="dDest"
+                      placeholder="Tujuan Anda"
+                      autocomplete="off"
+                      aria-label="Tujuan"
+                    />
+                    <button
+                      class="ri-clear"
+                      onclick="clearD('dDest')"
+                      aria-label="Bersihkan"
+                    >
+                      ×
+                    </button>
+                    <div class="suggest" id="dDestSug"></div>
+                  </div>
+                </div>
+
+                <div class="opt-row">
+                  <button class="opt" onclick="toast('Penjemputan: Sekarang')">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.9"
+                    >
+                      <circle cx="12" cy="12" r="9" />
+                      <path d="M12 7v5l3 2" />
+                    </svg>
+                    Saat ini <span class="chev">⌄</span>
+                  </button>
+                  <button class="opt" onclick="toast('Kapasitas: 1 penumpang')">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.9"
+                    >
+                      <circle cx="12" cy="8" r="3.2" />
+                      <path d="M5 20a7 7 0 0 1 14 0" />
+                    </svg>
+                    1 <span class="chev">⌄</span>
+                  </button>
+                </div>
+
+                <section id="dRideZone">
+                  <h2 class="zone-h">Pilih perjalanan</h2>
+                  <p class="zone-p" id="dRideCap">
+                    Estimasi tarif muncul setelah tujuan dipilih.
+                  </p>
+                  <div id="dRideList">
+                    <div class="empty">
+                      <svg
+                        width="76"
+                        height="34"
+                        viewBox="0 0 76 34"
+                        fill="none"
+                      >
+                        <path
+                          d="M10 22 16 11q2-3 8-3h28q6 0 9 5l4 9v8H6v-6q0-4 4-4Z"
+                          fill="#e6e6e6"
+                          stroke="#b9b9b9"
+                        />
+                        <circle cx="20" cy="29" r="4" fill="#c9c9c9" />
+                        <circle cx="56" cy="29" r="4" fill="#c9c9c9" />
+                      </svg>
+                      Pilihan kendaraan &amp; estimasi tarif akan tampil di
+                      sini<br />setelah Anda menentukan tujuan.
+                    </div>
+                  </div>
+                </section>
+              </div>
+
+              <div class="panel-foot">
+                <div class="pay-row">
+                  <svg
+                    width="17"
+                    height="17"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.9"
+                  >
+                    <rect x="3" y="6" width="18" height="12" rx="2" />
+                    <circle cx="12" cy="12" r="2.6" />
+                    <path d="M6.5 9.5v.01M17.5 14.5v.01" />
+                  </svg>
+                  Tunai <span class="chev">⌄</span>
+                </div>
+                <button class="cta" id="dCta" disabled onclick="dRequest()">
+                  Pilih tujuan dulu
+                </button>
+                <p class="fine">
+                  Dengan melanjutkan, Anda menyetujui Ketentuan Layanan &amp;
+                  Kebijakan Privasi. Demo UI — tidak ada transaksi nyata.
+                </p>
+              </div>
+            </aside>
+
+            <!-- map -->
+            <div class="ub-mapbox">
+              <div class="mzoom" id="dZoom"></div>
+              <div class="map-ui-top">
+                <button
+                  class="mchip"
+                  onclick="toast('Peta ilustrasi area Kota Malang.')"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.9"
+                  >
+                    <path
+                      d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15m6-12v15"
+                    />
+                  </svg>
+                  Peta
+                </button>
+                <button
+                  class="mchip"
+                  onclick="toast('Titik jemput mengikuti lokasi demo.')"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.9"
+                  >
+                    <circle cx="12" cy="12" r="8" />
+                    <circle cx="12" cy="12" r="2.6" />
+                    <path d="M12 2v3m0 14v3M2 12h3m14 0h3" />
+                  </svg>
+                  Lokasi saya
+                </button>
+              </div>
+              <div class="map-status"><i></i> Area layanan tersedia</div>
+              <div class="map-tools">
+                <button
+                  class="mtool"
+                  onclick="dMap.zoom(1)"
+                  aria-label="Perbesar"
+                >
+                  <svg
+                    width="17"
+                    height="17"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                  >
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                </button>
+                <button
+                  class="mtool"
+                  onclick="dMap.zoom(-1)"
+                  aria-label="Perkecil"
+                >
+                  <svg
+                    width="17"
+                    height="17"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                  >
+                    <path d="M5 12h14" />
+                  </svg>
+                </button>
+                <button
+                  class="mtool"
+                  onclick="
+                    dMap.reset();
+                    toast('Tampilan peta diatur ulang.');
+                  "
+                  aria-label="Reset"
+                >
+                  <svg
+                    width="17"
+                    height="17"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.9"
+                  >
+                    <path d="M4 10a8 8 0 1 1 1 7M4 4v6h6" />
+                  </svg>
+                </button>
+              </div>
+              <div class="map-attr">
+                Peta ilustratif · Malang, Jawa Timur · Demo UI
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= MOBILE VIEW ================= -->
+      <section class="view" id="view-mobile">
+        <div class="phone-box">
+          <div class="phone">
+            <span class="p-btn power"></span><span class="p-btn vol"></span>
+            <div class="screen">
+              <div class="p-camera"></div>
+              <div class="p-status">
+                <span id="pClock">13.05</span>
+                <div class="p-ics">
+                  <svg width="16" height="12" viewBox="0 0 16 12">
+                    <path
+                      d="M1 11h2V8H1v3Zm4 0h2V5H5v6Zm4 0h2V2H9v9Zm4 0h2V0h-2v11Z"
+                      fill="#0d0e10"
+                    />
+                  </svg>
+                  <svg
+                    width="16"
+                    height="12"
+                    viewBox="0 0 16 12"
+                    fill="#0d0e10"
+                  >
+                    <path d="M8 10.6 2.9 5.9a7.6 7.6 0 0 1 10.2 0L8 10.6Z" />
+                    <path
+                      d="M8 7 5.4 4.6a4.6 4.6 0 0 1 5.2 0L8 7Z"
+                      opacity=".55"
+                    />
+                  </svg>
+                  <svg width="24" height="12" viewBox="0 0 24 12">
+                    <rect
+                      x=".5"
+                      y=".5"
+                      width="20"
+                      height="11"
+                      rx="3"
+                      fill="none"
+                      stroke="#0d0e10"
+                      opacity=".5"
+                    />
+                    <rect
+                      x="2"
+                      y="2"
+                      width="14"
+                      height="8"
+                      rx="1.6"
+                      fill="#0d0e10"
+                    />
+                    <path
+                      d="M22 4v4a2.2 2.2 0 0 0 0-4Z"
+                      fill="#0d0e10"
+                      opacity=".5"
+                    />
+                  </svg>
+                </div>
+              </div>
+
+              <div class="map-wrap">
+                <div
+                  class="mzoom"
+                  id="mZoom"
+                  style="width: 100%; height: 100%"
+                ></div>
+              </div>
+
+              <!-- SCENE: home -->
+              <div class="m-scene sc-home on" id="scHome">
+                <div class="sc-top">
+                  <button
+                    class="icobtn"
+                    onclick="toast('Menu akun — demo UI.')"
+                    aria-label="Menu"
+                  >
+                    <svg
+                      width="17"
+                      height="17"
+                      viewBox="0 0 24 24"
+                      stroke="#000"
+                      stroke-width="2.4"
+                      stroke-linecap="round"
+                    >
+                      <path d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                  </button>
+                  <button
+                    class="icobtn"
+                    onclick="toast('Pusat Keamanan — demo UI.')"
+                    aria-label="Keamanan"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#000"
+                      stroke-width="2"
+                    >
+                      <path
+                        d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6l-7-3Z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <div class="home-card">
+                  <button class="m-search" onclick="mOpenSearch()">
+                    <svg
+                      width="17"
+                      height="17"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.4"
+                    >
+                      <circle cx="11" cy="11" r="7" />
+                      <path d="m20 20-3.5-3.5" />
+                    </svg>
+                    Mau ke mana?
+                    <span class="later">
+                      <svg
+                        width="11"
+                        height="11"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.2"
+                      >
+                        <circle cx="12" cy="12" r="9" />
+                        <path d="M12 7v5l3 2" />
+                      </svg>
+                      Nanti
+                    </span>
+                  </button>
+                  <div class="m-chips">
+                    <button
+                      class="chip"
+                      onclick="
+                        mQuick('Rumah', 'Jl. Pisang Kipas No. 12, Lowokwaru')
+                      "
+                    >
+                      <span class="cic">⌂</span>Rumah
+                    </button>
+                    <button
+                      class="chip"
+                      onclick="
+                        mQuick('Kantor', 'Jl. Letjen S. Parman, Blimbing')
+                      "
+                    >
+                      <span class="cic">◳</span>Kantor
+                    </button>
+                    <button
+                      class="chip"
+                      onclick="toast('Riwayat perjalanan — demo UI.')"
+                    >
+                      <span class="cic">↺</span>Terbaru
+                    </button>
+                  </div>
+                  <p class="m-saved-h">Tempat tersimpan</p>
+                  <div id="mSaved"></div>
+                </div>
+              </div>
+
+              <!-- SCENE: search -->
+              <div class="m-scene sc-search" id="scSearch">
+                <div class="s-head">
+                  <button
+                    class="icobtn"
+                    style="box-shadow: none; background: #f2f2f2"
+                    onclick="mGo('scHome')"
+                    aria-label="Kembali"
+                  >
+                    <svg
+                      width="17"
+                      height="17"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#000"
+                      stroke-width="2.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M19 12H5m6-7-7 7 7 7" />
+                    </svg>
+                  </button>
+                  <input
+                    id="mQuery"
+                    placeholder="Cari tujuan"
+                    autocomplete="off"
+                  />
+                </div>
+                <div class="s-list" id="mSugList"></div>
+              </div>
+
+              <!-- SCENE: ride selection -->
+              <div class="m-scene" id="scRides">
+                <div class="r-head">
+                  <button
+                    class="icobtn"
+                    onclick="
+                      mGo('scHome');
+                      mMap.clearDest();
+                    "
+                    aria-label="Tutup"
+                  >
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      stroke="#000"
+                      stroke-width="2.6"
+                      stroke-linecap="round"
+                    >
+                      <path d="M6 6l12 12M18 6 6 18" />
+                    </svg>
+                  </button>
+                  <div class="r-dest">
+                    <b id="mDestName">—</b><span id="mDestSub">Tujuan</span>
+                  </div>
+                </div>
+                <div class="r-sheet">
+                  <div class="grabber"></div>
+                  <div class="r-cards" id="mCards"></div>
+                  <div class="r-pay">
+                    <svg
+                      width="17"
+                      height="17"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.9"
+                    >
+                      <rect x="3" y="6" width="18" height="12" rx="2" />
+                      <circle cx="12" cy="12" r="2.6" />
+                    </svg>
+                    Tunai <span class="chev">⌄</span>
+                  </div>
+                  <button class="m-cta" id="mCta" onclick="mBook()">
+                    Pesan
+                  </button>
+                </div>
+              </div>
+
+              <!-- SCENE: searching driver -->
+              <div class="m-scene" id="scFind">
+                <div class="f-sheet">
+                  <div class="radar">
+                    <i></i><i></i><i></i>
+                    <span class="core">
+                      <svg
+                        width="34"
+                        height="20"
+                        viewBox="0 0 76 34"
+                        fill="none"
+                      >
+                        <path
+                          d="M10 22 16 11q2-3 8-3h28q6 0 9 5l4 9v8H6v-6q0-4 4-4Z"
+                          fill="#14161a"
+                        />
+                        <circle cx="20" cy="29" r="4" fill="#3c3f45" />
+                        <circle cx="56" cy="29" r="4" fill="#3c3f45" />
+                      </svg>
+                    </span>
+                  </div>
+                  <h3>Mencari pengemudi…</h3>
+                  <p id="mFindSub">UberX · Malang Town Square</p>
+                  <button class="m-ghost" onclick="mCancelFind()">
+                    Batalkan
+                  </button>
+                </div>
+              </div>
+
+              <!-- SCENE: driver -->
+              <div class="m-scene" id="scDriver">
+                <div class="dr-sheet">
+                  <div class="dr-top">
+                    <div class="dr-eta">
+                      <b id="mEta">3 mnt</b><span>tiba</span>
+                    </div>
+                    <div class="dr-bar"><i id="mProg"></i></div>
+                    <button
+                      class="dr-share"
+                      onclick="toast('Bagikan perjalanan — demo UI.')"
+                    >
+                      <svg
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#000"
+                        stroke-width="2"
+                      >
+                        <circle cx="6" cy="12" r="2.6" />
+                        <circle cx="17" cy="6" r="2.6" />
+                        <circle cx="17" cy="18" r="2.6" />
+                        <path d="m8.4 10.8 6.2-3.6m-6.2 6 6.2 3.6" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="dr-main">
+                    <div class="avatar" id="mAvatar">SR</div>
+                    <div style="min-width: 0">
+                      <b id="mDriverName">Siti Rahma</b
+                      ><span class="rate"
+                        >★ <span id="mRating">4,92</span></span
+                      >
+                      <div class="carline" id="mCar">
+                        Toyota Avanza · Silver
+                      </div>
+                    </div>
+                    <div class="plate" id="mPlate">N 1234 AB</div>
+                  </div>
+                  <div class="dr-otp-row">
+                    <span class="lbl">Kode OTP<br />berikan ke pengemudi</span>
+                    <span class="otp-big" id="mOtp">4821</span>
+                    <div class="dr-act">
+                      <button
+                        class="rbtn"
+                        onclick="toast('Chat pengemudi — demo UI.')"
+                      >
+                        <svg
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#000"
+                          stroke-width="1.9"
+                        >
+                          <path
+                            d="M21 12a8 8 0 0 1-8 8H5l-2 2V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z"
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        class="rbtn"
+                        onclick="toast('Menelepon pengemudi — demo UI.')"
+                      >
+                        <svg
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#000"
+                          stroke-width="1.9"
+                        >
+                          <path
+                            d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <button class="dr-done" onclick="mFinish()">Selesai</button>
+                </div>
+              </div>
+
+              <div class="p-gesture"></div>
+            </div>
+          </div>
+
+          <!-- annotations -->
+          <div class="ann a1"><i></i>Punch-hole camera</div>
+          <div class="ann a2"><i></i>Status bar live · jam asli</div>
+          <div class="ann a5"><i></i>Gesture pill</div>
+          <div class="ann a3 right"><i></i>Bottom sheet + kartu ride</div>
+          <div class="ann a4 right"><i></i>OTP &amp; pelat nomor</div>
+          <div class="caption">Pixel Frame · Aplikasi Uber Mobile</div>
+        </div>
+      </section>
+    </main>
+
+    <!-- toast + modal -->
+    <div class="toast" id="toast" role="status"></div>
+    <div class="modal-bk" id="dModal" role="dialog" aria-modal="true">
+      <div class="modal">
+        <button class="modal-x" onclick="closeModal()" aria-label="Tutup">
+          ×
+        </button>
+        <div class="ok">✓</div>
+        <h2>Perjalanan siap dipesan</h2>
+        <p>
+          Ini hanya pratinjau antarmuka. Tidak ada pengemudi yang dihubungi dan
+          tidak ada transaksi yang dibuat.
+        </p>
+        <div class="routebox" id="dModalRoute"></div>
+        <button class="mdone" onclick="closeModal()">Mengerti</button>
+      </div>
+    </div>
+
+    <script>
+      /* ================= DATA ================= */
+      const PLACES = [
+        {
+          name: "Alun-Alun Tugu",
+          detail: "Jl. Tugu, Klojen, Kota Malang",
+          x: 340,
+          y: 560,
+        },
+        {
+          name: "Stasiun Malang",
+          detail: "Jl. Tronojoyo, Klojen",
+          x: 520,
+          y: 520,
+        },
+        {
+          name: "Malang Town Square",
+          detail: "Jl. Veteran, Penanggungan",
+          x: 790,
+          y: 385,
+        },
+        {
+          name: "Universitas Brawijaya",
+          detail: "Jl. Veteran, Lowokwaru",
+          x: 700,
+          y: 300,
+        },
+        {
+          name: "Museum Angkut",
+          detail: "Jl. Terusan Sultan Agung, Kota Batu",
+          x: 250,
+          y: 210,
+        },
+        {
+          name: "Kampung Warna-Warni Jodipan",
+          detail: "Jodipan, Blimbing",
+          x: 900,
+          y: 640,
+        },
+        {
+          name: "Ijen Boulevard",
+          detail: "Jl. Besar Ijen, Klojen",
+          x: 560,
+          y: 280,
+        },
+        {
+          name: "Bandara Abdulrachman Saleh",
+          detail: "Pakis, Kab. Malang",
+          x: 1010,
+          y: 170,
+        },
+        {
+          name: "Malang City Point",
+          detail: "Jl. Terusan Dieng, Sukun",
+          x: 460,
+          y: 780,
+        },
+      ];
+      const RIDES = [
+        {
+          id: "moto",
+          name: "Uber Moto",
+          seats: 1,
+          eta: "2 mnt",
+          price: "Rp 12.500",
+          desc: "Ojek cepat & terjangkau",
+          kind: "moto",
+          tag: "Hemat",
+        },
+        {
+          id: "uberx",
+          name: "UberX",
+          seats: 4,
+          eta: "4 mnt",
+          price: "Rp 18.000",
+          desc: "Perjalanan harian terjangkau",
+          kind: "x",
+        },
+        {
+          id: "comfort",
+          name: "Comfort",
+          seats: 4,
+          eta: "6 mnt",
+          price: "Rp 24.500",
+          desc: "Mobil baru, pengemudi top",
+          kind: "comfort",
+          tag: "Nyaman",
+        },
+        {
+          id: "xl",
+          name: "UberXL",
+          seats: 6,
+          eta: "8 mnt",
+          price: "Rp 32.000",
+          desc: "MPV lega, muat banyak",
+          kind: "xl",
+        },
+        {
+          id: "black",
+          name: "Black",
+          seats: 4,
+          eta: "10 mnt",
+          price: "Rp 58.000",
+          desc: "Sedan premium eksklusif",
+          kind: "black",
+          tag: "Premium",
+        },
+      ];
+      const DRIVERS = [
+        {
+          name: "Siti Rahma",
+          rating: "4,92",
+          car: "Toyota Avanza · Silver",
+          plate: "N 1284 KJ",
+        },
+        {
+          name: "Budi Santoso",
+          rating: "4,88",
+          car: "Daihatsu Xenia · Hitam",
+          plate: "N 4521 AB",
+        },
+        {
+          name: "Agus Wijaya",
+          rating: "4,95",
+          car: "Honda Brio · Putih",
+          plate: "N 7733 QP",
+        },
+        {
+          name: "Dewi Lestari",
+          rating: "4,90",
+          car: "Suzuki Ertiga · Abu",
+          plate: "N 2210 ZX",
+        },
+      ];
+      const $ = (id) => document.getElementById(id);
+      const esc = (s) =>
+        String(s).replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      let toastT;
+      function toast(m) {
+        const t = $("toast");
+        t.textContent = m;
+        t.classList.add("show");
+        clearTimeout(toastT);
+        toastT = setTimeout(() => t.classList.remove("show"), 2400);
+      }
+
+      /* ================= CAR ART ================= */
+      function carSVG(kind, w = 86, h = 40) {
+        if (kind === "moto")
+          return `<svg width="${w * 0.62}" height="${h}" viewBox="0 0 60 40" fill="none"><circle cx="14" cy="30" r="7" fill="#2b2e33"/><circle cx="46" cy="30" r="7" fill="#2b2e33"/><circle cx="14" cy="30" r="2.6" fill="#aeb6bf"/><circle cx="46" cy="30" r="2.6" fill="#aeb6bf"/><path d="M14 30 24 16h12l10 14" stroke="#14161a" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 16l-4-5h8" stroke="#14161a" stroke-width="3" stroke-linecap="round"/><rect x="26" y="12" width="12" height="6" rx="3" fill="#14161a"/></svg>`;
+        const palette = {
+          x: ["#c9ced4", "#2f353d"],
+          comfort: ["#b7c6e8", "#28324a"],
+          xl: ["#d8d2c4", "#3a362c"],
+          black: ["#16181d", "#a9bccb"],
+        };
+        const [body, glass] = palette[kind] || palette.x;
+        const long = kind === "xl";
+        return `<svg width="${w}" height="${h}" viewBox="0 0 ${long ? 96 : 80} 40" fill="none" aria-hidden="true">
+    <path d="${long ? "M10 26 15 13q2-4 9-4h48q8 0 11 6l6 11v6q0 4-4 4h-70q-5 0-5-4v-12Z" : "M9 25l6-11q2-4 8-4h34q7 0 10 5l7 10v7q0 4-4 4h-57q-4 0-4-4v-7Z"}" fill="${body}" stroke="rgba(0,0,0,.35)"/>
+    <path d="${long ? "M22 13q2-3 7-3h40q5 0 7 4l3 7H19Z" : "M19 14q2-3 7-3h28q5 0 7 4l4 6H17Z"}" fill="${glass}"/>
+    <path d="${long ? "M48 10v11" : "M41 11v10"}" stroke="rgba(255,255,255,.55)" stroke-width="1.6"/>
+    <circle cx="${long ? 24 : 20}" cy="31" r="6" fill="#24262b"/><circle cx="${long ? 74 : 58}" cy="31" r="6" fill="#24262b"/>
+    <circle cx="${long ? 24 : 20}" cy="31" r="2.2" fill="#9aa1a9"/><circle cx="${long ? 74 : 58}" cy="31" r="2.2" fill="#9aa1a9"/>
+    <path d="${long ? "M84 24h6" : "M70 23h5"}" stroke="#f5e9b8" stroke-width="2.4" stroke-linecap="round"/>
+  </svg>`;
+      }
+      const sgIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.6"/></svg>`;
+      const chev = `<svg class="chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>`;
+
+      /* ================= MAP GENERATOR ================= */
+      function buildMap(uid, vb) {
+        const loops = [
+          {
+            d: "M-80 180 C180 260 260 120 485 190 S830 305 1280 160",
+            dur: "19s",
+            off: "-3s",
+          },
+          {
+            d: "M-40 530 C180 455 300 520 450 480 S760 410 1240 520",
+            dur: "26s",
+            off: "-12s",
+          },
+          {
+            d: "M530 -40 C495 160 585 300 530 460 S580 690 610 940",
+            dur: "22s",
+            off: "-8s",
+          },
+        ]
+          .map(
+            (l, i) =>
+              `<g><use href="#${uid}-car" xlink:href="#${uid}-car"/><animateMotion dur="${l.dur}" begin="${l.off}" repeatCount="indefinite" rotate="auto"><mpath href="#${uid}-lp${i}" xlink:href="#${uid}-lp${i}"/></animateMotion></g>`,
+          )
+          .join("");
+        return `
+  <svg class="msvg" viewBox="${vb}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Peta ilustrasi Kota Malang">
+    <defs>
+      <pattern id="${uid}-grid" width="150" height="128" patternUnits="userSpaceOnUse" patternTransform="rotate(-13)">
+        <path d="M0 0H150M0 0V128" fill="none" stroke="#d8d9d2" stroke-width="1" opacity=".55"/>
+      </pattern>
+      <filter id="${uid}-sh" x="-60%" y="-60%" width="220%" height="220%"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity=".22"/></filter>
+      <g id="${uid}-car"><rect x="-9" y="-5" width="18" height="10" rx="3.2" fill="#14161a"/><rect x="-4.5" y="-3.2" width="8" height="6.4" rx="1.6" fill="#9fb2c8"/></g>
+    </defs>
+    <rect width="1200" height="900" fill="#e9eae4"/><rect width="1200" height="900" fill="url(#${uid}-grid)"/>
+    <!-- blocks & parks -->
+    <path d="M90 100 340 62 388 240 267 321 85 280Z M790 70 1085 110 1124 292 930 337 790 246Z M720 580 960 530 1080 735 1000 890 760 820Z" fill="#d2dfcd"/>
+    <path d="M420 650 570 614 635 744 545 850 370 812Z" fill="#d8e2d1"/>
+    <path d="M54 490 210 440 280 560 213 665 55 630Z" fill="#d9e3d3"/>
+    <path d="M600 130 760 150 745 260 590 240Z" fill="#dfe0d8"/>
+    <path d="M640 600 800 570 840 690 690 730Z" fill="#e0e1d9"/>
+    <!-- river -->
+    <path d="M690 905 C670 760 780 700 900 705 S1090 770 1185 900" fill="none" stroke="#b7cfd6" stroke-width="26" opacity=".9"/>
+    <!-- local streets -->
+    <g fill="none" stroke="#fff" stroke-width="13" opacity=".92">
+      <path d="M-80 180 C180 260 260 120 485 190 S830 305 1280 160"/>
+      <path d="M-60 365 C180 330 270 430 465 365 S790 360 1250 465"/>
+      <path d="M-30 730 C180 665 340 710 520 635 S850 665 1260 590"/>
+      <path d="M220 -40 C270 180 380 260 320 475 S360 750 290 940"/>
+      <path d="M530 -40 C495 160 585 300 530 460 S580 690 610 940"/>
+      <path d="M870 -40 C790 180 885 300 830 475 S885 720 830 960"/>
+    </g>
+    <!-- main roads -->
+    <g fill="none" stroke="#fdfdfb" stroke-width="25">
+      <path d="M-40 530 C180 455 300 520 450 480 S760 410 1240 520"/>
+      <path d="M410 -30 C480 180 420 290 480 480 S650 700 700 930"/>
+    </g>
+    <g fill="none" stroke="#d1d2cc" stroke-width="2.4">
+      <path d="M-80 180 C180 260 260 120 485 190 S830 305 1280 160"/>
+      <path d="M-60 365 C180 330 270 430 465 365 S790 360 1250 465"/>
+      <path d="M-40 530 C180 455 300 520 450 480 S760 410 1240 520"/>
+      <path d="M530 -40 C495 160 585 300 530 460 S580 690 610 940"/>
+    </g>
+    <path id="${uid}-lp0" d="M-80 180 C180 260 260 120 485 190 S830 305 1280 160" fill="none" stroke="none"/>
+    <path id="${uid}-lp1" d="M-40 530 C180 455 300 520 450 480 S760 410 1240 520" fill="none" stroke="none"/>
+    <path id="${uid}-lp2" d="M530 -40 C495 160 585 300 530 460 S580 690 610 940" fill="none" stroke="none"/>
+    <!-- labels -->
+    <g fill="#a5a99e" font-family="Arial,sans-serif" font-size="15" opacity=".95">
+      <text x="110" y="145">TAMAN KOTA</text><text x="845" y="160">KLOJEN</text>
+      <text x="880" y="742">KAMPUNG WARNA-WARNI</text><text x="150" y="585">ALUN-ALUN TUGU</text>
+      <text x="700" y="545">KAWASAN KAYUTANGAN</text><text x="340" y="795">SUKUN</text><text x="1020" y="395">BLIMBING</text>
+    </g>
+    <text x="545" y="292" fill="#a5a99e" font-family="Arial" font-size="13" transform="rotate(-78 545 292)">JL. BESAR IJEN</text>
+    <text x="770" y="820" fill="#8fb2bc" font-family="Arial" font-size="13" font-style="italic" transform="rotate(-35 770 820)">Kali Brantas</text>
+    <!-- route -->
+    <g id="${uid}-routeG" opacity="0">
+      <path id="${uid}-casing" class="routepath" fill="none" stroke="#fff" stroke-width="11"/>
+      <path id="${uid}-route" class="routepath" fill="none" stroke="#101318" stroke-width="6.5"/>
+    </g>
+    ${loops}
+    <!-- pickup -->
+    <g transform="translate(310 460)" filter="url(#${uid}-sh)">
+      <circle class="pulse" r="17" fill="#276ef1" opacity=".4"/>
+      <circle r="8.5" fill="#276ef1" stroke="#fff" stroke-width="3"/><circle r="2.6" fill="#fff"/>
+    </g>
+    <!-- destination pin -->
+    <g id="${uid}-pin" opacity="0" filter="url(#${uid}-sh)">
+      <g class="pin-anim" id="${uid}-pinA">
+        <path d="M0 -26 C-14 -26 -23 -16 -23 -3 C-23 12 0 34 0 34 S23 12 23 -3 C23 -16 14 -26 0 -26Z" fill="#000"/>
+        <circle cy="-4" r="7" fill="#fff"/>
+      </g>
+    </g>
+  </svg>`;
+      }
+      function MapCtl(hostId, uid, vb) {
+        const host = $(hostId);
+        host.innerHTML = buildMap(uid, vb);
+        const svg = host.querySelector("svg"),
+          route = $(`${uid}-route`),
+          casing = $(`${uid}-casing`),
+          routeG = $(`${uid}-routeG`),
+          pin = $(`${uid}-pin`),
+          pinA = $(`${uid}-pinA`);
+        let z = 1;
+        return {
+          setDest(p) {
+            const d = `M310 460 Q ${(310 + p.x) / 2 + (p.y - 460) * 0.25} ${(460 + p.y) / 2 - (p.x - 310) * 0.25} ${p.x} ${p.y}`;
+            route.setAttribute("d", d);
+            casing.setAttribute("d", d);
+            pin.setAttribute("transform", `translate(${p.x} ${p.y})`);
+            pin.setAttribute("opacity", 1);
+            pinA.classList.remove("drop");
+            void pinA.getBoundingClientRect();
+            pinA.classList.add("drop");
+            const len = route.getTotalLength();
+            route.style.transition = "none";
+            casing.style.transition = "none";
+            [route, casing].forEach((el) => {
+              el.style.strokeDasharray = len;
+              el.style.strokeDashoffset = len;
+            });
+            routeG.setAttribute("opacity", 1);
+            requestAnimationFrame(() => {
+              [route, casing].forEach((el) => {
+                el.style.transition =
+                  "stroke-dashoffset 1.1s cubic-bezier(.3,.7,.2,1)";
+                el.style.strokeDashoffset = 0;
+              });
+            });
+          },
+          clearDest() {
+            routeG.setAttribute("opacity", 0);
+            pin.setAttribute("opacity", 0);
+          },
+          zoom(dir) {
+            z = Math.max(0.85, Math.min(1.35, z + dir * 0.1));
+            host.style.transform = `scale(${z})`;
+          },
+          reset() {
+            z = 1;
+            host.style.transform = "scale(1)";
+          },
+          spawnDriver() {
+            const NS = "http://www.w3.org/2000/svg",
+              g = document.createElementNS(NS, "g");
+            const u = document.createElementNS(NS, "use");
+            u.setAttribute("href", `#${uid}-car`);
+            u.setAttribute("transform", "scale(1.3)");
+            const am = document.createElementNS(NS, "animateMotion");
+            am.setAttribute("dur", "3.4s");
+            am.setAttribute("fill", "freeze");
+            am.setAttribute("rotate", "auto");
+            am.setAttribute("begin", "indefinite");
+            const mp = document.createElementNS(NS, "mpath");
+            mp.setAttribute("href", `#${uid}-route`);
+            am.appendChild(mp);
+            g.appendChild(u);
+            g.appendChild(am);
+            routeG.appendChild(g);
+            requestAnimationFrame(() => am.beginElement());
+          },
+        };
+      }
+      const dMap = MapCtl("dZoom", "dm", "0 0 1200 900");
+      const mMap = MapCtl("mZoom", "mm", "235 115 790 790");
+
+      /* ================= MODE SWITCH ================= */
+      function setMode(mode) {
+        const desk = mode === "desktop";
+        $("view-desktop").classList.toggle("active", desk);
+        $("view-mobile").classList.toggle("active", !desk);
+        $("segDesk").classList.toggle("active", desk);
+        $("segMob").classList.toggle("active", !desk);
+      }
+      document.addEventListener("keydown", (e) => {
+        if (e.target.tagName === "INPUT") return;
+        if (e.key === "d" || e.key === "D") setMode("desktop");
+        if (e.key === "m" || e.key === "M") setMode("mobile");
+        if (e.key === "Escape") {
+          closeModal();
+          document
+            .querySelectorAll(".suggest")
+            .forEach((s) => s.classList.remove("show"));
+        }
+      });
+
+      /* ================= DESKTOP FLOW ================= */
+      let dSel = null,
+        dDestPlace = null,
+        dTimer = null;
+      function renderDSug(type) {
+        const isPick = type === "pickup",
+          input = $(isPick ? "dPickup" : "dDest"),
+          box = $(isPick ? "dPickupSug" : "dDestSug");
+        const q = input.value.trim().toLowerCase();
+        let list = PLACES.filter(
+          (p) =>
+            p.name.toLowerCase().includes(q) ||
+            p.detail.toLowerCase().includes(q),
+        );
+        if (!q && isPick) list = PLACES.slice(0, 4);
+        box.innerHTML = (
+          list.length
+            ? list.slice(0, 5)
+            : [
+                {
+                  name: input.value || "—",
+                  detail: "Lokasi yang Anda masukkan",
+                  x: 790,
+                  y: 385,
+                },
+              ]
+        )
+          .map(
+            (
+              p,
+            ) => `<button class="sg" data-n="${esc(p.name)}" data-d="${esc(p.detail)}" data-x="${p.x}" data-y="${p.y}">
+      <span class="sg-ico">${sgIcon}</span><span><b>${esc(p.name)}</b><span>${esc(p.detail)}</span></span></button>`,
+          )
+          .join("");
+        box.classList.add("show");
+        box.querySelectorAll(".sg").forEach(
+          (b) =>
+            (b.onclick = () => {
+              input.value = b.dataset.n;
+              box.classList.remove("show");
+              syncField(input);
+              if (!isPick) {
+                dDestPlace = {
+                  name: b.dataset.n,
+                  detail: b.dataset.d,
+                  x: +b.dataset.x,
+                  y: +b.dataset.y,
+                };
+                dUpdate();
+              }
+            }),
+        );
+      }
+      function syncField(inp) {
+        inp
+          .closest(".ri-field")
+          .classList.toggle("has-val", inp.value.length > 0);
+      }
+      function clearD(id) {
+        const el = $(id);
+        el.value = "";
+        syncField(el);
+        el.focus();
+        if (id === "dDest") {
+          dDestPlace = null;
+          dUpdate();
+        }
+      }
+      function swapD() {
+        const a = $("dPickup"),
+          b = $("dDest");
+        [a.value, b.value] = [b.value, a.value];
+        syncField(a);
+        syncField(b);
+        toast("Lokasi ditukar");
+      }
+      function dUpdate() {
+        const zone = $("dRideList"),
+          cap = $("dRideCap"),
+          cta = $("dCta");
+        if (dDestPlace) {
+          dMap.setDest(dDestPlace);
+          cap.textContent = `Estimasi tarif menuju ${dDestPlace.name}.`;
+          zone.innerHTML = RIDES.map(
+            (r, i) => `
+      <button class="ride ${r.id === dSel ? "sel" : ""}" data-id="${r.id}" style="animation-delay:${i * 70}ms">
+        <span class="car">${carSVG(r.kind)}</span>
+        <span><b>${r.name}${r.tag ? `<span class="pillx">${r.tag}</span>` : ""}</b>
+        <span class="cap"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="3.2"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>${r.seats}</span>
+        <span class="desc">${r.desc}</span></span>
+        <span><span class="price">${r.price}</span><span class="eta">${r.eta} jemput</span></span>
+      </button>`,
+          ).join("");
+          zone.querySelectorAll(".ride").forEach(
+            (c) =>
+              (c.onclick = () => {
+                dSel = c.dataset.id;
+                zone
+                  .querySelectorAll(".ride")
+                  .forEach((x) =>
+                    x.classList.toggle("sel", x.dataset.id === dSel),
+                  );
+                const r = RIDES.find((x) => x.id === dSel);
+                cta.disabled = false;
+                cta.textContent = `Pesan ${r.name}`;
+              }),
+          );
+          if (!dSel) {
+            dSel = "uberx";
+            zone.querySelector('[data-id="uberx"]').classList.add("sel");
+          }
+          cta.disabled = false;
+          const r = RIDES.find((x) => x.id === dSel);
+          cta.textContent = `Pesan ${r.name}`;
+        } else {
+          dMap.clearDest();
+          dSel = null;
+          cap.textContent = "Estimasi tarif muncul setelah tujuan dipilih.";
+          zone.innerHTML = `<div class="empty"><svg width="76" height="34" viewBox="0 0 76 34" fill="none"><path d="M10 22 16 11q2-3 8-3h28q6 0 9 5l4 9v8H6v-6q0-4 4-4Z" fill="#e6e6e6" stroke="#b9b9b9"/><circle cx="20" cy="29" r="4" fill="#c9c9c9"/><circle cx="56" cy="29" r="4" fill="#c9c9c9"/></svg>Pilihan kendaraan &amp; estimasi tarif akan tampil di sini<br/>setelah Anda menentukan tujuan.</div>`;
+          cta.disabled = true;
+          cta.textContent = "Pilih tujuan dulu";
+        }
+      }
+      function dRequest() {
+        const r = RIDES.find((x) => x.id === dSel);
+        if (!r || !dDestPlace) return;
+        $("dModalRoute").innerHTML =
+          `<div>● &nbsp;<strong>${esc($("dPickup").value || "Lokasi saat ini")}</strong></div><div>■ &nbsp;<strong>${esc(dDestPlace.name)}</strong></div><div style="margin-top:8px;border-top:1px solid #ddd;padding-top:8px">${r.name} · ${r.price} · ${r.eta}</div>`;
+        $("dModal").classList.add("show");
+      }
+      function closeModal() {
+        $("dModal").classList.remove("show");
+      }
+      $("dModal").addEventListener("click", (e) => {
+        if (e.target === $("dModal")) closeModal();
+      });
+
+      ["dPickup", "dDest"].forEach((id) => {
+        const inp = $(id),
+          type = id === "dPickup" ? "pickup" : "dest";
+        inp.addEventListener("focus", () => renderDSug(type));
+        inp.addEventListener("input", () => {
+          syncField(inp);
+          renderDSug(type);
+          if (id === "dDest" && !inp.value.trim()) {
+            dDestPlace = null;
+            dUpdate();
+          }
+        });
+        syncField(inp);
+      });
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest("#dPickupWrap"))
+          $("dPickupSug").classList.remove("show");
+        if (!e.target.closest("#dDestWrap"))
+          $("dDestSug").classList.remove("show");
+      });
+
+      /* ================= MOBILE FLOW ================= */
+      let mSel = "uberx",
+        mDest = null,
+        mCnt = null,
+        mFindT = null;
+      function mGo(sceneId) {
+        document
+          .querySelectorAll(".m-scene")
+          .forEach((s) => s.classList.remove("on"));
+        $(sceneId).classList.add("on");
+      }
+      function sgRow(p, handler) {
+        return `<button class="sg" style="padding:13px 10px" data-n="${esc(p.name)}" data-d="${esc(p.detail)}" data-x="${p.x}" data-y="${p.y}">
+    <span class="sg-ico">${sgIcon}</span><span><b>${esc(p.name)}</b><span>${esc(p.detail)}</span></span></button>`;
+      }
+      function renderMSug() {
+        const q = ($("mQuery").value || "").trim().toLowerCase();
+        const list = PLACES.filter(
+          (p) =>
+            p.name.toLowerCase().includes(q) ||
+            p.detail.toLowerCase().includes(q),
+        ).slice(0, 6);
+        $("mSugList").innerHTML = list.length
+          ? list.map((p) => sgRow(p)).join("")
+          : `<div class="empty" style="margin-top:20px">Tidak ada hasil untuk “${esc(q || "-")}”.</div>`;
+        bindMSug();
+      }
+      function bindMSug() {
+        $("mSugList")
+          .querySelectorAll(".sg")
+          .forEach(
+            (b) =>
+              (b.onclick = () =>
+                mChoose({
+                  name: b.dataset.n,
+                  detail: b.dataset.d,
+                  x: +b.dataset.x,
+                  y: +b.dataset.y,
+                })),
+          );
+      }
+      function mOpenSearch() {
+        mGo("scSearch");
+        $("mQuery").value = "";
+        renderMSug();
+        setTimeout(() => $("mQuery").focus(), 120);
+      }
+      $("mQuery").addEventListener("input", renderMSug);
+      function mQuick(name, detail) {
+        const p = PLACES.find((x) => x.name === name) || {
+          name,
+          detail,
+          x: 600,
+          y: 400,
+        };
+        mChoose({ name, detail, x: p.x, y: p.y });
+      }
+      function mChoose(p) {
+        mDest = p;
+        mMap.setDest(p);
+        $("mDestName").textContent = p.name;
+        $("mDestSub").textContent = p.detail;
+        renderMCards();
+        mGo("scRides");
+      }
+      function renderMCards() {
+        $("mCards").innerHTML = RIDES.map(
+          (r) => `
+    <button class="rc ${r.id === mSel ? "sel" : ""}" data-id="${r.id}">
+      <div class="row1"><b>${r.name}</b><span class="eta">${r.eta}</span></div>
+      <div style="margin:6px 0 2px">${carSVG(r.kind, 80, 36)}</div>
+      <div class="desc">${r.seats} kursi · ${r.desc}</div>
+      <div class="price">${r.price}</div>
+    </button>`,
+        ).join("");
+        $("mCards")
+          .querySelectorAll(".rc")
+          .forEach(
+            (c) =>
+              (c.onclick = () => {
+                mSel = c.dataset.id;
+                renderMCards();
+                $("mCta").textContent =
+                  `Pesan ${RIDES.find((r) => r.id === mSel).name}`;
+              }),
+          );
+        $("mCta").textContent =
+          `Pesan ${RIDES.find((r) => r.id === mSel).name}`;
+      }
+      function mBook() {
+        const r = RIDES.find((x) => x.id === mSel);
+        $("mFindSub").textContent = `${r.name} · ${mDest.name}`;
+        mGo("scFind");
+        mFindT = setTimeout(() => {
+          mFindT = null;
+          mDriverFound();
+        }, 2600);
+      }
+      function mCancelFind() {
+        clearTimeout(mFindT);
+        mFindT = null;
+        mGo("scRides");
+        toast("Permintaan dibatalkan");
+      }
+      function mDriverFound() {
+        const d = DRIVERS[Math.floor(Math.random() * DRIVERS.length)];
+        $("mDriverName").textContent = d.name;
+        $("mAvatar").textContent = d.name
+          .split(" ")
+          .map((w) => w[0])
+          .join("")
+          .slice(0, 2)
+          .toUpperCase();
+        $("mRating").textContent = d.rating;
+        $("mCar").textContent = d.car;
+        $("mPlate").textContent = d.plate;
+        $("mOtp").textContent = String(Math.floor(1000 + Math.random() * 9000));
+        mMap.spawnDriver();
+        mGo("scDriver");
+        // countdown ETA
+        let secs = 150 + Math.floor(Math.random() * 120),
+          total = secs;
+        clearInterval(mCnt);
+        const tick = () => {
+          secs = Math.max(0, secs - 1);
+          $("mEta").textContent =
+            secs > 60 ? `${Math.ceil(secs / 60)} mnt` : `${secs} dtk`;
+          $("mProg").style.width = 100 * (1 - secs / total) + "%";
+          if (secs === 0) {
+            clearInterval(mCnt);
+            $("mEta").textContent = "tiba";
+          }
+        };
+        tick();
+        mCnt = setInterval(tick, 1000);
+      }
+      function mFinish() {
+        clearInterval(mCnt);
+        mMap.clearDest();
+        mDest = null;
+        mSel = "uberx";
+        mGo("scHome");
+        toast("Perjalanan selesai — terima kasih!");
+      }
+      // saved places di home
+      $("mSaved").innerHTML = PLACES.slice(0, 3)
+        .map(
+          (p) => `
+  <button class="saved" data-n="${esc(p.name)}" data-d="${esc(p.detail)}" data-x="${p.x}" data-y="${p.y}">
+    <span class="sg-ico">${sgIcon}</span>
+    <span><b>${esc(p.name)}</b><span>${esc(p.detail)}</span></span>
+    ${chev}
+  </button>`,
+        )
+        .join("");
+      $("mSaved")
+        .querySelectorAll(".saved")
+        .forEach(
+          (b) =>
+            (b.onclick = () =>
+              mChoose({
+                name: b.dataset.n,
+                detail: b.dataset.d,
+                x: +b.dataset.x,
+                y: +b.dataset.y,
+              })),
+        );
+
+      /* ================= CLOCK LIVE ================= */
+      function tickClock() {
+        const n = new Date();
+        $("pClock").textContent = n
+          .toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
+          .replace(":", ".");
+      }
+      tickClock();
+      setInterval(tickClock, 10000);
+
+      /* init */
+      dUpdate();
+      renderMCards();
+      setTimeout(
+        () =>
+          toast("Selamat datang! Switch tampilan via tombol di atas (D / M)."),
+        700,
+      );
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1623 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0b0f17" />
+    <title>Android TV — UI Clone</title>
+    <style>
+      :root {
+        --bg: #0b0f17;
+        --panel: #151b27;
+        --panel-2: #1c2432;
+        --text: #f7f8fb;
+        --muted: #9ba6b8;
+        --blue: #8ab4f8;
+        --blue-strong: #4285f4;
+        --focus: #a8c7fa;
+        --header-h: 78px;
+        --page-pad: clamp(24px, 4.3vw, 76px);
+        --radius: 15px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        scrollbar-color: #3b4658 #111722;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        background:
+          radial-gradient(
+            ellipse at 72% 8%,
+            rgba(42, 62, 94, 0.22),
+            transparent 38%
+          ),
+          linear-gradient(180deg, #111723 0%, var(--bg) 48%, #080b11 100%);
+        font-family: Roboto, "Google Sans", Arial, sans-serif;
+        overflow-x: hidden;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      button {
+        color: inherit;
+      }
+      .ambient {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: -1;
+        background: radial-gradient(
+          ellipse at 50% 105%,
+          rgba(38, 62, 95, 0.12),
+          transparent 55%
+        );
+      }
+      .topbar {
+        height: var(--header-h);
+        width: 100%;
+        padding: 0 var(--page-pad);
+        display: flex;
+        align-items: center;
+        gap: clamp(22px, 3vw, 48px);
+        position: relative;
+        z-index: 5;
+        background: linear-gradient(
+          180deg,
+          rgba(8, 12, 19, 0.92),
+          rgba(8, 12, 19, 0.52)
+        );
+        backdrop-filter: blur(18px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.035);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 0 0 auto;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        color: #e7edf8;
+        white-space: nowrap;
+      }
+      .brand-mark {
+        width: 31px;
+        height: 25px;
+        position: relative;
+        display: inline-block;
+        border: 2px solid #dce7f8;
+        border-radius: 5px;
+        box-shadow: 0 0 16px rgba(138, 180, 248, 0.18);
+      }
+      .brand-mark::before {
+        content: "";
+        position: absolute;
+        width: 11px;
+        height: 11px;
+        border: 2px solid #8ab4f8;
+        border-radius: 50%;
+        left: 8px;
+        top: 5px;
+      }
+      .brand-mark::after {
+        content: "";
+        position: absolute;
+        width: 5px;
+        height: 2px;
+        background: #dce7f8;
+        bottom: -5px;
+        left: 11px;
+        border-radius: 2px;
+      }
+      .nav {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        min-width: 0;
+      }
+      .nav button,
+      .icon-button,
+      .profile-button,
+      .hero-action,
+      .app-tile,
+      .media-card,
+      .chip {
+        border: 0;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .nav button {
+        color: #aeb8c8;
+        background: transparent;
+        padding: 10px 15px;
+        border-radius: 24px;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        transition: 0.18s ease;
+      }
+      .nav button.active {
+        color: #fff;
+        background: rgba(138, 180, 248, 0.17);
+      }
+      .nav button:hover {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.08);
+      }
+      .topbar-spacer {
+        flex: 1;
+      }
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+      .icon-button,
+      .profile-button {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: rgba(255, 255, 255, 0.07);
+        color: #dce5f3;
+        transition: 0.18s ease;
+      }
+      .icon-button svg {
+        width: 20px;
+        height: 20px;
+      }
+      .profile-button {
+        width: 37px;
+        height: 37px;
+        background: linear-gradient(135deg, #6c8dc9, #394a68);
+        font-size: 13px;
+        font-weight: 700;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+      }
+      [data-focusable]:focus-visible,
+      .focused {
+        outline: 3px solid var(--focus) !important;
+        outline-offset: 4px;
+        box-shadow:
+          0 0 0 7px rgba(138, 180, 248, 0.17),
+          0 10px 34px rgba(0, 0, 0, 0.34) !important;
+        z-index: 10;
+      }
+      .topbar [data-focusable]:focus-visible {
+        outline-offset: 2px;
+      }
+      main {
+        padding-bottom: 68px;
+      }
+      .hero {
+        min-height: clamp(350px, 43vw, 530px);
+        height: 48vh;
+        max-height: 540px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+        margin-bottom: 8px;
+        background-image: url("https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=2200&q=88");
+        background-size: cover;
+        background-position: center 44%;
+      }
+      .hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(
+            90deg,
+            rgba(7, 10, 16, 0.98) 0%,
+            rgba(7, 10, 16, 0.88) 24%,
+            rgba(7, 10, 16, 0.36) 55%,
+            rgba(7, 10, 16, 0.05) 100%
+          ),
+          linear-gradient(
+            0deg,
+            #0b0f17 0%,
+            rgba(11, 15, 23, 0.1) 33%,
+            rgba(7, 10, 16, 0.1) 100%
+          );
+      }
+      .hero::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          ellipse at 70% 38%,
+          transparent 0%,
+          rgba(7, 10, 16, 0.12) 55%,
+          rgba(7, 10, 16, 0.34) 100%
+        );
+      }
+      .hero-content {
+        position: relative;
+        z-index: 1;
+        width: min(610px, 55vw);
+        margin-left: var(--page-pad);
+        padding-top: 12px;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #c4d8fa;
+        text-transform: uppercase;
+        letter-spacing: 0.19em;
+        font-size: 11px;
+        font-weight: 800;
+        margin-bottom: 17px;
+      }
+      .eyebrow .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #8ab4f8;
+        box-shadow: 0 0 12px #8ab4f8;
+      }
+      .hero h1 {
+        margin: 0;
+        font-size: clamp(42px, 6.1vw, 82px);
+        line-height: 0.98;
+        letter-spacing: -0.055em;
+        font-weight: 800;
+        text-shadow: 0 4px 26px rgba(0, 0, 0, 0.35);
+      }
+      .hero-subtitle {
+        margin: 15px 0 13px;
+        color: #e3eaf4;
+        font-size: clamp(13px, 1.2vw, 16px);
+        font-weight: 500;
+        letter-spacing: 0.035em;
+      }
+      .hero-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #b7c2d2;
+        font-size: 13px;
+        margin-bottom: 17px;
+      }
+      .rating {
+        color: #f8d27a;
+        font-weight: 700;
+      }
+      .meta-divider {
+        width: 3px;
+        height: 3px;
+        background: #7e8a9b;
+        border-radius: 50%;
+      }
+      .hero-description {
+        max-width: 490px;
+        margin: 0;
+        color: #c0c8d5;
+        font-size: 14px;
+        line-height: 1.65;
+        text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+      }
+      .hero-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 25px;
+      }
+      .hero-action {
+        display: inline-flex;
+        gap: 9px;
+        align-items: center;
+        justify-content: center;
+        padding: 13px 21px;
+        border-radius: 7px;
+        font-size: 13px;
+        font-weight: 750;
+        transition:
+          transform 0.18s,
+          background 0.18s;
+      }
+      .hero-action.primary {
+        background: #e8f0fe;
+        color: #142238;
+        min-width: 132px;
+      }
+      .hero-action.secondary {
+        color: #f0f4fb;
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.19);
+        backdrop-filter: blur(12px);
+      }
+      .hero-action svg {
+        width: 16px;
+        height: 16px;
+      }
+      .hero-action:hover {
+        transform: translateY(-2px);
+      }
+      .hero-controls {
+        position: absolute;
+        z-index: 2;
+        right: var(--page-pad);
+        bottom: 31px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #c8d1df;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+      }
+      .hero-controls span {
+        width: 18px;
+        height: 3px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.3);
+      }
+      .hero-controls span:first-child {
+        width: 32px;
+        background: #dce8fa;
+      }
+      .section {
+        padding: 20px var(--page-pad) 4px;
+      }
+      .section-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+      .section-heading h2 {
+        font-size: 18px;
+        line-height: 1.2;
+        margin: 0;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .section-heading .see-all {
+        color: #a9c8fa;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 7px 10px;
+        border-radius: 6px;
+        background: transparent;
+        border: 0;
+      }
+      .section-heading .see-all:hover {
+        background: rgba(138, 180, 248, 0.1);
+      }
+      .media-row {
+        display: flex;
+        gap: 16px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 5px 5px 17px 4px;
+        margin: 0 -4px;
+        scrollbar-width: none;
+      }
+      .media-row::-webkit-scrollbar {
+        display: none;
+      }
+      .media-card {
+        flex: 0 0 clamp(220px, 22vw, 300px);
+        min-width: 0;
+        text-align: left;
+        padding: 0;
+        background: transparent;
+        border-radius: var(--radius);
+        color: var(--text);
+        position: relative;
+        transition:
+          transform 0.2s ease,
+          filter 0.2s ease;
+      }
+      .media-card:hover {
+        transform: translateY(-4px) scale(1.015);
+      }
+      .media-art {
+        height: clamp(126px, 12.5vw, 166px);
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+        background: #202c3e;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.24);
+      }
+      .media-art img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.5s ease;
+      }
+      .media-card:hover .media-art img {
+        transform: scale(1.045);
+      }
+      .media-art::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          0deg,
+          rgba(6, 10, 16, 0.65),
+          transparent 52%
+        );
+        pointer-events: none;
+      }
+      .progress-track {
+        position: absolute;
+        z-index: 1;
+        left: 14px;
+        right: 14px;
+        bottom: 12px;
+        height: 3px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.3);
+        overflow: hidden;
+      }
+      .progress-track i {
+        display: block;
+        height: 100%;
+        background: #8ab4f8;
+        border-radius: 4px;
+      }
+      .card-title {
+        font-size: 13px;
+        font-weight: 650;
+        margin: 10px 2px 4px;
+        color: #eef2f8;
+      }
+      .card-subtitle {
+        font-size: 11px;
+        color: #929eaf;
+        margin: 0 2px;
+      }
+      .app-row {
+        display: flex;
+        gap: 15px;
+        overflow-x: auto;
+        padding: 5px 5px 17px 4px;
+        margin: 0 -4px;
+        scrollbar-width: none;
+      }
+      .app-row::-webkit-scrollbar {
+        display: none;
+      }
+      .app-tile {
+        flex: 0 0 clamp(118px, 11.5vw, 150px);
+        height: clamp(88px, 8.5vw, 112px);
+        border-radius: 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: linear-gradient(145deg, #202a3a, #151c29);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        transition:
+          transform 0.18s,
+          background 0.18s;
+      }
+      .app-tile:hover {
+        transform: translateY(-4px);
+        background: #27344a;
+      }
+      .app-icon {
+        width: 39px;
+        height: 39px;
+        display: grid;
+        place-items: center;
+        font-size: 19px;
+        font-weight: 800;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
+      }
+      .app-name {
+        color: #dbe2ed;
+        font-size: 11px;
+        font-weight: 650;
+        letter-spacing: 0.01em;
+      }
+      .youtube {
+        background: #f7f7f7;
+        color: #f00;
+        border-radius: 11px;
+      }
+      .netflix {
+        background: #111;
+        color: #e50914;
+        font-family: Arial, sans-serif;
+        font-size: 26px;
+      }
+      .prime {
+        background: linear-gradient(135deg, #243f68, #15263e);
+        color: #7dd3fc;
+      }
+      .disney {
+        background: linear-gradient(135deg, #162b69, #081532);
+        color: #fff;
+        font-family: Georgia, serif;
+      }
+      .spotify {
+        background: #1ed760;
+        color: #07170d;
+        border-radius: 50%;
+      }
+      .plex {
+        background: #e5a62b;
+        color: #17130a;
+      }
+      .system-row {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
+        padding-top: 5px;
+      }
+      .system-pill {
+        background: rgba(255, 255, 255, 0.055);
+        color: #aeb9c9;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        padding: 10px 14px;
+        border-radius: 9px;
+        font-size: 11px;
+      }
+      .footer {
+        padding: 38px var(--page-pad) 18px;
+        color: #667286;
+        font-size: 10px;
+        letter-spacing: 0.04em;
+      }
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 36px;
+        transform: translate(-50%, 20px);
+        opacity: 0;
+        pointer-events: none;
+        color: #172235;
+        background: #e8f0fe;
+        padding: 12px 18px;
+        border-radius: 9px;
+        font-size: 13px;
+        font-weight: 650;
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+        transition: 0.25s;
+        z-index: 50;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      .overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 30;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: rgba(3, 6, 11, 0.76);
+        backdrop-filter: blur(13px);
+      }
+      .overlay.open {
+        display: flex;
+      }
+      .dialog {
+        width: min(650px, 94vw);
+        background: linear-gradient(145deg, #202a3b, #131a26);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 19px;
+        padding: 28px;
+        box-shadow: 0 28px 90px rgba(0, 0, 0, 0.55);
+        position: relative;
+      }
+      .dialog h3 {
+        margin: 0 0 8px;
+        font-size: 23px;
+        letter-spacing: -0.03em;
+      }
+      .dialog p {
+        margin: 0 0 21px;
+        color: #aeb9ca;
+        font-size: 13px;
+        line-height: 1.55;
+      }
+      .search-field {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border: 1px solid rgba(180, 204, 244, 0.45);
+        background: rgba(7, 12, 20, 0.58);
+        padding: 0 16px;
+        height: 54px;
+        border-radius: 10px;
+      }
+      .search-field svg {
+        width: 20px;
+        height: 20px;
+        color: #a9c8fa;
+        flex: 0 0 auto;
+      }
+      .search-field input {
+        width: 100%;
+        min-width: 0;
+        background: transparent;
+        color: #fff;
+        outline: 0;
+        border: 0;
+        font-size: 15px;
+      }
+      .search-field input::placeholder {
+        color: #778498;
+      }
+      .suggestions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+        margin-top: 16px;
+      }
+      .chip {
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #c7d1df;
+        background: rgba(255, 255, 255, 0.06);
+        padding: 8px 12px;
+        font-size: 11px;
+      }
+      .dialog-close {
+        position: absolute;
+        right: 18px;
+        top: 17px;
+        width: 34px;
+        height: 34px;
+        border: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.08);
+        color: #dbe5f3;
+        cursor: pointer;
+        font-size: 18px;
+      }
+      .detail-layout {
+        display: grid;
+        grid-template-columns: 190px 1fr;
+        gap: 23px;
+        align-items: start;
+      }
+      .detail-poster {
+        height: 245px;
+        width: 100%;
+        border-radius: 12px;
+        object-fit: cover;
+        background: #273449;
+      }
+      .detail-copy h3 {
+        margin-top: 5px;
+      }
+      .detail-copy .hero-meta {
+        margin: 11px 0 14px;
+        flex-wrap: wrap;
+      }
+      .detail-copy p {
+        margin-bottom: 18px;
+      }
+      .detail-copy .hero-action {
+        margin-right: 7px;
+      }
+      .clock-weather {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #9ba8ba;
+        font-size: 11px;
+        margin-right: 8px;
+        white-space: nowrap;
+      }
+      .clock-weather strong {
+        color: #dce6f5;
+        font-weight: 650;
+      }
+      @media (min-width: 1500px) {
+        .hero-content {
+          width: 650px;
+        }
+        .hero-description {
+          font-size: 15px;
+        }
+      }
+      @media (max-width: 850px) {
+        :root {
+          --header-h: 68px;
+          --page-pad: 23px;
+        }
+        .brand {
+          font-size: 12px;
+        }
+        .brand-mark {
+          transform: scale(0.9);
+        }
+        .nav {
+          gap: 0;
+        }
+        .nav button {
+          padding: 9px 10px;
+          font-size: 12px;
+        }
+        .clock-weather {
+          display: none;
+        }
+        .hero {
+          height: 440px;
+          min-height: 380px;
+          background-position: 60% center;
+        }
+        .hero-content {
+          width: min(570px, 72vw);
+        }
+        .hero-description {
+          max-width: 430px;
+        }
+      }
+      @media (max-width: 600px) {
+        :root {
+          --header-h: 62px;
+          --page-pad: 18px;
+        }
+        .topbar {
+          gap: 10px;
+        }
+        .brand {
+          gap: 7px;
+          font-size: 0;
+        }
+        .brand-mark {
+          transform: scale(0.83);
+          transform-origin: left center;
+        }
+        .nav {
+          flex: 1;
+          justify-content: center;
+        }
+        .nav button {
+          padding: 8px 9px;
+          font-size: 11px;
+        }
+        .nav button:nth-child(3),
+        .nav button:nth-child(4) {
+          display: none;
+        }
+        .top-actions {
+          gap: 7px;
+        }
+        .icon-button {
+          width: 36px;
+          height: 36px;
+        }
+        .profile-button {
+          width: 32px;
+          height: 32px;
+        }
+        .hero {
+          height: 470px;
+          min-height: 420px;
+          align-items: flex-end;
+          padding-bottom: 56px;
+          background-position: 62% center;
+        }
+        .hero::before {
+          background:
+            linear-gradient(
+              0deg,
+              rgba(7, 10, 16, 0.98) 0%,
+              rgba(7, 10, 16, 0.78) 45%,
+              rgba(7, 10, 16, 0.05) 100%
+            ),
+            linear-gradient(90deg, rgba(7, 10, 16, 0.3), transparent);
+        }
+        .hero-content {
+          width: auto;
+          margin-right: var(--page-pad);
+          padding: 0;
+        }
+        .hero h1 {
+          font-size: 47px;
+        }
+        .hero-description {
+          font-size: 12px;
+        }
+        .hero-controls {
+          bottom: 20px;
+          right: var(--page-pad);
+        }
+        .section {
+          padding-top: 15px;
+        }
+        .section-heading h2 {
+          font-size: 16px;
+        }
+        .media-card {
+          flex-basis: 218px;
+        }
+        .media-art {
+          height: 124px;
+        }
+        .app-tile {
+          flex-basis: 106px;
+          height: 85px;
+        }
+        .detail-layout {
+          grid-template-columns: 105px 1fr;
+          gap: 14px;
+        }
+        .detail-poster {
+          height: 155px;
+        }
+        .dialog {
+          padding: 22px;
+        }
+        .detail-copy .hero-action {
+          margin-bottom: 7px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="ambient"></div>
+    <header class="topbar">
+      <div class="brand" aria-label="Android TV">
+        <span class="brand-mark"></span><span>ANDROID TV</span>
+      </div>
+      <nav class="nav" aria-label="Navigasi utama">
+        <button class="active" data-focusable data-nav="home">Home</button>
+        <button data-focusable data-nav="discover">Discover</button>
+        <button data-focusable data-nav="apps">Apps</button>
+        <button data-focusable data-nav="library">Library</button>
+      </nav>
+      <div class="topbar-spacer"></div>
+      <div class="clock-weather">
+        <span>◷</span><strong id="clock">19:57</strong><span>•</span
+        ><span>Malang 28°</span>
+      </div>
+      <div class="top-actions">
+        <button
+          class="icon-button"
+          id="searchButton"
+          data-focusable
+          aria-label="Search"
+          title="Search"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          >
+            <circle cx="10.8" cy="10.8" r="6.8"></circle>
+            <path d="m16 16 5 5"></path>
+          </svg>
+        </button>
+        <button
+          class="profile-button"
+          id="profileButton"
+          data-focusable
+          aria-label="Profil"
+        >
+          U
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" id="homeHero" aria-label="Konten unggulan">
+        <div class="hero-content">
+          <div class="eyebrow">
+            <span class="dot"></span> Pilihan hari ini
+            <span style="color: #8798b1">•</span> Android TV Originals
+          </div>
+          <h1>BEYOND<br />THE STARS</h1>
+          <div class="hero-subtitle">
+            SEBUAH PERJALANAN MELAMPAUI BATAS SEMESTA
+          </div>
+          <div class="hero-meta">
+            <span class="rating">★ 9.2</span><span class="meta-divider"></span
+            ><span>2026</span><span class="meta-divider"></span
+            ><span>Science Fiction</span><span class="meta-divider"></span
+            ><span>2j 08m</span>
+          </div>
+          <p class="hero-description">
+            Ketika sinyal misterius datang dari sisi lain galaksi, satu kru
+            harus mempertaruhkan segalanya untuk menemukan jawaban yang dapat
+            mengubah masa depan umat manusia.
+          </p>
+          <div class="hero-actions">
+            <button
+              class="hero-action primary"
+              data-focusable
+              data-action="play"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  d="M8 5.7c0-.8.9-1.3 1.6-.9l9.2 5.3c.7.4.7 1.4 0 1.8l-9.2 5.3c-.7.4-1.6-.1-1.6-.9V5.7Z"
+                />
+              </svg>
+              Putar
+            </button>
+            <button
+              class="hero-action secondary"
+              data-focusable
+              data-action="hero-info"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="12" cy="12" r="9"></circle>
+                <path d="M12 11v5m0-8h.01" stroke-linecap="round"></path>
+              </svg>
+              Info selengkapnya
+            </button>
+          </div>
+        </div>
+        <div class="hero-controls">
+          <span></span><span></span><span></span><span></span><b>01 / 04</b>
+        </div>
+      </section>
+
+      <section class="section" id="continueSection">
+        <div class="section-heading">
+          <h2>Lanjutkan menonton</h2>
+          <button class="see-all" data-focusable data-action="see-all">
+            Lihat semua&nbsp; ›
+          </button>
+        </div>
+        <div class="media-row">
+          <button
+            class="media-card"
+            data-focusable
+            data-title="The Silent Planet"
+            data-subtitle="Season 1 · Episode 4"
+            data-image="https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=900&q=85"
+            data-description="Di tengah misi yang semakin berbahaya, kru menemukan petunjuk baru tentang planet yang sunyi."
+          >
+            <div class="media-art">
+              <img
+                loading="lazy"
+                src="https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=900&q=85"
+                alt="Pemandangan bumi dari luar angkasa"
+              />
+              <div class="progress-track"><i style="width: 68%"></i></div>
+            </div>
+            <div class="card-title">The Silent Planet</div>
+            <div class="card-subtitle">S1 E4 · Tersisa 18 menit</div>
+          </button>
+          <button
+            class="media-card"
+            data-focusable
+            data-title="Wild Earth"
+            data-subtitle="Season 2 · Episode 1"
+            data-image="https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=900&q=85"
+            data-description="Jelajahi kehidupan liar dan lanskap menakjubkan dalam serial dokumenter alam ini."
+          >
+            <div class="media-art">
+              <img
+                loading="lazy"
+                src="https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=900&q=85"
+                alt="Rusa di alam liar"
+              />
+              <div class="progress-track"><i style="width: 34%"></i></div>
+            </div>
+            <div class="card-title">Wild Earth</div>
+            <div class="card-subtitle">S2 E1 · Tersisa 32 menit</div>
+          </button>
+          <button
+            class="media-card"
+            data-focusable
+            data-title="Midnight in Tokyo"
+            data-subtitle="Film · 2025"
+            data-image="https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=900&q=85"
+            data-description="Satu malam, dua orang asing, dan rahasia yang menghubungkan mereka di kota yang tidak pernah tidur."
+          >
+            <div class="media-art">
+              <img
+                loading="lazy"
+                src="https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=900&q=85"
+                alt="Langit malam kota"
+              />
+              <div class="progress-track"><i style="width: 82%"></i></div>
+            </div>
+            <div class="card-title">Midnight in Tokyo</div>
+            <div class="card-subtitle">Film · Tersisa 12 menit</div>
+          </button>
+          <button
+            class="media-card"
+            data-focusable
+            data-title="The Deep Blue"
+            data-subtitle="Season 1 · Episode 6"
+            data-image="https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=900&q=85"
+            data-description="Tim peneliti menyelam lebih dalam untuk mengungkap ekosistem misterius di dasar samudra."
+          >
+            <div class="media-art">
+              <img
+                loading="lazy"
+                src="https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=900&q=85"
+                alt="Ombak laut biru"
+              />
+              <div class="progress-track"><i style="width: 49%"></i></div>
+            </div>
+            <div class="card-title">The Deep Blue</div>
+            <div class="card-subtitle">S1 E6 · Tersisa 24 menit</div>
+          </button>
+        </div>
+      </section>
+
+      <section class="section" id="appsSection">
+        <div class="section-heading">
+          <h2>Aplikasi favorit</h2>
+          <button class="see-all" data-focusable data-action="manage-apps">
+            Kelola aplikasi&nbsp; ›
+          </button>
+        </div>
+        <div class="app-row">
+          <button class="app-tile" data-focusable data-app="YouTube">
+            <span class="app-icon youtube">▶</span
+            ><span class="app-name">YouTube</span>
+          </button>
+          <button class="app-tile" data-focusable data-app="Netflix">
+            <span class="app-icon netflix">N</span
+            ><span class="app-name">Netflix</span>
+          </button>
+          <button class="app-tile" data-focusable data-app="Prime Video">
+            <span class="app-icon prime">prime</span
+            ><span class="app-name">Prime Video</span>
+          </button>
+          <button class="app-tile" data-focusable data-app="Disney+">
+            <span class="app-icon disney">D+</span
+            ><span class="app-name">Disney+</span>
+          </button>
+          <button class="app-tile" data-focusable data-app="Spotify">
+            <span class="app-icon spotify">≋</span
+            ><span class="app-name">Spotify</span>
+          </button>
+          <button class="app-tile" data-focusable data-app="Plex">
+            <span class="app-icon plex">▸</span
+            ><span class="app-name">Plex</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="section" id="recommendedSection">
+        <div class="section-heading">
+          <h2>Direkomendasikan untuk Anda</h2>
+          <button class="see-all" data-focusable data-action="see-all">
+            Jelajahi&nbsp; ›
+          </button>
+        </div>
+        <div class="media-row">
+          <button
+            class="media-card"
+            data-focusable
+            data-title="Into the Wild"
+            data-subtitle="Adventure · 2026"
+            data-image="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=85"
+            data-description="Petualangan menuju tempat-tempat paling terpencil di bumi, dengan cerita tentang keberanian dan penemuan diri."
+          >
+            <div class="media-art">
+              <img
+                loading="lazy"
+                src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=85"
+                alt="Lanskap pegunungan"
+              />
+              <div class="progress-track" style="display: none"></div>
+            </div>
+            <div class="card-title">Into the Wild</div>
+            <div class="card-subtitle">Adventure · 2026</div>
+          </button>
+          <button
+            class="media-card"
+            data-focusable
+            data-title="Blue Horizon"
+            data-subtitle="Documentary · 2025"
+            data-image="https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=900&q=85"
+            data-description="Kisah visual tentang lautan, kehidupan bawah air, dan upaya menjaga keindahan planet kita."
+          >
+            <div class="media-art">
+              <img
+                loading="lazy"
+                src="https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=900&q=85"
+                alt="Gelombang laut"
+              />
+              <div class="progress-track" style="display: none"></div>
+            </div>
+            <div class="card-title">Blue Horizon</div>
+            <div class="card-subtitle">Documentary · 2025</div>
+          </button>
+          <button
+            class="media-card"
+            data-focusable
+            data-title="Neon City"
+            data-subtitle="Sci-Fi · 2026"
+            data-image="https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=900&q=85"
+            data-description="Di masa depan, seorang teknisi menemukan sisi tersembunyi dari kota yang dikendalikan algoritma."
+          >
+            <div class="media-art">
+              <img
+                loading="lazy"
+                src="https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=900&q=85"
+                alt="Pemandangan malam"
+              />
+              <div class="progress-track" style="display: none"></div>
+            </div>
+            <div class="card-title">Neon City</div>
+            <div class="card-subtitle">Sci-Fi · 2026</div>
+          </button>
+          <button
+            class="media-card"
+            data-focusable
+            data-title="Mountain Stories"
+            data-subtitle="Travel · 2025"
+            data-image="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=900&q=85"
+            data-description="Perjalanan melintasi pegunungan dan bertemu dengan komunitas yang hidup berdampingan dengan alam."
+          >
+            <div class="media-art">
+              <img
+                loading="lazy"
+                src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=900&q=85"
+                alt="Pegunungan bersalju"
+              />
+              <div class="progress-track" style="display: none"></div>
+            </div>
+            <div class="card-title">Mountain Stories</div>
+            <div class="card-subtitle">Travel · 2025</div>
+          </button>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-heading"><h2>Pengaturan cepat</h2></div>
+        <div class="system-row">
+          <button class="system-pill" data-focusable data-action="wifi">
+            ◉ &nbsp; Wi-Fi terhubung
+          </button>
+          <button class="system-pill" data-focusable data-action="bluetooth">
+            ᛒ &nbsp; Bluetooth
+          </button>
+          <button class="system-pill" data-focusable data-action="display">
+            ▣ &nbsp; Tampilan &amp; suara
+          </button>
+          <button class="system-pill" data-focusable data-action="settings">
+            ⚙ &nbsp; Semua pengaturan
+          </button>
+        </div>
+      </section>
+      <div class="footer">
+        ANDROID TV UI CONCEPT&nbsp; · &nbsp;FRONTEND DEMO&nbsp; · &nbsp;REMOTE:
+        ↑ ↓ ← → ENTER / ESC
+      </div>
+    </main>
+
+    <div
+      class="overlay"
+      id="searchOverlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="searchTitle"
+    >
+      <div class="dialog">
+        <button
+          class="dialog-close"
+          data-focusable
+          data-close="search"
+          aria-label="Tutup"
+        >
+          ×
+        </button>
+        <h3 id="searchTitle">Cari di Android TV</h3>
+        <p>Temukan film, serial, aplikasi, dan video favorit Anda.</p>
+        <form id="searchForm">
+          <div class="search-field">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <circle cx="10.8" cy="10.8" r="6.8"></circle>
+              <path d="m16 16 5 5"></path>
+            </svg>
+            <input
+              id="searchInput"
+              type="search"
+              placeholder="Cari film, acara TV, aplikasi..."
+              autocomplete="off"
+            />
+          </div>
+        </form>
+        <div class="suggestions">
+          <button class="chip" data-focusable data-query="Film populer">
+            Film populer</button
+          ><button class="chip" data-focusable data-query="Serial terbaru">
+            Serial terbaru</button
+          ><button class="chip" data-focusable data-query="Dokumenter alam">
+            Dokumenter alam
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="overlay"
+      id="detailOverlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="detailTitle"
+    >
+      <div class="dialog">
+        <button
+          class="dialog-close"
+          data-focusable
+          data-close="detail"
+          aria-label="Tutup"
+        >
+          ×
+        </button>
+        <div class="detail-layout">
+          <img class="detail-poster" id="detailImage" alt="Artwork konten" />
+          <div class="detail-copy">
+            <div class="eyebrow">
+              <span class="dot"></span> Rekomendasi Android TV
+            </div>
+            <h3 id="detailTitle">Judul konten</h3>
+            <div class="hero-meta">
+              <span class="rating">★ 8.9</span><span class="meta-divider"></span
+              ><span id="detailSubtitle">Film · 2026</span>
+            </div>
+            <p id="detailDescription">Deskripsi konten.</p>
+            <button
+              class="hero-action primary"
+              data-focusable
+              data-action="detail-play"
+            >
+              ▶&nbsp; Putar</button
+            ><button
+              class="hero-action secondary"
+              data-focusable
+              data-action="detail-list"
+            >
+              ＋&nbsp; Daftar saya
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="overlay"
+      id="profileOverlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="profileTitle"
+    >
+      <div class="dialog" style="max-width: 430px">
+        <button
+          class="dialog-close"
+          data-focusable
+          data-close="profile"
+          aria-label="Tutup"
+        >
+          ×
+        </button>
+        <h3 id="profileTitle">Profil pengguna</h3>
+        <p>
+          Selamat datang kembali. Personalisasikan pengalaman menonton Anda.
+        </p>
+        <div class="system-row">
+          <span class="system-pill">● &nbsp; Pengguna aktif</span
+          ><span class="system-pill">Mode anak: nonaktif</span>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 22px">
+          <button
+            class="hero-action primary"
+            data-focusable
+            data-action="switch-profile"
+          >
+            Ganti profil</button
+          ><button
+            class="hero-action secondary"
+            data-focusable
+            data-action="settings"
+          >
+            Pengaturan
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      (() => {
+        const $ = (selector, root = document) => root.querySelector(selector);
+        const $$ = (selector, root = document) => [
+          ...root.querySelectorAll(selector),
+        ];
+        const toast = $("#toast");
+        let toastTimer;
+        let lastFocused = null;
+        let currentOverlay = null;
+
+        function showToast(message) {
+          toast.textContent = message;
+          toast.classList.add("show");
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(() => toast.classList.remove("show"), 2300);
+        }
+        function updateClock() {
+          const now = new Date();
+          $("#clock").textContent = new Intl.DateTimeFormat("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }).format(now);
+        }
+        updateClock();
+        setInterval(updateClock, 15000);
+
+        function openOverlay(id) {
+          const overlay = document.getElementById(id);
+          if (!overlay) return;
+          lastFocused = document.activeElement;
+          currentOverlay = overlay;
+          overlay.classList.add("open");
+          const first = overlay.querySelector("[data-focusable], input");
+          if (first) setTimeout(() => first.focus(), 30);
+        }
+        function closeOverlay(overlay = currentOverlay) {
+          if (!overlay) return;
+          overlay.classList.remove("open");
+          if (currentOverlay === overlay) currentOverlay = null;
+          if (lastFocused && document.contains(lastFocused))
+            lastFocused.focus();
+        }
+        function openDetail(data) {
+          $("#detailTitle").textContent = data.title || "Konten pilihan";
+          $("#detailSubtitle").textContent = data.subtitle || "Film · 2026";
+          $("#detailDescription").textContent =
+            data.description || "Nikmati pilihan hiburan untuk Anda.";
+          $("#detailImage").src =
+            data.image ||
+            "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=600&q=85";
+          openOverlay("detailOverlay");
+        }
+
+        $("#searchButton").addEventListener("click", () =>
+          openOverlay("searchOverlay"),
+        );
+        $("#profileButton").addEventListener("click", () =>
+          openOverlay("profileOverlay"),
+        );
+        $("#homeHero")
+          .querySelector('[data-action="hero-info"]')
+          .addEventListener("click", () =>
+            openDetail({
+              title: "Beyond the Stars",
+              subtitle: "Science Fiction · 2026 · 2j 08m",
+              image:
+                "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=900&q=85",
+              description:
+                "Ketika sinyal misterius datang dari sisi lain galaksi, satu kru harus mempertaruhkan segalanya untuk menemukan jawaban yang dapat mengubah masa depan umat manusia.",
+            }),
+          );
+
+        $$("[data-close]").forEach((button) =>
+          button.addEventListener("click", () =>
+            closeOverlay(button.closest(".overlay")),
+          ),
+        );
+        $$(".overlay").forEach((overlay) =>
+          overlay.addEventListener("click", (event) => {
+            if (event.target === overlay) closeOverlay(overlay);
+          }),
+        );
+        $$(".media-card").forEach((card) =>
+          card.addEventListener("click", () =>
+            openDetail({
+              title: card.dataset.title,
+              subtitle: card.dataset.subtitle,
+              image: card.dataset.image,
+              description: card.dataset.description,
+            }),
+          ),
+        );
+        $$("[data-app]").forEach((button) =>
+          button.addEventListener("click", () =>
+            showToast("Membuka " + button.dataset.app + "…"),
+          ),
+        );
+        $$("[data-query]").forEach((button) =>
+          button.addEventListener("click", () => {
+            $("#searchInput").value = button.dataset.query;
+            $("#searchInput").focus();
+          }),
+        );
+        $("#searchForm").addEventListener("submit", (event) => {
+          event.preventDefault();
+          const value = $("#searchInput").value.trim();
+          if (value) {
+            closeOverlay($("#searchOverlay"));
+            showToast("Hasil pencarian untuk “" + value + "”");
+          }
+        });
+        $$("[data-nav]").forEach((button) =>
+          button.addEventListener("click", () => {
+            $$("[data-nav]").forEach((item) => item.classList.remove("active"));
+            button.classList.add("active");
+            const target = {
+              home: "#homeHero",
+              discover: "#recommendedSection",
+              apps: "#appsSection",
+              library: "#continueSection",
+            }[button.dataset.nav];
+            document
+              .querySelector(target)
+              .scrollIntoView({ behavior: "smooth", block: "start" });
+          }),
+        );
+        $$("[data-action]").forEach((button) =>
+          button.addEventListener("click", () => {
+            const action = button.dataset.action;
+            const messages = {
+              play: "Menyiapkan pemutaran Beyond the Stars…",
+              "detail-play": "Menyiapkan pemutaran…",
+              "detail-list": "Ditambahkan ke Daftar saya",
+              "see-all": "Menampilkan semua rekomendasi…",
+              "manage-apps": "Membuka pengelola aplikasi…",
+              wifi: "Wi-Fi: Terhubung ke Home Network",
+              bluetooth: "Bluetooth siap dipasangkan",
+              display: "Pengaturan tampilan dan suara",
+              settings: "Pengaturan Android TV",
+              "switch-profile": "Pemilih profil dibuka",
+            };
+            if (action === "detail-play" || action === "detail-list")
+              closeOverlay($("#detailOverlay"));
+            showToast(messages[action] || "Fitur demo: " + action);
+          }),
+        );
+
+        // Remote navigation: move to the nearest focusable control in the requested direction.
+        function visibleFocusable() {
+          return $$("[data-focusable]").filter((el) => {
+            const r = el.getBoundingClientRect();
+            return (
+              r.width > 0 &&
+              r.height > 0 &&
+              getComputedStyle(el).visibility !== "hidden" &&
+              (!currentOverlay || currentOverlay.contains(el))
+            );
+          });
+        }
+        function moveFocus(direction) {
+          const items = visibleFocusable();
+          if (!items.length) return;
+          let current = document.activeElement;
+          if (!items.includes(current)) {
+            items[0].focus();
+            return;
+          }
+          const a = current.getBoundingClientRect();
+          const ax = a.left + a.width / 2,
+            ay = a.top + a.height / 2;
+          let best = null,
+            bestScore = Infinity;
+          for (const item of items) {
+            if (item === current) continue;
+            const r = item.getBoundingClientRect();
+            const bx = r.left + r.width / 2,
+              by = r.top + r.height / 2;
+            const dx = bx - ax,
+              dy = by - ay;
+            let primary, secondary;
+            if (direction === "right") {
+              if (dx <= 4) continue;
+              primary = dx;
+              secondary = Math.abs(dy);
+            }
+            if (direction === "left") {
+              if (dx >= -4) continue;
+              primary = -dx;
+              secondary = Math.abs(dy);
+            }
+            if (direction === "down") {
+              if (dy <= 4) continue;
+              primary = dy;
+              secondary = Math.abs(dx);
+            }
+            if (direction === "up") {
+              if (dy >= -4) continue;
+              primary = -dy;
+              secondary = Math.abs(dx);
+            }
+            const score =
+              primary + secondary * 1.75 + Math.max(0, primary - 260) * 0.35;
+            if (score < bestScore) {
+              bestScore = score;
+              best = item;
+            }
+          }
+          if (best) {
+            best.focus();
+            best.scrollIntoView({
+              block: "nearest",
+              inline: "nearest",
+              behavior: "smooth",
+            });
+          } else if (direction === "down")
+            window.scrollBy({ top: 240, behavior: "smooth" });
+          else if (direction === "up")
+            window.scrollBy({ top: -240, behavior: "smooth" });
+        }
+        document.addEventListener("keydown", (event) => {
+          const key = event.key;
+          if (key === "Escape" || key === "Backspace") {
+            if (currentOverlay) {
+              event.preventDefault();
+              closeOverlay();
+            }
+            return;
+          }
+          if (
+            ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)
+          ) {
+            if (
+              document.activeElement &&
+              document.activeElement.tagName === "INPUT"
+            )
+              return;
+            event.preventDefault();
+            moveFocus(
+              {
+                ArrowUp: "up",
+                ArrowDown: "down",
+                ArrowLeft: "left",
+                ArrowRight: "right",
+              }[key],
+            );
+          }
+          if (
+            (key === "Enter" || key === " ") &&
+            document.activeElement &&
+            document.activeElement.dataset.focusable !== undefined
+          ) {
+            if (document.activeElement.tagName !== "BUTTON") return;
+            event.preventDefault();
+            document.activeElement.click();
+          }
+        });
+
+        // Start with the first hero action selected, just like a TV launcher.
+        window.addEventListener("load", () => {
+          const initial = $('[data-action="play"]');
+          if (initial && window.matchMedia("(min-width: 700px)").matches)
+            initial.focus({ preventScroll: true });
+        });
+      })();
+    </script>
+  </body>
+</html>

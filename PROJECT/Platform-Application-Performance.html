@@ -1,0 +1,2099 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Platform AppPerformance</title>
+    <meta
+      name="description"
+      content="Application performance monitoring dashboard with sample telemetry."
+    />
+    <style>
+      :root {
+        --bg: #f8fafc;
+        --surface: #ffffff;
+        --text: #0f172a;
+        --text-muted: #64748b;
+        --line: #e2e8f0;
+        --accent: #2563eb;
+        --accent-soft: #eff6ff;
+        --green: #10b981;
+        --green-bg: #ecfdf5;
+        --amber: #f59e0b;
+        --amber-bg: #fffbeb;
+        --red: #ef4444;
+        --red-bg: #fef2f2;
+        --shadow:
+          0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
+        --shadow-lg:
+          0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          "Inter",
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        font-size: 14px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+        border: none;
+        background: transparent;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      .shell {
+        display: grid;
+        grid-template-columns: 260px minmax(0, 1fr);
+        min-height: 100vh;
+      }
+      .sidebar {
+        background: var(--surface);
+        border-right: 1px solid var(--line);
+        padding: 24px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 8px;
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      .brandmark {
+        height: 32px;
+        width: 32px;
+        border-radius: 8px;
+        background: var(--text);
+        color: white;
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        font-size: 13px;
+        letter-spacing: -0.02em;
+      }
+      .workspace {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: background 0.2s;
+      }
+      .workspace:hover {
+        background: var(--bg);
+      }
+      .workspace .square {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: #e2e8f0;
+        color: #475569;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        font-size: 12px;
+      }
+      .workspace strong {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .workspace small {
+        display: block;
+        color: var(--text-muted);
+        font-size: 11px;
+        margin-top: 2px;
+      }
+      .nav-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        padding: 0 12px;
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .nav {
+        display: grid;
+        gap: 4px;
+      }
+      .nav button {
+        width: 100%;
+        color: #475569;
+        text-align: left;
+        padding: 10px 12px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.15s ease;
+      }
+      .nav button:hover {
+        background: #f1f5f9;
+        color: var(--text);
+      }
+      .nav button.active {
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .ico {
+        width: 18px;
+        height: 18px;
+        display: inline-grid;
+        place-items: center;
+        font-size: 16px;
+        opacity: 0.8;
+      }
+      .nav button.active .ico {
+        opacity: 1;
+      }
+      .sidebar-bottom {
+        margin-top: auto;
+      }
+      .statusbox {
+        background: #f8fafc;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 16px;
+        font-size: 12px;
+        color: var(--text-muted);
+        line-height: 1.5;
+      }
+      .statusbox strong {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .main {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .topbar {
+        height: 72px;
+        background: rgba(255, 255, 255, 0.85);
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 32px;
+        gap: 24px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        backdrop-filter: blur(12px);
+      }
+      .crumb {
+        font-size: 13px;
+        color: var(--text-muted);
+        font-weight: 500;
+      }
+      .crumb strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .select,
+      .search {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 9px 12px;
+        color: var(--text);
+        font-size: 13px;
+        transition: border-color 0.15s;
+      }
+      .select:focus,
+      .search:focus {
+        border-color: var(--accent);
+      }
+      .search {
+        width: 200px;
+      }
+      .iconbtn {
+        width: 36px;
+        height: 36px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: #64748b;
+        display: grid;
+        place-items: center;
+        font-size: 16px;
+        transition: all 0.15s;
+      }
+      .iconbtn:hover {
+        background: #f8fafc;
+        color: var(--text);
+        border-color: #cbd5e1;
+      }
+      .avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #dbeafe;
+        color: #1d4ed8;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .content {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 32px;
+        width: 100%;
+      }
+      .pagehead {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 24px;
+        margin-bottom: 32px;
+      }
+      .eyebrow {
+        font-size: 12px;
+        color: var(--text-muted);
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+      .pagehead h1 {
+        font-size: 28px;
+        line-height: 1.2;
+        letter-spacing: -0.03em;
+        margin: 0 0 8px;
+        font-weight: 700;
+        color: var(--text);
+      }
+      .pagehead p {
+        margin: 0;
+        color: var(--text-muted);
+        font-size: 15px;
+        line-height: 1.5;
+      }
+      .head-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .btn {
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: #334155;
+        border-radius: 8px;
+        padding: 9px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.15s;
+      }
+      .btn:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+      }
+      .btn.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: white;
+      }
+      .btn.primary:hover {
+        background: #1d4ed8;
+        border-color: #1d4ed8;
+      }
+      .notice {
+        border: 1px solid #dbeafe;
+        background: #eff6ff;
+        color: #1e40af;
+        padding: 14px 16px;
+        border-radius: 10px;
+        font-size: 13px;
+        margin-bottom: 24px;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        line-height: 1.5;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        background: var(--green);
+        flex-shrink: 0;
+      }
+      .dot.amber {
+        background: var(--amber);
+      }
+      .dot.red {
+        background: var(--red);
+      }
+
+      .filters {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
+      }
+      .filters label {
+        font-size: 12px;
+        color: var(--text-muted);
+        font-weight: 500;
+      }
+      .filters select,
+      .filters input {
+        border: 1px solid var(--line);
+        background: var(--surface);
+        border-radius: 8px;
+        padding: 9px 12px;
+        font-size: 13px;
+        color: var(--text);
+        transition: border-color 0.15s;
+      }
+      .filters select:focus,
+      .filters input:focus {
+        border-color: var(--accent);
+        outline: none;
+      }
+      .filters .spacer {
+        flex: 1;
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 20px;
+        margin-bottom: 24px;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        min-width: 0;
+        transition: box-shadow 0.2s;
+      }
+      .card:hover {
+        box-shadow: var(--shadow-lg);
+      }
+      .metric {
+        padding: 24px;
+      }
+      .metric-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--text-muted);
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .metric-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: #f1f5f9;
+        display: grid;
+        place-items: center;
+        color: #475569;
+        font-size: 16px;
+      }
+      .metric-value {
+        font-size: 32px;
+        letter-spacing: -0.03em;
+        font-weight: 700;
+        margin: 16px 0 8px;
+        line-height: 1;
+        color: var(--text);
+      }
+      .metric-foot {
+        font-size: 12px;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .positive {
+        color: var(--green);
+        font-weight: 600;
+      }
+      .negative {
+        color: var(--red);
+        font-weight: 600;
+      }
+
+      .chart-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr);
+        gap: 20px;
+        margin-bottom: 24px;
+      }
+      .panel-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 24px 24px 0;
+      }
+      .panel-head h2 {
+        font-size: 15px;
+        margin: 0 0 4px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .panel-head p {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin: 0;
+      }
+      .legend {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        font-size: 12px;
+        color: var(--text-muted);
+        font-weight: 500;
+      }
+      .legend span {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .legend i {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .chart-wrap {
+        padding: 16px 24px 24px;
+      }
+      .chart {
+        width: 100%;
+        height: 240px;
+        display: block;
+        overflow: visible;
+      }
+      .chart text {
+        font-size: 11px;
+        fill: #94a3b8;
+        font-weight: 500;
+      }
+      .chart .gridline {
+        stroke: #f1f5f9;
+        stroke-dasharray: 4 4;
+      }
+      .chart .line-main {
+        fill: none;
+        stroke: var(--accent);
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .chart .line-secondary {
+        fill: none;
+        stroke: #94a3b8;
+        stroke-width: 1.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .chart .area {
+        fill: url(#areaFill);
+      }
+      .chart-note {
+        font-size: 12px;
+        color: var(--text-muted);
+        padding: 0 4px;
+        margin-top: 8px;
+      }
+
+      .health-list {
+        padding: 8px 24px 24px;
+      }
+      .health-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 0;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      .health-row:last-child {
+        border-bottom: 0;
+      }
+      .service-symbol {
+        width: 32px;
+        height: 32px;
+        background: #f1f5f9;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-size: 11px;
+        font-weight: 700;
+        color: #475569;
+        letter-spacing: -0.02em;
+      }
+      .service-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .service-info strong {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .service-info small {
+        display: block;
+        color: var(--text-muted);
+        font-size: 11px;
+        margin-top: 2px;
+      }
+      .health-val {
+        text-align: right;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .health-val small {
+        display: block;
+        color: var(--text-muted);
+        font-weight: 400;
+        font-size: 11px;
+        margin-top: 2px;
+      }
+
+      .table-card {
+        overflow: hidden;
+        margin-bottom: 24px;
+      }
+      .table-head {
+        padding: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        border-bottom: 1px solid var(--line);
+      }
+      .table-head h2 {
+        font-size: 15px;
+        margin: 0;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .table-head .sub {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-top: 4px;
+      }
+      .table-wrap {
+        overflow: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        white-space: nowrap;
+      }
+      th {
+        text-align: left;
+        background: #f8fafc;
+        color: #64748b;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+        padding: 14px 24px;
+        border-bottom: 1px solid var(--line);
+      }
+      td {
+        padding: 16px 24px;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 13px;
+        color: #334155;
+      }
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+      tbody tr:hover {
+        background: #f8fafc;
+      }
+      tbody tr[data-open] {
+        cursor: pointer;
+      }
+      .service-name {
+        font-weight: 600;
+        color: var(--text);
+      }
+      .subtext {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 4px;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+      }
+      .pill.green {
+        background: var(--green-bg);
+        color: #059669;
+      }
+      .pill.amber {
+        background: var(--amber-bg);
+        color: #d97706;
+      }
+      .pill.red {
+        background: var(--red-bg);
+        color: #dc2626;
+      }
+      .pill.gray {
+        background: #f1f5f9;
+        color: #64748b;
+      }
+
+      .mono {
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 12px;
+        color: #475569;
+      }
+      .table-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      .textbtn {
+        border: 0;
+        background: none;
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: 6px;
+        transition: background 0.15s;
+      }
+      .textbtn:hover {
+        background: var(--accent-soft);
+      }
+      .empty {
+        padding: 48px;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 14px;
+      }
+
+      .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 24px;
+      }
+      .detail-block {
+        padding: 24px;
+      }
+      .detail-block h3 {
+        font-size: 15px;
+        margin: 0 0 20px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .kv {
+        display: flex;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 12px 0;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 13px;
+      }
+      .kv:last-child {
+        border: 0;
+      }
+      .kv span:first-child {
+        color: var(--text-muted);
+      }
+      .kv strong,
+      .kv code {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .tracebar {
+        height: 12px;
+        background: #f1f5f9;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .tracebar span {
+        height: 100%;
+        display: block;
+        border-radius: 6px;
+        background: #93c5fd;
+      }
+      .spanrow {
+        display: grid;
+        grid-template-columns: 140px minmax(80px, 1fr) 60px;
+        gap: 16px;
+        align-items: center;
+        padding: 12px 0;
+        font-size: 12px;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      .spanrow:last-child {
+        border: 0;
+      }
+      .spanrow .tracebar {
+        height: 8px;
+      }
+
+      .formgrid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      .field {
+        display: grid;
+        gap: 8px;
+      }
+      .field label {
+        font-size: 12px;
+        color: var(--text-muted);
+        font-weight: 500;
+      }
+      .field input,
+      .field select,
+      .field textarea {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px 12px;
+        background: var(--surface);
+        font-size: 13px;
+        color: var(--text);
+        transition: border-color 0.15s;
+      }
+      .field input:focus,
+      .field select:focus,
+      .field textarea:focus {
+        border-color: var(--accent);
+        outline: none;
+      }
+      .field.full {
+        grid-column: 1 / -1;
+      }
+
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        z-index: 50;
+      }
+      .modal-backdrop.open {
+        display: flex;
+      }
+      .modal {
+        width: min(640px, 100%);
+        max-height: 85vh;
+        overflow: auto;
+        background: var(--surface);
+        border-radius: 16px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        border: 1px solid var(--line);
+      }
+      .modal-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--line);
+      }
+      .modal-head h2 {
+        font-size: 16px;
+        margin: 0;
+        font-weight: 600;
+      }
+      .modal-body {
+        padding: 24px;
+      }
+      .modal-foot {
+        padding: 16px 24px;
+        border-top: 1px solid var(--line);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        background: #f8fafc;
+        border-radius: 0 0 16px 16px;
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        background: #0f172a;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 500;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        z-index: 100;
+        display: none;
+        animation: slideUp 0.3s ease;
+      }
+      .toast.show {
+        display: block;
+      }
+      @keyframes slideUp {
+        from {
+          transform: translateY(10px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .mobile-menu {
+        display: none;
+      }
+      .footer-note {
+        font-size: 12px;
+        color: #94a3b8;
+        text-align: right;
+        padding: 8px 0 24px;
+      }
+
+      @media (max-width: 1100px) {
+        .shell {
+          grid-template-columns: 240px minmax(0, 1fr);
+        }
+        .content {
+          padding: 24px;
+        }
+        .metrics {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .chart-grid {
+          grid-template-columns: 1fr;
+        }
+        .search {
+          width: 160px;
+        }
+      }
+      @media (max-width: 760px) {
+        .shell {
+          grid-template-columns: 1fr;
+        }
+        .sidebar {
+          position: fixed;
+          z-index: 40;
+          inset: 0 auto 0 0;
+          width: 280px;
+          transform: translateX(-105%);
+          transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 10px 0 30px rgba(0, 0, 0, 0.1);
+        }
+        .sidebar.open {
+          transform: translateX(0);
+        }
+        .mobile-menu {
+          display: inline-grid;
+          place-items: center;
+        }
+        .topbar {
+          height: 64px;
+          padding: 0 20px;
+        }
+        .top-actions {
+          gap: 8px;
+        }
+        .top-actions .select.env {
+          display: none;
+        }
+        .search {
+          width: 140px;
+        }
+        .content {
+          padding: 20px 16px;
+        }
+        .pagehead {
+          display: block;
+        }
+        .head-actions {
+          margin-top: 20px;
+        }
+        .pagehead h1 {
+          font-size: 24px;
+        }
+        .metrics {
+          gap: 12px;
+        }
+        .metric {
+          padding: 20px;
+        }
+        .metric-value {
+          font-size: 28px;
+        }
+        .chart-grid,
+        .detail-grid {
+          grid-template-columns: 1fr;
+        }
+        .table-head {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 12px;
+        }
+        .footer-note {
+          text-align: left;
+        }
+        .formgrid {
+          grid-template-columns: 1fr;
+        }
+        .field.full {
+          grid-column: auto;
+        }
+      }
+      @media (max-width: 420px) {
+        .search {
+          display: none;
+        }
+        .content {
+          padding: 16px 12px;
+        }
+        .metric {
+          padding: 16px;
+        }
+        .metric-value {
+          font-size: 24px;
+        }
+        .metric-foot {
+          font-size: 11px;
+        }
+        .metric-icon {
+          width: 28px;
+          height: 28px;
+        }
+        .panel-head {
+          padding: 20px;
+        }
+        .chart-wrap {
+          padding: 12px 16px 20px;
+        }
+        .head-actions .btn {
+          padding: 8px 12px;
+          font-size: 12px;
+        }
+        .notice {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 8px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar" id="sidebar">
+        <div class="brand">
+          <span class="brandmark">AP</span>
+          <span
+            >AppPerf<br /><span
+              style="
+                font-weight: 500;
+                color: var(--text-muted);
+                font-size: 12px;
+              "
+              >Platform</span
+            ></span
+          >
+        </div>
+        <div class="workspace">
+          <div class="square">AC</div>
+          <div>
+            <strong>Acme Engineering</strong>
+            <small>Workspace · Free plan</small>
+          </div>
+          <span style="margin-left: auto; color: #8993a3">⌄</span>
+        </div>
+        <div>
+          <div class="nav-label">Monitor</div>
+          <nav class="nav" id="nav">
+            <button class="active" data-page="overview">
+              <span class="ico">◫</span>Overview
+            </button>
+            <button data-page="services">
+              <span class="ico">▦</span>Services
+            </button>
+            <button data-page="traces">
+              <span class="ico">⌁</span>Distributed traces
+            </button>
+            <button data-page="errors"><span class="ico">⚠</span>Errors</button>
+            <button data-page="alerts">
+              <span class="ico">♧</span>Alerts & incidents
+            </button>
+          </nav>
+        </div>
+        <div>
+          <div class="nav-label">Configure</div>
+          <nav class="nav">
+            <button data-page="dashboards">
+              <span class="ico">▤</span>Dashboards
+            </button>
+            <button data-page="integrations">
+              <span class="ico">⌘</span>Integrations
+            </button>
+            <button data-page="settings">
+              <span class="ico">⚙</span>Settings
+            </button>
+          </nav>
+        </div>
+        <div class="sidebar-bottom">
+          <div class="statusbox">
+            <strong><span class="dot"></span> All systems operational</strong>
+            Telemetry shown is sample data. No production systems are connected.
+          </div>
+        </div>
+      </aside>
+      <main class="main">
+        <header class="topbar">
+          <div style="display: flex; align-items: center; gap: 12px">
+            <button
+              class="iconbtn mobile-menu"
+              id="menuBtn"
+              aria-label="Open navigation"
+            >
+              ☰
+            </button>
+            <div class="crumb">
+              Workspace / <strong id="crumb">Overview</strong>
+            </div>
+          </div>
+          <div class="top-actions">
+            <input
+              class="search"
+              id="globalSearch"
+              placeholder="Search services…"
+              aria-label="Search services"
+            />
+            <select class="select env" id="envSelect" aria-label="Environment">
+              <option>Production</option>
+              <option>Staging</option>
+              <option>Development</option>
+            </select>
+            <button
+              class="iconbtn"
+              id="notifBtn"
+              title="Notifications"
+              aria-label="Notifications"
+            >
+              ♧
+            </button>
+            <div class="avatar" title="User profile">WP</div>
+          </div>
+        </header>
+        <div class="content" id="appContent"></div>
+      </main>
+    </div>
+    <div
+      class="modal-backdrop"
+      id="modalBackdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modalTitle"
+    >
+      <div class="modal">
+        <div class="modal-head">
+          <h2 id="modalTitle">Details</h2>
+          <button class="iconbtn" id="modalClose" aria-label="Close">×</button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+        <div class="modal-foot" id="modalFoot">
+          <button class="btn" id="modalCancel">Close</button>
+          <button class="btn primary" id="modalSave">Save changes</button>
+        </div>
+      </div>
+    </div>
+    <div class="toast" id="toast" role="status"></div>
+    <script>
+      const services = [
+        {
+          name: "checkout-api",
+          team: "Commerce",
+          status: "Degraded",
+          rps: 842,
+          p95: 348,
+          error: 0.82,
+          uptime: "99.92%",
+          version: "v2.8.1",
+          language: "Node.js",
+          deps: ["inventory-svc", "payments-api", "postgres-primary"],
+        },
+        {
+          name: "inventory-svc",
+          team: "Commerce",
+          status: "Healthy",
+          rps: 621,
+          p95: 96,
+          error: 0.08,
+          uptime: "99.99%",
+          version: "v1.14.0",
+          language: "Go",
+          deps: ["postgres-primary", "redis-cache"],
+        },
+        {
+          name: "payments-api",
+          team: "Payments",
+          status: "Healthy",
+          rps: 388,
+          p95: 124,
+          error: 0.12,
+          uptime: "99.98%",
+          version: "v3.2.4",
+          language: "Python",
+          deps: ["payment-provider", "postgres-primary"],
+        },
+        {
+          name: "user-service",
+          team: "Identity",
+          status: "Healthy",
+          rps: 512,
+          p95: 78,
+          error: 0.04,
+          uptime: "99.99%",
+          version: "v2.1.0",
+          language: "Go",
+          deps: ["postgres-primary", "redis-cache"],
+        },
+        {
+          name: "catalog-api",
+          team: "Commerce",
+          status: "Healthy",
+          rps: 304,
+          p95: 112,
+          error: 0.16,
+          uptime: "99.97%",
+          version: "v1.9.3",
+          language: "Node.js",
+          deps: ["search-index", "postgres-primary"],
+        },
+        {
+          name: "notification-worker",
+          team: "Platform",
+          status: "Healthy",
+          rps: 173,
+          p95: 188,
+          error: 0.21,
+          uptime: "99.95%",
+          version: "v1.6.2",
+          language: "Python",
+          deps: ["message-queue"],
+        },
+      ];
+      const traces = [
+        {
+          id: "tr_8f32a91c",
+          method: "POST",
+          path: "/api/v1/checkout",
+          service: "checkout-api",
+          duration: 348,
+          status: 500,
+          time: "14:32:08.421",
+          spans: [
+            ["checkout-api", 348, 0],
+            ["inventory-svc", 92, 8],
+            ["postgres.query", 286, 17],
+            ["payments-api", 61, 37],
+          ],
+        },
+        {
+          id: "tr_7b10c4e2",
+          method: "GET",
+          path: "/api/v1/products",
+          service: "catalog-api",
+          duration: 124,
+          status: 200,
+          time: "14:31:56.103",
+          spans: [
+            ["catalog-api", 124, 0],
+            ["search-index", 68, 8],
+            ["postgres.query", 32, 17],
+          ],
+        },
+        {
+          id: "tr_6a90f21d",
+          method: "POST",
+          path: "/api/v1/checkout",
+          service: "checkout-api",
+          duration: 312,
+          status: 200,
+          time: "14:31:42.888",
+          spans: [
+            ["checkout-api", 312, 0],
+            ["inventory-svc", 88, 8],
+            ["postgres.query", 242, 17],
+            ["payments-api", 54, 37],
+          ],
+        },
+        {
+          id: "tr_5c21a88f",
+          method: "GET",
+          path: "/api/v1/users/me",
+          service: "user-service",
+          duration: 78,
+          status: 200,
+          time: "14:31:30.012",
+          spans: [
+            ["user-service", 78, 0],
+            ["redis.get", 12, 8],
+            ["postgres.query", 25, 17],
+          ],
+        },
+        {
+          id: "tr_4e19b7a3",
+          method: "POST",
+          path: "/api/v1/payment",
+          service: "payments-api",
+          duration: 522,
+          status: 502,
+          time: "14:31:14.506",
+          spans: [
+            ["payments-api", 522, 0],
+            ["payment-provider", 440, 8],
+            ["postgres.query", 26, 17],
+          ],
+        },
+        {
+          id: "tr_3d08a6c1",
+          method: "GET",
+          path: "/api/v1/products",
+          service: "catalog-api",
+          duration: 109,
+          status: 200,
+          time: "14:30:58.741",
+          spans: [
+            ["catalog-api", 109, 0],
+            ["search-index", 61, 8],
+          ],
+        },
+      ];
+      const errors = [
+        {
+          id: "ERR-1042",
+          title: "Query timeout on inventory lookup",
+          service: "checkout-api",
+          count: 128,
+          level: "High",
+          first: "Today, 13:48",
+          last: "2 min ago",
+          stack:
+            "QueryFailedError: canceling statement due to statement timeout\\n  at PostgresQueryRunner.query (database.js:218)\\n  at InventoryRepository.findAvailable (inventory.js:84)",
+        },
+        {
+          id: "ERR-1038",
+          title: "Payment provider returned 502",
+          service: "payments-api",
+          count: 42,
+          level: "Medium",
+          first: "Today, 12:21",
+          last: "8 min ago",
+          stack:
+            "PaymentGatewayError: upstream returned status 502\\n  at PaymentClient.charge (payment.js:119)",
+        },
+        {
+          id: "ERR-1029",
+          title: "Connection pool exhausted",
+          service: "inventory-svc",
+          count: 19,
+          level: "Medium",
+          first: "Today, 10:04",
+          last: "21 min ago",
+          stack:
+            "PoolTimeoutError: unable to acquire connection\\n  at ConnectionPool.acquire (pool.go:71)",
+        },
+        {
+          id: "ERR-1011",
+          title: "Invalid request payload",
+          service: "catalog-api",
+          count: 7,
+          level: "Low",
+          first: "Yesterday, 16:32",
+          last: "Yesterday",
+          stack:
+            "ValidationError: expected product_id to be a string\\n  at validateRequest (validation.js:45)",
+        },
+      ];
+      let incidents = [
+        {
+          id: "INC-208",
+          title: "Elevated latency on POST /checkout",
+          service: "checkout-api",
+          severity: "High",
+          status: "Open",
+          time: "12 min ago",
+          description:
+            "P95 latency has exceeded the 200 ms service objective. The PostgreSQL inventory query accounts for most of the observed delay.",
+        },
+        {
+          id: "INC-207",
+          title: "Payment provider error rate increased",
+          service: "payments-api",
+          severity: "Medium",
+          status: "Acknowledged",
+          time: "28 min ago",
+          description:
+            "Upstream payment provider is returning intermittent 502 responses. Retry rate remains within the configured limit.",
+        },
+        {
+          id: "INC-204",
+          title: "Catalog latency returned to normal",
+          service: "catalog-api",
+          severity: "Low",
+          status: "Resolved",
+          time: "2 hours ago",
+          description:
+            "Latency returned to the expected range after the search index recovered.",
+        },
+      ];
+      let currentPage = "overview",
+        currentRange = "24h",
+        selectedService = null,
+        selectedTrace = null,
+        selectedError = null,
+        toastTimer;
+      const state = {
+        env: "Production",
+        search: "",
+        serviceFilter: "All services",
+        statusFilter: "All statuses",
+        incFilter: "All statuses",
+        range: "24h",
+        rules: [
+          {
+            name: "Checkout P95 latency",
+            service: "checkout-api",
+            metric: "P95 latency",
+            threshold: 200,
+            window: "5 minutes",
+            severity: "High",
+            enabled: true,
+          },
+          {
+            name: "Payment error rate",
+            service: "payments-api",
+            metric: "Error rate",
+            threshold: 1,
+            window: "10 minutes",
+            severity: "Medium",
+            enabled: true,
+          },
+        ],
+        dashboards: [
+          "Application overview",
+          "API health",
+          "Database performance",
+        ],
+        widgets: 4,
+      };
+      const $ = (s) => document.querySelector(s);
+      const fmt = (n) => n.toLocaleString("en-US");
+      function toast(msg) {
+        const el = $("#toast");
+        el.textContent = msg;
+        el.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
+      }
+      function statusPill(s) {
+        let c =
+          s === "Healthy" || s === "Resolved"
+            ? "green"
+            : s === "Degraded" ||
+                s === "Acknowledged" ||
+                s === "Medium" ||
+                s === "Low"
+              ? "amber"
+              : s === "Open" || s === "High" || s === "Critical"
+                ? "red"
+                : "gray";
+        return `<span class="pill ${c}">${s}</span>`;
+      }
+      function pageHead(title, desc, actions = "") {
+        return `<div class="pagehead"><div><div class="eyebrow">APPPERF PLATFORM</div><h1>${title}</h1><p>${desc}</p></div><div class="head-actions">${actions}</div></div>`;
+      }
+      function selectRange() {
+        return `<select id="rangeSelect" aria-label="Time range" class="select"><option value="1h" ${currentRange === "1h" ? "selected" : ""}>Last hour</option><option value="24h" ${currentRange === "24h" ? "selected" : ""}>Last 24 hours</option><option value="7d" ${currentRange === "7d" ? "selected" : ""}>Last 7 days</option></select>`;
+      }
+      function metric(label, value, foot, icon, trend = "") {
+        return `<div class="card metric"><div class="metric-top"><span>${label}</span><span class="metric-icon">${icon}</span></div><div class="metric-value">${value}</div><div class="metric-foot">${trend ? `<span class="${trend.startsWith("+") ? "negative" : "positive"}">${trend}</span> · ` : ""}${foot}</div></div>`;
+      }
+      function chartSvg(kind = "latency", range = currentRange) {
+        let n = range === "1h" ? 24 : range === "7d" ? 28 : 30;
+        let vals = Array.from({ length: n }, (_, i) => {
+          let v =
+            kind === "latency"
+              ? 130 + Math.sin(i * 0.63) * 22 + Math.cos(i * 0.19) * 15
+              : kind === "requests"
+                ? 2800 + Math.sin(i * 0.55) * 360 + Math.cos(i * 0.21) * 170
+                : 0.18 + Math.abs(Math.sin(i * 0.48)) * 0.08;
+          if (kind === "latency" && i > n * 0.7 && i < n * 0.82) v += 125;
+          if (kind === "requests" && i === n - 4) v -= 450;
+          if (kind === "errors" && i > n * 0.72 && i < n * 0.82) v += 0.35;
+          return Math.max(0, v);
+        });
+        let W = 700,
+          H = 210,
+          L = 38,
+          R = 12,
+          T = 14,
+          B = 26,
+          innerW = W - L - R,
+          innerH = H - T - B,
+          max = kind === "latency" ? 350 : kind === "requests" ? 4000 : 0.7;
+        let points = vals.map((v, i) => [
+          L + (i * innerW) / (n - 1),
+          T + innerH - (v / max) * innerH,
+        ]);
+        let line = points
+          .map(
+            (p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1),
+          )
+          .join(" ");
+        let area =
+          line + ` L ${points[n - 1][0]} ${T + innerH} L ${L} ${T + innerH} Z`;
+        let labels =
+          range === "1h"
+            ? ["-60m", "-45m", "-30m", "-15m", "Now"]
+            : range === "7d"
+              ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+              : ["00:00", "06:00", "12:00", "18:00", "Now"];
+        let grid = "";
+        for (let i = 0; i < 4; i++) {
+          let y = T + (i * innerH) / 3;
+          grid += `<line class="gridline" x1="${L}" y1="${y}" x2="${W - R}" y2="${y}"/><text x="${L - 8}" y="${y + 3}" text-anchor="end">${Math.round(max * (1 - i / 3))}${kind === "errors" ? "%" : ""}</text>`;
+        }
+        let xl = labels
+          .map(
+            (x, i) =>
+              `<text x="${L + (i * innerW) / (labels.length - 1)}" y="${H - 5}" text-anchor="${i === 0 ? "start" : i === labels.length - 1 ? "end" : "middle"}">${x}</text>`,
+          )
+          .join("");
+        return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${kind} over ${range}"><defs><linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2563eb" stop-opacity=".12"/><stop offset="1" stop-color="#2563eb" stop-opacity="0"/></linearGradient></defs>${grid}<path class="area" d="${area}"/><path class="line-main" d="${line}"/>${kind === "latency" ? `<line x1="${L}" y1="${T + innerH - (200 / max) * innerH}" x2="${W - R}" y2="${T + innerH - (200 / max) * innerH}" stroke="#f59e0b" stroke-dasharray="4 4"/><text x="${W - R - 2}" y="${T + innerH - (200 / max) * innerH - 5}" text-anchor="end" fill="#d97706">200 ms target</text>` : ""}${xl}</svg>`;
+      }
+      function serviceTable(list = services) {
+        if (!list.length)
+          return `<div class="empty">No services match your filters.</div>`;
+        return `<div class="table-wrap"><table><thead><tr><th>Service</th><th>Status</th><th>Requests / sec</th><th>P95 latency</th><th>Error rate</th><th>Uptime</th><th></th></tr></thead><tbody>${list.map((s) => `<tr data-open="service" data-id="${s.name}"><td><div class="service-name">${s.name}</div><div class="subtext">${s.team} · ${s.language}</div></td><td>${statusPill(s.status)}</td><td>${fmt(s.rps)}</td><td>${s.p95} ms</td><td>${s.error.toFixed(2)}%</td><td>${s.uptime}</td><td><button class="textbtn" data-service="${s.name}">Details →</button></td></tr>`).join("")}</tbody></table></div>`;
+      }
+      function traceTable(list = traces) {
+        if (!list.length) return `<div class="empty">No traces found.</div>`;
+        return `<div class="table-wrap"><table><thead><tr><th>Trace / Endpoint</th><th>Service</th><th>Duration</th><th>Status</th><th>Time</th></tr></thead><tbody>${list.map((t) => `<tr data-open="trace" data-id="${t.id}"><td><div class="service-name">${t.method} <span class="mono">${t.path}</span></div><div class="subtext mono">${t.id}</div></td><td>${t.service}</td><td><strong>${t.duration} ms</strong></td><td>${statusPill(String(t.status).startsWith("2") ? "Healthy" : String(t.status))}</td><td>${t.time}</td></tr>`).join("")}</tbody></table></div>`;
+      }
+      function errorsTable(list = errors) {
+        if (!list.length) return `<div class="empty">No errors found.</div>`;
+        return `<div class="table-wrap"><table><thead><tr><th>Error group</th><th>Service</th><th>Occurrences</th><th>Severity</th><th>Last seen</th><th></th></tr></thead><tbody>${list.map((e) => `<tr data-open="error" data-id="${e.id}"><td><div class="service-name">${e.title}</div><div class="subtext mono">${e.id}</div></td><td>${e.service}</td><td>${e.count}</td><td>${statusPill(e.level)}</td><td>${e.last}</td><td><button class="textbtn" data-error="${e.id}">Inspect →</button></td></tr>`).join("")}</tbody></table></div>`;
+      }
+      function incidentTable(list = incidents) {
+        if (!list.length)
+          return `<div class="empty">No incidents match this filter.</div>`;
+        return `<div class="table-wrap"><table><thead><tr><th>Incident</th><th>Service</th><th>Severity</th><th>Status</th><th>Triggered</th><th>Actions</th></tr></thead><tbody>${list.map((i) => `<tr><td><div class="service-name">${i.title}</div><div class="subtext mono">${i.id}</div></td><td>${i.service}</td><td>${statusPill(i.severity)}</td><td>${statusPill(i.status)}</td><td>${i.time}</td><td><div class="table-actions"><button class="textbtn" data-incident="${i.id}">Details</button>${i.status !== "Resolved" ? `<button class="textbtn" data-action="${i.status === "Open" ? "ack" : "resolve"}" data-id="${i.id}">${i.status === "Open" ? "Acknowledge" : "Resolve"}</button>` : `<button class="textbtn" data-action="reopen" data-id="${i.id}">Reopen</button>`}</div></td></tr>`).join("")}</tbody></table></div>`;
+      }
+      function overview() {
+        let env = state.env;
+        let scale = env === "Production" ? 1 : env === "Staging" ? 0.42 : 0.17;
+        return `${pageHead("Overview", "Monitor application health and investigate performance changes.", `<button class="btn" id="refreshBtn">↻ Refresh</button><button class="btn primary" id="newAlertBtn">＋ New alert rule</button>`)}<div class="notice"><span class="dot amber"></span><span><strong>Sample telemetry</strong> — values are simulated for this local prototype. No real services are connected.</span><span style="margin-left:auto;color:#6880a5;font-weight:600">${env}</span></div><div class="filters"><label>Time range</label>${selectRange()}<label>Environment</label><select id="filterEnv" class="select"><option ${env === "Production" ? "selected" : ""}>Production</option><option ${env === "Staging" ? "selected" : ""}>Staging</option><option ${env === "Development" ? "selected" : ""}>Development</option></select><span class="spacer"></span><span style="font-size:12px;color:var(--text-muted)">Updated just now</span></div><div class="metrics">${metric("Request throughput", `${(2840 * scale).toLocaleString("en-US", { maximumFractionDigits: 0 })}<span style="font-size:14px;font-weight:500"> req/s</span>`, "Across 12 instrumented services", "↗", "+4.8%")}${metric("P95 latency", `${Math.round(142 * (env === "Production" ? 1 : env === "Staging" ? 0.78 : 0.62))}<span style="font-size:14px;font-weight:500"> ms</span>`, "Target under 200 ms", "◷", "−8.2%")}${metric("Error rate", `${(0.24 * scale).toFixed(2)}<span style="font-size:14px;font-weight:500">%</span>`, "Across all requests", "⚠", "−0.06%")}${metric("Service health", "5 / 6", "1 service needs attention", "◇")}</div><div class="chart-grid"><section class="card"><div class="panel-head"><div><h2>Request latency</h2><p>Percentile latency over time</p></div><div class="legend"><span><i style="background:#2563eb"></i>P95</span><span><i style="background:#f59e0b"></i>SLO</span></div></div><div class="chart-wrap">${chartSvg("latency")}<div class="chart-note">Latency spike detected at 13:48 UTC+7 · checkout-api</div></div></section><section class="card"><div class="panel-head"><div><h2>Service health</h2><p>Current status across your services</p></div><button class="textbtn" data-goto="services">View all →</button></div><div class="health-list">${services
+          .slice(0, 4)
+          .map(
+            (s) =>
+              `<div class="health-row"><div class="service-symbol">${s.name.slice(0, 2).toUpperCase()}</div><div class="service-info"><strong>${s.name}</strong><small>${s.team}</small></div><div class="health-val">${s.p95} ms<small>${statusPill(s.status)}</small></div></div>`,
+          )
+          .join(
+            "",
+          )}</div></section></div><section class="card table-card"><div class="table-head"><div><h2>Recent incidents</h2><div class="sub">Issues requiring attention</div></div><button class="btn" data-goto="alerts">View incidents</button></div>${incidentTable(incidents.filter((i) => i.status !== "Resolved").slice(0, 3))}</section><section class="card table-card"><div class="table-head"><div><h2>Slowest services</h2><div class="sub">Ranked by P95 response time</div></div><button class="btn" data-goto="services">All services</button></div>${serviceTable([...services].sort((a, b) => b.p95 - a.p95).slice(0, 4))}</section><div class="footer-note">AppPerf Platform · Mock data · Local prototype</div>`;
+      }
+      function servicesPage() {
+        let q = state.search.toLowerCase();
+        let list = services.filter(
+          (s) =>
+            (s.name + " " + s.team + " " + s.language)
+              .toLowerCase()
+              .includes(q) &&
+            (state.statusFilter === "All statuses" ||
+              s.status === state.statusFilter),
+        );
+        return `${pageHead("Services", "Monitor latency, traffic, and errors across instrumented services.", `<button class="btn" id="exportServices">Export CSV</button><button class="btn primary" data-goto="integrations">＋ Add service</button>`)}<div class="metrics">${metric("Total services", services.length, "Reporting telemetry", "▦")}${metric("Healthy services", services.filter((s) => s.status === "Healthy").length, "Within configured thresholds", "✓")}${metric("Degraded services", services.filter((s) => s.status === "Degraded").length, "Require investigation", "⚠")}${metric("Avg. P95 latency", Math.round(services.reduce((a, s) => a + s.p95, 0) / services.length) + " ms", "Across all services", "◷")}</div><section class="card table-card"><div class="table-head"><div><h2>Service inventory</h2><div class="sub">${list.length} services · Sample telemetry</div></div><div class="filters" style="margin:0"><select id="statusFilter" class="select"><option>All statuses</option><option ${state.statusFilter === "Healthy" ? "selected" : ""}>Healthy</option><option ${state.statusFilter === "Degraded" ? "selected" : ""}>Degraded</option></select></div></div><div id="serviceTable">${serviceTable(list)}</div></section>`;
+      }
+      function tracesPage() {
+        let q = state.search.toLowerCase();
+        let list = traces.filter((t) =>
+          (t.id + " " + t.path + " " + t.service).toLowerCase().includes(q),
+        );
+        return `${pageHead("Distributed traces", "Follow individual requests across services, databases, and external dependencies.", `<button class="btn" id="exportTraces">Export CSV</button>`)}<div class="filters"><input id="traceSearch" class="search" placeholder="Filter by trace ID, endpoint…" value="${state.search}" style="min-width:220px"><select id="traceStatus" class="select"><option>All status codes</option><option>Errors only</option><option>Successful only</option></select><span class="spacer"></span><span style="font-size:12px;color:var(--text-muted)">${list.length} traces</span></div><section class="card table-card"><div class="table-head"><div><h2>Trace explorer</h2><div class="sub">Select a request to inspect its span waterfall</div></div><span class="pill gray">Sample traces</span></div><div id="traceTable">${traceTable(list)}</div></section>`;
+      }
+      function errorsPage() {
+        let q = state.search.toLowerCase();
+        let list = errors.filter((e) =>
+          (e.id + " " + e.title + " " + e.service).toLowerCase().includes(q),
+        );
+        return `${pageHead("Errors", "Group application exceptions and find the traces behind them.", `<button class="btn" id="exportErrors">Export CSV</button>`)}<div class="metrics">${metric("Error groups", errors.length, "Unique grouped exceptions", "⚠")}${metric("Occurrences", fmt(errors.reduce((a, e) => a + e.count, 0)), "Across current sample window", "▤")}${metric("High severity", errors.filter((e) => e.level === "High").length, "Needs investigation", "!")}${metric("Affected services", new Set(errors.map((e) => e.service)).size, "Services with reported errors", "▦")}</div><section class="card table-card"><div class="table-head"><div><h2>Error groups</h2><div class="sub">Grouped by exception type and stack trace</div></div><input class="search" id="errorSearch" placeholder="Search errors…" value="${state.search}"></div><div id="errorTable">${errorsTable(list)}</div></section>`;
+      }
+      function alertsPage() {
+        let filtered = incidents.filter(
+          (i) =>
+            state.incFilter === "All statuses" || i.status === state.incFilter,
+        );
+        return `${pageHead("Alerts & incidents", "Manage alert rules and coordinate incident response.", `<button class="btn primary" id="newRule">＋ Create alert rule</button>`)}<div class="metrics">${metric("Open incidents", incidents.filter((i) => i.status === "Open").length, "Awaiting acknowledgement", "⚠")}${metric("Acknowledged", incidents.filter((i) => i.status === "Acknowledged").length, "Being investigated", "◷")}${metric("Resolved", incidents.filter((i) => i.status === "Resolved").length, "Closed incidents", "✓")}${metric("Active rules", state.rules.filter((r) => r.enabled).length, "Alert rules enabled", "♧")}</div><section class="card table-card"><div class="table-head"><div><h2>Incidents</h2><div class="sub">Review, acknowledge, or resolve active incidents</div></div><select id="incidentFilter" class="select"><option>All statuses</option><option ${state.incFilter === "Open" ? "selected" : ""}>Open</option><option ${state.incFilter === "Acknowledged" ? "selected" : ""}>Acknowledged</option><option ${state.incFilter === "Resolved" ? "selected" : ""}>Resolved</option></select></div><div id="incidentTable">${incidentTable(filtered)}</div></section><section class="card table-card"><div class="table-head"><div><h2>Alert rules</h2><div class="sub">Thresholds evaluated against mock telemetry</div></div><button class="btn" id="newRule2">＋ New rule</button></div><div class="table-wrap"><table><thead><tr><th>Rule</th><th>Service</th><th>Condition</th><th>Window</th><th>Severity</th><th>Enabled</th></tr></thead><tbody>${state.rules.map((r, i) => `<tr><td class="service-name">${r.name}</td><td>${r.service}</td><td>${r.metric} &gt; ${r.threshold}${r.metric === "Error rate" ? "%" : " ms"}</td><td>${r.window}</td><td>${statusPill(r.severity)}</td><td><input type="checkbox" data-rule="${i}" ${r.enabled ? "checked" : ""} aria-label="Enable ${r.name}"></td></tr>`).join("")}</tbody></table></div></section>`;
+      }
+      function dashboardsPage() {
+        return `${pageHead("Dashboards", "Create focused views for the metrics your team cares about.", `<button class="btn primary" id="createDashboard">＋ New dashboard</button>`)}<div class="metrics">${metric("Dashboards", state.dashboards.length, "Saved in this browser", "▤")}${metric("Metric widgets", state.widgets, "Across active dashboard", "◫")}${metric("Shared dashboards", "0", "Local prototype only", "↗")}${metric("Last updated", "Just now", "No backend connection", "◷")}</div><div class="detail-grid">${state.dashboards.map((d, i) => `<section class="card detail-block"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><div class="metric-icon">▤</div><button class="textbtn" data-dashboard-remove="${i}">Remove</button></div><h3>${d}</h3><p style="font-size:13px;color:var(--text-muted);margin:0 0 18px">${i === 0 ? "Request latency, throughput, and service health" : i === 1 ? "Endpoint errors and response times" : "Database query performance"}</p><div style="height:95px;overflow:hidden">${chartSvg(i === 2 ? "requests" : "latency")}</div><button class="btn" style="margin-top:16px" data-dashboard-open="${i}">Open dashboard →</button></section>`).join("")}</div><section class="card detail-block"><h3>Customize current dashboard</h3><p style="font-size:13px;color:var(--text-muted);margin-bottom:15px">Add a sample metric widget to the selected dashboard.</p><button class="btn primary" id="addWidget">＋ Add metric widget</button> <span style="font-size:12px;color:var(--text-muted);margin-left:8px">${state.widgets} widgets configured</span></section>`;
+      }
+      function integrationsPage() {
+        let items = [
+          [
+            "OpenTelemetry",
+            "Vendor-neutral telemetry collection",
+            "OT",
+            "Recommended",
+          ],
+          [
+            "Node.js",
+            "Runtime instrumentation for Node.js services",
+            "JS",
+            "SDK",
+          ],
+          [
+            "Python",
+            "Runtime instrumentation for Python applications",
+            "PY",
+            "SDK",
+          ],
+          ["Go", "Native Go instrumentation and exporters", "GO", "SDK"],
+          [
+            "Kubernetes",
+            "Cluster, pod, and container metrics",
+            "K8",
+            "Infrastructure",
+          ],
+          [
+            "PostgreSQL",
+            "Query performance and database telemetry",
+            "PG",
+            "Database",
+          ],
+        ];
+        return `${pageHead("Integrations", "Connect telemetry sources to monitor your application stack.", `<button class="btn" id="integrationDocs">View setup guide</button>`)}<div class="notice"><span class="dot amber"></span>All integrations are examples. Setup snippets are illustrative; no live connection is established.</div><div class="detail-grid">${items.map((it, i) => `<section class="card detail-block"><div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div class="service-symbol" style="width:40px;height:40px;font-size:13px">${it[2]}</div><div style="flex:1"><h3 style="margin:0 0 3px;font-size:15px">${it[0]}</h3><div class="subtext">${it[3]}</div></div><span class="pill gray">Not connected</span></div><p style="font-size:13px;color:var(--text-muted);min-height:36px;margin:0 0 15px">${it[1]}</p><button class="btn" data-integration="${it[0]}">Configure →</button></section>`).join("")}</div>`;
+      }
+      function settingsPage() {
+        return `${pageHead("Settings", "Manage workspace preferences for this local prototype.")}<section class="card detail-block" style="margin-bottom:20px"><h3>Workspace</h3><div class="formgrid"><div class="field"><label>Workspace name</label><input value="Acme Engineering" id="workspaceName"></div><div class="field"><label>Default environment</label><select id="defaultEnv"><option>Production</option><option>Staging</option><option>Development</option></select></div><div class="field"><label>Display timezone</label><select><option>Asia/Jakarta (UTC+7)</option><option>UTC</option></select></div><div class="field"><label>Data retention</label><select><option>7 days (sample)</option><option>14 days</option><option>30 days</option></select></div></div><div style="margin-top:24px"><button class="btn primary" id="saveSettings">Save preferences</button></div></section><section class="card detail-block"><h3>Notifications</h3><div class="kv"><span>Incident alerts</span><input type="checkbox" checked></div><div class="kv"><span>Weekly performance summary</span><input type="checkbox"></div><div class="kv"><span>Service health changes</span><input type="checkbox" checked></div><p style="font-size:12px;color:var(--text-muted);margin-top:16px">Preferences are stored locally in this browser. Notifications are not sent externally.</p></section>`;
+      }
+      function serviceDetail(s) {
+        return `${pageHead(s.name, `${s.team} team · ${s.language} · ${s.version}`, `<button class="btn" data-goto="services">← All services</button><button class="btn primary" id="serviceAlert">＋ Create alert</button>`)}<div class="notice"><span class="dot ${s.status === "Healthy" ? "" : "amber"}"></span>${s.status === "Healthy" ? "Service is operating within expected thresholds." : "Elevated latency detected. Investigate database spans and connection pool utilization."}</div><div class="metrics">${metric("Request throughput", fmt(s.rps) + " req/s", "Current request rate", "↗")}${metric("P95 latency", s.p95 + " ms", "Target under 200 ms", "◷")}${metric("Error rate", s.error.toFixed(2) + "%", "Across requests", "⚠")}${metric("Uptime", s.uptime, "Sample 30-day window", "✓")}</div><div class="chart-grid"><section class="card"><div class="panel-head"><div><h2>Latency over time</h2><p>P95 response time</p></div>${selectRange()}</div><div class="chart-wrap">${chartSvg("latency")}</div></section><section class="card detail-block"><h3>Service details</h3><div class="kv"><span>Health status</span>${statusPill(s.status)}</div><div class="kv"><span>Version</span><strong>${s.version}</strong></div><div class="kv"><span>Runtime</span><strong>${s.language}</strong></div><div class="kv"><span>Owning team</span><strong>${s.team}</strong></div><div class="kv"><span>Environment</span><strong>${state.env}</strong></div></section></div><section class="card detail-block" style="margin-bottom:20px"><h3>Service dependencies</h3>${s.deps.map((d, i) => `<div class="health-row"><div class="service-symbol">${d.slice(0, 2).toUpperCase()}</div><div class="service-info"><strong>${d}</strong><small>${i === 0 ? "Upstream dependency" : "Connected dependency"}</small></div><span class="pill ${i === 0 && s.status === "Degraded" ? "amber" : "green"}">${i === 0 && s.status === "Degraded" ? "Investigate" : "Healthy"}</span></div>`).join("")}</section><section class="card table-card"><div class="table-head"><div><h2>Recent traces</h2><div class="sub">Requests associated with this service</div></div><button class="btn" data-goto="traces">View all traces</button></div>${traceTable(traces.filter((t) => t.service === s.name || t.spans.some((sp) => sp[0] === s.name)).slice(0, 4))}</section>`;
+      }
+      function traceDetail(t) {
+        return `${pageHead("Trace detail", `${t.method} ${t.path}`, `<button class="btn" data-goto="traces">← Trace explorer</button>`)}<div class="notice"><span class="dot ${t.status >= 500 ? "red" : ""}"></span><span>Trace <code class="mono">${t.id}</code> · ${t.status} · ${t.time}</span><span style="margin-left:auto;font-weight:650">${t.duration} ms total</span></div><div class="metrics">${metric("Total duration", t.duration + " ms", "End-to-end request time", "◷")}${metric("Span count", t.spans.length, "Recorded operations", "⌁")}${metric("Service", t.service, "Entry point", "▦")}${metric("HTTP status", t.status, "Response code", "↗")}</div><section class="card detail-block" style="margin-bottom:20px"><h3>Span waterfall</h3><div style="display:flex;justify-content:space-between;color:var(--text-muted);font-size:11px;margin-bottom:12px;font-weight:500"><span>Operation</span><span>Duration · relative timeline</span></div>${t.spans.map((sp, i) => `<div class="spanrow"><span style="font-weight:500">${sp[0]}</span><div class="tracebar"><span style="width:${Math.max(8, (sp[1] / t.duration) * 100)}%;margin-left:${sp[2]}%;background:${i === 2 && sp[1] > 200 ? "#f59e0b" : "#93c5fd"}"></span></div><strong style="text-align:right">${sp[1]} ms</strong></div>`).join("")}<p style="font-size:12px;color:var(--text-muted);margin:16px 0 0">Sample trace visualization. Span timing and dependencies are illustrative.</p></section><div class="detail-grid"><section class="card detail-block"><h3>Request attributes</h3><div class="kv"><span>HTTP method</span><strong>${t.method}</strong></div><div class="kv"><span>Endpoint</span><strong>${t.path}</strong></div><div class="kv"><span>Trace ID</span><code class="mono">${t.id}</code></div><div class="kv"><span>Environment</span><strong>${state.env}</strong></div></section><section class="card detail-block"><h3>Investigation notes</h3><p style="font-size:13px;color:var(--text-muted);margin:0">${t.duration > 200 ? "This request is slower than the target. Inspect the longest database or upstream span first." : "This request completed within the expected latency range."}</p><button class="btn" style="margin-top:16px" data-goto="errors">View related errors</button></section></div>`;
+      }
+      function errorDetail(e) {
+        return `${pageHead(e.title, `${e.id} · ${e.service}`, `<button class="btn" data-goto="errors">← All errors</button><button class="btn primary" id="createIncident">Create incident</button>`)}<div class="metrics">${metric("Occurrences", e.count, "In sample window", "⚠")}${metric("Severity", e.level, "Based on mock rules", "!")}${metric("First seen", e.first, "Initial occurrence", "◷")}${metric("Last seen", e.last, "Most recent occurrence", "↻")}</div><div class="detail-grid"><section class="card detail-block"><h3>Error details</h3><div class="kv"><span>Error group</span><strong>${e.id}</strong></div><div class="kv"><span>Service</span><strong>${e.service}</strong></div><div class="kv"><span>Environment</span><strong>${state.env}</strong></div><div class="kv"><span>Occurrences</span><strong>${e.count}</strong></div></section><section class="card detail-block"><h3>Suggested investigation</h3><p style="font-size:13px;color:var(--text-muted);margin:0">Review the stack trace and inspect traces around the most recent occurrence. Confirm whether the error correlates with elevated latency or dependency failures.</p><button class="btn" style="margin-top:16px" data-goto="traces">Open trace explorer →</button></section></div><section class="card detail-block"><h3>Stack trace</h3><pre style="white-space:pre-wrap;overflow-wrap:anywhere;background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:16px;font:12px/1.7 ui-monospace,SFMono-Regular,monospace;color:#334155;margin:0">${e.stack.replace(/\\n/g, "\n")}</pre></section>`;
+      }
+      function render() {
+        let html;
+        if (selectedService) {
+          let s = services.find((s) => s.name === selectedService);
+          html = s ? serviceDetail(s) : overview();
+        } else if (selectedTrace) {
+          let t = traces.find((t) => t.id === selectedTrace);
+          html = t ? traceDetail(t) : overview();
+        } else if (selectedError) {
+          let e = errors.find((e) => e.id === selectedError);
+          html = e ? errorDetail(e) : overview();
+        } else {
+          html = (
+            {
+              overview,
+              services: servicesPage,
+              traces: tracesPage,
+              errors: errorsPage,
+              alerts: alertsPage,
+              dashboards: dashboardsPage,
+              integrations: integrationsPage,
+              settings: settingsPage,
+            }[currentPage] || overview
+          )();
+        }
+        $("#appContent").innerHTML = html;
+        $("#crumb").textContent =
+          selectedService ||
+          selectedTrace ||
+          selectedError ||
+          {
+            overview: "Overview",
+            services: "Services",
+            traces: "Distributed traces",
+            errors: "Errors",
+            alerts: "Alerts & incidents",
+            dashboards: "Dashboards",
+            integrations: "Integrations",
+            settings: "Settings",
+          }[currentPage] ||
+          "Overview";
+        document
+          .querySelectorAll("#nav button")
+          .forEach((b) =>
+            b.classList.toggle(
+              "active",
+              !selectedService &&
+                !selectedTrace &&
+                !selectedError &&
+                b.dataset.page === currentPage,
+            ),
+          );
+        bindPage();
+      }
+      function go(page) {
+        selectedService = selectedTrace = selectedError = null;
+        currentPage = page;
+        state.search = "";
+        render();
+        $("#sidebar").classList.remove("open");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      function openService(name) {
+        selectedService = name;
+        selectedTrace = selectedError = null;
+        render();
+        window.scrollTo(0, 0);
+      }
+      function openTrace(id) {
+        selectedTrace = id;
+        selectedService = selectedError = null;
+        render();
+        window.scrollTo(0, 0);
+      }
+      function openError(id) {
+        selectedError = id;
+        selectedService = selectedTrace = null;
+        render();
+        window.scrollTo(0, 0);
+      }
+      function openModal(
+        title,
+        body,
+        saveLabel = "Save changes",
+        onSave = null,
+      ) {
+        $("#modalTitle").textContent = title;
+        $("#modalBody").innerHTML = body;
+        $("#modalSave").textContent = saveLabel;
+        $("#modalSave").style.display = onSave ? "" : "none";
+        $("#modalFoot").style.display = onSave ? "flex" : "none";
+        $("#modalBackdrop").classList.add("open");
+        $("#modalSave").onclick = () => {
+          if (onSave) onSave();
+        };
+      }
+      function closeModal() {
+        $("#modalBackdrop").classList.remove("open");
+      }
+      function newRuleModal() {
+        openModal(
+          "Create alert rule",
+          `<div class="formgrid"><div class="field full"><label>Rule name</label><input id="ruleName" placeholder="e.g. API latency threshold" required></div><div class="field"><label>Service</label><select id="ruleService">${services.map((s) => `<option>${s.name}</option>`).join("")}</select></div><div class="field"><label>Metric</label><select id="ruleMetric"><option>P95 latency</option><option>Error rate</option><option>Request throughput</option></select></div><div class="field"><label>Threshold</label><input type="number" id="ruleThreshold" value="200" min="0"></div><div class="field"><label>Evaluation window</label><select id="ruleWindow"><option>5 minutes</option><option>10 minutes</option><option>15 minutes</option></select></div><div class="field full"><label>Severity</label><select id="ruleSeverity"><option>High</option><option>Medium</option><option>Low</option></select></div></div>`,
+          `Create rule`,
+          () => {
+            let name = $("#ruleName").value.trim();
+            if (!name) {
+              toast("Enter a rule name first.");
+              return;
+            }
+            state.rules.push({
+              name,
+              service: $("#ruleService").value,
+              metric: $("#ruleMetric").value,
+              threshold: Number($("#ruleThreshold").value) || 0,
+              window: $("#ruleWindow").value,
+              severity: $("#ruleSeverity").value,
+              enabled: true,
+            });
+            closeModal();
+            render();
+            toast("Alert rule created locally.");
+          },
+        );
+      }
+      function bindPage() {
+        let rs = $("#rangeSelect");
+        if (rs)
+          rs.addEventListener("change", (e) => {
+            currentRange = e.target.value;
+            render();
+          });
+        let env = $("#filterEnv");
+        if (env)
+          env.addEventListener("change", (e) => {
+            state.env = e.target.value;
+            $("#envSelect").value = state.env;
+            render();
+          });
+        let sf = $("#statusFilter");
+        if (sf)
+          sf.addEventListener("change", (e) => {
+            state.statusFilter = e.target.value;
+            render();
+          });
+        let tf = $("#traceSearch");
+        if (tf)
+          tf.addEventListener("input", (e) => {
+            state.search = e.target.value;
+            let list = traces.filter((t) =>
+              (t.id + " " + t.path + " " + t.service)
+                .toLowerCase()
+                .includes(state.search.toLowerCase()),
+            );
+            $("#traceTable").innerHTML = traceTable(list);
+          });
+        let ef = $("#errorSearch");
+        if (ef)
+          ef.addEventListener("input", (e) => {
+            state.search = e.target.value;
+            $("#errorTable").innerHTML = errorsTable(
+              errors.filter((x) =>
+                (x.id + " " + x.title + " " + x.service)
+                  .toLowerCase()
+                  .includes(state.search.toLowerCase()),
+              ),
+            );
+          });
+        let inf = $("#incidentFilter");
+        if (inf)
+          inf.addEventListener("change", (e) => {
+            state.incFilter = e.target.value;
+            $("#incidentTable").innerHTML = incidentTable(
+              incidents.filter(
+                (i) =>
+                  state.incFilter === "All statuses" ||
+                  i.status === state.incFilter,
+              ),
+            );
+            bindTableActions();
+          });
+        let ref = $("#refreshBtn");
+        if (ref)
+          ref.onclick = () => {
+            render();
+            toast("Sample dashboard refreshed.");
+          };
+        ["newAlertBtn", "newRule", "newRule2"].forEach((id) => {
+          let el = $("#" + id);
+          if (el) el.onclick = newRuleModal;
+        });
+        let es = $("#exportServices");
+        if (es)
+          es.onclick = () =>
+            exportCsv(
+              "services.csv",
+              ["name", "team", "status", "rps", "p95", "error", "uptime"],
+              services,
+            );
+        let et = $("#exportTraces");
+        if (et)
+          et.onclick = () =>
+            exportCsv(
+              "traces.csv",
+              ["id", "method", "path", "service", "duration", "status", "time"],
+              traces,
+            );
+        let ee = $("#exportErrors");
+        if (ee)
+          ee.onclick = () =>
+            exportCsv(
+              "errors.csv",
+              ["id", "title", "service", "count", "level", "first", "last"],
+              errors,
+            );
+        let cd = $("#createDashboard");
+        if (cd)
+          cd.onclick = () =>
+            openModal(
+              "New dashboard",
+              `<div class="field"><label>Dashboard name</label><input id="dashboardName" placeholder="e.g. Checkout health"></div>`,
+              "Create dashboard",
+              () => {
+                let n = $("#dashboardName").value.trim();
+                if (!n) {
+                  toast("Enter a dashboard name.");
+                  return;
+                }
+                state.dashboards.push(n);
+                closeModal();
+                render();
+                toast("Dashboard created locally.");
+              },
+            );
+        let aw = $("#addWidget");
+        if (aw)
+          aw.onclick = () => {
+            state.widgets++;
+            render();
+            toast("Metric widget added to the dashboard.");
+          };
+        let sn = $("#saveSettings");
+        if (sn)
+          sn.onclick = () => {
+            let n = $("#workspaceName").value.trim();
+            if (n) {
+              document.querySelector(".workspace strong").textContent = n;
+              toast("Preferences saved in this view.");
+            } else toast("Workspace name cannot be empty.");
+          };
+        let sa = $("#serviceAlert");
+        if (sa) sa.onclick = newRuleModal;
+        let ci = $("#createIncident");
+        if (ci)
+          ci.onclick = () => {
+            let e = errors.find((e) => e.id === selectedError);
+            incidents.unshift({
+              id: "INC-" + (209 + incidents.length),
+              title: "Investigation: " + e.title,
+              service: e.service,
+              severity: e.level,
+              status: "Open",
+              time: "Just now",
+              description:
+                "Created from error group " +
+                e.id +
+                ". Review related traces and stack details.",
+            });
+            go("alerts");
+            toast("Incident created locally.");
+          };
+        let ig = $("#integrationDocs");
+        if (ig)
+          ig.onclick = () =>
+            openModal(
+              "Integration setup guide",
+              `<p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">A typical setup uses an OpenTelemetry SDK or collector to send traces, metrics, and logs to a configured backend.</p><pre style="white-space:pre-wrap;background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:16px;font-size:12px;margin:0">OTEL_SERVICE_NAME=your-service\nOTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318\nOTEL_TRACES_EXPORTER=otlp\nOTEL_METRICS_EXPORTER=otlp</pre><p style="font-size:12px;color:var(--text-muted);margin-top:12px">Example only. Configure a real collector and secure endpoint before sending production telemetry.</p>`,
+              "Close",
+              null,
+            );
+        document.querySelectorAll("[data-integration]").forEach(
+          (b) =>
+            (b.onclick = () =>
+              openModal(
+                "Configure " + b.dataset.integration,
+                `<div class="notice"><span class="dot amber"></span>Configuration preview only; connection is not tested.</div><div class="field"><label>Service name</label><input value="${b.dataset.integration.toLowerCase().replaceAll(" ", "-")}" id="integrationService"></div><div class="field" style="margin-top:12px"><label>OTLP endpoint</label><input placeholder="http://localhost:4318" id="integrationEndpoint"></div><p style="font-size:12px;color:var(--text-muted);margin-top:12px">This form does not send credentials or connect to a remote service.</p>`,
+                "Save configuration",
+                () => {
+                  if (!$("#integrationService").value.trim()) {
+                    toast("Enter a service name.");
+                    return;
+                  }
+                  closeModal();
+                  toast("Configuration saved in this session only.");
+                },
+              )),
+        );
+        document.querySelectorAll("[data-dashboard-remove]").forEach(
+          (b) =>
+            (b.onclick = () => {
+              state.dashboards.splice(Number(b.dataset.dashboardRemove), 1);
+              render();
+              toast("Dashboard removed locally.");
+            }),
+        );
+        document.querySelectorAll("[data-dashboard-open]").forEach(
+          (b) =>
+            (b.onclick = () => {
+              openModal(
+                state.dashboards[Number(b.dataset.dashboardOpen)] ||
+                  "Dashboard",
+                `<p style="font-size:13px;color:var(--text-muted)">Dashboard preview with ${state.widgets} metric widgets.</p><div style="margin-top:14px">${chartSvg("latency")}</div>`,
+                "Close",
+                null,
+              );
+            }),
+        );
+        document.querySelectorAll("[data-rule]").forEach(
+          (c) =>
+            (c.onchange = () => {
+              state.rules[Number(c.dataset.rule)].enabled = c.checked;
+              toast("Alert rule updated.");
+            }),
+        );
+        bindTableActions();
+      }
+      function bindTableActions() {
+        document
+          .querySelectorAll("[data-goto]")
+          .forEach((b) => (b.onclick = () => go(b.dataset.goto)));
+        document.querySelectorAll("[data-service]").forEach(
+          (b) =>
+            (b.onclick = (e) => {
+              e.stopPropagation();
+              openService(b.dataset.service);
+            }),
+        );
+        document.querySelectorAll("[data-error]").forEach(
+          (b) =>
+            (b.onclick = (e) => {
+              e.stopPropagation();
+              openError(b.dataset.error);
+            }),
+        );
+        document
+          .querySelectorAll('tr[data-open="service"]')
+          .forEach((tr) => (tr.onclick = () => openService(tr.dataset.id)));
+        document
+          .querySelectorAll('tr[data-open="trace"]')
+          .forEach((tr) => (tr.onclick = () => openTrace(tr.dataset.id)));
+        document
+          .querySelectorAll('tr[data-open="error"]')
+          .forEach((tr) => (tr.onclick = () => openError(tr.dataset.id)));
+        document.querySelectorAll("[data-incident]").forEach(
+          (b) =>
+            (b.onclick = () => {
+              let i = incidents.find((x) => x.id === b.dataset.incident);
+              if (i)
+                openModal(
+                  i.id + " · " + i.title,
+                  `<div class="kv"><span>Service</span><strong>${i.service}</strong></div><div class="kv"><span>Severity</span>${statusPill(i.severity)}</div><div class="kv"><span>Status</span>${statusPill(i.status)}</div><div class="kv"><span>Triggered</span><strong>${i.time}</strong></div><p style="font-size:13px;color:var(--text-muted);margin-top:16px">${i.description}</p>`,
+                  "Close",
+                  null,
+                );
+            }),
+        );
+        document.querySelectorAll("[data-action]").forEach(
+          (b) =>
+            (b.onclick = () => {
+              let i = incidents.find((x) => x.id === b.dataset.id);
+              if (!i) return;
+              i.status =
+                b.dataset.action === "ack"
+                  ? "Acknowledged"
+                  : b.dataset.action === "resolve"
+                    ? "Resolved"
+                    : "Open";
+              render();
+              toast(i.id + " updated to " + i.status + ".");
+            }),
+        );
+      }
+      function exportCsv(filename, keys, rows) {
+        let csv = [
+          keys.join(","),
+          ...rows.map((r) =>
+            keys
+              .map((k) => `"${String(r[k] ?? "").replaceAll('"', '""')}"`)
+              .join(","),
+          ),
+        ].join("\n");
+        let a = document.createElement("a");
+        a.href = URL.createObjectURL(
+          new Blob([csv], { type: "text/csv;charset=utf-8;" }),
+        );
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        toast("CSV export prepared.");
+      }
+      $("#nav").addEventListener("click", (e) => {
+        let b = e.target.closest("button[data-page]");
+        if (b) go(b.dataset.page);
+      });
+      document
+        .querySelectorAll(".nav button[data-page]")
+        .forEach((b) => b.addEventListener("click", () => go(b.dataset.page)));
+      $("#globalSearch").addEventListener("input", (e) => {
+        state.search = e.target.value;
+        if (
+          currentPage === "services" ||
+          currentPage === "traces" ||
+          currentPage === "errors"
+        )
+          render();
+      });
+      $("#envSelect").addEventListener("change", (e) => {
+        state.env = e.target.value;
+        if (currentPage === "overview") render();
+      });
+      $("#menuBtn").onclick = () => $("#sidebar").classList.toggle("open");
+      $("#modalClose").onclick = closeModal;
+      $("#modalCancel").onclick = closeModal;
+      $("#modalBackdrop").addEventListener("click", (e) => {
+        if (e.target === $("#modalBackdrop")) closeModal();
+      });
+      $("#notifBtn").onclick = () => {
+        let active = incidents.filter((i) => i.status !== "Resolved");
+        openModal(
+          "Notifications",
+          active.length
+            ? active
+                .map(
+                  (i) =>
+                    `<div class="kv"><span>${i.id} · ${i.title}</span>${statusPill(i.status)}</div>`,
+                )
+                .join("")
+            : "<p>No new notifications.</p>",
+          "Close",
+          null,
+        );
+      };
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeModal();
+      });
+      render();
+    </script>
+  </body>
+</html>

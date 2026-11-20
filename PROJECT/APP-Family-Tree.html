@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aplikasi Silsilah Keluarga</title>
+<style>
+  :root{
+    --bg:#f4f4f2;
+    --surface:#ffffff;
+    --ink:#1b1b19;
+    --muted:#77736d;
+    --line:#e5e3df;
+    --line-strong:#c9c6c0;
+    --accent:#0f766e;
+    --accent-soft:#e6f2f0;
+    --danger:#b91c1c;
+    --danger-soft:#fdecec;
+    --radius:10px;
+    --shadow:0 1px 2px rgba(27,27,25,.06);
+    font-size:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    background:var(--bg);color:var(--ink);line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  svg{display:block}
+  button{font:inherit;cursor:pointer;color:inherit}
+  input,select,textarea{font:inherit;color:inherit}
+
+  /* ---------- App shell ---------- */
+  #app{
+    display:grid;
+    grid-template-rows:auto minmax(0,1fr);
+    grid-template-columns:minmax(300px,340px) minmax(0,1fr);
+    grid-template-areas:"header header" "side main";
+    height:100vh;height:100dvh;
+  }
+  header{
+    grid-area:header;
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    background:var(--surface);border-bottom:1px solid var(--line);
+    padding:10px 16px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;margin-right:auto}
+  .brand .logo{width:34px;height:34px;border-radius:9px;background:var(--accent);display:grid;place-items:center;flex:none}
+  .brand .logo svg{width:20px;height:20px;stroke:#fff}
+  .brand h1{font-size:1.02rem;font-weight:700;letter-spacing:-.01em}
+  .brand p{font-size:.74rem;color:var(--muted);margin-top:1px}
+
+  .btn{
+    display:inline-flex;align-items:center;gap:7px;
+    background:var(--surface);border:1px solid var(--line-strong);
+    border-radius:8px;padding:7px 12px;font-size:.84rem;font-weight:600;
+    transition:background .12s,border-color .12s;white-space:nowrap;
+  }
+  .btn:hover{background:#fafaf9;border-color:#b5b1aa}
+  .btn svg{width:15px;height:15px;stroke:currentColor;flex:none}
+  .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn-primary:hover{background:#0c5f59;border-color:#0c5f59}
+  .btn-danger{color:var(--danger)}
+  .btn-danger:hover{background:var(--danger-soft);border-color:#e5b4b4}
+  .btn-sm{padding:5px 9px;font-size:.78rem}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+
+  /* ---------- Sidebar ---------- */
+  aside{
+    grid-area:side;overflow-y:auto;background:var(--surface);
+    border-right:1px solid var(--line);padding:16px 16px 40px;
+  }
+  aside section{margin-bottom:26px}
+  aside h2{
+    font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:7px;
+  }
+  aside h2 svg{width:14px;height:14px;stroke:var(--muted)}
+  aside h2 .count{margin-left:auto;background:#f0efec;border-radius:99px;padding:1px 8px;font-size:.7rem;color:var(--muted);letter-spacing:0}
+
+  .ctx-card{
+    border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;
+    background:#fafaf9;margin-bottom:12px;font-size:.84rem;
+  }
+  .ctx-card .ctx-title{font-size:.72rem;color:var(--muted);margin-bottom:4px}
+  .ctx-card .ctx-name{font-weight:700;display:flex;align-items:center;gap:8px}
+  .ctx-card .ctx-name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ctx-card .ctx-actions{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+  .ctx-empty{color:var(--muted);font-size:.84rem}
+
+  .rel-options{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+  .rel-options label{
+    display:flex;align-items:center;gap:7px;border:1px solid var(--line);
+    border-radius:8px;padding:7px 9px;font-size:.8rem;cursor:pointer;background:var(--surface);
+  }
+  .rel-options label:hover{border-color:var(--line-strong)}
+  .rel-options input{accent-color:var(--accent)}
+  .rel-options label.on{border-color:var(--accent);background:var(--accent-soft)}
+
+  .field{margin-bottom:11px}
+  .field label{display:block;font-size:.74rem;font-weight:600;color:var(--muted);margin-bottom:4px}
+  .field input[type=text],.field input[type=date],.field select,.field textarea{
+    width:100%;border:1px solid var(--line-strong);border-radius:8px;
+    padding:8px 10px;font-size:.86rem;background:var(--surface);
+  }
+  .field textarea{resize:vertical;min-height:60px}
+  .field input:focus,.field select:focus,.field textarea:focus{
+    outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent);
+  }
+  .field .req::after{content:" *";color:var(--danger)}
+
+  .photo-row{display:flex;align-items:center;gap:10px}
+  .photo-preview{
+    width:52px;height:52px;border-radius:50%;background:#e7e5e4;flex:none;
+    display:grid;place-items:center;overflow:hidden;border:1px solid var(--line);
+  }
+  .photo-preview img{width:100%;height:100%;object-fit:cover}
+  .photo-preview span{font-size:.68rem;color:var(--muted);text-align:center;padding:4px}
+  .photo-btns{display:flex;flex-direction:column;gap:6px}
+  input[type=file]{display:none}
+
+  .form-actions{display:flex;gap:8px;margin-top:4px}
+  .form-actions .btn{flex:1;justify-content:center}
+
+  /* Birthday list */
+  .bday-list{display:flex;flex-direction:column;gap:8px}
+  .bday-item{
+    display:flex;align-items:center;gap:10px;border:1px solid var(--line);
+    border-radius:var(--radius);padding:8px 10px;background:var(--surface);
+  }
+  .bday-item.today{border-color:var(--accent);background:var(--accent-soft)}
+  .bday-item .bday-date{
+    width:40px;height:40px;border-radius:9px;background:#f0efec;flex:none;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+  }
+  .bday-item.today .bday-date{background:var(--accent)}
+  .bday-date b{font-size:.95rem;line-height:1}
+  .bday-date i{font-style:normal;font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  .bday-item.today .bday-date b,.bday-item.today .bday-date i{color:#fff}
+  .bday-item .bday-info{min-width:0;flex:1}
+  .bday-item .bday-name{font-size:.86rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bday-item .bday-sub{font-size:.72rem;color:var(--muted)}
+  .bday-badge{
+    flex:none;font-size:.68rem;font-weight:700;border-radius:99px;
+    padding:3px 8px;background:#f0efec;color:var(--muted);
+  }
+  .bday-item.today .bday-badge{background:var(--accent);color:#fff}
+  .bday-badge.soon{background:var(--accent-soft);color:var(--accent)}
+  .muted-note{font-size:.78rem;color:var(--muted)}
+
+  /* Member list */
+  .search-box{position:relative;margin-bottom:10px}
+  .search-box svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;stroke:var(--muted)}
+  .search-box input{
+    width:100%;border:1px solid var(--line-strong);border-radius:8px;
+    padding:8px 10px 8px 32px;font-size:.84rem;background:var(--surface);
+  }
+  .search-box input:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  .member-list{display:flex;flex-direction:column;gap:6px}
+  .member-item{
+    display:flex;align-items:center;gap:10px;border:1px solid transparent;
+    border-radius:var(--radius);padding:6px 8px;cursor:pointer;background:transparent;
+    text-align:left;width:100%;
+  }
+  .member-item:hover{background:#f7f6f4;border-color:var(--line)}
+  .member-item.sel{border-color:var(--accent);background:var(--accent-soft)}
+  .member-item .m-avatar{
+    width:34px;height:34px;border-radius:50%;background:#e7e5e4;flex:none;
+    display:grid;place-items:center;overflow:hidden;font-size:.72rem;font-weight:700;color:#57534e;
+  }
+  .member-item .m-avatar img{width:100%;height:100%;object-fit:cover}
+  .member-item .m-info{min-width:0;flex:1}
+  .member-item .m-name{font-size:.84rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .member-item .m-sub{font-size:.71rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .member-item .m-gen{flex:none;font-size:.64rem;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:2px 5px}
+
+  /* ---------- Main canvas ---------- */
+  main{grid-area:main;position:relative;overflow:hidden;background:var(--bg)}
+  #treeSvg{width:100%;height:100%;touch-action:none;cursor:grab}
+  #treeSvg.panning{cursor:grabbing}
+
+  .canvas-toolbar{
+    position:absolute;left:14px;top:14px;display:flex;flex-direction:column;
+    border:1px solid var(--line-strong);border-radius:10px;background:var(--surface);
+    box-shadow:var(--shadow);overflow:hidden;
+  }
+  .canvas-toolbar button{
+    width:36px;height:36px;display:grid;place-items:center;background:transparent;border:none;
+  }
+  .canvas-toolbar button:hover{background:#f2f1ee}
+  .canvas-toolbar button svg{width:17px;height:17px;stroke:var(--ink)}
+  .canvas-toolbar .tb-sep{height:1px;background:var(--line)}
+
+  .legend{
+    position:absolute;right:14px;bottom:14px;background:var(--surface);
+    border:1px solid var(--line);border-radius:10px;padding:9px 12px;
+    box-shadow:var(--shadow);display:flex;gap:14px;align-items:center;
+  }
+  .legend .lg{display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--muted)}
+  .legend .dot{width:9px;height:9px;border-radius:3px;flex:none}
+
+  .zoom-label{
+    position:absolute;left:60px;top:22px;font-size:.72rem;color:var(--muted);
+    background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:2px 8px;
+  }
+
+  .empty-hint{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:10px;color:var(--muted);text-align:center;padding:20px;
+    pointer-events:none;
+  }
+  .empty-hint svg{width:44px;height:44px;stroke:#a8a29e}
+  .empty-hint p{font-size:.9rem;max-width:340px}
+
+  /* ---------- Modal ---------- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(27,27,25,.45);z-index:60;
+    display:none;align-items:center;justify-content:center;padding:16px;
+  }
+  .modal-overlay.open{display:flex}
+  .modal{
+    background:var(--surface);border-radius:14px;width:100%;max-width:440px;
+    box-shadow:0 12px 40px rgba(27,27,25,.22);max-height:92vh;overflow-y:auto;
+  }
+  .modal-head{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--line)}
+  .modal-head svg{width:18px;height:18px;stroke:var(--accent)}
+  .modal-head h3{font-size:.98rem;font-weight:700}
+  .modal-head .modal-close{margin-left:auto;border:none;background:none;width:30px;height:30px;display:grid;place-items:center;border-radius:7px}
+  .modal-head .modal-close:hover{background:#f2f1ee}
+  .modal-head .modal-close svg{width:15px;height:15px;stroke:var(--ink)}
+  .modal-body{padding:18px}
+  .modal-body p{font-size:.85rem;color:var(--muted);margin-bottom:14px}
+  .detail-grid{display:flex;gap:14px;align-items:flex-start}
+  .detail-photo{
+    width:84px;height:84px;border-radius:50%;background:#e7e5e4;flex:none;
+    display:grid;place-items:center;overflow:hidden;border:1px solid var(--line);
+  }
+  .detail-photo img{width:100%;height:100%;object-fit:cover}
+  .detail-photo svg{width:30px;height:30px;stroke:#a8a29e}
+  .detail-fields{flex:1;min-width:0}
+  .detail-row{margin-bottom:7px}
+  .detail-row dt{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  .detail-row dd{font-size:.86rem}
+  .detail-note{
+    margin-top:12px;border:1px solid var(--line);border-radius:8px;background:#fafaf9;
+    padding:10px 12px;font-size:.82rem;white-space:pre-wrap;
+  }
+  .modal-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+
+  /* ---------- Toast ---------- */
+  #toast{
+    position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(8px);
+    background:var(--ink);color:#fff;border-radius:9px;padding:10px 16px;font-size:.84rem;
+    opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:90;
+    box-shadow:0 6px 20px rgba(27,27,25,.3);max-width:90vw;text-align:center;
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* ---------- Mobile ---------- */
+  /* SVG tree nodes & links */
+  .lnk{stroke:#c9c6c0;stroke-width:1.6;fill:none}
+  .lnk-partner{stroke:#c9c6c0;stroke-width:1.6;stroke-dasharray:none}
+  .lnk.hl{stroke:#0f766e;stroke-width:2.4}
+  .node{cursor:pointer}
+  .node .card{transition:filter .12s}
+  .node.hover .card{filter:drop-shadow(0 2px 5px rgba(27,27,25,.18))}
+  .node.selected .card{stroke-width:2.6}
+  .node .init{font:700 15px system-ui,sans-serif;fill:#57534e}
+  .node .nm{font:600 12.5px system-ui,sans-serif;fill:#1b1b19}
+  .node .sb{font:400 10.5px system-ui,sans-serif;fill:#77736d}
+  .node .sb2{font:400 9.5px system-ui,sans-serif;fill:#a8a29e}
+  .node:focus{outline:none}
+  .node:focus .card{stroke:#0f766e;stroke-width:2.2}
+
+  @media (max-width:900px){
+    #app{
+      grid-template-columns:1fr;
+      grid-template-rows:auto minmax(0,1fr) auto;
+      grid-template-areas:"header" "main" "side";
+      height:auto;min-height:100vh;min-height:100dvh;
+    }
+    main{height:64vh;min-height:420px;border-bottom:1px solid var(--line)}
+    aside{border-right:none;max-height:none}
+    header{position:sticky;top:0;z-index:30}
+    .brand p{display:none}
+    .rel-options{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">
+      <span class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.6"/><circle cx="6" cy="19" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M12 7.6V12M12 12H6M12 12h6M6 16.4V12M18 16.4V12"/></svg>
+      </span>
+      <div>
+        <h1>Silsilah Keluarga</h1>
+        <p id="headerSub">Belum ada anggota</p>
+      </div>
+    </div>
+    <button class="btn" id="btnExportPng" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.8" cy="8.8" r="1.8"/><path d="M21 15.2l-4.4-4.4L6 21"/></svg>
+      Ekspor PNG
+    </button>
+    <button class="btn" id="btnExportPdf" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5M9 13h1.6a1.4 1.4 0 0 1 0 2.8H9V13zm0 2.8V19M14.5 13v4a1.2 1.2 0 0 0 2.4 0v-4a1.2 1.2 0 0 0-2.4 0z"/></svg>
+      Ekspor PDF
+    </button>
+    <button class="btn" id="btnDemo" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3.2"/></svg>
+      Contoh Data
+    </button>
+    <button class="btn btn-primary" id="btnAddRoot" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c.6-3.3 2.8-5.2 5.5-5.2s4.9 1.9 5.5 5.2"/><path d="M18.5 5.5v5M16 8h5"/></svg>
+      Tambah Anggota
+    </button>
+  </header>
+
+  <aside>
+    <section id="ctxSection">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>
+        Tambah / Ubah Anggota
+      </h2>
+      <div id="ctxCard" class="ctx-card" hidden>
+        <div class="ctx-title" id="ctxTitle">—</div>
+        <div class="ctx-name" id="ctxName">—</div>
+      </div>
+      <div id="ctxEmpty" class="ctx-empty">
+        Tekan <b>Tambah Anggota</b> untuk membuat akar keluarga pertama. Setelah ada
+        anggota, klik kartunya di diagram lalu gunakan <b>Tambah Anak</b> atau
+        <b>Tambah Pasangan</b> untuk membentuk cabang baru antar generasi.
+      </div>
+      <form id="memberForm" autocomplete="off" hidden>
+        <div class="field">
+          <label class="req">Hubungan</label>
+          <input type="text" id="fRelLabel" disabled>
+        </div>
+        <div class="field">
+          <label class="req" for="fName">Nama</label>
+          <input type="text" id="fName" maxlength="60" placeholder="Nama lengkap" required>
+        </div>
+        <div class="field">
+          <label for="fGender">Jenis Kelamin</label>
+          <select id="fGender">
+            <option value="M">Laki-laki</option>
+            <option value="F">Perempuan</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fBirth">Tanggal Lahir</label>
+          <input type="date" id="fBirth">
+        </div>
+        <div class="field">
+          <label for="fDeath">Tanggal Wafat (opsional)</label>
+          <input type="date" id="fDeath">
+        </div>
+        <div class="field">
+          <label>Foto</label>
+          <div class="photo-row">
+            <div class="photo-preview" id="photoPreview"><span>Tanpa foto</span></div>
+            <div class="photo-btns">
+              <label class="btn btn-sm" for="fPhoto">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.8" cy="8.8" r="1.8"/><path d="M21 15.2l-4.4-4.4L6 21"/></svg>
+                Pilih Foto
+              </label>
+              <button class="btn btn-sm" id="btnRemovePhoto" type="button">Hapus Foto</button>
+            </div>
+          </div>
+          <input type="file" id="fPhoto" accept="image/*">
+        </div>
+        <div class="field">
+          <label for="fNote">Catatan</label>
+          <textarea id="fNote" maxlength="300" placeholder="Pekerjaan, tempat tinggal, dll."></textarea>
+        </div>
+        <div class="form-actions">
+          <button class="btn" type="button" id="btnCancel">Batal</button>
+          <button class="btn btn-primary" type="submit">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+            Simpan
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section>
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M12 14.2l1.2 2.4 2.6.4-1.9 1.8.5 2.6-2.4-1.2-2.4 1.2.5-2.6-1.9-1.8 2.6-.4z"/></svg>
+        Ulang Tahun Terdekat
+      </h2>
+      <div class="bday-list" id="bdayList"></div>
+    </section>
+
+    <section>
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        Daftar Anggota
+        <span class="count" id="memberCount">0</span>
+      </h2>
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="text" id="searchInput" placeholder="Cari nama...">
+      </div>
+      <div class="member-list" id="memberList"></div>
+    </section>
+  </aside>
+
+  <main>
+    <svg id="treeSvg" xmlns="http://www.w3.org/2000/svg">
+      <g id="viewRoot">
+        <g id="linkLayer"></g>
+        <g id="nodeLayer"></g>
+      </g>
+    </svg>
+    <div class="empty-hint" id="emptyHint">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.6"/><circle cx="6" cy="19" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M12 7.6V12M12 12H6M12 12h6M6 16.4V12M18 16.4V12"/></svg>
+      <p id="emptyHintText">Pohon keluarga masih kosong. Tekan <b>Tambah Anggota</b> untuk mulai, atau coba <b>Contoh Data</b>.</p>
+    </div>
+    <div class="canvas-toolbar">
+      <button id="btnZoomIn" type="button" title="Perbesar">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      <button id="btnZoomOut" type="button" title="Perkecil">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>
+      </button>
+      <div class="tb-sep"></div>
+      <button id="btnFit" type="button" title="Sesuaikan tampilan">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+      </button>
+    </div>
+    <div class="zoom-label" id="zoomLabel">100%</div>
+    <div class="legend">
+      <span class="lg"><span class="dot" style="background:#0f766e"></span>Laki-laki</span>
+      <span class="lg"><span class="dot" style="background:#b45309"></span>Perempuan</span>
+      <span class="lg"><span class="dot" style="background:#c9c6c0"></span>Pasangan</span>
+    </div>
+  </main>
+</div>
+
+<!-- Detail modal -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-head">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c.7-4 4-6.5 8-6.5s7.3 2.5 8 6.5"/></svg>
+      <h3 id="detailTitle">Detail Anggota</h3>
+      <button class="modal-close" data-close-modal type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-grid">
+        <div class="detail-photo" id="detailPhoto">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c.7-4 4-6.5 8-6.5s7.3 2.5 8 6.5"/></svg>
+        </div>
+        <dl class="detail-fields" id="detailFields"></dl>
+      </div>
+      <div class="detail-note" id="detailNote" hidden></div>
+      <div class="modal-actions">
+        <button class="btn btn-sm" id="btnAddChild" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="2.6"/><path d="M12 8.6V15M8.5 20.5c.5-2.6 1.9-4 3.5-4s3 1.4 3.5 4"/><path d="M12 11.5h-3M12 11.5h3"/></svg>
+          Tambah Anak
+        </button>
+        <button class="btn btn-sm" id="btnAddPartner" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="7.5" r="2.8"/><circle cx="16" cy="8.5" r="2.4"/><path d="M3.5 20c.5-3.2 2.5-5 5-5s4.5 1.8 5 5M14.5 20c.3-2.3 1.6-3.7 3.5-3.7s3.2 1.4 3.5 3.7"/></svg>
+          Tambah Pasangan
+        </button>
+        <button class="btn btn-sm" id="btnEdit" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
+          Ubah
+        </button>
+        <button class="btn btn-sm btn-danger" id="btnDelete" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></svg>
+          Hapus
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" role="status"></div>
+
+<script>
+"use strict";
+/* ============ 1. STATE & UTIL ============ */
+const LS_KEY = "silsilah-keluarga-v1";
+let members = [];        // {id,name,gender,birth,death,photo,note,parentIds:[],partnerId}
+let seq = 1;
+let selectedId = null;   // anggota yang kartunya terbuka di modal / konteks form
+let editingId = null;    // sedang mengubah anggota yang sudah ada
+let formMode = null;     // "root" | "child" | "partner" | "edit"
+let pendingPhoto = null; // dataURL foto di form
+let view = { x: 0, y: 0, k: 1 };
+
+const $ = (s) => document.querySelector(s);
+const svg = $("#treeSvg"), viewRoot = $("#viewRoot"),
+      linkLayer = $("#linkLayer"), nodeLayer = $("#nodeLayer");
+
+const uid = () => "p" + (seq++) + Date.now().toString(36).slice(-4);
+const esc = (s) => String(s).replace(/[&<>"']/g, c =>
+  ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+const byId = (id) => members.find(m => m.id === id);
+const childrenOf = (id) => members.filter(m => m.parentIds.includes(id))
+  .sort((a, b) => (a.birth || "9999").localeCompare(b.birth || "9999"));
+const roots = () => members.filter(m => m.parentIds.length === 0);
+const genOf = (m) => { let g = 0, p = m; 
+  while (p && p.parentIds.length) { p = byId(p.parentIds[0]); g++; }
+  return g + 1; };
+
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._tm); t._tm = setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+function save() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({ members, seq }));
+  } catch (e) { /* storage penuh: abaikan, data tetap di memori */ }
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    if (Array.isArray(d.members)) members = d.members;
+    if (d.seq) seq = d.seq;
+  } catch (e) { /* data korup: mulai kosong */ }
+}
+
+const MONTHS = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+function fmtDate(iso) {
+  if (!iso) return "-";
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return iso;
+  return `${d} ${MONTHS[m - 1]} ${y}`;
+}
+function ageOf(iso, ref) {
+  if (!iso) return null;
+  const b = new Date(iso), t = ref ? new Date(ref) : new Date();
+  if (isNaN(b) || b > t) return null;
+  let a = t.getFullYear() - b.getFullYear();
+  const mm = t.getMonth() - b.getMonth();
+  if (mm < 0 || (mm === 0 && t.getDate() < b.getDate())) a--;
+  return a >= 0 ? a : null;
+}
+// hari menuju ulang tahun berikutnya (0 = hari ini)
+function daysToNextBday(iso, now) {
+  if (!iso) return null;
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return null;
+  const t = now || new Date();
+  let next = new Date(t.getFullYear(), m - 1, d);
+  // 29 Feb -> geser ke 1 Mar pada tahun non-kabisat otomatis oleh Date
+  const sameDay = next.getMonth() === m - 1 ? true : false;
+  if (!sameDay) next = new Date(t.getFullYear(), m, 1);
+  if (next < new Date(t.getFullYear(), t.getMonth(), t.getDate()))
+    next = new Date(next.getFullYear() + 1, next.getMonth(), next.getDate());
+  const diff = Math.round((next - new Date(t.getFullYear(), t.getMonth(), t.getDate())) / 864e5);
+  return diff;
+}
+
+/* ============ 2. LAYOUT ============ */
+const NW = 150, NH = 76, GAP_SIB = 26, GAP_GEN = 96, PARTNER_GAP = 34;
+
+// Layout pohon: unit dasar adalah pasangan (couple).
+// Anak digambar di bawah pasangan orang tuanya.
+function layout() {
+  const pos = new Map(); // id -> {x, y, cx, cy, w}
+
+  // suami/istri yang valid (hubungan dua arah)
+  const isPartnerOf = (a, b) =>
+    a.partnerId && b && a.partnerId === b.id && b.partnerId === a.id;
+
+  // "couple" dari sebuah anggota: [anggota, pasangan] atau [anggota]
+  function coupleOf(m) {
+    const p = m.partnerId ? byId(m.partnerId) : null;
+    return isPartnerOf(m, p) ? [m, p] : [m];
+  }
+
+  // lebar sebuah subtree berakar pada unit pasangan
+  function measureUnit(m, seen) {
+    const c = coupleOf(m);
+    const selfW = c.length === 2 ? NW * 2 + PARTNER_GAP : NW;
+    c.forEach(x => seen.add(x.id));
+    // anak dari pasangan ini = anak yang menyebut salah satu dari c
+    const kids = members.filter(k =>
+      !seen.has(k.id) && k.parentIds.some(pid => c.some(x => x.id === pid)));
+    if (!kids.length) return selfW;
+    let w = 0;
+    kids.forEach(k => { w += measureUnit(k, seen) + GAP_SIB; });
+    return Math.max(selfW, w - GAP_SIB);
+  }
+
+  function placeUnit(m, left, depth, seen) {
+    const c = coupleOf(m);
+    c.forEach(x => seen.add(x.id));
+    const selfW = c.length === 2 ? NW * 2 + PARTNER_GAP : NW;
+    const kids = members.filter(k =>
+      !seen.has(k.id) && k.parentIds.some(pid => c.some(x => x.id === pid)));
+    const y = depth * (NH + GAP_GEN);
+
+    let xLeft;
+    if (!kids.length) {
+      xLeft = left;
+    } else {
+      // lebar tiap subtree anak dihitung dengan salinan seen yang berbeda
+      const kidsW = kids.map(k => measureUnit(k, new Set(seen)));
+      let cursor = left;
+      kids.forEach((k, i) => {
+        placeUnit(k, cursor, depth + 1, seen);
+        cursor += kidsW[i] + GAP_SIB;
+      });
+      // pusat unit di tengah rentang anak sebenarnya, tidak melanggar batas kiri
+      const centers = kids.map(k => pos.get(k.id).x + NW / 2);
+      const cMid = (Math.min(...centers) + Math.max(...centers)) / 2;
+      xLeft = Math.max(left, cMid - selfW / 2);
+    }
+    // inti unit di kiri-tengah, pasangan di kanan
+    pos.set(m.id, { x: xLeft, y, cx: xLeft + NW / 2, cy: y + NH / 2, w: NW });
+    if (c.length === 2) {
+      const px = xLeft + NW + PARTNER_GAP;
+      pos.set(c[1].id, { x: px, y, cx: px + NW / 2, cy: y + NH / 2, w: NW });
+    }
+  }
+
+  // tentukan akar jangkar: root tanpa pasangan, atau salah satu dari
+  // pasangan yang keduanya root. Root yang pasangannya bukan root akan
+  // otomatis ditempatkan sebagai pasangan di subtree pasangannya.
+  const allRoots = roots();
+  const anchored = new Set();
+  const anchorRoots = allRoots.filter(r => {
+    if (anchored.has(r.id)) return false;
+    const p = r.partnerId ? byId(r.partnerId) : null;
+    if (isPartnerOf(r, p)) {
+      if (allRoots.some(q => q.id === p.id)) {
+        const pick = r.id < p.id ? r : p; // deterministik: id terkecil jangkar
+        anchored.add(pick.id);
+        return pick.id === r.id;
+      }
+      return false; // pasangan bukan root: ikut subtree pasangan
+    }
+    return true;
+  });
+  const seenAll = new Set();
+  anchorRoots.forEach(r => {
+    let max = 0;
+    pos.forEach(pp => { max = Math.max(max, pp.x + pp.w); });
+    placeUnit(r, pos.size ? max + 90 : 0, 0, seenAll);
+  });
+  // sisa root (mis. setelah hapus pasangan) diletakkan menyamping
+  allRoots.forEach(r => {
+    if (seenAll.has(r.id)) return;
+    let max = 0;
+    pos.forEach(pp => { max = Math.max(max, pp.x + pp.w); });
+    placeUnit(r, pos.size ? max + 90 : 0, 0, seenAll);
+  });
+  return pos;
+}
+
+
+/* ============ 3. RENDER TREE (SVG) ============ */
+function renderTree() {
+  const pos = layout();
+  linkLayer.innerHTML = "";
+  nodeLayer.innerHTML = "";
+  $("#emptyHint").style.display = members.length ? "none" : "flex";
+  if (!members.length) { updateHeaderSub(); return; }
+
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (t, attrs) => {
+    const e = document.createElementNS(NS, t);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  };
+
+  // --- garis ---
+  const outline = (m) => {
+    const kids = childrenOf(m.id);
+    const p = pos.get(m.id);
+    const arr = [];
+    if (!kids.length || !p) return arr;
+    // titik turun dari pasangan (atau diri sendiri jika single parent)
+    const partner = m.partnerId ? pos.get(m.partnerId) : null;
+    const originX = partner ? (p.cx + partner.cx) / 2 : p.cx;
+    const busY = p.y + NH + GAP_GEN * 0.45;
+    arr.push({ d: `M${originX} ${p.y + NH} V${busY}`, kind: "drop" });
+    const kidPts = kids.map(k => pos.get(k.id)).filter(Boolean);
+    if (kidPts.length) {
+      const xs = kidPts.map(q => q.cx);
+      arr.push({ d: `M${Math.min(...xs)} ${busY} H${Math.max(...xs)}`, kind: "bus" });
+      kidPts.forEach(q => arr.push({ d: `M${q.cx} ${busY} V${q.y}`, kind: "drop" }));
+    }
+    return arr;
+  };
+
+  members.forEach(m => {
+    const partner = m.partnerId ? byId(m.partnerId) : null;
+    const showPartnerLink = partner && partner.partnerId === m.id && m.gender === "M";
+    if (showPartnerLink) {
+      const a = pos.get(m.id), b = pos.get(partner.id);
+      if (a && b) {
+        const y = a.cy;
+        linkLayer.appendChild(el("line", {
+          x1: a.cx, y1: y, x2: b.cx, y2: y,
+          class: "lnk lnk-partner", "data-a": m.id, "data-b": partner.id
+        }));
+      }
+    }
+    outline(m).forEach(seg => {
+      linkLayer.appendChild(el("path", {
+        d: seg.d, class: "lnk", "data-owner": m.id,
+        fill: "none"
+      }));
+    });
+  });
+
+  // --- kartu node ---
+  members.forEach(m => {
+    const p = pos.get(m.id);
+    if (!p) return;
+    const g = el("g", {
+      class: "node" + (m.id === selectedId ? " selected" : "") +
+        (m.partnerOnly ? " partner-node" : ""),
+      transform: `translate(${p.x},${p.y})`,
+      "data-id": m.id, tabindex: "0",
+      role: "button", "aria-label": m.name
+    });
+    const isPartner = m.parentIds.length === 0 && m.partnerId && byId(m.partnerId) &&
+      byId(m.partnerId).partnerId === m.id && roots().some(r => r.id === m.partnerId || r.id === m.id);
+    const stroke = m.gender === "F" ? "#b45309" : "#0f766e";
+    const fillCard = m.parentIds.length === 0 && m.partnerId && !roots().some(r => r.id === m.id)
+      ? "#f5f4f2" : "#ffffff";
+
+    g.appendChild(el("rect", {
+      x: 0, y: 0, width: NW, height: NH, rx: 11,
+      class: "card", fill: fillCard, stroke, "stroke-width": "1.4"
+    }));
+    // foto / inisial
+    const clip = el("clipPath", { id: "clip-" + m.id });
+    clip.appendChild(el("rect", { x: 10, y: 10, width: 44, height: 44, rx: 22 }));
+    const defs = el("defs", {}); defs.appendChild(clip); g.appendChild(defs);
+    const av = el("g", { "clip-path": `url(#clip-${m.id})` });
+    if (m.photo) {
+      av.appendChild(el("image", {
+        href: m.photo, x: 10, y: 10, width: 44, height: 44, preserveAspectRatio: "xMidYMid slice"
+      }));
+    } else {
+      av.appendChild(el("circle", { cx: 32, cy: 32, r: 22, fill: "#eceae7" }));
+      av.appendChild(el("text", {
+        x: 32, y: 32, class: "init", "text-anchor": "middle", dy: "0.35em"
+      })).textContent = initials(m.name);
+    }
+    g.appendChild(av);
+    if (m.death) { // tanda sudah wafat: garis kecil di sudut
+      g.appendChild(el("path", {
+        d: `M${NW - 26} 14 h12 M${NW - 20} 8 v12`,
+        stroke: "#77736d", "stroke-width": "1.6", "stroke-linecap": "round"
+      }));
+    }
+    // teks
+    const name = el("text", { x: 62, y: 27, class: "nm" });
+    name.textContent = truncate(m.name, 16);
+    g.appendChild(name);
+    const sub = el("text", { x: 62, y: 44, class: "sb" });
+    const ageTxt = ageOf(m.birth, m.death || null);
+    sub.textContent = m.birth ? fmtDate(m.birth).replace(/ \d{4}$/, "") +
+      (ageTxt !== null ? " · " + ageTxt + " th" : "") : "Anggota keluarga";
+    g.appendChild(sub);
+    const gen = el("text", { x: 62, y: 60, class: "sb2" });
+    const rel = relationshipLabel(m);
+    gen.textContent = "G" + genOf(m) + (rel ? " · " + rel : "");
+    g.appendChild(gen);
+
+    nodeLayer.appendChild(g);
+  });
+
+  updateHeaderSub();
+  applyView();
+}
+function initials(name) {
+  const parts = String(name || "?").trim().split(/\s+/);
+  return ((parts[0] || "?")[0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
+}
+function truncate(s, n) {
+  s = String(s || "");
+  return s.length > n ? s.slice(0, n - 1) + "…" : s;
+}
+function relationshipLabel(m) {
+  if (m.parentIds.length === 0 && !m.partnerId) return "Akar keluarga";
+  if (m.parentIds.length === 0 && m.partnerId) return "Pasangan";
+  const sibs = childrenOf(m.parentIds[0]);
+  return sibs.length > 1 ? `Anak ke-${sibs.findIndex(s => s.id === m.id) + 1}` : "Anak";
+}
+
+/* ============ 4. PAN & ZOOM ============ */
+function applyView() {
+  viewRoot.setAttribute("transform", `translate(${view.x},${view.y}) scale(${view.k})`);
+  $("#zoomLabel").textContent = Math.round(view.k * 100) + "%";
+}
+function fitView() {
+  if (!members.length) { view = { x: 0, y: 0, k: 1 }; applyView(); return; }
+  const pos = layout();
+  let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
+  pos.forEach(p => {
+    minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
+    maxX = Math.max(maxX, p.x + p.w); maxY = Math.max(maxY, p.y + NH);
+  });
+  // sertakan label pasangan yang menempel di kanan unit
+  const r = svg.getBoundingClientRect();
+  const pad = 40;
+  const availW = Math.max(120, r.width - pad * 2);
+  const availH = Math.max(120, r.height - pad * 2);
+  const k = Math.min(2, Math.max(0.12,
+    Math.min(availW / (maxX - minX), availH / (maxY - minY))));
+  view = {
+    k,
+    x: pad + (availW - (maxX - minX) * k) / 2 - minX * k,
+    y: pad + (availH - (maxY - minY) * k) / 2 - minY * k
+  };
+  applyView();
+}
+function zoomAt(factor, cx, cy) {
+  const r = svg.getBoundingClientRect();
+  cx = cx == null ? r.width / 2 : cx; cy = cy == null ? r.height / 2 : cy;
+  const k2 = Math.min(2.5, Math.max(0.08, view.k * factor));
+  const s = k2 / view.k;
+  view.x = cx - (cx - view.x) * s;
+  view.y = cy - (cy - view.y) * s;
+  view.k = k2;
+  applyView();
+}
+let panPt = null, downOnNode = null;
+svg.addEventListener("pointerdown", (e) => {
+  if (e.button !== 0) return;
+  downOnNode = e.target.closest ? e.target.closest(".node") : null;
+  panPt = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, moved: false };
+  // pointer capture hanya bila bukan pada kartu, agar click tetap sampai ke node
+  if (!downOnNode) svg.setPointerCapture(e.pointerId);
+});
+svg.addEventListener("pointermove", (e) => {
+  if (!panPt) return;
+  const dx = e.clientX - panPt.x, dy = e.clientY - panPt.y;
+  if (Math.abs(dx) + Math.abs(dy) > 4) {
+    panPt.moved = true;
+    svg.classList.add("panning");
+    view.x = panPt.vx + dx; view.y = panPt.vy + dy;
+    applyView();
+  }
+});
+svg.addEventListener("pointerup", (e) => {
+  svg.classList.remove("panning");
+  panPt = null; downOnNode = null;
+});
+svg.addEventListener("pointercancel", () => {
+  svg.classList.remove("panning");
+  panPt = null; downOnNode = null;
+});
+svg.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  const r = svg.getBoundingClientRect();
+  zoomAt(e.deltaY < 0 ? 1.12 : 1 / 1.12, e.clientX - r.left, e.clientY - r.top);
+}, { passive: false });
+$("#btnZoomIn").addEventListener("click", () => zoomAt(1.2));
+$("#btnZoomOut").addEventListener("click", () => zoomAt(1 / 1.2));
+$("#btnFit").addEventListener("click", fitView);
+window.addEventListener("resize", () => { applyView(); });
+
+/* ============ 5. FORM & CRUD ============ */
+const form = $("#memberForm");
+function openForm(mode, ctxId) {
+  formMode = mode; editingId = null; pendingPhoto = null;
+  const ctx = ctxId ? byId(ctxId) : null;
+  selectedId = ctxId || selectedId;
+  const relMap = {
+    root: "Akar keluarga (generasi pertama)",
+    child: ctx ? "Anak dari: " + ctx.name : "Anak",
+    partner: ctx ? "Pasangan dari: " + ctx.name : "Pasangan",
+    edit: "Ubah data anggota"
+  };
+  $("#fRelLabel").value = relMap[mode] || "";
+  $("#ctxEmpty").hidden = true;
+  $("#ctxCard").hidden = !ctx;
+  if (ctx) {
+    $("#ctxTitle").textContent = mode === "child" ? "Anak dari" : mode === "partner" ? "Pasangan dari" : "Mengubah";
+    $("#ctxName").textContent = ctx.name;
+  }
+  form.hidden = false;
+  $("#fName").value = "";
+  $("#fGender").value = "M";
+  $("#fBirth").value = "";
+  $("#fDeath").value = "";
+  $("#fNote").value = "";
+  setPhotoPreview(null);
+  $("#fName").focus();
+  form.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+function openEdit(m) {
+  openForm("edit", m.id);
+  editingId = m.id;
+  $("#fRelLabel").value = "Ubah data anggota";
+  $("#fName").value = m.name;
+  $("#fGender").value = m.gender || "M";
+  $("#fBirth").value = m.birth || "";
+  $("#fDeath").value = m.death || "";
+  $("#fNote").value = m.note || "";
+  pendingPhoto = m.photo || null;
+  setPhotoPreview(pendingPhoto);
+}
+function closeForm() {
+  form.hidden = true;
+  formMode = null; editingId = null; pendingPhoto = null;
+  refreshCtxVisibility();
+}
+function refreshCtxVisibility() {
+  const hasForm = !form.hidden;
+  $("#ctxEmpty").hidden = hasForm || members.length > 0 ? (hasForm ? true : false) : false;
+  // tampilkan kartu konteks hanya saat form terbuka dengan konteks
+}
+function setPhotoPreview(dataUrl) {
+  const box = $("#photoPreview");
+  if (dataUrl) {
+    box.innerHTML = "";
+    const img = document.createElement("img");
+    img.src = dataUrl; img.alt = "Pratinjau foto";
+    box.appendChild(img);
+  } else {
+    box.innerHTML = "<span>Tanpa foto</span>";
+  }
+}
+$("#fPhoto").addEventListener("change", (e) => {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  if (f.size > 3 * 1024 * 1024) { toast("Foto terlalu besar (maks 3 MB)."); e.target.value = ""; return; }
+  const rd = new FileReader();
+  rd.onload = () => {
+    // kompres ke max 220px agar hemat penyimpanan
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement("canvas");
+      const s = Math.min(1, 220 / Math.max(img.width, img.height));
+      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      pendingPhoto = c.toDataURL("image/jpeg", 0.82);
+      setPhotoPreview(pendingPhoto);
+    };
+    img.onerror = () => { pendingPhoto = rd.result; setPhotoPreview(pendingPhoto); };
+    img.src = rd.result;
+  };
+  rd.readAsDataURL(f);
+  e.target.value = "";
+});
+$("#btnRemovePhoto").addEventListener("click", () => { pendingPhoto = null; setPhotoPreview(null); });
+$("#btnCancel").addEventListener("click", closeForm);
+
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const name = $("#fName").value.trim();
+  if (!name) { toast("Nama wajib diisi."); return; }
+  const birth = $("#fBirth").value || null;
+  const death = $("#fDeath").value || null;
+  if (birth && death && death < birth) { toast("Tanggal wafat mendahului lahir."); return; }
+
+  if (formMode === "edit" && editingId) {
+    const m = byId(editingId);
+    Object.assign(m, {
+      name, gender: $("#fGender").value, birth, death,
+      note: $("#fNote").value.trim() || null, photo: pendingPhoto
+    });
+    toast("Data " + name + " diperbarui.");
+  } else if (formMode === "root") {
+    members.push({
+      id: uid(), name, gender: $("#fGender").value, birth, death,
+      note: $("#fNote").value.trim() || null, photo: pendingPhoto,
+      parentIds: [], partnerId: null
+    });
+    toast(name + " ditambahkan sebagai akar keluarga.");
+  } else if (formMode === "child") {
+    const ctx = byId(selectedId);
+    if (!ctx) { toast("Konteks hilang."); return; }
+    // anak menempel pada kedua orang tua bila pasangan ada
+    const parentIds = [ctx.id];
+    if (ctx.partnerId && byId(ctx.partnerId) && byId(ctx.partnerId).partnerId === ctx.id)
+      parentIds.push(ctx.partnerId);
+    members.push({
+      id: uid(), name, gender: $("#fGender").value, birth, death,
+      note: $("#fNote").value.trim() || null, photo: pendingPhoto,
+      parentIds, partnerId: null
+    });
+    toast(name + " ditambahkan sebagai anak " + ctx.name + ".");
+  } else if (formMode === "partner") {
+    const ctx = byId(selectedId);
+    if (!ctx) { toast("Konteks hilang."); return; }
+    if (ctx.partnerId && byId(ctx.partnerId)) { toast(ctx.name + " sudah punya pasangan."); return; }
+    const pid = uid();
+    members.push({
+      id: pid, name, gender: $("#fGender").value, birth, death,
+      note: $("#fNote").value.trim() || null, photo: pendingPhoto,
+      parentIds: [], partnerId: ctx.id
+    });
+    ctx.partnerId = pid;
+    toast(name + " ditambahkan sebagai pasangan " + ctx.name + ".");
+  }
+  save();
+  closeForm();
+  renderAll();
+  fitView();
+});
+
+function deleteMember(id) {
+  const m = byId(id);
+  if (!m) return;
+  const desc = countDescendants(id);
+  const msg = desc > 0
+    ? `Hapus ${m.name} beserta ${desc} keturunannya? Tindakan ini tidak bisa dibatalkan.`
+    : `Hapus ${m.name}?`;
+  if (!confirm(msg)) return;
+  const kill = new Set([id]);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    members.forEach(x => {
+      if (!kill.has(x.id) && x.parentIds.some(p => kill.has(p))) { kill.add(x.id); changed = true; }
+    });
+  }
+  members = members.filter(x => !kill.has(x.id));
+  members.forEach(x => {
+    if (x.partnerId && kill.has(x.partnerId)) x.partnerId = null;
+    x.parentIds = x.parentIds.filter(p => !kill.has(p));
+  });
+  if (selectedId && kill.has(selectedId)) { selectedId = null; closeModal(); }
+  save(); renderAll(); fitView();
+  toast(m.name + " dihapus.");
+}
+function countDescendants(id) {
+  const out = new Set();
+  let frontier = [id];
+  while (frontier.length) {
+    const next = [];
+    members.forEach(x => {
+      if (!out.has(x.id) && x.parentIds.some(p => frontier.includes(p))) { out.add(x.id); next.push(x.id); }
+    });
+    frontier = next;
+  }
+  return out.size;
+}
+
+/* ============ 6. DETAIL MODAL ============ */
+const modal = $("#detailModal");
+function openDetail(id) {
+  const m = byId(id);
+  if (!m) return;
+  selectedId = id;
+  renderTree(); // update highlight
+  $("#detailTitle").textContent = m.name;
+  const ph = $("#detailPhoto");
+  ph.innerHTML = m.photo ? "" : ph.innerHTML;
+  if (m.photo) {
+    const img = document.createElement("img");
+    img.src = m.photo; img.alt = m.name;
+    ph.appendChild(img);
+  }
+  const age = ageOf(m.birth, m.death || null);
+  const rows = [
+    ["Hubungan", relationshipLabel(m)],
+    ["Generasi", "Generasi " + genOf(m)],
+    ["Tanggal Lahir", m.birth ? fmtDate(m.birth) : "-"],
+    ["Usia", age !== null ? age + " tahun" + (m.death ? " (wafat)" : "") : "-"],
+  ];
+  if (m.death) rows.push(["Tanggal Wafat", fmtDate(m.death)]);
+  const partner = m.partnerId ? byId(m.partnerId) : null;
+  if (partner) rows.push(["Pasangan", partner.name]);
+  const parents = m.parentIds.map(p => byId(p)).filter(Boolean).map(p => p.name);
+  if (parents.length) rows.push(["Orang Tua", parents.join(" & ")]);
+  const kids = childrenOf(m.id);
+  if (kids.length) rows.push(["Anak", kids.map(k => k.name).join(", ")]);
+  $("#detailFields").innerHTML = rows.map(([k, v]) =>
+    `<div class="detail-row"><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("");
+  const dn = $("#detailNote");
+  if (m.note) { dn.hidden = false; dn.textContent = m.note; } else dn.hidden = true;
+  modal.classList.add("open");
+}
+function closeModal() { modal.classList.remove("open"); }
+modal.addEventListener("click", (e) => {
+  if (e.target === modal || e.target.closest("[data-close-modal]")) closeModal();
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+
+// klik node di canvas (bukan saat drag)
+nodeLayer.addEventListener("click", (e) => {
+  const g = e.target.closest(".node");
+  if (!g) return;
+  openDetail(g.dataset.id);
+});
+nodeLayer.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" && e.key !== " ") return;
+  const g = e.target.closest(".node");
+  if (!g) return;
+  e.preventDefault();
+  openDetail(g.dataset.id);
+});
+// hover: sorot garis keturunan milik kartu
+nodeLayer.addEventListener("pointerover", (e) => {
+  const g = e.target.closest(".node");
+  if (!g) return;
+  linkLayer.querySelectorAll(".lnk").forEach(l => {
+    if (l.dataset.owner === g.dataset.id || l.dataset.a === g.dataset.id || l.dataset.b === g.dataset.id)
+      l.classList.add("hl");
+  });
+  g.classList.add("hover");
+});
+nodeLayer.addEventListener("pointerout", (e) => {
+  const g = e.target.closest(".node");
+  if (!g) return;
+  linkLayer.querySelectorAll(".lnk.hl").forEach(l => l.classList.remove("hl"));
+  g.classList.remove("hover");
+});
+
+$("#btnAddChild").addEventListener("click", () => {
+  closeModal();
+  openForm("child", selectedId);
+});
+$("#btnAddPartner").addEventListener("click", () => {
+  closeModal();
+  openForm("partner", selectedId);
+});
+$("#btnEdit").addEventListener("click", () => {
+  const m = byId(selectedId);
+  closeModal();
+  if (m) openEdit(m);
+});
+$("#btnDelete").addEventListener("click", () => { deleteMember(selectedId); });
+$("#btnAddRoot").addEventListener("click", () => {
+  if (!members.length) openForm("root");
+  else if (selectedId) openForm("child", selectedId);
+  else openForm("root");
+});
+
+/* ============ 7. BIRTHDAY DIRECTORY ============ */
+function renderBirthdays() {
+  const box = $("#bdayList");
+  const now = new Date();
+  const list = members
+    .filter(m => !m.death && m.birth && daysToNextBday(m.birth, now) !== null)
+    .map(m => ({ m, d: daysToNextBday(m.birth, now) }))
+    .sort((a, b) => a.d - b.d)
+    .slice(0, 6);
+  if (!list.length) {
+    box.innerHTML = `<p class="muted-note">Belum ada tanggal lahir yang tercatat. Isi tanggal lahir saat menambah anggota agar muncul di sini.</p>`;
+    return;
+  }
+  box.innerHTML = list.map(({ m, d }) => {
+    const [y, mo, dd] = m.birth.split("-").map(Number);
+    const turning = y ? (now.getFullYear() - y + (d === 0 ? 0 : 1)) : null;
+    const badge = d === 0 ? "Hari ini"
+      : d === 1 ? "Besok"
+      : d <= 7 ? `${d} hari` : `${d} hari`;
+    const cls = d === 0 ? "today" : d <= 7 ? "" : "";
+    return `<div class="bday-item ${cls}">
+      <div class="bday-date"><b>${dd}</b><i>${MONTHS[mo - 1]}</i></div>
+      <div class="bday-info">
+        <div class="bday-name">${esc(m.name)}</div>
+        <div class="bday-sub">${turning ? "genap " + turning + " tahun" : "ulang tahun"} · G${genOf(m)}</div>
+      </div>
+      <span class="bday-badge ${d <= 7 ? "soon" : ""}">${badge}</span>
+    </div>`;
+  }).join("");
+}
+
+/* ============ 8. MEMBER LIST & HEADER ============ */
+function renderMemberList() {
+  const q = $("#searchInput").value.trim().toLowerCase();
+  const box = $("#memberList");
+  const list = members
+    .filter(m => !q || m.name.toLowerCase().includes(q))
+    .sort((a, b) => (a.birth || "9999").localeCompare(b.birth || "9999"));
+  $("#memberCount").textContent = members.length;
+  if (!list.length) {
+    box.innerHTML = `<p class="muted-note">${members.length ? "Tidak ada nama yang cocok." : "Belum ada anggota keluarga."}</p>`;
+    return;
+  }
+  box.innerHTML = list.map(m => {
+    const age = ageOf(m.birth, m.death || null);
+    const sub = [
+      m.birth ? fmtDate(m.birth) : null,
+      age !== null ? age + " th" : null,
+      relationshipLabel(m)
+    ].filter(Boolean).join(" · ");
+    const av = m.photo
+      ? `<img src="${m.photo}" alt="">`
+      : esc(initials(m.name));
+    return `<button type="button" class="member-item ${m.id === selectedId ? "sel" : ""}" data-id="${m.id}">
+      <span class="m-avatar">${av}</span>
+      <span class="m-info">
+        <span class="m-name">${esc(m.name)}</span>
+        <span class="m-sub">${esc(sub)}</span>
+      </span>
+      <span class="m-gen">G${genOf(m)}</span>
+    </button>`;
+  }).join("");
+}
+$("#memberList").addEventListener("click", (e) => {
+  const it = e.target.closest(".member-item");
+  if (!it) return;
+  openDetail(it.dataset.id);
+});
+$("#searchInput").addEventListener("input", renderMemberList);
+
+function updateHeaderSub() {
+  const living = members.filter(m => !m.death).length;
+  const gens = members.length ? Math.max(...members.map(genOf)) : 0;
+  $("#headerSub").textContent = members.length
+    ? `${members.length} anggota · ${living} masih hidup · ${gens} generasi`
+    : "Belum ada anggota";
+}
+function renderAll() {
+  renderTree();
+  renderBirthdays();
+  renderMemberList();
+  updateHeaderSub();
+  // jika form tersembunyi dan ada anggota, arahkan pengguna lewat kartu diagram
+  if (form.hidden) {
+    $("#ctxEmpty").hidden = members.length > 0;
+    $("#ctxCard").hidden = true;
+  }
+}
+
+/* ============ 9. EXPORT PNG / PDF ============ */
+function buildExportSvg() {
+  // SVG mandiri berukuran penuh pohon (tanpa pan/zoom)
+  const pos = layout();
+  if (!pos.size) return null;
+  let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
+  pos.forEach(p => {
+    minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
+    maxX = Math.max(maxX, p.x + p.w); maxY = Math.max(maxY, p.y + NH);
+  });
+  const pad = 36, titleH = 64;
+  const W = maxX - minX + pad * 2, H = maxY - minY + pad * 2 + titleH;
+  const clone = svg.cloneNode(true);
+  clone.querySelector("#viewRoot").setAttribute("transform",
+    `translate(${pad - minX},${titleH - minY})`);
+  clone.setAttribute("width", W);
+  clone.setAttribute("height", H);
+  clone.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  clone.setAttribute("style", "background:#ffffff");
+  // judul
+  const NS = "http://www.w3.org/2000/svg";
+  const t = document.createElementNS(NS, "text");
+  t.setAttribute("x", pad); t.setAttribute("y", 34);
+  t.setAttribute("style", "font:700 19px system-ui,sans-serif;fill:#1b1b19");
+  t.textContent = "Silsilah Keluarga";
+  const sub = document.createElementNS(NS, "text");
+  const living = members.filter(m => !m.death).length;
+  const gens = Math.max(...members.map(genOf));
+  sub.setAttribute("x", pad); sub.setAttribute("y", 54);
+  sub.setAttribute("style", "font:400 12px system-ui,sans-serif;fill:#77736d");
+  sub.textContent = `${members.length} anggota · ${living} hidup · ${gens} generasi · diekspor ${fmtDate(new Date().toISOString().slice(0, 10))}`;
+  clone.insertBefore(sub, clone.firstChild);
+  clone.insertBefore(t, clone.firstChild);
+  return { svgStr: new XMLSerializer().serializeToString(clone), W, H };
+}
+function download(url, filename) {
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+$("#btnExportPng").addEventListener("click", () => {
+  const ex = buildExportSvg();
+  if (!ex) { toast("Pohon masih kosong."); return; }
+  const scale = 2;
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement("canvas");
+    c.width = ex.W * scale; c.height = ex.H * scale;
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.drawImage(img, 0, 0, c.width, c.height);
+    c.toBlob(b => {
+      const u = URL.createObjectURL(b);
+      download(u, "silsilah-keluarga.png");
+      setTimeout(() => URL.revokeObjectURL(u), 4000);
+      toast("Diagram diekspor ke PNG.");
+    }, "image/png");
+  };
+  img.onerror = () => toast("Gagal mengekspor PNG.");
+  img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(ex.svgStr);
+});
+$("#btnExportPdf").addEventListener("click", () => {
+  const ex = buildExportSvg();
+  if (!ex) { toast("Pohon masih kosong."); return; }
+  // PDF satu halaman: konten vektor SVG via print-to-PDF window
+  const w = window.open("", "_blank");
+  if (!w) { toast("Popup diblokir browser. Izinkan popup untuk ekspor PDF."); return; }
+  const escXml = ex.svgStr.replace(/&nbsp;/g, "&#160;");
+  w.document.write(`<!DOCTYPE html><html><head><title>Silsilah Keluarga</title>
+<style>
+  @page { size: ${Math.min(ex.W / 96, 50).toFixed(2)}in ${Math.min(ex.H / 96, 50).toFixed(2)}in; margin: 0; }
+  html,body{margin:0;padding:0;background:#fff}
+  svg{display:block;width:${ex.W}px;height:${ex.H}px;max-width:100%;height:auto}
+  @media print { .noprint{display:none} }
+</style></head><body>
+${escXml}
+<div class="noprint" style="position:fixed;top:10px;right:10px;font:600 13px system-ui;background:#1b1b19;color:#fff;padding:10px 16px;border-radius:8px">
+Jendela cetak akan terbuka — pilih "Save as PDF" (ukuran kertas: fit ke halaman, tanpa margin)
+</div>
+<script>window.onload=function(){setTimeout(function(){window.print()},300)}<\/script>
+</body></html>`);
+  w.document.close();
+  toast("Pilih Simpan sebagai PDF di jendela cetak.");
+});
+
+/* ============ 10. DEMO DATA & INIT ============ */
+$("#btnDemo").addEventListener("click", () => {
+  if (members.length && !confirm("Ganti data saat ini dengan contoh keluarga?")) return;
+  const mk = (name, gender, birth, death, note, parentIds, partnerId) =>
+    ({ id: uid(), name, gender, birth, death, note, photo: null, parentIds: parentIds || [], partnerId: partnerId || null });
+  const now = new Date();
+  const upcoming = (daysAhead, year) => {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysAhead);
+    return `${year || d.getFullYear() - 30}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+  members = [];
+  const kakek = mk("Soeharno Wijaya", "M", "1948-03-12", "2020-08-04", "Pensiunan guru, pendiri keluarga di Yogyakarta.", [], null);
+  const nenek = mk("Sri Rahayu", "F", "1952-07-22", null, "Pensiunan bidan, hobi berkebun.", [], kakek.id);
+  kakek.partnerId = nenek.id;
+  const budi = mk("Budi Wijaya", "M", "1975-01-05", null, "Insinyur di Bandung.", [kakek.id, nenek.id], null);
+  const budiS = mk("Ani Lestari", "F", upcoming(5), null, "Apoteker.", [], budi.id);
+  budi.partnerId = budiS.id;
+  const rina = mk("Rina Wijaya", "F", "1978-09-30", null, "Dokter gigi di Semarang.", [kakek.id, nenek.id], null);
+  const rinaS = mk("Dedi Kurniawan", "M", "1976-11-02", null, "Pengusaha kuliner.", [], rina.id);
+  rina.partnerId = rinaS.id;
+  const agus = mk("Agus Wijaya", "M", "1982-04-18", null, "Belum menikah, bekerja di Jakarta.", [kakek.id, nenek.id], null);
+  const c1 = mk("Dewi Wijaya", "F", "2001-06-14", null, "Mahasiswa kedokteran.", [budi.id, budiS.id], null);
+  const c2 = mk("Fajar Wijaya", "M", upcoming(0), null, "Siswa SMA, basket.", [budi.id, budiS.id], null);
+  const c3 = mk("Sari Kurniawan", "F", "2005-12-03", null, "Siswa SMP.", [rina.id, rinaS.id], null);
+  members.push(kakek, nenek, budi, budiS, rina, rinaS, agus, c1, c2, c3);
+  save();
+  renderAll();
+  fitView();
+  toast("Contoh data 3 generasi dimuat.");
+});
+
+// init
+load();
+renderAll();
+fitView();
+</script>
+</body>
+</html>
+</body>
+</html>

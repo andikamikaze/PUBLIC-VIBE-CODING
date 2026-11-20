@@ -1,0 +1,3328 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>Notion Clone — Desktop & Mobile</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ============================================
+         RESET & VARIABLES
+         ============================================ */
+      :root {
+        --bg: #fff;
+        --sidebar: #fbfbfa;
+        --panel: #fff;
+        --text: #37352f;
+        --text-soft: #787774;
+        --muted: #9b9a97;
+        --line: #e9e9e7;
+        --hover: #efefed;
+        --active: #e9e9e7;
+        --soft: #f7f7f5;
+        --accent: #2383e2;
+        --accent-soft: #e7f3fb;
+        --shadow: 0 4px 18px rgba(15, 15, 15, 0.08);
+        --shadow-lg: 0 8px 30px rgba(15, 15, 15, 0.12);
+        --radius: 3px;
+        --radius-md: 6px;
+        --sidebar-w: 240px;
+        --font:
+          "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Helvetica, Arial, sans-serif;
+        --mono:
+          "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
+          Consolas, monospace;
+      }
+      * {
+        box-sizing: border-box;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        font-family: var(--font);
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--text);
+        background: #e9e9e7;
+        overflow: hidden;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      button {
+        color: inherit;
+      }
+      kbd {
+        font-family: var(--mono);
+        font-size: 10px;
+        background: #f2f1ef;
+        border: 1px solid var(--line);
+        border-radius: 3px;
+        padding: 1px 4px;
+        color: var(--text-soft);
+      }
+
+      /* ============================================
+         DEVICE SWITCHER (Top Bar)
+         ============================================ */
+      .device-switcher {
+        position: fixed;
+        top: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 4px;
+        box-shadow: var(--shadow);
+      }
+      .device-switcher button {
+        border: 0;
+        background: transparent;
+        padding: 8px 16px;
+        border-radius: 7px;
+        font-size: 13px;
+        font-weight: 550;
+        color: var(--text-soft);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.15s;
+      }
+      .device-switcher button.active {
+        background: var(--text);
+        color: #fff;
+      }
+      .device-switcher button:hover:not(.active) {
+        background: var(--hover);
+        color: var(--text);
+      }
+      .device-switcher .dev-icon {
+        width: 14px;
+        height: 14px;
+        display: inline-block;
+      }
+
+      /* ============================================
+         VIEW CONTAINERS
+         ============================================ */
+      .view-container {
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-top: 70px;
+        transition: opacity 0.3s;
+      }
+      .view-container.hidden {
+        display: none;
+      }
+
+      /* ============================================
+         DESKTOP VIEW
+         ============================================ */
+      .desktop-frame {
+        width: min(1440px, calc(100vw - 40px));
+        height: min(900px, calc(100vh - 100px));
+        background: var(--bg);
+        border-radius: 10px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+        display: flex;
+        position: relative;
+      }
+
+      .app {
+        height: 100%;
+        display: flex;
+        background: var(--bg);
+        flex: 1;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        width: var(--sidebar-w);
+        height: 100%;
+        flex: 0 0 var(--sidebar-w);
+        background: var(--sidebar);
+        border-right: 1px solid var(--line);
+        display: flex;
+        flex-direction: column;
+        transition:
+          width 0.2s,
+          flex-basis 0.2s;
+        overflow: hidden;
+        z-index: 20;
+      }
+      .sidebar.collapsed {
+        width: 0;
+        flex-basis: 0;
+        border: 0;
+      }
+      .side-inner {
+        width: var(--sidebar-w);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        min-width: var(--sidebar-w);
+      }
+      .workspace-switch {
+        margin: 10px 10px 6px;
+        padding: 6px 8px;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        border-radius: 5px;
+        cursor: pointer;
+        min-height: 38px;
+        position: relative;
+      }
+      .workspace-switch:hover,
+      .side-row:hover,
+      .side-action:hover {
+        background: var(--hover);
+      }
+      .workspace-mark {
+        height: 22px;
+        width: 22px;
+        border-radius: 5px;
+        background: linear-gradient(135deg, #2383e2, #5ba3e8);
+        display: grid;
+        place-items: center;
+        font-weight: 750;
+        font-size: 12px;
+        color: #fff;
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
+        flex-shrink: 0;
+      }
+      .workspace-name {
+        font-size: 14px;
+        font-weight: 600;
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--text);
+      }
+      .tiny-muted {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .side-top-actions {
+        display: flex;
+        gap: 2px;
+        opacity: 0;
+        transition: opacity 0.15s;
+      }
+      .workspace-switch:hover .side-top-actions {
+        opacity: 1;
+      }
+      .icon-btn {
+        border: 0;
+        background: transparent;
+        width: 28px;
+        height: 28px;
+        display: inline-grid;
+        place-items: center;
+        border-radius: 5px;
+        color: var(--text-soft);
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+      .icon-btn:hover {
+        background: var(--active);
+        color: var(--text);
+      }
+      .icon {
+        width: 16px;
+        height: 16px;
+        display: block;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .icon.small {
+        width: 14px;
+        height: 14px;
+      }
+      .side-scroll {
+        overflow: auto;
+        padding: 0 8px 16px;
+        scrollbar-width: thin;
+        flex: 1;
+      }
+      .side-scroll::-webkit-scrollbar {
+        width: 8px;
+      }
+      .side-scroll::-webkit-scrollbar-thumb {
+        background: #d8d8d4;
+        border-radius: 4px;
+      }
+      .side-tools {
+        display: grid;
+        gap: 1px;
+        margin-bottom: 14px;
+      }
+      .side-row {
+        height: 28px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 8px;
+        border-radius: 4px;
+        color: var(--text-soft);
+        cursor: pointer;
+        white-space: nowrap;
+        font-size: 14px;
+      }
+      .side-row .icon {
+        color: var(--muted);
+        width: 14px;
+        height: 14px;
+      }
+      .side-row .row-label {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .shortcut {
+        font-size: 11px;
+        color: #b4b4ae;
+        letter-spacing: 0.01em;
+        font-family: var(--mono);
+      }
+      .section-head {
+        height: 29px;
+        display: flex;
+        align-items: center;
+        padding: 0 6px 0 8px;
+        margin-top: 14px;
+        color: var(--text-soft);
+        font-size: 12px;
+        font-weight: 550;
+        white-space: nowrap;
+      }
+      .section-head .head-title {
+        flex: 1;
+      }
+      .section-head .icon-btn {
+        opacity: 0;
+        width: 22px;
+        height: 22px;
+      }
+      .section-head:hover .icon-btn {
+        opacity: 1;
+      }
+      .page-row {
+        height: 28px;
+        padding-left: 8px;
+        gap: 6px;
+      }
+      .page-row.active {
+        background: var(--active);
+      }
+      .page-row.active .row-label {
+        color: var(--text);
+        font-weight: 500;
+      }
+      .page-row .row-label {
+        color: var(--text-soft);
+      }
+      .page-icon {
+        width: 16px;
+        height: 16px;
+        display: grid;
+        place-items: center;
+        font-size: 13px;
+        flex-shrink: 0;
+      }
+      .nested {
+        padding-left: 16px;
+      }
+      .add-row {
+        color: var(--muted);
+      }
+      .side-bottom {
+        padding: 8px 10px 10px;
+        border-top: 1px solid var(--line);
+      }
+      .upgrade-card {
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #fff;
+        margin-bottom: 8px;
+      }
+      .upgrade-title {
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 2px;
+      }
+      .upgrade-copy {
+        font-size: 12px;
+        color: var(--text-soft);
+        line-height: 1.4;
+        margin-bottom: 8px;
+      }
+      .upgrade-btn {
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 4px;
+        padding: 5px 9px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+      }
+      .upgrade-btn:hover {
+        background: var(--soft);
+      }
+      .user-row {
+        height: 34px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 6px;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      .avatar {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-size: 10px;
+        font-weight: 700;
+        color: #fff;
+        background: #697c91;
+        flex-shrink: 0;
+      }
+      .user-name {
+        font-size: 13px;
+        font-weight: 500;
+        flex: 1;
+        color: var(--text);
+      }
+      .plan {
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      /* Main */
+      .main {
+        min-width: 0;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        position: relative;
+        background: var(--bg);
+      }
+      .topbar {
+        height: 45px;
+        min-height: 45px;
+        display: flex;
+        align-items: center;
+        padding: 0 16px 0 10px;
+        gap: 8px;
+        z-index: 5;
+        background: var(--bg);
+      }
+      .topbar-left {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        min-width: 0;
+        flex: 1;
+      }
+      .crumbs {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        min-width: 0;
+        color: var(--muted);
+        font-size: 13px;
+        white-space: nowrap;
+      }
+      .crumb-link {
+        color: var(--text-soft);
+        cursor: pointer;
+        padding: 3px 4px;
+        border-radius: 3px;
+      }
+      .crumb-link:hover {
+        background: var(--hover);
+      }
+      .crumb-page {
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        min-width: 0;
+        padding: 3px 4px;
+        border-radius: 3px;
+        cursor: pointer;
+      }
+      .crumb-page:hover {
+        background: var(--hover);
+      }
+      .crumb-page span:last-child {
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .crumb-divider {
+        color: #c5c5c1;
+      }
+      .topbar-right {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+      }
+      .top-link {
+        font-size: 13px;
+        color: var(--text-soft);
+        padding: 4px 7px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .top-link:hover {
+        background: var(--hover);
+      }
+      .share-btn {
+        border: 1px solid #e4e4e1;
+        background: #fff;
+        padding: 5px 11px;
+        border-radius: 4px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        margin-left: 4px;
+      }
+      .share-btn:hover {
+        background: var(--soft);
+      }
+      .avatar-stack {
+        display: flex;
+        margin: 0 4px;
+      }
+      .avatar-stack .avatar {
+        width: 20px;
+        height: 20px;
+        border: 2px solid white;
+        margin-left: -5px;
+        font-size: 8px;
+      }
+      .content-scroll {
+        overflow: auto;
+        flex: 1;
+        scrollbar-width: thin;
+        scrollbar-color: #d8d8d4 transparent;
+      }
+      .content-scroll::-webkit-scrollbar {
+        width: 10px;
+      }
+      .content-scroll::-webkit-scrollbar-thumb {
+        background: #d8d8d4;
+        border-radius: 5px;
+      }
+      .page {
+        width: min(100% - 96px, 900px);
+        margin: 0 auto;
+        padding: 0 0 100px;
+      }
+      .cover-image {
+        width: 100%;
+        height: 180px;
+        background:
+          linear-gradient(135deg, #667eea 0%, #764ba2 100%),
+          url("https://images.unsplash.com/photo-1557683316-973673baf9e5?w=1200");
+        background-size: cover;
+        background-position: center;
+        margin: 0 0 -80px;
+        position: relative;
+      }
+      .page-actions {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        margin: 30px 0 6px;
+        color: var(--muted);
+        font-size: 13px;
+        opacity: 0;
+        transition: opacity 0.15s;
+      }
+      .page:hover .page-actions {
+        opacity: 1;
+      }
+      .page-action-left,
+      .page-action-right {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .tiny-btn {
+        background: transparent;
+        border: 0;
+        padding: 4px 6px;
+        border-radius: 3px;
+        color: var(--text-soft);
+        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        cursor: pointer;
+      }
+      .tiny-btn:hover {
+        background: var(--hover);
+        color: var(--text);
+      }
+      .title-line {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        margin-bottom: 6px;
+        margin-top: 12px;
+      }
+      .big-page-icon {
+        width: 78px;
+        height: 78px;
+        display: grid;
+        place-items: center;
+        font-size: 68px;
+        line-height: 1;
+        flex-shrink: 0;
+        margin-top: 10px;
+        cursor: pointer;
+      }
+      h1 {
+        font-size: 40px;
+        letter-spacing: -0.03em;
+        line-height: 1.2;
+        font-weight: 700;
+        margin: 0 0 4px;
+        color: var(--text);
+        padding: 3px 2px;
+        border-radius: 3px;
+      }
+      h1:hover {
+        background: var(--soft);
+      }
+      .subtitle {
+        font-size: 14px;
+        color: var(--text-soft);
+        margin: 0 0 14px;
+        line-height: 1.5;
+        padding: 3px 2px;
+        border-radius: 3px;
+      }
+      .subtitle:hover {
+        background: var(--soft);
+      }
+      [contenteditable="true"] {
+        outline: none;
+      }
+      [contenteditable="true"]:focus {
+        box-shadow: 0 0 0 2px rgba(35, 131, 226, 0.2);
+      }
+      .metadata {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 4px 12px;
+        align-items: center;
+        margin: 10px 0 28px;
+        padding: 12px 0;
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        font-size: 14px;
+      }
+      .meta-label {
+        color: var(--text-soft);
+      }
+      .meta-value {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--text);
+        cursor: pointer;
+        padding: 3px 6px;
+        border-radius: 3px;
+      }
+      .meta-value:hover {
+        background: var(--hover);
+      }
+      .meta-dot {
+        height: 7px;
+        width: 7px;
+        border-radius: 50%;
+        background: #51a879;
+      }
+      .callout {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        background: #f7f6f3;
+        border-radius: 3px;
+        padding: 14px 16px;
+        margin: 18px 0;
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--text);
+      }
+      .callout-icon {
+        font-size: 16px;
+        line-height: 1.5;
+      }
+      .callout strong {
+        font-weight: 600;
+      }
+      h2.section-title {
+        font-size: 24px;
+        letter-spacing: -0.02em;
+        font-weight: 600;
+        margin: 40px 0 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 3px 2px;
+        border-radius: 3px;
+      }
+      h2.section-title:hover {
+        background: var(--soft);
+      }
+      .section-title .title-emoji {
+        font-size: 20px;
+      }
+      .section-desc {
+        font-size: 14px;
+        color: var(--text-soft);
+        margin: 0 0 16px;
+        line-height: 1.5;
+      }
+      .database-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 20px 0 12px;
+        gap: 10px;
+      }
+      .view-tabs {
+        display: flex;
+        align-items: center;
+        gap: 1px;
+      }
+      .view-tab {
+        border: 0;
+        background: transparent;
+        padding: 5px 8px;
+        border-radius: 3px;
+        font-size: 13px;
+        color: var(--text-soft);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+      }
+      .view-tab.active {
+        color: var(--text);
+        background: var(--hover);
+        font-weight: 500;
+      }
+      .view-tab:hover {
+        background: var(--hover);
+      }
+      .db-controls {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+      }
+      .db-controls .icon-btn {
+        width: 26px;
+        height: 26px;
+      }
+      .new-btn {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        background: #fff;
+        border: 1px solid #e5e5e1;
+        border-radius: 3px;
+        padding: 4px 9px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+      }
+      .new-btn:hover {
+        background: var(--soft);
+      }
+      .board {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        align-items: start;
+      }
+      .board-column {
+        background: var(--soft);
+        border-radius: 4px;
+        padding: 10px 8px 8px;
+        min-height: 200px;
+        transition: background 0.15s;
+      }
+      .board-column.drag-over {
+        background: var(--active);
+        outline: 2px dashed var(--accent);
+      }
+      .column-head {
+        height: 28px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 4px 8px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text);
+      }
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--muted);
+      }
+      .status-dot.progress {
+        background: #e2a13b;
+      }
+      .status-dot.done {
+        background: #55a47b;
+      }
+      .count {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 400;
+      }
+      .column-menu {
+        margin-left: auto;
+        opacity: 0;
+      }
+      .board-column:hover .column-menu {
+        opacity: 1;
+      }
+      .task-list {
+        display: grid;
+        gap: 8px;
+        min-height: 70px;
+      }
+      .task-card {
+        background: #fff;
+        border: 1px solid #e7e7e4;
+        border-radius: 3px;
+        padding: 10px 12px;
+        cursor: grab;
+        transition:
+          box-shadow 0.15s,
+          transform 0.15s;
+      }
+      .task-card:hover {
+        box-shadow: 0 1px 3px rgba(15, 15, 15, 0.1);
+      }
+      .task-card.dragging {
+        opacity: 0.45;
+        transform: rotate(2deg);
+      }
+      .task-title {
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 1.4;
+        margin-bottom: 10px;
+        color: var(--text);
+      }
+      .task-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-bottom: 10px;
+      }
+      .tag {
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 11px;
+        line-height: 1.4;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+      .tag.design {
+        background: #fadbd8;
+        color: #943d35;
+      }
+      .tag.dev {
+        background: #d4e4f7;
+        color: #2c5d8a;
+      }
+      .tag.research {
+        background: #f4ecd6;
+        color: #8d6d29;
+      }
+      .tag.content {
+        background: #e9e5f8;
+        color: #7161a5;
+      }
+      .tag.ops {
+        background: #d8eadf;
+        color: #2d6a43;
+      }
+      .task-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .task-meta {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .mini-avatar {
+        height: 18px;
+        width: 18px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-size: 8px;
+        color: #fff;
+        font-weight: 600;
+        background: #8b9aab;
+      }
+      .mini-avatar.pink {
+        background: #c58b91;
+      }
+      .mini-avatar.green {
+        background: #719a7f;
+      }
+      .mini-avatar.gold {
+        background: #bd9b60;
+      }
+      .mini-avatar.purple {
+        background: #9587b6;
+      }
+      .add-task {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+        padding: 7px 6px;
+        cursor: pointer;
+        border-radius: 3px;
+      }
+      .add-task:hover {
+        color: var(--text);
+        background: var(--active);
+      }
+
+      /* Table view */
+      .table-view {
+        display: none;
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 3px;
+      }
+      .table-view table {
+        border-collapse: collapse;
+        width: 100%;
+        min-width: 650px;
+        font-size: 14px;
+      }
+      .table-view th {
+        height: 33px;
+        text-align: left;
+        font-weight: 500;
+        color: var(--text-soft);
+        border-bottom: 1px solid var(--line);
+        padding: 0 12px;
+        white-space: nowrap;
+        font-size: 13px;
+        background: var(--soft);
+      }
+      .table-view td {
+        height: 36px;
+        border-bottom: 1px solid var(--line);
+        padding: 0 12px;
+        color: var(--text);
+        white-space: nowrap;
+        font-size: 14px;
+      }
+      .table-view tr:last-child td {
+        border-bottom: 0;
+      }
+      .table-view tr:hover td {
+        background: var(--soft);
+      }
+      .table-name {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text);
+        font-weight: 500;
+      }
+      .status-pill {
+        font-size: 12px;
+        border-radius: 3px;
+        padding: 3px 8px;
+        background: var(--hover);
+        color: var(--text-soft);
+        display: inline-block;
+      }
+      .status-pill.progress {
+        background: #fff1d9;
+        color: #94641f;
+      }
+      .status-pill.done {
+        background: #dbeddb;
+        color: #2d6a43;
+      }
+
+      /* Lower grid */
+      .lower-grid {
+        display: grid;
+        grid-template-columns: 1.3fr 1fr;
+        gap: 30px;
+        margin-top: 40px;
+      }
+      .lower-card {
+        padding: 0;
+      }
+      .lower-card-head {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text);
+      }
+      .activity-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin: 14px 0;
+        font-size: 13px;
+        color: var(--text-soft);
+        line-height: 1.5;
+      }
+      .activity-item strong {
+        font-weight: 500;
+        color: var(--text);
+      }
+      .activity-time {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+      .check-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin: 10px 0;
+        font-size: 14px;
+        color: var(--text);
+        line-height: 1.5;
+      }
+      .check-item input {
+        accent-color: var(--text);
+        margin: 3px 0 0;
+        width: 15px;
+        height: 15px;
+      }
+      .check-item.done label {
+        text-decoration: line-through;
+        color: var(--muted);
+      }
+      .add-block {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: var(--muted);
+        font-size: 14px;
+        padding: 8px 10px;
+        margin-top: 20px;
+        cursor: pointer;
+        border-radius: 3px;
+      }
+      .add-block:hover {
+        background: var(--hover);
+        color: var(--text);
+      }
+      .footer-note {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 60px;
+        text-align: center;
+      }
+
+      /* Popovers & Modals */
+      .popover {
+        position: fixed;
+        z-index: 80;
+        display: none;
+        min-width: 210px;
+        background: #fff;
+        border: 1px solid #e8e8e5;
+        border-radius: 5px;
+        box-shadow: var(--shadow-lg);
+        padding: 5px;
+      }
+      .popover.open {
+        display: block;
+      }
+      .pop-item {
+        height: 30px;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 0 9px;
+        border-radius: 3px;
+        font-size: 13px;
+        color: var(--text);
+        cursor: pointer;
+      }
+      .pop-item:hover {
+        background: var(--hover);
+      }
+      .pop-item .icon {
+        width: 14px;
+        height: 14px;
+        color: var(--text-soft);
+      }
+      .pop-sep {
+        height: 1px;
+        background: var(--line);
+        margin: 4px 3px;
+      }
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 15, 15, 0.22);
+        z-index: 100;
+        display: none;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 15vh 16px 20px;
+      }
+      .modal-backdrop.open {
+        display: flex;
+      }
+      .search-modal {
+        width: min(560px, 100%);
+        background: #fff;
+        border: 1px solid #e6e6e2;
+        border-radius: 6px;
+        box-shadow: 0 16px 55px rgba(0, 0, 0, 0.18);
+        overflow: hidden;
+      }
+      .search-input-wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line);
+      }
+      .search-input-wrap .icon {
+        color: var(--muted);
+        width: 18px;
+        height: 18px;
+      }
+      .search-input {
+        border: 0;
+        outline: 0;
+        flex: 1;
+        font-size: 14px;
+        color: var(--text);
+        background: transparent;
+      }
+      .search-results {
+        padding: 8px;
+        max-height: 330px;
+        overflow: auto;
+      }
+      .search-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        padding: 5px 8px;
+        font-weight: 500;
+      }
+      .search-result {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 8px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .search-result:hover,
+      .search-result.selected {
+        background: var(--hover);
+      }
+      .search-result .result-meta {
+        margin-left: auto;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .modal-foot {
+        border-top: 1px solid var(--line);
+        padding: 10px 14px;
+        color: var(--muted);
+        font-size: 11px;
+        display: flex;
+        justify-content: space-between;
+      }
+      .toast {
+        position: fixed;
+        bottom: 22px;
+        left: 50%;
+        transform: translate(-50%, 15px);
+        opacity: 0;
+        pointer-events: none;
+        background: #292929;
+        color: #fff;
+        padding: 10px 14px;
+        border-radius: 5px;
+        font-size: 13px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        transition:
+          opacity 0.2s,
+          transform 0.2s;
+        z-index: 150;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      .mobile-scrim {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.25);
+        z-index: 15;
+      }
+
+      /* ============================================
+         MOBILE VIEW (Pixel Phone)
+         ============================================ */
+      .mobile-view {
+        position: relative;
+      }
+      .pixel-phone {
+        width: 393px;
+        height: 852px;
+        background: #000;
+        border-radius: 52px;
+        padding: 14px;
+        box-shadow:
+          0 0 0 2px #1a1a1a,
+          0 30px 80px rgba(0, 0, 0, 0.4),
+          0 15px 40px rgba(0, 0, 0, 0.2);
+        position: relative;
+        overflow: hidden;
+      }
+      /* Side buttons */
+      .pixel-phone::before,
+      .pixel-phone::after {
+        content: "";
+        position: absolute;
+        background: #2a2a2a;
+        border-radius: 2px;
+      }
+      .pixel-phone::before {
+        /* Power button */
+        right: -2px;
+        top: 160px;
+        width: 3px;
+        height: 70px;
+      }
+      .pixel-phone::after {
+        /* Volume buttons */
+        left: -2px;
+        top: 130px;
+        width: 3px;
+        height: 100px;
+        box-shadow: 0 60px 0 #2a2a2a;
+      }
+      .phone-screen {
+        width: 100%;
+        height: 100%;
+        background: #fff;
+        border-radius: 40px;
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+      /* Status bar */
+      .status-bar {
+        height: 44px;
+        padding: 14px 28px 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 15px;
+        font-weight: 600;
+        color: #000;
+        flex-shrink: 0;
+        position: relative;
+        z-index: 10;
+      }
+      .status-left {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .status-right {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .status-icon {
+        width: 16px;
+        height: 12px;
+        stroke: #000;
+        fill: none;
+        stroke-width: 1.3;
+      }
+      .battery {
+        width: 24px;
+        height: 12px;
+        border: 1.5px solid #000;
+        border-radius: 2px;
+        position: relative;
+        padding: 1px;
+      }
+      .battery::after {
+        content: "";
+        position: absolute;
+        right: -2px;
+        top: 3px;
+        width: 1.5px;
+        height: 4px;
+        background: #000;
+      }
+      .battery-fill {
+        width: 80%;
+        height: 100%;
+        background: #000;
+        border-radius: 1px;
+      }
+      /* Punch hole camera */
+      .punch-hole {
+        position: absolute;
+        top: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 12px;
+        height: 12px;
+        background: #000;
+        border-radius: 50%;
+        z-index: 20;
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+      }
+      .punch-hole::after {
+        content: "";
+        position: absolute;
+        inset: 3px;
+        background: radial-gradient(circle, #0a0a2e 0%, #000 70%);
+        border-radius: 50%;
+      }
+
+      /* Mobile Notion Header */
+      .mobile-header {
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border-bottom: 1px solid var(--line);
+        background: #fff;
+        flex-shrink: 0;
+      }
+      .mobile-header .menu-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        color: var(--text);
+      }
+      .mobile-header .menu-btn:active {
+        background: var(--hover);
+      }
+      .mobile-header .breadcrumb {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        min-width: 0;
+      }
+      .mobile-header .crumb-icon {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        background: var(--soft);
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        flex-shrink: 0;
+      }
+      .mobile-header .crumb-text {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .mobile-header .header-actions {
+        display: flex;
+        gap: 4px;
+      }
+      .mobile-header .icon-btn {
+        width: 32px;
+        height: 32px;
+      }
+
+      /* Mobile content */
+      .mobile-content {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: none;
+      }
+      .mobile-content::-webkit-scrollbar {
+        display: none;
+      }
+      .mobile-cover {
+        width: 100%;
+        height: 140px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        position: relative;
+        flex-shrink: 0;
+      }
+      .mobile-page-body {
+        padding: 20px 16px 120px;
+      }
+      .mobile-page-icon {
+        width: 56px;
+        height: 56px;
+        display: grid;
+        place-items: center;
+        font-size: 48px;
+        margin-top: -40px;
+        background: #fff;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      }
+      .mobile-page-title {
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: var(--text);
+        margin: 0 0 6px;
+        line-height: 1.2;
+      }
+      .mobile-page-subtitle {
+        font-size: 14px;
+        color: var(--text-soft);
+        margin: 0 0 14px;
+        line-height: 1.5;
+      }
+      .mobile-meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 16px;
+      }
+      .mobile-meta-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 9px;
+        background: var(--soft);
+        border-radius: 4px;
+        font-size: 12px;
+        color: var(--text-soft);
+      }
+      .mobile-meta-chip .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #51a879;
+      }
+      .mobile-callout {
+        background: #f7f6f3;
+        border-radius: 6px;
+        padding: 12px;
+        margin: 14px 0;
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .mobile-section-title {
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        margin: 24px 0 10px;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .mobile-view-tabs {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 10px;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .mobile-view-tabs::-webkit-scrollbar {
+        display: none;
+      }
+      .mobile-view-tab {
+        border: 0;
+        background: transparent;
+        padding: 5px 10px;
+        border-radius: 14px;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-soft);
+        white-space: nowrap;
+        cursor: pointer;
+      }
+      .mobile-view-tab.active {
+        background: var(--text);
+        color: #fff;
+      }
+      .mobile-board-column {
+        background: var(--soft);
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 12px;
+      }
+      .mobile-column-head {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 2px 4px 8px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .mobile-task-card {
+        background: #fff;
+        border: 1px solid #e7e7e4;
+        border-radius: 6px;
+        padding: 10px;
+        margin-bottom: 6px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+      }
+      .mobile-task-title {
+        font-size: 13px;
+        font-weight: 500;
+        margin-bottom: 6px;
+        color: var(--text);
+      }
+      .mobile-task-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      /* Mobile bottom nav */
+      .mobile-bottom-nav {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 88px;
+        background: #fff;
+        border-top: 1px solid var(--line);
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-around;
+        padding: 8px 0 20px;
+        flex-shrink: 0;
+      }
+      .mobile-nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        color: var(--muted);
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 6px;
+      }
+      .mobile-nav-item.active {
+        color: var(--accent);
+      }
+      .mobile-nav-icon {
+        width: 22px;
+        height: 22px;
+      }
+      .mobile-nav-label {
+        font-size: 10px;
+        font-weight: 500;
+      }
+      .mobile-fab {
+        position: absolute;
+        bottom: 96px;
+        right: 16px;
+        width: 48px;
+        height: 48px;
+        background: var(--accent);
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(35, 131, 226, 0.4);
+        cursor: pointer;
+        z-index: 5;
+      }
+      .mobile-fab:active {
+        transform: scale(0.95);
+      }
+
+      /* Mobile drawer */
+      .mobile-drawer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 85%;
+        height: 100%;
+        background: var(--sidebar);
+        z-index: 30;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid var(--line);
+      }
+      .mobile-drawer.open {
+        transform: translateX(0);
+      }
+      .mobile-drawer-scrim {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.3);
+        z-index: 29;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s;
+      }
+      .mobile-drawer-scrim.open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .mobile-drawer-header {
+        padding: 44px 16px 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .mobile-drawer-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px 12px;
+        scrollbar-width: none;
+      }
+      .mobile-drawer-scroll::-webkit-scrollbar {
+        display: none;
+      }
+      .mobile-drawer-item {
+        height: 40px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 10px;
+        border-radius: 6px;
+        font-size: 14px;
+        color: var(--text);
+        cursor: pointer;
+        margin-bottom: 2px;
+      }
+      .mobile-drawer-item:hover {
+        background: var(--hover);
+      }
+      .mobile-drawer-item .icon {
+        width: 18px;
+        height: 18px;
+      }
+
+      /* Gesture indicator */
+      .gesture-indicator {
+        position: absolute;
+        bottom: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 134px;
+        height: 5px;
+        background: #000;
+        border-radius: 3px;
+        z-index: 50;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- SVG Icon Definitions -->
+    <svg
+      aria-hidden="true"
+      style="position: absolute; width: 0; height: 0; overflow: hidden"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <symbol id="i-menu" viewBox="0 0 24 24">
+        <path d="M4 6h16M4 12h16M4 18h16" />
+      </symbol>
+      <symbol id="i-search" viewBox="0 0 24 24">
+        <circle cx="10.8" cy="10.8" r="6.8" />
+        <path d="m16 16 4.5 4.5" />
+      </symbol>
+      <symbol id="i-inbox" viewBox="0 0 24 24">
+        <path d="M4 5h16l1 11H3L4 5Z" />
+        <path d="M3.5 15.5h5l1.5 2h4l1.5-2h5" />
+      </symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3" />
+        <path
+          d="m19.4 15 .1.1 1.1 1.8-1.7 2.9-2.1-.5a7.8 7.8 0 0 1-1.5.9l-.5 2.1h-3.4l-.5-2.1a7.8 7.8 0 0 1-1.5-.9l-2.1.5-1.7-2.9 1.1-1.8a7.2 7.2 0 0 1 0-1.8l-1.1-1.8 1.7-2.9 2.1.5a7.8 7.8 0 0 1 1.5-.9l.5-2.1h3.4l.5 2.1a7.8 7.8 0 0 1 1.5.9l2.1-.5 1.7 2.9-1.1 1.8a7.2 7.2 0 0 1 0 1.8Z"
+        />
+      </symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24">
+        <path d="M12 5v14M5 12h14" />
+      </symbol>
+      <symbol id="i-chevron" viewBox="0 0 24 24">
+        <path d="m9 18 6-6-6-6" />
+      </symbol>
+      <symbol id="i-down" viewBox="0 0 24 24">
+        <path d="m6 9 6 6 6-6" />
+      </symbol>
+      <symbol id="i-more" viewBox="0 0 24 24">
+        <circle cx="5" cy="12" r="1" />
+        <circle cx="12" cy="12" r="1" />
+        <circle cx="19" cy="12" r="1" />
+      </symbol>
+      <symbol id="i-star" viewBox="0 0 24 24">
+        <path
+          d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"
+        />
+      </symbol>
+      <symbol id="i-share" viewBox="0 0 24 24">
+        <path d="M12 15V3m-4 4 4-4 4 4" />
+        <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
+      </symbol>
+      <symbol id="i-link" viewBox="0 0 24 24">
+        <path d="M10 13a5 5 0 0 0 7.1 0l2.4-2.4a5 5 0 0 0-7.1-7.1L11 4.9" />
+        <path d="M14 11a5 5 0 0 0-7.1 0l-2.4 2.4a5 5 0 0 0 7.1 7.1l1.4-1.4" />
+      </symbol>
+      <symbol id="i-filter" viewBox="0 0 24 24">
+        <path d="M4 6h16M7 12h10m-7 6h4" />
+      </symbol>
+      <symbol id="i-sort" viewBox="0 0 24 24">
+        <path d="M8 5v14m-4-4 4 4 4-4M16 19V5m-4 4 4-4 4 4" />
+      </symbol>
+      <symbol id="i-board" viewBox="0 0 24 24">
+        <rect x="3" y="4" width="18" height="16" rx="2" />
+        <path d="M9 4v16m6-16v10" />
+      </symbol>
+      <symbol id="i-table" viewBox="0 0 24 24">
+        <rect x="3" y="4" width="18" height="16" rx="1" />
+        <path d="M3 10h18M9 4v16m6-10v10" />
+      </symbol>
+      <symbol id="i-calendar" viewBox="0 0 24 24">
+        <rect x="3" y="5" width="18" height="16" rx="2" />
+        <path d="M16 3v4M8 3v4M3 10h18" />
+      </symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 2" />
+      </symbol>
+      <symbol id="i-comment" viewBox="0 0 24 24">
+        <path
+          d="M20 11.5a7.5 7.5 0 0 1-8 7.5 8.7 8.7 0 0 1-3.4-.7L4 20l1.3-3.8A7.2 7.2 0 0 1 4 12c0-4.1 3.6-7.5 8-7.5s8 2.9 8 7Z"
+        />
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 24 24">
+        <path d="m5 12 4 4L19 6" />
+      </symbol>
+      <symbol id="i-edit" viewBox="0 0 24 24">
+        <path d="m15 5 4 4M4 20l4.5-1 11-11a2.8 2.8 0 0 0-4-4l-11 11L4 20Z" />
+      </symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24">
+        <path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3" />
+      </symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="4" />
+        <path
+          d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
+        />
+      </symbol>
+      <symbol id="i-help" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M9.5 9a2.6 2.6 0 1 1 4.4 1.9c-1.1 1-1.9 1.3-1.9 3.1m0 3h.01" />
+      </symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="7" height="7" rx="1" />
+        <rect x="14" y="3" width="7" height="7" rx="1" />
+        <rect x="3" y="14" width="7" height="7" rx="1" />
+        <rect x="14" y="14" width="7" height="7" rx="1" />
+      </symbol>
+      <symbol id="i-file" viewBox="0 0 24 24">
+        <path d="M6 3h8l5 5v13H6z" />
+        <path d="M14 3v5h5M9 13h7m-7 4h7" />
+      </symbol>
+      <symbol id="i-inbox-small" viewBox="0 0 24 24">
+        <path d="M4 5h16l1 11H3L4 5Z" />
+        <path d="M3.5 15.5h5l1.5 2h4l1.5-2h5" />
+      </symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24">
+        <rect x="4" y="10" width="16" height="11" rx="2" />
+        <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+      </symbol>
+      <symbol id="i-users" viewBox="0 0 24 24">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+        <circle cx="9.5" cy="7" r="4" />
+        <path d="M20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+      </symbol>
+      <symbol id="i-home" viewBox="0 0 24 24">
+        <path d="m3 11 9-8 9 8v9a2 2 0 0 1-2 2h-4v-7H9v7H5a2 2 0 0 1-2-2z" />
+      </symbol>
+      <symbol id="i-favorite" viewBox="0 0 24 24">
+        <path
+          d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"
+        />
+      </symbol>
+      <symbol id="i-monitor" viewBox="0 0 24 24">
+        <rect x="2" y="4" width="20" height="14" rx="2" />
+        <path d="M8 21h8M12 18v3" />
+      </symbol>
+      <symbol id="i-phone" viewBox="0 0 24 24">
+        <rect x="6" y="2" width="12" height="20" rx="2" />
+        <path d="M11 18h2" />
+      </symbol>
+    </svg>
+
+    <!-- DEVICE SWITCHER -->
+    <div class="device-switcher">
+      <button id="switchDesktop" class="active">
+        <svg class="dev-icon"><use href="#i-monitor" /></svg>
+        Desktop
+      </button>
+      <button id="switchMobile">
+        <svg class="dev-icon"><use href="#i-phone" /></svg>
+        Mobile (Pixel)
+      </button>
+    </div>
+
+    <!-- DESKTOP VIEW -->
+    <div class="view-container" id="desktopView">
+      <div class="desktop-frame">
+        <div class="app">
+          <aside class="sidebar" id="sidebar">
+            <div class="side-inner">
+              <div class="workspace-switch" id="workspaceSwitch">
+                <div class="workspace-mark">A</div>
+                <div class="workspace-name">Acme Studio</div>
+                <div class="side-top-actions">
+                  <button class="icon-btn" title="New page" id="sideNew">
+                    <svg class="icon"><use href="#i-plus" /></svg>
+                  </button>
+                  <button class="icon-btn" title="More">
+                    <svg class="icon"><use href="#i-more" /></svg>
+                  </button>
+                </div>
+                <svg
+                  class="icon small"
+                  style="color: var(--muted)"
+                  viewBox="0 0 24 24"
+                >
+                  <use href="#i-down" />
+                </svg>
+              </div>
+              <div class="side-scroll">
+                <div class="side-tools">
+                  <div class="side-row" id="searchOpen">
+                    <svg class="icon"><use href="#i-search" /></svg>
+                    <span class="row-label">Search</span>
+                    <span class="shortcut">⌘ K</span>
+                  </div>
+                  <div class="side-row" data-toast="Inbox is up to date">
+                    <svg class="icon"><use href="#i-inbox" /></svg>
+                    <span class="row-label">Inbox</span>
+                    <span class="shortcut">⌘ I</span>
+                  </div>
+                  <div class="side-row" data-toast="Settings panel">
+                    <svg class="icon"><use href="#i-settings" /></svg>
+                    <span class="row-label">Settings</span>
+                  </div>
+                </div>
+                <div class="section-head">
+                  <span class="head-title">Teamspaces</span>
+                  <button
+                    class="icon-btn"
+                    id="addTeamspace"
+                    title="Add teamspace"
+                  >
+                    <svg class="icon small"><use href="#i-plus" /></svg>
+                  </button>
+                </div>
+                <div class="side-row">
+                  <span class="page-icon">◈</span>
+                  <span class="row-label">Product & Design</span>
+                  <svg class="icon small"><use href="#i-down" /></svg>
+                </div>
+                <div class="side-row nested">
+                  <span class="page-icon">📊</span>
+                  <span class="row-label">Team overview</span>
+                </div>
+                <div class="side-row nested">
+                  <span class="page-icon">🗓</span>
+                  <span class="row-label">Weekly planning</span>
+                </div>
+                <div class="side-row nested">
+                  <span class="page-icon">📚</span>
+                  <span class="row-label">Research library</span>
+                </div>
+                <div class="section-head">
+                  <span class="head-title">Private</span>
+                  <button class="icon-btn" id="addPrivate" title="Add page">
+                    <svg class="icon small"><use href="#i-plus" /></svg>
+                  </button>
+                </div>
+                <div
+                  class="side-row page-row active"
+                  data-page="Product Roadmap"
+                >
+                  <span class="page-icon">🚀</span>
+                  <span class="row-label">Product Roadmap</span>
+                  <button class="icon-btn" title="More">
+                    <svg class="icon small"><use href="#i-more" /></svg>
+                  </button>
+                </div>
+                <div class="side-row page-row" data-page="Meeting Notes">
+                  <span class="page-icon">📝</span>
+                  <span class="row-label">Meeting Notes</span>
+                </div>
+                <div class="side-row page-row" data-page="Ideas & Inspiration">
+                  <span class="page-icon">💡</span>
+                  <span class="row-label">Ideas & Inspiration</span>
+                </div>
+                <div class="side-row page-row" data-page="Getting started">
+                  <span class="page-icon">👋</span>
+                  <span class="row-label">Getting started</span>
+                </div>
+                <div class="side-row add-row" id="addPage">
+                  <svg class="icon"><use href="#i-plus" /></svg>
+                  <span class="row-label">Add a page</span>
+                </div>
+                <div class="section-head" style="margin-top: 23px">
+                  <span class="head-title">Favorites</span>
+                </div>
+                <div class="side-row page-row">
+                  <span class="page-icon">⭐</span>
+                  <span class="row-label">Brand guidelines</span>
+                </div>
+                <div class="side-row page-row">
+                  <span class="page-icon">📈</span>
+                  <span class="row-label">Q4 metrics</span>
+                </div>
+              </div>
+              <div class="side-bottom">
+                <div class="upgrade-card">
+                  <div class="upgrade-title">Upgrade to Plus</div>
+                  <div class="upgrade-copy">
+                    Unlock unlimited pages, guests, and AI features.
+                  </div>
+                  <button class="upgrade-btn" id="upgradeBtn">Upgrade ↗</button>
+                </div>
+                <div class="user-row" id="userMenu">
+                  <div class="avatar">JD</div>
+                  <span class="user-name">Jordan Davis</span>
+                  <span class="plan">Free</span>
+                  <svg class="icon small" style="color: var(--muted)">
+                    <use href="#i-more" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <main class="main">
+            <header class="topbar">
+              <div class="topbar-left">
+                <button
+                  class="icon-btn"
+                  id="sidebarToggle"
+                  title="Toggle sidebar"
+                >
+                  <svg class="icon"><use href="#i-menu" /></svg>
+                </button>
+                <div class="crumbs">
+                  <span class="crumb-link">Acme Studio</span>
+                  <span class="crumb-divider">/</span>
+                  <span class="crumb-page">
+                    <span>🚀</span>
+                    <span id="crumbTitle">Product Roadmap</span>
+                  </span>
+                </div>
+              </div>
+              <div class="topbar-right">
+                <span class="top-link" id="updatesLink">3 updates</span>
+                <span class="top-link" id="commentsLink">2 comments</span>
+                <div class="avatar-stack">
+                  <div class="avatar" style="background: #7d91aa">JD</div>
+                  <div class="avatar" style="background: #c28b91">MK</div>
+                  <div class="avatar" style="background: #6e9278">AL</div>
+                </div>
+                <button class="share-btn" id="shareBtn">Share</button>
+                <button class="icon-btn" id="copyLink" title="Copy link">
+                  <svg class="icon"><use href="#i-link" /></svg>
+                </button>
+                <button class="icon-btn" id="topMore" title="More options">
+                  <svg class="icon"><use href="#i-more" /></svg>
+                </button>
+              </div>
+            </header>
+            <div class="content-scroll" id="contentScroll">
+              <div class="cover-image"></div>
+              <article class="page" id="pageContent">
+                <div class="page-actions">
+                  <div class="page-action-left">
+                    <button class="tiny-btn" id="addIconBtn">
+                      🚀 Add icon
+                    </button>
+                    <button class="tiny-btn" id="addCoverBtn">
+                      🖼 Change cover
+                    </button>
+                  </div>
+                  <div class="page-action-right">
+                    <button class="tiny-btn" id="favoriteBtn">
+                      <svg class="icon small"><use href="#i-star" /></svg>
+                      <span>Add to favorites</span>
+                    </button>
+                    <button class="tiny-btn" id="pageUpdates">
+                      <svg class="icon small"><use href="#i-clock" /></svg>
+                      <span>Edited just now</span>
+                    </button>
+                    <button class="tiny-btn" id="pageMore">
+                      <svg class="icon"><use href="#i-more" /></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="title-line">
+                  <div class="big-page-icon" id="bigPageIcon">🚀</div>
+                  <div style="min-width: 0; flex: 1">
+                    <h1
+                      id="pageTitle"
+                      contenteditable="true"
+                      spellcheck="false"
+                    >
+                      Product Roadmap
+                    </h1>
+                  </div>
+                </div>
+                <p
+                  class="subtitle"
+                  id="pageSubtitle"
+                  contenteditable="true"
+                  spellcheck="false"
+                >
+                  A shared space to plan what we're building, track progress,
+                  and keep the team moving in the same direction.
+                </p>
+                <div class="metadata">
+                  <span class="meta-label">Status</span>
+                  <span class="meta-value">
+                    <span class="meta-dot"></span>
+                    <span>In progress</span>
+                  </span>
+                  <span class="meta-label">Target launch</span>
+                  <span class="meta-value">
+                    <svg class="icon small"><use href="#i-calendar" /></svg>
+                    <span>December 2026</span>
+                  </span>
+                  <span class="meta-label">Owner</span>
+                  <span class="meta-value">
+                    <div
+                      class="avatar"
+                      style="width: 18px; height: 18px; font-size: 9px"
+                    >
+                      JD
+                    </div>
+                    <span>Jordan Davis</span>
+                  </span>
+                  <span class="meta-label">Last edited</span>
+                  <span class="meta-value">
+                    <svg class="icon small"><use href="#i-clock" /></svg>
+                    <span>Just now</span>
+                  </span>
+                </div>
+                <div class="callout">
+                  <span class="callout-icon">💡</span>
+                  <div>
+                    <strong>North star</strong><br />
+                    Make Acme the simplest way for teams to turn good ideas into
+                    great products. Keep this roadmap focused on outcomes, not
+                    just output.
+                  </div>
+                </div>
+
+                <h2 class="section-title">
+                  <span class="title-emoji">🧭</span> Roadmap overview
+                </h2>
+                <p class="section-desc">
+                  A high-level view of what the team is working on right now.
+                </p>
+                <div class="database-toolbar">
+                  <div class="view-tabs">
+                    <button class="view-tab active" data-view="board">
+                      <svg class="icon small"><use href="#i-board" /></svg>
+                      Board
+                    </button>
+                    <button class="view-tab" data-view="table">
+                      <svg class="icon small"><use href="#i-table" /></svg>
+                      Table
+                    </button>
+                    <button class="view-tab" data-view="calendar">
+                      <svg class="icon small"><use href="#i-calendar" /></svg>
+                      Calendar
+                    </button>
+                    <button class="icon-btn" id="addView" title="Add a view">
+                      <svg class="icon small"><use href="#i-plus" /></svg>
+                    </button>
+                  </div>
+                  <div class="db-controls">
+                    <button class="icon-btn" id="filterBtn" title="Filter">
+                      <svg class="icon"><use href="#i-filter" /></svg>
+                    </button>
+                    <button class="icon-btn" id="sortBtn" title="Sort">
+                      <svg class="icon"><use href="#i-sort" /></svg>
+                    </button>
+                    <button class="icon-btn" id="searchTasks" title="Search">
+                      <svg class="icon"><use href="#i-search" /></svg>
+                    </button>
+                    <button class="new-btn" id="newTask">
+                      <svg class="icon small"><use href="#i-plus" /></svg> New
+                    </button>
+                  </div>
+                </div>
+                <div class="board" id="board">
+                  <section class="board-column" data-status="todo">
+                    <div class="column-head">
+                      <span class="status-dot"></span>
+                      <span>To do</span>
+                      <span class="count" id="count-todo">2</span>
+                      <button class="icon-btn column-menu">
+                        <svg class="icon small"><use href="#i-more" /></svg>
+                      </button>
+                    </div>
+                    <div class="task-list" id="list-todo">
+                      <div class="task-card" draggable="true" data-id="1">
+                        <div class="task-title">
+                          Redesign onboarding experience
+                        </div>
+                        <div class="task-tags">
+                          <span class="tag design">Design</span>
+                          <span class="tag research">Discovery</span>
+                        </div>
+                        <div class="task-foot">
+                          <div class="task-meta">
+                            <span class="mini-avatar pink">MK</span>
+                            <span>Nov 12</span>
+                          </div>
+                          <span>◷ 3</span>
+                        </div>
+                      </div>
+                      <div class="task-card" draggable="true" data-id="2">
+                        <div class="task-title">
+                          Set up customer feedback loop
+                        </div>
+                        <div class="task-tags">
+                          <span class="tag research">Research</span>
+                        </div>
+                        <div class="task-foot">
+                          <div class="task-meta">
+                            <span class="mini-avatar gold">AL</span>
+                            <span>Nov 18</span>
+                          </div>
+                          <span>◷ 2</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="add-task" data-add="todo">
+                      <svg class="icon small"><use href="#i-plus" /></svg> New
+                    </div>
+                  </section>
+                  <section class="board-column" data-status="progress">
+                    <div class="column-head">
+                      <span class="status-dot progress"></span>
+                      <span>In progress</span>
+                      <span class="count" id="count-progress">3</span>
+                      <button class="icon-btn column-menu">
+                        <svg class="icon small"><use href="#i-more" /></svg>
+                      </button>
+                    </div>
+                    <div class="task-list" id="list-progress">
+                      <div class="task-card" draggable="true" data-id="3">
+                        <div class="task-title">Build workspace dashboard</div>
+                        <div class="task-tags">
+                          <span class="tag dev">Engineering</span>
+                        </div>
+                        <div class="task-foot">
+                          <div class="task-meta">
+                            <span class="mini-avatar">JD</span>
+                            <span>Nov 08</span>
+                          </div>
+                          <span>◷ 5</span>
+                        </div>
+                      </div>
+                      <div class="task-card" draggable="true" data-id="4">
+                        <div class="task-title">
+                          Define the new visual language
+                        </div>
+                        <div class="task-tags">
+                          <span class="tag design">Design</span>
+                        </div>
+                        <div class="task-foot">
+                          <div class="task-meta">
+                            <span class="mini-avatar pink">MK</span>
+                            <span>Nov 10</span>
+                          </div>
+                          <span>◷ 4</span>
+                        </div>
+                      </div>
+                      <div class="task-card" draggable="true" data-id="5">
+                        <div class="task-title">Write launch announcement</div>
+                        <div class="task-tags">
+                          <span class="tag content">Content</span>
+                        </div>
+                        <div class="task-foot">
+                          <div class="task-meta">
+                            <span class="mini-avatar purple">SR</span>
+                            <span>Nov 14</span>
+                          </div>
+                          <span>◷ 1</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="add-task" data-add="progress">
+                      <svg class="icon small"><use href="#i-plus" /></svg> New
+                    </div>
+                  </section>
+                  <section class="board-column" data-status="done">
+                    <div class="column-head">
+                      <span class="status-dot done"></span>
+                      <span>Done</span>
+                      <span class="count" id="count-done">2</span>
+                      <button class="icon-btn column-menu">
+                        <svg class="icon small"><use href="#i-more" /></svg>
+                      </button>
+                    </div>
+                    <div class="task-list" id="list-done">
+                      <div class="task-card" draggable="true" data-id="6">
+                        <div class="task-title">Interview 8 early adopters</div>
+                        <div class="task-tags">
+                          <span class="tag research">Research</span>
+                        </div>
+                        <div class="task-foot">
+                          <div class="task-meta">
+                            <span class="mini-avatar green">AL</span>
+                            <span>Oct 21</span>
+                          </div>
+                          <span>✓</span>
+                        </div>
+                      </div>
+                      <div class="task-card" draggable="true" data-id="7">
+                        <div class="task-title">
+                          Audit existing product flows
+                        </div>
+                        <div class="task-tags">
+                          <span class="tag design">Design</span>
+                        </div>
+                        <div class="task-foot">
+                          <div class="task-meta">
+                            <span class="mini-avatar">JD</span>
+                            <span>Oct 24</span>
+                          </div>
+                          <span>✓</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="add-task" data-add="done">
+                      <svg class="icon small"><use href="#i-plus" /></svg> New
+                    </div>
+                  </section>
+                </div>
+                <div class="table-view" id="tableView">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Owner</th>
+                        <th>Due date</th>
+                        <th>Team</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                  </table>
+                </div>
+                <div class="lower-grid">
+                  <section class="lower-card">
+                    <div class="lower-card-head">💬 Recent activity</div>
+                    <div class="activity-item">
+                      <span class="mini-avatar pink">MK</span>
+                      <div>
+                        <strong>Morgan Kim</strong> moved
+                        <strong>Define the new visual language</strong> to In
+                        progress
+                        <div class="activity-time">2 hours ago</div>
+                      </div>
+                    </div>
+                    <div class="activity-item">
+                      <span class="mini-avatar green">AL</span>
+                      <div>
+                        <strong>Alex Lee</strong> completed
+                        <strong>Interview 8 early adopters</strong>
+                        <div class="activity-time">Yesterday at 4:32 PM</div>
+                      </div>
+                    </div>
+                    <div class="activity-item">
+                      <span class="mini-avatar">JD</span>
+                      <div>
+                        <strong>You</strong> added a new item to the roadmap
+                        <div class="activity-time">Yesterday at 11:08 AM</div>
+                      </div>
+                    </div>
+                  </section>
+                  <section class="lower-card">
+                    <div class="lower-card-head">☑️ This week's focus</div>
+                    <div class="check-item">
+                      <input type="checkbox" id="focus1" checked /><label
+                        for="focus1"
+                        >Finalize onboarding wireframes</label
+                      >
+                    </div>
+                    <div class="check-item">
+                      <input type="checkbox" id="focus2" /><label for="focus2"
+                        >Review dashboard prototype</label
+                      >
+                    </div>
+                    <div class="check-item">
+                      <input type="checkbox" id="focus3" /><label for="focus3"
+                        >Share research findings</label
+                      >
+                    </div>
+                    <div class="check-item">
+                      <input type="checkbox" id="focus4" /><label for="focus4"
+                        >Align launch milestones</label
+                      >
+                    </div>
+                  </section>
+                </div>
+                <div class="add-block" id="addBlock">
+                  <svg class="icon small"><use href="#i-plus" /></svg> Click to
+                  add a block
+                </div>
+                <div class="footer-note">
+                  Press <kbd>space</kbd> for AI, or <kbd>/</kbd> for commands
+                </div>
+              </article>
+            </div>
+          </main>
+        </div>
+      </div>
+    </div>
+
+    <!-- MOBILE VIEW -->
+    <div class="view-container hidden" id="mobileView">
+      <div class="mobile-view">
+        <div class="pixel-phone">
+          <div class="phone-screen">
+            <div class="punch-hole"></div>
+            <!-- Status Bar -->
+            <div class="status-bar">
+              <div class="status-left">
+                <span id="statusTime">9:41</span>
+              </div>
+              <div class="status-right">
+                <svg class="status-icon" viewBox="0 0 16 12">
+                  <path
+                    d="M2 9h2v2H2zM6 7h2v4H6zM10 4h2v7h-2zM14 2v9h-2V2z"
+                    fill="#000"
+                    stroke="none"
+                  />
+                </svg>
+                <svg class="status-icon" viewBox="0 0 16 12">
+                  <path
+                    d="M8 3C5.5 3 3.3 4 1.7 5.7l1.4 1.4C4.4 5.8 6.1 5 8 5s3.6.8 4.9 2.1l1.4-1.4C12.7 4 10.5 3 8 3zM8 7c-1.5 0-2.8.6-3.8 1.6l1.4 1.4C6.4 9.4 7.2 9 8 9s1.6.4 2.4 1l1.4-1.4C10.8 7.6 9.5 7 8 7z"
+                    fill="#000"
+                    stroke="none"
+                  />
+                  <circle cx="8" cy="11" r="1.5" fill="#000" />
+                </svg>
+                <div class="battery">
+                  <div class="battery-fill"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mobile Header -->
+            <div class="mobile-header">
+              <button class="menu-btn" id="mobileMenuBtn">
+                <svg class="icon"><use href="#i-menu" /></svg>
+              </button>
+              <div class="breadcrumb">
+                <div class="crumb-icon">🚀</div>
+                <span class="crumb-text" id="mobileCrumb">Product Roadmap</span>
+              </div>
+              <div class="header-actions">
+                <button class="icon-btn" id="mobileSearch">
+                  <svg class="icon"><use href="#i-search" /></svg>
+                </button>
+                <button class="icon-btn" id="mobileShare">
+                  <svg class="icon"><use href="#i-share" /></svg>
+                </button>
+                <button class="icon-btn" id="mobileMore">
+                  <svg class="icon"><use href="#i-more" /></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Content -->
+            <div class="mobile-content">
+              <div class="mobile-cover"></div>
+              <div class="mobile-page-body">
+                <div class="mobile-page-icon" id="mobilePageIcon">🚀</div>
+                <h1 class="mobile-page-title" id="mobilePageTitle">
+                  Product Roadmap
+                </h1>
+                <p class="mobile-page-subtitle" id="mobilePageSubtitle">
+                  A shared space to plan what we're building, track progress,
+                  and keep the team moving.
+                </p>
+                <div class="mobile-meta-row">
+                  <span class="mobile-meta-chip">
+                    <span class="dot"></span>
+                    In progress
+                  </span>
+                  <span class="mobile-meta-chip">
+                    <svg class="icon small" style="width: 12px; height: 12px">
+                      <use href="#i-calendar" />
+                    </svg>
+                    Dec 2026
+                  </span>
+                  <span class="mobile-meta-chip">
+                    <svg class="icon small" style="width: 12px; height: 12px">
+                      <use href="#i-users" />
+                    </svg>
+                    3 people
+                  </span>
+                </div>
+                <div class="mobile-callout">
+                  <span>💡</span>
+                  <div>
+                    <strong>North star:</strong> Make Acme the simplest way for
+                    teams to turn good ideas into great products.
+                  </div>
+                </div>
+                <h2 class="mobile-section-title">
+                  <span>🧭</span> Roadmap overview
+                </h2>
+                <div class="mobile-view-tabs">
+                  <button class="mobile-view-tab active" data-view="board">
+                    ▤ Board
+                  </button>
+                  <button class="mobile-view-tab" data-view="list">
+                    ☰ List
+                  </button>
+                  <button class="mobile-view-tab" data-view="calendar">
+                    📅 Calendar
+                  </button>
+                </div>
+
+                <!-- Mobile Board -->
+                <div id="mobileBoard">
+                  <div class="mobile-board-column">
+                    <div class="mobile-column-head">
+                      <span class="status-dot"></span>
+                      <span>To do</span>
+                      <span class="count">2</span>
+                    </div>
+                    <div class="mobile-task-card">
+                      <div class="mobile-task-title">
+                        Redesign onboarding experience
+                      </div>
+                      <div class="mobile-task-meta">
+                        <span>🏷 Design</span>
+                        <span>Nov 12</span>
+                      </div>
+                    </div>
+                    <div class="mobile-task-card">
+                      <div class="mobile-task-title">
+                        Set up customer feedback loop
+                      </div>
+                      <div class="mobile-task-meta">
+                        <span>🏷 Research</span>
+                        <span>Nov 18</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="mobile-board-column">
+                    <div class="mobile-column-head">
+                      <span class="status-dot progress"></span>
+                      <span>In progress</span>
+                      <span class="count">3</span>
+                    </div>
+                    <div class="mobile-task-card">
+                      <div class="mobile-task-title">
+                        Build workspace dashboard
+                      </div>
+                      <div class="mobile-task-meta">
+                        <span>🏷 Engineering</span>
+                        <span>Nov 08</span>
+                      </div>
+                    </div>
+                    <div class="mobile-task-card">
+                      <div class="mobile-task-title">
+                        Define the new visual language
+                      </div>
+                      <div class="mobile-task-meta">
+                        <span>🏷 Design</span>
+                        <span>Nov 10</span>
+                      </div>
+                    </div>
+                    <div class="mobile-task-card">
+                      <div class="mobile-task-title">
+                        Write launch announcement
+                      </div>
+                      <div class="mobile-task-meta">
+                        <span>🏷 Content</span>
+                        <span>Nov 14</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="mobile-board-column">
+                    <div class="mobile-column-head">
+                      <span class="status-dot done"></span>
+                      <span>Done</span>
+                      <span class="count">2</span>
+                    </div>
+                    <div class="mobile-task-card">
+                      <div class="mobile-task-title">
+                        Interview 8 early adopters
+                      </div>
+                      <div class="mobile-task-meta">
+                        <span>🏷 Research</span>
+                        <span>Oct 21</span>
+                      </div>
+                    </div>
+                    <div class="mobile-task-card">
+                      <div class="mobile-task-title">
+                        Audit existing product flows
+                      </div>
+                      <div class="mobile-task-meta">
+                        <span>🏷 Design</span>
+                        <span>Oct 24</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <h2 class="mobile-section-title">
+                  <span>☑️</span> This week's focus
+                </h2>
+                <div class="check-item">
+                  <input type="checkbox" checked /><label
+                    >Finalize onboarding wireframes</label
+                  >
+                </div>
+                <div class="check-item">
+                  <input type="checkbox" /><label
+                    >Review dashboard prototype</label
+                  >
+                </div>
+                <div class="check-item">
+                  <input type="checkbox" /><label
+                    >Share research findings</label
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- FAB -->
+            <div class="mobile-fab" id="mobileFab">
+              <svg class="icon" style="width: 22px; height: 22px">
+                <use href="#i-plus" />
+              </svg>
+            </div>
+
+            <!-- Bottom Nav -->
+            <div class="mobile-bottom-nav">
+              <div class="mobile-nav-item active">
+                <svg class="mobile-nav-icon"><use href="#i-home" /></svg>
+                <span class="mobile-nav-label">Home</span>
+              </div>
+              <div class="mobile-nav-item">
+                <svg class="mobile-nav-icon"><use href="#i-inbox" /></svg>
+                <span class="mobile-nav-label">Inbox</span>
+              </div>
+              <div class="mobile-nav-item">
+                <svg class="mobile-nav-icon"><use href="#i-favorite" /></svg>
+                <span class="mobile-nav-label">Favorites</span>
+              </div>
+              <div class="mobile-nav-item">
+                <svg class="mobile-nav-icon"><use href="#i-settings" /></svg>
+                <span class="mobile-nav-label">Settings</span>
+              </div>
+            </div>
+
+            <!-- Mobile Drawer -->
+            <div class="mobile-drawer-scrim" id="drawerScrim"></div>
+            <div class="mobile-drawer" id="mobileDrawer">
+              <div class="mobile-drawer-header">
+                <div class="workspace-mark">A</div>
+                <div class="workspace-name">Acme Studio</div>
+              </div>
+              <div class="mobile-drawer-scroll">
+                <div class="mobile-drawer-item">
+                  <svg class="icon"><use href="#i-search" /></svg>
+                  <span>Search</span>
+                </div>
+                <div class="mobile-drawer-item">
+                  <svg class="icon"><use href="#i-inbox" /></svg>
+                  <span>Inbox</span>
+                </div>
+                <div class="mobile-drawer-item">
+                  <svg class="icon"><use href="#i-clock" /></svg>
+                  <span>Recent</span>
+                </div>
+                <div
+                  style="height: 1px; background: var(--line); margin: 10px 0"
+                ></div>
+                <div
+                  style="
+                    padding: 4px 10px;
+                    font-size: 11px;
+                    font-weight: 600;
+                    color: var(--text-soft);
+                    text-transform: uppercase;
+                  "
+                >
+                  Workspaces
+                </div>
+                <div class="mobile-drawer-item">
+                  <span>◈</span>
+                  <span>Product & Design</span>
+                </div>
+                <div class="mobile-drawer-item" style="padding-left: 32px">
+                  <span>📊</span>
+                  <span>Team overview</span>
+                </div>
+                <div class="mobile-drawer-item" style="padding-left: 32px">
+                  <span>🗓</span>
+                  <span>Weekly planning</span>
+                </div>
+                <div
+                  style="height: 1px; background: var(--line); margin: 10px 0"
+                ></div>
+                <div
+                  style="
+                    padding: 4px 10px;
+                    font-size: 11px;
+                    font-weight: 600;
+                    color: var(--text-soft);
+                    text-transform: uppercase;
+                  "
+                >
+                  Private
+                </div>
+                <div class="mobile-drawer-item">
+                  <span>🚀</span>
+                  <span>Product Roadmap</span>
+                </div>
+                <div class="mobile-drawer-item">
+                  <span>📝</span>
+                  <span>Meeting Notes</span>
+                </div>
+                <div class="mobile-drawer-item">
+                  <span>💡</span>
+                  <span>Ideas & Inspiration</span>
+                </div>
+                <div class="mobile-drawer-item">
+                  <span>👋</span>
+                  <span>Getting started</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Gesture indicator -->
+            <div class="gesture-indicator"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Popovers & Modals (shared) -->
+    <div class="popover" id="genericMenu"></div>
+    <div class="modal-backdrop" id="searchModal">
+      <div class="search-modal">
+        <div class="search-input-wrap">
+          <svg class="icon"><use href="#i-search" /></svg>
+          <input
+            class="search-input"
+            id="globalSearchInput"
+            placeholder="Search pages, people, and more..."
+            autocomplete="off"
+          />
+          <span class="tiny-muted">ESC</span>
+        </div>
+        <div class="search-results" id="searchResults">
+          <div class="search-label">Suggested</div>
+          <div class="search-result" data-open="Product Roadmap">
+            <span>🚀</span><span>Product Roadmap</span>
+            <span class="result-meta">Private</span>
+          </div>
+          <div class="search-result" data-open="Meeting Notes">
+            <span>📝</span><span>Meeting Notes</span>
+            <span class="result-meta">Private</span>
+          </div>
+          <div class="search-result" data-open="Ideas & Inspiration">
+            <span>💡</span><span>Ideas & Inspiration</span>
+            <span class="result-meta">Private</span>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <span>↑↓ to navigate · ↵ to open</span><span>Search everywhere</span>
+        </div>
+      </div>
+    </div>
+    <div class="toast" id="toast">Done</div>
+
+    <script>
+      const $ = (s, r = document) => r.querySelector(s);
+      const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+      const sidebar = $("#sidebar"),
+        scrim = $("#mobileScrim"),
+        menu = $("#genericMenu"),
+        toastEl = $("#toast");
+      let toastTimer,
+        dragged = null,
+        taskCounter = 8,
+        activeView = "board";
+      const taskData = [
+        {
+          id: 1,
+          title: "Redesign onboarding experience",
+          status: "todo",
+          owner: "MK",
+          date: "Nov 12",
+          team: "Design",
+          tag: "Design",
+        },
+        {
+          id: 2,
+          title: "Set up customer feedback loop",
+          status: "todo",
+          owner: "AL",
+          date: "Nov 18",
+          team: "Research",
+          tag: "Research",
+        },
+        {
+          id: 3,
+          title: "Build workspace dashboard",
+          status: "progress",
+          owner: "JD",
+          date: "Nov 08",
+          team: "Engineering",
+          tag: "Engineering",
+        },
+        {
+          id: 4,
+          title: "Define the new visual language",
+          status: "progress",
+          owner: "MK",
+          date: "Nov 10",
+          team: "Design",
+          tag: "Design",
+        },
+        {
+          id: 5,
+          title: "Write launch announcement",
+          status: "progress",
+          owner: "SR",
+          date: "Nov 14",
+          team: "Content",
+          tag: "Content",
+        },
+        {
+          id: 6,
+          title: "Interview 8 early adopters",
+          status: "done",
+          owner: "AL",
+          date: "Oct 21",
+          team: "Research",
+          tag: "Research",
+        },
+        {
+          id: 7,
+          title: "Audit existing product flows",
+          status: "done",
+          owner: "JD",
+          date: "Oct 24",
+          team: "Design",
+          tag: "Design",
+        },
+      ];
+
+      // ============ DEVICE SWITCHER ============
+      $("#switchDesktop").addEventListener("click", () => {
+        $("#desktopView").classList.remove("hidden");
+        $("#mobileView").classList.add("hidden");
+        $("#switchDesktop").classList.add("active");
+        $("#switchMobile").classList.remove("active");
+      });
+      $("#switchMobile").addEventListener("click", () => {
+        $("#mobileView").classList.remove("hidden");
+        $("#desktopView").classList.add("hidden");
+        $("#switchMobile").classList.add("active");
+        $("#switchDesktop").classList.remove("active");
+        syncMobileContent();
+      });
+
+      function syncMobileContent() {
+        $("#mobilePageTitle").textContent = $("#pageTitle").textContent;
+        $("#mobileCrumb").textContent = $("#pageTitle").textContent;
+        $("#mobilePageIcon").textContent = $("#bigPageIcon").textContent;
+        $("#mobilePageSubtitle").textContent = $("#pageSubtitle").textContent;
+      }
+
+      // ============ TOAST ============
+      function toast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2200);
+      }
+
+      // ============ STATUS BAR TIME ============
+      function updateTime() {
+        const now = new Date();
+        const h = now.getHours();
+        const m = now.getMinutes().toString().padStart(2, "0");
+        $("#statusTime").textContent = `${h}:${m}`;
+      }
+      updateTime();
+      setInterval(updateTime, 60000);
+
+      // ============ MOBILE DRAWER ============
+      $("#mobileMenuBtn").addEventListener("click", () => {
+        $("#mobileDrawer").classList.add("open");
+        $("#drawerScrim").classList.add("open");
+      });
+      $("#drawerScrim").addEventListener("click", () => {
+        $("#mobileDrawer").classList.remove("open");
+        $("#drawerScrim").classList.remove("open");
+      });
+
+      // ============ MOBILE NAV ============
+      $$(".mobile-nav-item").forEach((item) => {
+        item.addEventListener("click", () => {
+          $$(".mobile-nav-item").forEach((i) => i.classList.remove("active"));
+          item.classList.add("active");
+          const label = item.querySelector(".mobile-nav-label").textContent;
+          toast(`${label} opened`);
+        });
+      });
+      $$(".mobile-view-tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+          $$(".mobile-view-tab").forEach((t) => t.classList.remove("active"));
+          tab.classList.add("active");
+          const view = tab.dataset.view;
+          if (view === "list" || view === "calendar") {
+            toast(
+              `${view.charAt(0).toUpperCase() + view.slice(1)} view coming soon`,
+            );
+          }
+        });
+      });
+
+      // Mobile actions
+      $("#mobileSearch").addEventListener("click", () =>
+        toast("Search opened"),
+      );
+      $("#mobileShare").addEventListener("click", () =>
+        toast("Share settings opened"),
+      );
+      $("#mobileMore").addEventListener("click", () => toast("More options"));
+      $("#mobileFab").addEventListener("click", () => toast("Quick add menu"));
+
+      // Drawer item clicks
+      $$(".mobile-drawer-item").forEach((item) => {
+        item.addEventListener("click", () => {
+          const text =
+            item.querySelector("span:last-child")?.textContent ||
+            item.textContent;
+          $("#mobileDrawer").classList.remove("open");
+          $("#drawerScrim").classList.remove("open");
+          toast(`Opened: ${text}`);
+        });
+      });
+
+      // ============ DESKTOP FUNCTIONS ============
+      function openMenu(anchor, items) {
+        menu.innerHTML = items
+          .map((it) =>
+            it.sep
+              ? '<div class="pop-sep"></div>'
+              : `<div class="pop-item" data-action="${it.action || ""}">${it.icon ? `<svg class="icon"><use href="#i-${it.icon}"/></svg>` : ""}<span>${it.label}</span></div>`,
+          )
+          .join("");
+        const r = anchor.getBoundingClientRect();
+        menu.style.left = Math.min(r.left, innerWidth - 230) + "px";
+        menu.style.top = Math.min(r.bottom + 5, innerHeight - 250) + "px";
+        menu.classList.add("open");
+        $$(".pop-item", menu).forEach((el) =>
+          el.addEventListener("click", () => {
+            const a = el.dataset.action;
+            menu.classList.remove("open");
+            handleMenuAction(a);
+          }),
+        );
+      }
+      function handleMenuAction(a) {
+        if (a === "duplicate") toast("Page duplicated");
+        else if (a === "export") toast("Export prepared");
+        else if (a === "delete") toast("Demo page cannot be deleted");
+        else if (a === "rename") {
+          const t = prompt("Rename page:", $("#pageTitle").textContent);
+          if (t) renamePage(t);
+        } else if (a === "copy") copyLink();
+        else if (a === "favorite") toggleFavorite();
+        else if (["board", "table", "calendar"].includes(a)) switchView(a);
+        else toast(a || "Action selected");
+      }
+      function toggleFavorite() {
+        const b = $("#favoriteBtn");
+        const on = b.dataset.on !== "true";
+        b.dataset.on = on ? "true" : "false";
+        b.innerHTML = `<svg class="icon small" style="${on ? "fill:#d6a43c;color:#bd8a22" : ""}"><use href="#i-star"/></svg><span>${on ? "Added to favorites" : "Add to favorites"}</span>`;
+        toast(on ? "Added to favorites" : "Removed from favorites");
+      }
+      function renamePage(t) {
+        $("#pageTitle").textContent = t;
+        $("#crumbTitle").textContent = t;
+        $$(".page-row.active .row-label").forEach((x) => (x.textContent = t));
+        document.title = "Notion — " + t;
+        syncMobileContent();
+      }
+      function copyLink() {
+        const text = location.href;
+        if (navigator.clipboard?.writeText)
+          navigator.clipboard
+            .writeText(text)
+            .then(() => toast("Link copied to clipboard"));
+        else toast("Link ready to share");
+      }
+      function openSearch() {
+        $("#searchModal").classList.add("open");
+        $("#globalSearchInput").value = "";
+        renderSearch("");
+        setTimeout(() => $("#globalSearchInput").focus(), 30);
+      }
+      function closeSearch() {
+        $("#searchModal").classList.remove("open");
+      }
+      function renderSearch(q) {
+        const items = [
+          "Product Roadmap",
+          "Meeting Notes",
+          "Ideas & Inspiration",
+          "Getting started",
+          "Team overview",
+          "Weekly planning",
+          "Research library",
+          "Brand guidelines",
+          "Q4 metrics",
+        ];
+        const match = items.filter((x) =>
+          x.toLowerCase().includes(q.toLowerCase()),
+        );
+        $("#searchResults").innerHTML =
+          '<div class="search-label">Pages</div>' +
+          match
+            .map(
+              (x) =>
+                `<div class="search-result" data-open="${x}"><span>${x === "Product Roadmap" ? "🚀" : x === "Meeting Notes" ? "📝" : x === "Ideas & Inspiration" ? "💡" : "📄"}</span><span>${x}</span><span class="result-meta">Open page</span></div>`,
+            )
+            .join("") +
+          (match.length
+            ? ""
+            : '<div style="padding:14px 9px;color:#999;font-size:12px">No results found</div>');
+        $$(".search-result", $("#searchResults")).forEach((x) =>
+          x.addEventListener("click", () => {
+            const name = x.dataset.open;
+            closeSearch();
+            if (name) renamePage(name);
+            toast("Opened " + name);
+          }),
+        );
+      }
+      function addTask(status = "todo", title) {
+        const name = title || prompt("Task name:");
+        if (!name) return;
+        const id = taskCounter++;
+        const card = document.createElement("div");
+        card.className = "task-card";
+        card.draggable = true;
+        card.dataset.id = id;
+        card.innerHTML = `<div class="task-title"></div><div class="task-tags"><span class="tag ops">New</span></div><div class="task-foot"><div class="task-meta"><span class="mini-avatar">JD</span><span>Nov 30</span></div><span>◷ 0</span></div>`;
+        $(".task-title", card).textContent = name;
+        $("#list-" + status).append(card);
+        taskData.push({
+          id,
+          title: name,
+          status,
+          owner: "JD",
+          date: "Nov 30",
+          team: "Product",
+          tag: "New",
+        });
+        wireCard(card);
+        updateCounts();
+        if (activeView === "table") renderTable();
+        toast("New task added");
+      }
+      function wireCard(card) {
+        card.addEventListener("dragstart", () => {
+          dragged = card;
+          setTimeout(() => card.classList.add("dragging"), 0);
+        });
+        card.addEventListener("dragend", () => {
+          card.classList.remove("dragging");
+          dragged = null;
+          updateCounts();
+          syncTaskData();
+        });
+        card.addEventListener("dblclick", () => {
+          const t = $(".task-title", card);
+          const v = prompt("Edit task:", t.textContent);
+          if (v) {
+            t.textContent = v;
+            syncTaskData();
+            if (activeView === "table") renderTable();
+          }
+        });
+      }
+      function updateCounts() {
+        ["todo", "progress", "done"].forEach(
+          (s) =>
+            ($("#count-" + s).textContent = $$(
+              "#list-" + s + " .task-card",
+            ).length),
+        );
+      }
+      function syncTaskData() {
+        taskData.forEach((t) => {
+          const c = $(`.task-card[data-id="${t.id}"]`);
+          if (c) {
+            t.status = c.closest(".task-list").id.replace("list-", "");
+            t.title = $(".task-title", c).textContent;
+          }
+        });
+      }
+      function renderTable() {
+        const rows = taskData
+          .map(
+            (t) =>
+              `<tr><td><div class="table-name"><span>▤</span>${escapeHtml(t.title)}</div></td><td><span class="status-pill ${t.status}">${t.status === "todo" ? "To do" : t.status === "progress" ? "In progress" : "Done"}</span></td><td>${t.owner}</td><td>${t.date}</td><td>${t.team}</td></tr>`,
+          )
+          .join("");
+        $("#tableBody").innerHTML = rows;
+      }
+      function escapeHtml(s) {
+        return String(s).replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      }
+      function switchView(v) {
+        activeView = v;
+        $$(".view-tab").forEach((b) =>
+          b.classList.toggle("active", b.dataset.view === v),
+        );
+        $("#board").style.display = v === "board" ? "grid" : "none";
+        $("#tableView").style.display = v === "table" ? "block" : "none";
+        if (v === "table") renderTable();
+        if (v === "calendar")
+          toast("Calendar view is available in the full product");
+      }
+      function addPage() {
+        const name = prompt("New page name:");
+        if (!name) return;
+        const row = document.createElement("div");
+        row.className = "side-row page-row";
+        row.dataset.page = name;
+        row.innerHTML =
+          '<span class="page-icon">📄</span><span class="row-label"></span>';
+        $(".row-label", row).textContent = name;
+        $("#addPage").before(row);
+        row.addEventListener("click", () => {
+          renamePage(name);
+          $$(".page-row").forEach((x) => x.classList.remove("active"));
+          row.classList.add("active");
+          toast("Opened " + name);
+        });
+        renamePage(name);
+        toast("Page created");
+      }
+
+      // ============ EVENT LISTENERS ============
+      $("#sidebarToggle").addEventListener("click", () => {
+        sidebar.classList.toggle("collapsed");
+      });
+      $("#searchOpen").addEventListener("click", openSearch);
+      $("#globalSearchInput").addEventListener("input", (e) =>
+        renderSearch(e.target.value),
+      );
+      $("#searchModal").addEventListener("click", (e) => {
+        if (e.target === $("#searchModal")) closeSearch();
+      });
+      $("#favoriteBtn").addEventListener("click", toggleFavorite);
+      $("#copyLink").addEventListener("click", copyLink);
+      $("#shareBtn").addEventListener("click", () =>
+        toast("Share settings ready"),
+      );
+      $("#updatesLink").addEventListener("click", () =>
+        toast("No new updates"),
+      );
+      $("#commentsLink").addEventListener("click", () =>
+        toast("Comments panel opened"),
+      );
+      $("#pageUpdates").addEventListener("click", () =>
+        toast("Last edited just now by Jordan Davis"),
+      );
+      $("#pageMore").addEventListener("click", (e) =>
+        openMenu(e.currentTarget, [
+          { label: "Rename", icon: "edit", action: "rename" },
+          { label: "Duplicate", icon: "file", action: "duplicate" },
+          { label: "Copy link", icon: "link", action: "copy" },
+          { sep: true },
+          { label: "Export", icon: "share", action: "export" },
+          { label: "Delete page", icon: "trash", action: "delete" },
+        ]),
+      );
+      $("#topMore").addEventListener("click", (e) =>
+        openMenu(e.currentTarget, [
+          {
+            label: "Customize page",
+            icon: "settings",
+            action: "Customize page",
+          },
+          { label: "Help", icon: "help", action: "help" },
+        ]),
+      );
+      $("#userMenu").addEventListener("click", (e) =>
+        openMenu(e.currentTarget, [
+          { label: "My account", icon: "settings", action: "Account settings" },
+          { label: "Log out", icon: "lock", action: "Log out" },
+        ]),
+      );
+      $("#workspaceSwitch").addEventListener("click", (e) => {
+        if (e.target.closest("button")) return;
+        openMenu(e.currentTarget, [
+          { label: "Acme Studio", icon: "grid", action: "Current workspace" },
+          {
+            label: "Create or join workspace",
+            icon: "plus",
+            action: "Workspace",
+          },
+          { sep: true },
+          {
+            label: "Manage workspaces",
+            icon: "settings",
+            action: "Workspace settings",
+          },
+        ]);
+      });
+      $("#sideNew").addEventListener("click", (e) => {
+        e.stopPropagation();
+        addPage();
+      });
+      $("#addPage").addEventListener("click", addPage);
+      $("#addPrivate").addEventListener("click", addPage);
+      $("#addTeamspace").addEventListener("click", () =>
+        toast("Teamspace created in the full product"),
+      );
+      $("#upgradeBtn").addEventListener("click", () =>
+        toast("Plan comparison is not connected"),
+      );
+      $$(".view-tab").forEach((b) =>
+        b.addEventListener("click", () => switchView(b.dataset.view)),
+      );
+      $("#addView").addEventListener("click", () =>
+        openMenu($("#addView"), [
+          { label: "Board view", icon: "board", action: "board" },
+          { label: "Table view", icon: "table", action: "table" },
+          { label: "Calendar view", icon: "calendar", action: "calendar" },
+        ]),
+      );
+      $("#newTask").addEventListener("click", () => addTask("todo"));
+      $$(".add-task").forEach((b) =>
+        b.addEventListener("click", () => addTask(b.dataset.add)),
+      );
+      $("#filterBtn").addEventListener("click", (e) =>
+        openMenu(e.currentTarget, [
+          { label: "All tasks", action: "All tasks" },
+          { label: "Assigned to me", action: "Assigned to me" },
+          { label: "Due this week", action: "Due this week" },
+        ]),
+      );
+      $("#sortBtn").addEventListener("click", (e) =>
+        openMenu(e.currentTarget, [
+          { label: "Name", action: "Sorted by name" },
+          { label: "Due date", action: "Sorted by due date" },
+          { label: "Status", action: "Sorted by status" },
+        ]),
+      );
+      $("#searchTasks").addEventListener("click", () => {
+        const q = prompt("Search tasks:");
+        if (q) {
+          $$(".task-card").forEach(
+            (c) =>
+              (c.style.display = $(".task-title", c)
+                .textContent.toLowerCase()
+                .includes(q.toLowerCase())
+                ? ""
+                : "none"),
+          );
+          toast("Filtered tasks · refresh to clear");
+        }
+      });
+      $("#addIconBtn").addEventListener("click", () => {
+        const v = prompt("Choose an emoji for this page:", "🚀");
+        if (v) {
+          $("#bigPageIcon").textContent = v;
+          syncMobileContent();
+        }
+      });
+      $("#addCoverBtn").addEventListener("click", () =>
+        toast("Cover image picker not connected"),
+      );
+      $("#addBlock").addEventListener("click", () => {
+        const p = document.createElement("p");
+        p.contentEditable = "true";
+        p.style.cssText =
+          "font-size:14px;color:#666;margin:10px 0;padding:5px 3px";
+        p.textContent = "Type something...";
+        $("#addBlock").before(p);
+        p.focus();
+      });
+      $$(".check-item input").forEach((i) =>
+        i.addEventListener("change", () =>
+          i.closest(".check-item").classList.toggle("done", i.checked),
+        ),
+      );
+      $("#pageTitle").addEventListener("input", () => {
+        $("#crumbTitle").textContent =
+          $("#pageTitle").textContent || "Untitled";
+        syncMobileContent();
+      });
+      $("#pageTitle").addEventListener("blur", () => {
+        const t = $("#pageTitle").textContent.trim() || "Untitled";
+        renamePage(t);
+      });
+      $$("[data-toast]").forEach((el) =>
+        el.addEventListener("click", () => toast(el.dataset.toast)),
+      );
+      $$(".page-row[data-page]").forEach((row) =>
+        row.addEventListener("click", (e) => {
+          if (e.target.closest("button")) return;
+          const name = row.dataset.page;
+          $$(".page-row").forEach((x) => x.classList.remove("active"));
+          row.classList.add("active");
+          renamePage(name);
+        }),
+      );
+      $$(".task-card").forEach(wireCard);
+      $$(".board-column").forEach((col) => {
+        col.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          col.classList.add("drag-over");
+        });
+        col.addEventListener("dragleave", () =>
+          col.classList.remove("drag-over"),
+        );
+        col.addEventListener("drop", (e) => {
+          e.preventDefault();
+          col.classList.remove("drag-over");
+          if (dragged) {
+            col.querySelector(".task-list").appendChild(dragged);
+            syncTaskData();
+            updateCounts();
+            if (activeView === "table") renderTable();
+            toast("Task moved");
+          }
+        });
+      });
+      menu.addEventListener("click", (e) => e.stopPropagation());
+      document.addEventListener("click", (e) => {
+        if (!menu.contains(e.target)) menu.classList.remove("open");
+      });
+      document.addEventListener("keydown", (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+          e.preventDefault();
+          openSearch();
+        }
+        if (e.key === "Escape") {
+          closeSearch();
+          menu.classList.remove("open");
+        }
+      });
+      renderTable();
+    </script>
+  </body>
+</html>

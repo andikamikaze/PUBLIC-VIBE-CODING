@@ -1,0 +1,3891 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#eef1f5" />
+    <title>Google Viewer Clone — Desktop & Mobile (Pixel Frame)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ============ TOKENS ============ */
+      :root {
+        --gblue: #4285f4;
+        --gblue-deep: #1a73e8;
+        --gblue-ink: #174ea6;
+        --gblue-tint: #e8f0fe;
+        --gred: #ea4335;
+        --gyellow: #fbbc04;
+        --ggreen: #34a853;
+        --ink: #202124;
+        --muted: #5f6368;
+        --line: #dadce0;
+        --d-bg: #202124;
+        --d-2: #28292c;
+        --d-3: #303134;
+        --d-line: #3c4043;
+        --d-text: #e8eaed;
+        --d-muted: #9aa0a6;
+        --d-blue: #8ab4f8;
+        --blue-dk: #26272b;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        font-family: Roboto, "Google Sans", Arial, sans-serif;
+        color: var(--ink);
+        background: #eef1f5;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+        color: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      :focus-visible {
+        outline: 2px solid var(--gblue-deep);
+        outline-offset: 2px;
+      }
+      .gv :focus-visible,
+      .px-screen :focus-visible {
+        outline-color: var(--d-blue);
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .sr {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+      }
+
+      /* ============ AMBIENT BACKGROUND ============ */
+      .bg {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        overflow: hidden;
+      }
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        opacity: 0.5;
+        background-image: radial-gradient(#c6ccd4 1px, transparent 1.2px);
+        background-size: 22px 22px;
+        -webkit-mask-image: radial-gradient(
+          ellipse at 50% 40%,
+          #000 30%,
+          transparent 78%
+        );
+        mask-image: radial-gradient(
+          ellipse at 50% 40%,
+          #000 30%,
+          transparent 78%
+        );
+      }
+      .wash {
+        position: absolute;
+        border-radius: 50%;
+        will-change: transform;
+      }
+      .w1 {
+        width: 52vw;
+        height: 52vw;
+        left: -14vw;
+        top: -20vw;
+        background: radial-gradient(
+          closest-side,
+          rgba(66, 133, 244, 0.18),
+          transparent 70%
+        );
+        animation: drift 22s ease-in-out infinite alternate;
+      }
+      .w2 {
+        width: 44vw;
+        height: 44vw;
+        right: -12vw;
+        top: -14vw;
+        background: radial-gradient(
+          closest-side,
+          rgba(234, 67, 53, 0.14),
+          transparent 70%
+        );
+        animation: drift 26s ease-in-out infinite alternate-reverse;
+      }
+      .w3 {
+        width: 46vw;
+        height: 46vw;
+        left: -10vw;
+        bottom: -20vw;
+        background: radial-gradient(
+          closest-side,
+          rgba(251, 188, 4, 0.17),
+          transparent 70%
+        );
+        animation: drift 24s ease-in-out infinite alternate;
+      }
+      .w4 {
+        width: 50vw;
+        height: 50vw;
+        right: -14vw;
+        bottom: -18vw;
+        background: radial-gradient(
+          closest-side,
+          rgba(52, 168, 83, 0.15),
+          transparent 70%
+        );
+        animation: drift 28s ease-in-out infinite alternate-reverse;
+      }
+      @keyframes drift {
+        from {
+          transform: translate(0, 0) scale(1);
+        }
+        to {
+          transform: translate(4vw, 3vw) scale(1.08);
+        }
+      }
+
+      /* ============ STAGE HEADER ============ */
+      .top {
+        position: relative;
+        z-index: 10;
+        flex: none;
+        height: 62px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 0 20px;
+        background: #fff;
+        border-bottom: 1px solid #e2e5e9;
+        box-shadow: 0 1px 3px rgba(60, 64, 67, 0.06);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+      .brand-name {
+        font-size: 16px;
+        font-weight: 500;
+        letter-spacing: -0.2px;
+        white-space: nowrap;
+      }
+      .chip {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        color: var(--gblue-ink);
+        background: var(--gblue-tint);
+        padding: 4px 9px;
+        border-radius: 999px;
+        white-space: nowrap;
+      }
+      .switch {
+        position: relative;
+        margin-left: auto;
+        display: flex;
+        background: #e4e8ee;
+        border-radius: 999px;
+        padding: 4px;
+      }
+      .sw-thumb {
+        position: absolute;
+        top: 4px;
+        bottom: 4px;
+        background: #fff;
+        border-radius: 999px;
+        box-shadow:
+          0 1px 3px rgba(60, 64, 67, 0.28),
+          0 2px 8px rgba(60, 64, 67, 0.12);
+        transition:
+          left 0.3s cubic-bezier(0.2, 0.7, 0.3, 1.1),
+          width 0.3s cubic-bezier(0.2, 0.7, 0.3, 1.1);
+      }
+      .sw-btn {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 0;
+        background: transparent;
+        padding: 8px 18px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #5f6368;
+        transition: color 0.2s;
+      }
+      .sw-btn svg {
+        width: 16px;
+        height: 16px;
+      }
+      .sw-btn.on {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .sw-btn.on svg {
+        color: var(--gblue-deep);
+      }
+      .hints {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11.5px;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      kbd {
+        display: inline-grid;
+        place-items: center;
+        min-width: 21px;
+        height: 21px;
+        padding: 0 5px;
+        border-radius: 5px;
+        background: #f1f3f4;
+        border: 1px solid #dadce0;
+        border-bottom-width: 2px;
+        font:
+          500 10.5px Roboto,
+          Mono,
+          monospace;
+        color: #3c4043;
+      }
+
+      /* ============ STAGE / VIEWS ============ */
+      .stage {
+        position: relative;
+        z-index: 1;
+        flex: 1;
+        min-height: 0;
+        padding: 18px;
+      }
+      .view {
+        position: absolute;
+        inset: 18px;
+        display: flex;
+        flex-direction: column;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(16px) scale(0.99);
+        transition:
+          opacity 0.38s ease,
+          transform 0.38s cubic-bezier(0.2, 0.7, 0.3, 1),
+          visibility 0s linear 0.38s;
+      }
+      .view.on {
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        transition:
+          opacity 0.38s ease,
+          transform 0.38s cubic-bezier(0.2, 0.7, 0.3, 1),
+          visibility 0s;
+      }
+
+      /* ============ BROWSER FRAME (desktop scene) ============ */
+      .browser {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow:
+          0 1px 2px rgba(60, 64, 67, 0.2),
+          0 16px 48px rgba(60, 64, 67, 0.3);
+      }
+      .chrome {
+        flex: none;
+        background: #dee1e6;
+      }
+      .tabs {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+        padding: 9px 12px 0;
+      }
+      .tab {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        height: 34px;
+        padding: 0 13px;
+        border-radius: 9px 9px 0 0;
+        max-width: 340px;
+      }
+      .tab.active {
+        background: #fff;
+      }
+      .tab.ghost {
+        background: rgba(255, 255, 255, 0.34);
+        color: #4a4f55;
+      }
+      .tab span {
+        flex: 1;
+        min-width: 0;
+        font-size: 12px;
+        color: #3c4043;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .tab .tx {
+        border: 0;
+        background: transparent;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: #5f6368;
+        padding: 0;
+      }
+      .tab .tx:hover {
+        background: #e8eaed;
+      }
+      .tab svg {
+        flex: none;
+      }
+      .newtab {
+        width: 28px;
+        height: 28px;
+        margin-bottom: 3px;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: #5f6368;
+        display: grid;
+        place-items: center;
+      }
+      .newtab:hover {
+        background: rgba(255, 255, 255, 0.55);
+      }
+      .chrome-bar {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        height: 42px;
+        padding: 0 12px;
+        background: #fff;
+      }
+      .navbtn {
+        width: 32px;
+        height: 32px;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        display: grid;
+        place-items: center;
+        color: #4a4f55;
+      }
+      .navbtn:hover {
+        background: #f1f3f4;
+      }
+      .navbtn.off {
+        color: #b6bac0;
+      }
+      .omni {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        height: 32px;
+        padding: 0 14px;
+        border-radius: 999px;
+        background: #f1f3f4;
+      }
+      .omni .url {
+        font:
+          400 12px "Roboto Mono",
+          monospace;
+        color: #3c4043;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .omni .lock {
+        color: var(--muted);
+        flex: none;
+      }
+      .omni .ostar {
+        margin-left: auto;
+        color: var(--muted);
+        flex: none;
+        border: 0;
+        background: transparent;
+        width: 24px;
+        height: 24px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+      }
+      .omni .ostar:hover {
+        background: #e4e7ea;
+      }
+      .chrome-avatar {
+        width: 28px;
+        height: 28px;
+        margin-left: 6px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #7e57c2;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 500;
+        flex: none;
+      }
+      .browser-body {
+        flex: 1;
+        min-height: 0;
+        position: relative;
+        background: var(--d-bg);
+      }
+
+      /* ============ GOOGLE VIEWER — DESKTOP CLONE ============ */
+      .gv {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        background: var(--d-bg);
+        color: var(--d-text);
+        overflow: hidden;
+      }
+      .gv-top {
+        flex: none;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 14px;
+        position: relative;
+        z-index: 30;
+      }
+      .gv-file {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        min-width: 0;
+        flex: 1;
+        padding-left: 2px;
+      }
+      .gv-name {
+        font-size: 15px;
+        font-weight: 500;
+        letter-spacing: 0.1px;
+        color: var(--d-text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .gv-actions {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+      }
+      .dbtn {
+        position: relative;
+        width: 40px;
+        height: 40px;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--d-text);
+        display: grid;
+        place-items: center;
+        transition: background 0.15s;
+      }
+      .dbtn:hover {
+        background: rgba(232, 234, 237, 0.09);
+      }
+      .dbtn svg {
+        width: 20px;
+        height: 20px;
+      }
+      .dbtn.starred {
+        color: #fdd663;
+      }
+      .menu-wrap {
+        position: relative;
+      }
+      .gv-body {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        position: relative;
+      }
+
+      /* thumbnail rail */
+      .gv-thumbs {
+        width: 212px;
+        flex: none;
+        background: #28292c;
+        border-right: 1px solid #202124;
+        display: flex;
+        flex-direction: column;
+        transition: margin-left 0.28s cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+      .gv-thumbs.hide {
+        margin-left: -212px;
+      }
+      .th-head {
+        flex: none;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 8px 0 18px;
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 1.1px;
+        color: var(--d-muted);
+      }
+      .th-head .dbtn {
+        width: 30px;
+        height: 30px;
+        color: var(--d-muted);
+      }
+      .th-list {
+        overflow: auto;
+        padding: 2px 14px 24px;
+        scrollbar-width: thin;
+        scrollbar-color: #4a4d52 transparent;
+      }
+      .th-list::-webkit-scrollbar {
+        width: 8px;
+      }
+      .th-list::-webkit-scrollbar-thumb {
+        background: #4a4d52;
+        border-radius: 4px;
+      }
+      .th-item {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 6px 10px;
+        border-radius: 10px;
+        color: var(--d-muted);
+      }
+      .th-item:hover {
+        background: rgba(232, 234, 237, 0.06);
+      }
+      .th-item.active {
+        background: rgba(138, 180, 248, 0.1);
+        color: var(--d-blue);
+      }
+      .th-paper {
+        width: 118px;
+        height: 152px;
+        background: #fff;
+        border-radius: 2px;
+        padding: 13px 10px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+      }
+      .th-item.active .th-paper {
+        outline: 2px solid var(--d-blue);
+        outline-offset: 2px;
+      }
+      .th-num {
+        font-size: 11.5px;
+      }
+      .mn-t {
+        height: 4px;
+        width: 58%;
+        background: #aeb4bc;
+        border-radius: 2px;
+        margin-bottom: 8px;
+      }
+      .mn-l {
+        height: 2.5px;
+        background: #dfe3e8;
+        border-radius: 2px;
+        margin: 4.5px 0;
+      }
+      .mn-l.s {
+        width: 66%;
+      }
+      .mn-b {
+        height: 30px;
+        background: #eef1f5;
+        border-radius: 2px;
+        margin: 9px 0;
+      }
+      .mn-chart {
+        height: 38px;
+        display: flex;
+        gap: 4px;
+        align-items: flex-end;
+        padding: 4px 8px;
+        background: #f4f7fb;
+        margin: 8px 0;
+      }
+      .mn-chart i {
+        flex: 1;
+        background: #9bbcf2;
+        border-radius: 2px 2px 0 0;
+      }
+      .gv-edge {
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 25;
+        width: 22px;
+        height: 66px;
+        border: 0;
+        border-radius: 0 10px 10px 0;
+        background: #303134;
+        color: var(--d-muted);
+        display: grid;
+        place-items: center;
+        box-shadow: 2px 0 6px rgba(0, 0, 0, 0.3);
+        transition:
+          background 0.15s,
+          color 0.15s;
+      }
+      .gv-edge:hover {
+        background: #3c4043;
+        color: var(--d-text);
+      }
+      .gv-edge svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      /* canvas + pages */
+      .gv-main {
+        flex: 1;
+        min-width: 0;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+      .gv-canvas {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding: 28px 40px 96px;
+        background: var(--d-bg);
+        scrollbar-width: thin;
+        scrollbar-color: #4a4d52 transparent;
+      }
+      .gv-canvas::-webkit-scrollbar {
+        width: 12px;
+        height: 12px;
+      }
+      .gv-canvas::-webkit-scrollbar-thumb {
+        background: #4a4d52;
+        border-radius: 8px;
+        border: 3px solid var(--d-bg);
+      }
+      .gv-pages {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 28px;
+        width: max-content;
+        margin: 0 auto;
+        transform-origin: top center;
+      }
+      .gv-pages.rot {
+        transform: rotate(var(--rot, 0deg));
+      }
+      .gv-pages.anim {
+        transition: transform 0.3s ease;
+      }
+      .paper {
+        width: 816px;
+        min-height: 1056px;
+        flex: none;
+        background: #fff;
+        color: #202124;
+        position: relative;
+        overflow: hidden;
+        padding: 72px 76px 60px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        transform: translateY(26px);
+        transition:
+          opacity 0.55s ease,
+          transform 0.55s cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+      .paper.in {
+        opacity: 1;
+        transform: none;
+      }
+
+      /* floating pills */
+      .pill {
+        position: absolute;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        background: var(--d-3);
+        border-radius: 22px;
+        padding: 4px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+      }
+      .pill .pbtn {
+        width: 34px;
+        height: 34px;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--d-text);
+        display: grid;
+        place-items: center;
+      }
+      .pill .pbtn:hover {
+        background: rgba(232, 234, 237, 0.1);
+      }
+      .pill .pbtn:disabled {
+        opacity: 0.32;
+        background: transparent;
+        cursor: default;
+      }
+      .pill .pbtn svg {
+        width: 19px;
+        height: 19px;
+      }
+      .page-pill {
+        left: 50%;
+        bottom: 18px;
+        transform: translateX(-50%);
+      }
+      .page-pill input {
+        width: 44px;
+        height: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 7px;
+        background: transparent;
+        color: var(--d-text);
+        text-align: center;
+        font-size: 13px;
+        outline: none;
+        appearance: textfield;
+        -moz-appearance: textfield;
+      }
+      .page-pill input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+      }
+      .page-pill input:focus {
+        border-color: var(--d-blue);
+      }
+      .page-pill .of {
+        font-size: 12.5px;
+        color: var(--d-muted);
+        padding: 0 8px 0 4px;
+        white-space: nowrap;
+      }
+      .zoom-pill {
+        left: 18px;
+        bottom: 18px;
+      }
+      .zoom-pill select {
+        height: 32px;
+        border: 0;
+        background: transparent;
+        color: var(--d-text);
+        font-size: 12.5px;
+        max-width: 150px;
+        outline: none;
+        cursor: pointer;
+      }
+      .zoom-pill select option {
+        background: #fff;
+        color: #202124;
+      }
+
+      /* find panel */
+      .gv-find {
+        position: absolute;
+        z-index: 26;
+        top: 12px;
+        right: 16px;
+        width: 330px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+        padding: 14px 14px 12px;
+        color: var(--ink);
+      }
+      .gv-find .row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .gv-find input {
+        flex: 1;
+        min-width: 0;
+        border: 0;
+        border-bottom: 1px solid var(--line);
+        padding: 8px 2px;
+        font-size: 13px;
+        outline: none;
+        background: transparent;
+      }
+      .gv-find input:focus {
+        border-bottom: 2px solid var(--gblue-deep);
+      }
+      .fbtn {
+        width: 30px;
+        height: 30px;
+        flex: none;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--muted);
+        display: grid;
+        place-items: center;
+      }
+      .fbtn:hover {
+        background: #f1f3f4;
+      }
+      .gv-find .note {
+        margin-top: 9px;
+        font-size: 11.5px;
+        color: #70757a;
+      }
+
+      /* details panel */
+      .gv-details {
+        position: absolute;
+        z-index: 40;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 340px;
+        background: #fff;
+        color: var(--ink);
+        box-shadow: -6px 0 24px rgba(0, 0, 0, 0.35);
+        transform: translateX(105%);
+        transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.3, 1);
+        display: flex;
+        flex-direction: column;
+      }
+      .gv-details.open {
+        transform: none;
+      }
+      .dt-tabs {
+        flex: none;
+        display: flex;
+        gap: 22px;
+        padding: 18px 22px 0;
+        border-bottom: 1px solid #eceff1;
+      }
+      .dt-tab {
+        border: 0;
+        background: transparent;
+        padding: 0 2px 12px;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--muted);
+        border-bottom: 3px solid transparent;
+        margin-bottom: -1px;
+      }
+      .dt-tab.on {
+        color: var(--gblue-ink);
+        border-bottom-color: var(--gblue-deep);
+      }
+      .dt-close {
+        margin-left: auto;
+        align-self: flex-start;
+        width: 32px;
+        height: 32px;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--muted);
+        display: grid;
+        place-items: center;
+      }
+      .dt-close:hover {
+        background: #f1f3f4;
+      }
+      .dt-body {
+        flex: 1;
+        overflow: auto;
+        padding: 18px 22px 26px;
+      }
+      .dt-prev {
+        display: flex;
+        justify-content: center;
+        margin: 6px 0 20px;
+      }
+      .dt-prev .mini {
+        width: 132px;
+        height: 170px;
+        background: #fff;
+        border: 1px solid #e3e6ea;
+        box-shadow: 0 2px 8px rgba(60, 64, 67, 0.22);
+        padding: 14px 12px;
+      }
+      .dt-row {
+        padding: 12px 0;
+        border-bottom: 1px solid #f1f3f4;
+      }
+      .dt-row .l {
+        font-size: 11px;
+        color: var(--muted);
+        margin-bottom: 5px;
+      }
+      .dt-row .v {
+        font-size: 13px;
+        color: #3c4043;
+        line-height: 1.45;
+      }
+      .act {
+        display: flex;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid #f1f3f4;
+        align-items: flex-start;
+      }
+      .act .av {
+        width: 30px;
+        height: 30px;
+        flex: none;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 500;
+      }
+      .act .t {
+        font-size: 12.5px;
+        color: #3c4043;
+        line-height: 1.45;
+      }
+      .act .w {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+
+      /* menu (material, light) */
+      .menu {
+        position: absolute;
+        top: 48px;
+        right: 0;
+        z-index: 60;
+        min-width: 236px;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow:
+          0 4px 18px rgba(0, 0, 0, 0.28),
+          0 1px 3px rgba(60, 64, 67, 0.2);
+        padding: 7px 0;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-6px);
+        transition: 0.16s ease;
+      }
+      .menu.open {
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+      }
+      .menu-item {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 10px 16px;
+        border: 0;
+        background: transparent;
+        color: #3c4043;
+        font-size: 13.5px;
+        text-align: left;
+      }
+      .menu-item:hover {
+        background: #f1f3f4;
+      }
+      .menu-item svg {
+        width: 18px;
+        height: 18px;
+        color: var(--muted);
+        flex: none;
+      }
+      .menu-sep {
+        border-top: 1px solid #eceff1;
+        margin: 6px 0;
+      }
+
+      /* loading */
+      .gv-loading {
+        position: absolute;
+        inset: 0;
+        z-index: 70;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        align-items: center;
+        justify-content: center;
+        background: var(--d-bg);
+        transition: opacity 0.45s ease;
+      }
+      .gv-loading.bye {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .gv-loading p {
+        margin: 0;
+        font-size: 13px;
+        color: var(--d-muted);
+      }
+      .gspinner {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        animation: gspin 1s linear infinite;
+        background: conic-gradient(
+          from 0deg,
+          var(--gblue) 0 25%,
+          var(--gred) 0 50%,
+          var(--gyellow) 0 75%,
+          var(--ggreen) 0 100%
+        );
+        -webkit-mask: radial-gradient(
+          farthest-side,
+          transparent calc(100% - 6.5px),
+          #000 calc(100% - 6px)
+        );
+        mask: radial-gradient(
+          farthest-side,
+          transparent calc(100% - 6.5px),
+          #000 calc(100% - 6px)
+        );
+      }
+      @keyframes gspin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* toast (desktop app) */
+      .gv-toast {
+        position: absolute;
+        z-index: 80;
+        left: 50%;
+        bottom: 26px;
+        transform: translate(-50%, 16px);
+        background: #323639;
+        color: #fff;
+        padding: 11px 18px;
+        border-radius: 8px;
+        font-size: 13px;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+        opacity: 0;
+        pointer-events: none;
+        transition: 0.24s ease;
+      }
+      .gv-toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+
+      /* ============ DOCUMENT CONTENT (halaman kertas) ============ */
+      .doc-kicker {
+        color: #5f6368;
+        text-transform: uppercase;
+        font-size: 10px;
+        letter-spacing: 1.8px;
+        font-weight: 700;
+      }
+      .doc-title {
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 36px;
+        line-height: 1.14;
+        letter-spacing: -0.8px;
+        margin: 16px 0 13px;
+        font-weight: 500;
+      }
+      .doc-intro {
+        color: #5f6368;
+        font-size: 13px;
+        line-height: 1.7;
+        max-width: 560px;
+        margin: 0 0 4px;
+      }
+      .doc-rule {
+        height: 1px;
+        background: #dfe3e8;
+        margin: 27px 0 29px;
+      }
+      .doc-section-title {
+        font-family: Georgia, serif;
+        font-size: 21px;
+        font-weight: 500;
+        margin: 0 0 13px;
+      }
+      .doc-copy {
+        font-size: 12px;
+        line-height: 1.8;
+        color: #42464b;
+        margin: 0 0 14px;
+      }
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin: 25px 0 29px;
+      }
+      .metric {
+        background: #f7f9fc;
+        padding: 16px 15px 14px;
+        border-top: 2px solid var(--gblue);
+      }
+      .metric-label {
+        color: #6f7479;
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+      }
+      .metric-value {
+        font-size: 24px;
+        letter-spacing: -0.5px;
+        font-weight: 500;
+        margin: 8px 0 3px;
+      }
+      .metric-note {
+        color: #188038;
+        font-size: 9px;
+      }
+      .chart-wrap {
+        margin: 20px 0 26px;
+        border: 1px solid #e5e8ec;
+        padding: 18px 18px 12px;
+      }
+      .chart-heading {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        color: #5f6368;
+        text-transform: uppercase;
+        margin-bottom: 14px;
+      }
+      .chart {
+        height: 146px;
+        display: flex;
+        align-items: flex-end;
+        gap: 20px;
+        padding: 0 15px;
+        border-bottom: 1px solid #dfe3e8;
+        background: repeating-linear-gradient(
+          to bottom,
+          transparent 0,
+          transparent 35px,
+          #eef0f3 36px
+        );
+      }
+      .bar-col {
+        flex: 1;
+        height: 100%;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        position: relative;
+      }
+      .bar {
+        width: 44%;
+        min-width: 19px;
+        background: #8ab4f8;
+        border-radius: 3px 3px 0 0;
+      }
+      .bar.dark {
+        background: var(--gblue);
+      }
+      .bar-label {
+        position: absolute;
+        bottom: -19px;
+        font-size: 9px;
+        color: #777d84;
+        white-space: nowrap;
+      }
+      .chart-legend {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        padding-top: 27px;
+        color: #6f7479;
+        font-size: 9px;
+      }
+      .legend-dot {
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        border-radius: 2px;
+        background: #8ab4f8;
+        margin-right: 5px;
+      }
+      .legend-dot.dark {
+        background: var(--gblue);
+      }
+      .doc-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 17px 0 25px;
+        font-size: 10px;
+      }
+      .doc-table th {
+        text-align: left;
+        padding: 10px 9px;
+        background: #f4f6f8;
+        color: #5f6368;
+        font-size: 9px;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        font-weight: 700;
+      }
+      .doc-table td {
+        padding: 10px 9px;
+        border-bottom: 1px solid #e7e9ec;
+        color: #42464b;
+      }
+      .doc-table td:last-child,
+      .doc-table th:last-child {
+        text-align: right;
+      }
+      .doc-callout {
+        border-left: 3px solid var(--gblue);
+        background: #f5f8fe;
+        padding: 14px 17px;
+        margin: 22px 0;
+        font-size: 11px;
+        line-height: 1.7;
+        color: #3c4043;
+      }
+      .page-footer {
+        position: absolute;
+        left: 76px;
+        right: 76px;
+        bottom: 35px;
+        padding-top: 12px;
+        border-top: 1px solid #e5e8ec;
+        display: flex;
+        justify-content: space-between;
+        color: #8a9097;
+        font-size: 9px;
+      }
+      .p2-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #dfe3e8;
+        padding-bottom: 16px;
+        margin-bottom: 35px;
+      }
+      .p2-header span {
+        font-size: 9px;
+        color: #6f7479;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      .p2-title {
+        font-family: Georgia, serif;
+        font-weight: 500;
+        font-size: 28px;
+        margin: 0 0 12px;
+      }
+      .p2-sub {
+        font-size: 11px;
+        line-height: 1.8;
+        color: #626970;
+        margin-bottom: 27px;
+      }
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+        margin-top: 20px;
+      }
+      .subhead {
+        font-size: 12px;
+        font-weight: 700;
+        margin: 0 0 8px;
+      }
+      .bullet-list {
+        margin: 8px 0 20px;
+        padding-left: 17px;
+        color: #42464b;
+        font-size: 11px;
+        line-height: 1.9;
+      }
+      .signature {
+        margin-top: 55px;
+        display: flex;
+        gap: 70px;
+      }
+      .signature-line {
+        width: 190px;
+        padding-top: 8px;
+        border-top: 1px solid #aeb4bc;
+        color: #70767d;
+        font-size: 9px;
+      }
+
+      /* ============ MOBILE SCENE — PIXEL FRAME ============ */
+      #viewMobile {
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+      }
+      .phone-wrap {
+        position: relative;
+        flex: none;
+      }
+      .pixel {
+        position: relative;
+        transform-origin: top left;
+        border-radius: 56px;
+        padding: 11px;
+        background: linear-gradient(150deg, #3d4045, #1a1b1e 42%, #101113);
+        box-shadow:
+          inset 0 0 0 2px rgba(255, 255, 255, 0.07),
+          0 28px 64px rgba(23, 32, 42, 0.42),
+          0 6px 18px rgba(23, 32, 42, 0.3);
+      }
+      .px-btn {
+        position: absolute;
+        right: -3.5px;
+        width: 3.5px;
+        border-radius: 0 3px 3px 0;
+        background: #2a2c30;
+      }
+      .px-btn.vol {
+        top: 170px;
+        height: 76px;
+      }
+      .px-btn.pwr {
+        top: 268px;
+        height: 46px;
+        background: #33363b;
+      }
+      .px-screen {
+        position: relative;
+        width: 392px;
+        height: 846px;
+        border-radius: 45px;
+        overflow: hidden;
+        background: var(--d-bg);
+      }
+      .punch {
+        position: absolute;
+        z-index: 60;
+        top: 11px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background: #000;
+        box-shadow: inset 0 0 3px 1.5px #1c2530;
+      }
+      .punch::after {
+        content: "";
+        position: absolute;
+        inset: 4px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 35% 32%,
+          rgba(120, 160, 255, 0.55),
+          transparent 60%
+        );
+      }
+      .m-app {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        background: var(--d-bg);
+        color: var(--d-text);
+      }
+      .m-status {
+        flex: none;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 26px 0 30px;
+        font-size: 12.5px;
+        font-weight: 500;
+        letter-spacing: 0.2px;
+        background: var(--d-bg);
+        position: relative;
+        z-index: 5;
+      }
+      .m-sicons {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .m-appbar {
+        flex: none;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding: 4px 8px 10px 8px;
+        background: var(--d-bg);
+        position: relative;
+        z-index: 5;
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+      .m-title-wrap {
+        flex: 1;
+        min-width: 0;
+        padding: 0 4px 0 10px;
+      }
+      .m-title {
+        font-size: 14.5px;
+        font-weight: 500;
+        color: var(--d-text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .m-sub {
+        font-size: 10.5px;
+        color: var(--d-muted);
+        margin-top: 2px;
+      }
+      .m-canvas {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        background: #17181b;
+        position: relative;
+        scrollbar-width: none;
+      }
+      .m-canvas::-webkit-scrollbar {
+        display: none;
+      }
+      .m-pages {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 0 108px;
+      }
+      .m-page {
+        position: relative;
+        width: var(--msw, 368px);
+        height: var(--msh, 476px);
+        flex: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      }
+      .m-page .paper {
+        position: absolute;
+        left: 0;
+        top: 0;
+        transform-origin: 0 0;
+        box-shadow: none;
+        opacity: 1;
+        transform-origin: 0 0;
+      }
+      .m-pill {
+        position: absolute;
+        z-index: 20;
+        left: 50%;
+        bottom: 36px;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        background: var(--d-3);
+        border-radius: 22px;
+        padding: 4px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+      }
+      .m-pill .pbtn {
+        width: 36px;
+        height: 36px;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--d-text);
+        display: grid;
+        place-items: center;
+      }
+      .m-pill .pbtn:active {
+        background: rgba(232, 234, 237, 0.12);
+      }
+      .m-pill .pbtn svg {
+        width: 19px;
+        height: 19px;
+      }
+      .m-count {
+        font-size: 12.5px;
+        color: var(--d-text);
+        padding: 0 10px;
+        white-space: nowrap;
+      }
+      .m-count b {
+        font-weight: 500;
+        color: var(--d-blue);
+      }
+      .m-zoom {
+        position: absolute;
+        z-index: 20;
+        right: 12px;
+        bottom: 36px;
+        display: flex;
+        flex-direction: column;
+        background: var(--d-3);
+        border-radius: 22px;
+        padding: 4px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+      }
+      .m-zoom .pbtn {
+        width: 36px;
+        height: 36px;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--d-text);
+        display: grid;
+        place-items: center;
+      }
+      .m-zoom .pbtn:active {
+        background: rgba(232, 234, 237, 0.12);
+      }
+      .m-zoom .sep {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.14);
+        margin: 2px 8px;
+      }
+      .m-gesture {
+        position: absolute;
+        z-index: 55;
+        bottom: 7px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 112px;
+        height: 4px;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.85);
+      }
+      /* scrim + bottom sheets */
+      .m-scrim {
+        position: absolute;
+        inset: 0;
+        z-index: 64;
+        background: rgba(0, 0, 0, 0.52);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s;
+      }
+      .m-scrim.on {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .m-sheet {
+        position: absolute;
+        z-index: 70;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #28292c;
+        border-radius: 26px 26px 0 0;
+        padding: 8px 8px 22px;
+        transform: translateY(105%);
+        transition: transform 0.32s cubic-bezier(0.2, 0.7, 0.3, 1);
+        box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.45);
+      }
+      .m-sheet.on {
+        transform: none;
+      }
+      .m-handle {
+        width: 36px;
+        height: 4px;
+        border-radius: 2px;
+        background: #5f6368;
+        margin: 6px auto 8px;
+      }
+      .m-item {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 13px 20px;
+        border: 0;
+        background: transparent;
+        color: var(--d-text);
+        font-size: 14px;
+        text-align: left;
+        border-radius: 12px;
+      }
+      .m-item:active {
+        background: rgba(232, 234, 237, 0.08);
+      }
+      .m-item svg {
+        width: 20px;
+        height: 20px;
+        color: var(--d-muted);
+        flex: none;
+      }
+      .m-sheet-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 12px 14px;
+      }
+      .m-sheet-head h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 500;
+        flex: 1;
+      }
+      .m-sheet-head .pbtn {
+        width: 34px;
+        height: 34px;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--d-text);
+        display: grid;
+        place-items: center;
+      }
+      .m-drow {
+        padding: 11px 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.07);
+      }
+      .m-drow .l {
+        font-size: 10.5px;
+        color: var(--d-muted);
+        margin-bottom: 3px;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+      }
+      .m-drow .v {
+        font-size: 13px;
+        color: var(--d-text);
+        line-height: 1.4;
+      }
+      .m-toast {
+        position: absolute;
+        z-index: 75;
+        left: 50%;
+        bottom: 92px;
+        transform: translate(-50%, 12px);
+        background: #e8eaed;
+        color: #202124;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-size: 12.5px;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+        opacity: 0;
+        pointer-events: none;
+        transition: 0.24s ease;
+        max-width: 82%;
+        text-align: center;
+      }
+      .m-toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      .phone-caption {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .phone-caption svg {
+        color: #34a853;
+      }
+
+      /* ============ RESPONSIF & MOTION ============ */
+      @media (max-width: 900px) {
+        .top {
+          gap: 10px;
+          padding: 0 12px;
+        }
+        .brand-name,
+        .hints {
+          display: none;
+        }
+        .switch {
+          margin-left: auto;
+        }
+        .stage {
+          padding: 10px;
+        }
+        .view {
+          inset: 10px;
+        }
+      }
+      @media (max-width: 820px) {
+        .gv-actions .hide-s {
+          display: none;
+        }
+        .gv-canvas {
+          padding: 20px 16px 92px;
+        }
+        .browser {
+          border-radius: 9px;
+        }
+        .tab.ghost,
+        .newtab {
+          display: none;
+        }
+      }
+      @keyframes toastpop {
+        from {
+          opacity: 0;
+          transform: translate(-50%, 12px);
+        }
+        to {
+          opacity: 1;
+          transform: translate(-50%, 0);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      /* ============ PRINT ============ */
+      @media print {
+        body {
+          display: block;
+          height: auto;
+          overflow: visible;
+          background: #fff;
+        }
+        .bg,
+        .top,
+        .chrome,
+        .gv-top,
+        .gv-thumbs,
+        .gv-edge,
+        .pill,
+        .gv-find,
+        .gv-details,
+        .gv-toast,
+        .gv-loading,
+        #viewMobile {
+          display: none !important;
+        }
+        .stage {
+          padding: 0;
+        }
+        .view {
+          position: static !important;
+          inset: auto;
+          opacity: 1 !important;
+          visibility: visible !important;
+          transform: none !important;
+        }
+        .browser,
+        .browser-body,
+        .gv {
+          height: auto !important;
+          overflow: visible !important;
+          background: #fff;
+        }
+        .gv-body,
+        .gv-main,
+        .gv-canvas {
+          display: block;
+          overflow: visible !important;
+          padding: 0 !important;
+          background: #fff;
+        }
+        .gv-pages {
+          display: block;
+          width: auto;
+          transform: none !important;
+          zoom: 1 !important;
+          gap: 0;
+          margin: 0;
+        }
+        .paper {
+          box-shadow: none;
+          margin: 0 auto 24px;
+          break-after: page;
+          opacity: 1 !important;
+          transform: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg" aria-hidden="true">
+      <div class="wash w1"></div>
+      <div class="wash w2"></div>
+      <div class="wash w3"></div>
+      <div class="wash w4"></div>
+      <div class="bg-grid"></div>
+    </div>
+
+    <!-- ======= HEADER STAGE + SWITCH ======= -->
+    <header class="top">
+      <div class="brand">
+        <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+          <circle cx="6" cy="6" r="4.2" fill="#4285F4" />
+          <circle cx="14" cy="6" r="4.2" fill="#EA4335" />
+          <circle cx="6" cy="14" r="4.2" fill="#FBBC04" />
+          <circle cx="14" cy="14" r="4.2" fill="#34A853" />
+        </svg>
+        <span class="brand-name">Google Viewer</span>
+        <span class="chip">UI CLONE · DESKTOP + MOBILE</span>
+      </div>
+
+      <div class="switch" role="tablist" aria-label="Pilih tampilan">
+        <span class="sw-thumb" id="swThumb"></span>
+        <button
+          class="sw-btn on"
+          id="btnDesktop"
+          role="tab"
+          aria-selected="true"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+          >
+            <rect x="2.5" y="4" width="19" height="12.5" rx="1.8" />
+            <path d="M9 20.5h6M12 16.5v4" stroke-linecap="round" />
+          </svg>
+          Desktop
+        </button>
+        <button class="sw-btn" id="btnMobile" role="tab" aria-selected="false">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+          >
+            <rect x="7" y="2.5" width="10" height="19" rx="2.4" />
+            <path d="M11 18.7h2" stroke-linecap="round" />
+          </svg>
+          Mobile
+        </button>
+      </div>
+
+      <div class="hints">
+        <kbd>D</kbd> Desktop&nbsp;&nbsp;<kbd>M</kbd> Mobile
+      </div>
+      <p class="sr" role="status" id="viewStatus"></p>
+    </header>
+
+    <main class="stage" id="stage">
+      <!-- ==================================================== -->
+      <!-- ================  VIEW: DESKTOP  =================== -->
+      <!-- ==================================================== -->
+      <section class="view on" id="viewDesktop" aria-label="Tampilan desktop">
+        <div class="browser">
+          <div class="chrome">
+            <div class="tabs">
+              <div class="tab active">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#5f6368"
+                  stroke-width="1.7"
+                >
+                  <path
+                    d="M6 2.8h8l4 4V20a1.2 1.2 0 0 1-1.2 1.2H6A1.2 1.2 0 0 1 4.8 20V4A1.2 1.2 0 0 1 6 2.8Z"
+                  />
+                  <path d="M14 3v4h4" />
+                </svg>
+                <span>Quarterly Business Review — 2026.pdf - Google Drive</span>
+                <button class="tx" tabindex="-1" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="13"
+                    height="13"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  >
+                    <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
+                  </svg>
+                </button>
+              </div>
+              <div class="tab ghost"><span>Google Drive</span></div>
+              <button class="newtab" title="Tab baru" tabindex="-1">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="15"
+                  height="15"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                >
+                  <path d="M12 5v14M5 12h14" stroke-linecap="round" />
+                </svg>
+              </button>
+            </div>
+            <div class="chrome-bar">
+              <button class="navbtn" tabindex="-1" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="17"
+                  height="17"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                >
+                  <path
+                    d="m14.5 6-6 6 6 6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+              <button class="navbtn off" tabindex="-1" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="17"
+                  height="17"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                >
+                  <path
+                    d="m9.5 6 6 6-6 6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+              <button class="navbtn" tabindex="-1" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                >
+                  <path
+                    d="M20 12a8 8 0 1 1-2.34-5.66M20 4v4.3h-4.3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+              <div class="omni">
+                <svg
+                  class="lock"
+                  viewBox="0 0 24 24"
+                  width="13"
+                  height="13"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                >
+                  <rect x="5" y="10.5" width="14" height="9.5" rx="2" />
+                  <path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" />
+                </svg>
+                <span class="url"
+                  >drive.google.com/file/d/1QzR4vK8wB2mN7pL3xYh9tU0cA6eD1f/view</span
+                >
+                <button class="ostar" tabindex="-1" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="15"
+                    height="15"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                  >
+                    <path
+                      d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div class="chrome-avatar">A</div>
+            </div>
+          </div>
+
+          <div class="browser-body">
+            <div class="gv" id="gv">
+              <!-- Loading spinner Google -->
+              <div class="gv-loading" id="gvLoading">
+                <div class="gspinner"></div>
+                <p>Memuat pratinjau…</p>
+              </div>
+
+              <!-- Topbar gelap ala Drive -->
+              <header class="gv-top">
+                <div class="gv-file">
+                  <svg
+                    width="30"
+                    height="34"
+                    viewBox="0 0 30 34"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fill="#ea4335"
+                      d="M3 3a2 2 0 0 1 2-2h13l9 9v20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3z"
+                    />
+                    <path fill="#c5221f" d="M18 1v7a2 2 0 0 0 2 2h7l-9-9z" />
+                    <text
+                      x="15"
+                      y="25"
+                      text-anchor="middle"
+                      font-family="Arial, sans-serif"
+                      font-size="8.5"
+                      font-weight="700"
+                      fill="#fff"
+                      letter-spacing=".5"
+                    >
+                      PDF
+                    </text>
+                  </svg>
+                  <span
+                    class="gv-name"
+                    title="Quarterly Business Review — 2026.pdf"
+                    >Quarterly Business Review — 2026.pdf</span
+                  >
+                </div>
+                <div class="gv-actions">
+                  <button
+                    class="dbtn"
+                    id="findBtn"
+                    title="Cari dalam dokumen (Ctrl+F)"
+                    aria-label="Cari dalam dokumen"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                    >
+                      <circle cx="10.8" cy="10.8" r="6.8" />
+                      <path d="m16 16 4.5 4.5" stroke-linecap="round" />
+                    </svg>
+                  </button>
+                  <button
+                    class="dbtn"
+                    id="starBtn"
+                    title="Tambahkan ke berbintang"
+                    aria-label="Bintangi"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                    >
+                      <path
+                        d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    class="dbtn hide-s"
+                    id="printBtnTop"
+                    title="Cetak"
+                    aria-label="Cetak"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                    >
+                      <path
+                        d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
+                      />
+                      <path d="M7 14h10v7H7zM17.5 11.5h.01" />
+                    </svg>
+                  </button>
+                  <button
+                    class="dbtn hide-s"
+                    id="dlBtnTop"
+                    title="Download"
+                    aria-label="Download"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                    >
+                      <path
+                        d="M12 3v12m0 0 4.5-4.5M12 15 7.5 10.5M5 19h14"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    class="dbtn"
+                    id="fsBtn"
+                    title="Layar penuh"
+                    aria-label="Layar penuh"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                    >
+                      <path
+                        d="M8 4H4v4m12-4h4v4M4 16v4h4m12-4v4h-4"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <div class="menu-wrap">
+                    <button
+                      class="dbtn"
+                      id="moreBtn"
+                      title="Lainnya"
+                      aria-label="Menu lainnya"
+                    >
+                      <svg viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="12" cy="5" r="1.7" />
+                        <circle cx="12" cy="12" r="1.7" />
+                        <circle cx="12" cy="19" r="1.7" />
+                      </svg>
+                    </button>
+                    <div class="menu" id="gvMenu" role="menu">
+                      <button class="menu-item" id="miShare">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                        >
+                          <circle cx="12" cy="7.5" r="2.6" />
+                          <path
+                            d="M12 10.2V15m-4.8 4a4.8 4.8 0 0 1 9.6 0"
+                            stroke-linecap="round"
+                          /></svg
+                        >Bagikan
+                      </button>
+                      <button class="menu-item" id="miDl">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                        >
+                          <path
+                            d="M12 3v12m0 0 4.5-4.5M12 15 7.5 10.5M5 19h14"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          /></svg
+                        >Download
+                      </button>
+                      <button class="menu-item" id="miPrint">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.7"
+                        >
+                          <path
+                            d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
+                          />
+                          <path d="M7 14h10v7H7z" /></svg
+                        >Cetak
+                      </button>
+                      <button class="menu-item" id="miRotate">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.7"
+                        >
+                          <path
+                            d="M20 7v5h-5M19 12a7.5 7.5 0 1 1-2.1-5.2L20 10"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          /></svg
+                        >Putar searah jarum jam
+                      </button>
+                      <div class="menu-sep"></div>
+                      <button class="menu-item" id="miDetails">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                        >
+                          <circle cx="12" cy="12" r="9" />
+                          <path
+                            d="M12 11v5M12 7.5h.01"
+                            stroke-linecap="round"
+                          /></svg
+                        >Detail file
+                      </button>
+                      <button class="menu-item" id="miPop">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                        >
+                          <path
+                            d="M14 4h6v6M20 4l-9 9M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          /></svg
+                        >Buka di tab baru
+                      </button>
+                      <button class="menu-item" id="miHelp">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                        >
+                          <circle cx="12" cy="12" r="9" />
+                          <path
+                            d="M9.6 9.2a2.5 2.5 0 0 1 4.9.6c0 1.6-2.4 2-2.4 3.4M12 16.6h.01"
+                            stroke-linecap="round"
+                          /></svg
+                        >Bantuan viewer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </header>
+
+              <div class="gv-body">
+                <!-- Rail thumbnail -->
+                <aside
+                  class="gv-thumbs"
+                  id="gvThumbs"
+                  aria-label="Thumbnail halaman"
+                >
+                  <div class="th-head">
+                    <span>HALAMAN</span>
+                    <button
+                      class="dbtn"
+                      id="thClose"
+                      title="Sembunyikan panel"
+                      aria-label="Sembunyikan thumbnail"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                      >
+                        <path
+                          d="m15 18-6-6 6-6"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="th-list">
+                    <button class="th-item active" data-page="1">
+                      <div class="th-paper">
+                        <div class="mn-t"></div>
+                        <div class="mn-l"></div>
+                        <div class="mn-l s"></div>
+                        <div class="mn-b"></div>
+                        <div
+                          class="mn-t"
+                          style="width: 40%; margin-top: 11px"
+                        ></div>
+                        <div class="mn-l"></div>
+                        <div class="mn-l"></div>
+                        <div class="mn-l s"></div>
+                      </div>
+                      <span class="th-num">1</span>
+                    </button>
+                    <button class="th-item" data-page="2">
+                      <div class="th-paper">
+                        <div class="mn-t" style="width: 72%"></div>
+                        <div class="mn-l s"></div>
+                        <div class="mn-l"></div>
+                        <div class="mn-chart">
+                          <i style="height: 45%"></i><i style="height: 78%"></i
+                          ><i style="height: 60%"></i
+                          ><i style="height: 95%"></i>
+                        </div>
+                        <div
+                          class="mn-t"
+                          style="width: 50%; margin-top: 13px"
+                        ></div>
+                        <div class="mn-l"></div>
+                        <div class="mn-l s"></div>
+                      </div>
+                      <span class="th-num">2</span>
+                    </button>
+                    <button class="th-item" data-page="3">
+                      <div class="th-paper">
+                        <div class="mn-t" style="width: 75%"></div>
+                        <div class="mn-l"></div>
+                        <div class="mn-l s"></div>
+                        <div class="mn-b" style="height: 50px"></div>
+                        <div
+                          class="mn-t"
+                          style="width: 48%; margin-top: 12px"
+                        ></div>
+                        <div class="mn-l"></div>
+                        <div class="mn-l"></div>
+                      </div>
+                      <span class="th-num">3</span>
+                    </button>
+                  </div>
+                </aside>
+                <button
+                  class="gv-edge"
+                  id="gvEdge"
+                  title="Tampilkan thumbnail"
+                  aria-label="Tampilkan thumbnail"
+                  hidden
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="m9.5 6 6 6-6 6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+
+                <div class="gv-main">
+                  <div class="gv-canvas" id="gvCanvas">
+                    <div class="gv-pages" id="gvPages">
+                      <!-- HALAMAN 1 -->
+                      <article class="paper" data-doc-page="1">
+                        <div class="doc-kicker">
+                          Strategi &amp; Performa · Oktober 2026
+                        </div>
+                        <h1 class="doc-title">
+                          Quarterly<br />Business Review
+                        </h1>
+                        <p class="doc-intro">
+                          Ringkasan kinerja bisnis, pencapaian strategis, dan
+                          prioritas utama untuk kuartal ketiga 2026. Dokumen ini
+                          disiapkan untuk tinjauan internal dan perencanaan
+                          kuartal berikutnya.
+                        </p>
+                        <div class="doc-rule"></div>
+                        <h2 class="doc-section-title">Ikhtisar eksekutif</h2>
+                        <p class="doc-copy">
+                          Sepanjang kuartal ketiga, organisasi mempertahankan
+                          pertumbuhan yang stabil dengan fokus pada pengalaman
+                          pelanggan, efisiensi operasional, dan pengembangan
+                          kapabilitas digital. Pendapatan tumbuh secara
+                          konsisten, sementara sejumlah inisiatif lintas fungsi
+                          mulai menunjukkan dampak yang terukur.
+                        </p>
+                        <div class="metric-grid">
+                          <div class="metric">
+                            <div class="metric-label">Pendapatan</div>
+                            <div class="metric-value">Rp 8,4M</div>
+                            <div class="metric-note">↑ 12,8% dari Q2</div>
+                          </div>
+                          <div class="metric">
+                            <div class="metric-label">Pelanggan aktif</div>
+                            <div class="metric-value">24,6K</div>
+                            <div class="metric-note">↑ 8,3% dari Q2</div>
+                          </div>
+                          <div class="metric">
+                            <div class="metric-label">Kepuasan</div>
+                            <div class="metric-value">92,4%</div>
+                            <div class="metric-note">↑ 3,1 poin</div>
+                          </div>
+                        </div>
+                        <h2 class="doc-section-title">Kinerja dalam angka</h2>
+                        <p class="doc-copy">
+                          Tren pertumbuhan menunjukkan momentum yang positif
+                          selama tiga kuartal terakhir. Peningkatan terbesar
+                          berasal dari segmen layanan digital dan perluasan
+                          basis pelanggan perusahaan.
+                        </p>
+                        <div class="chart-wrap">
+                          <div class="chart-heading">
+                            Pertumbuhan pendapatan per kuartal
+                          </div>
+                          <div class="chart">
+                            <div class="bar-col">
+                              <div class="bar" style="height: 48%"></div>
+                              <span class="bar-label">Q1</span>
+                            </div>
+                            <div class="bar-col">
+                              <div class="bar" style="height: 66%"></div>
+                              <span class="bar-label">Q2</span>
+                            </div>
+                            <div class="bar-col">
+                              <div class="bar dark" style="height: 87%"></div>
+                              <span class="bar-label">Q3</span>
+                            </div>
+                            <div class="bar-col">
+                              <div
+                                class="bar"
+                                style="height: 96%; opacity: 0.3"
+                              ></div>
+                              <span class="bar-label">Target Q4</span>
+                            </div>
+                          </div>
+                          <div class="chart-legend">
+                            <span><i class="legend-dot"></i>Realisasi</span
+                            ><span
+                              ><i class="legend-dot dark"></i>Kuartal
+                              berjalan</span
+                            >
+                          </div>
+                        </div>
+                        <div class="page-footer">
+                          <span>INTERNAL · BUSINESS REVIEW 2026</span
+                          ><span>01 / 03</span>
+                        </div>
+                      </article>
+                      <!-- HALAMAN 2 -->
+                      <article class="paper" data-doc-page="2">
+                        <div class="p2-header">
+                          <span>Business Review · Q3 2026</span
+                          ><span>Analisis kinerja</span>
+                        </div>
+                        <h1 class="p2-title">Sorotan kinerja</h1>
+                        <p class="p2-sub">
+                          Tinjauan berikut merangkum indikator utama,
+                          perkembangan inisiatif, serta area yang memerlukan
+                          perhatian pada kuartal mendatang.
+                        </p>
+                        <h2 class="doc-section-title" style="font-size: 18px">
+                          Ringkasan per segmen
+                        </h2>
+                        <table class="doc-table">
+                          <thead>
+                            <tr>
+                              <th>Segmen</th>
+                              <th>Pendapatan</th>
+                              <th>Pertumbuhan</th>
+                              <th>Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td>Layanan digital</td>
+                              <td>Rp 3,8M</td>
+                              <td>+18,2%</td>
+                              <td style="color: #188038">Di atas target</td>
+                            </tr>
+                            <tr>
+                              <td>Enterprise</td>
+                              <td>Rp 2,9M</td>
+                              <td>+11,4%</td>
+                              <td style="color: #188038">Sesuai target</td>
+                            </tr>
+                            <tr>
+                              <td>Kemitraan</td>
+                              <td>Rp 1,7M</td>
+                              <td>+6,1%</td>
+                              <td style="color: #b06000">Perlu perhatian</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                        <div class="doc-rule" style="margin: 25px 0"></div>
+                        <div class="two-col">
+                          <section>
+                            <h3 class="subhead">Pencapaian utama</h3>
+                            <ul class="bullet-list">
+                              <li>
+                                Peluncuran portal layanan pelanggan generasi
+                                baru.
+                              </li>
+                              <li>Waktu penyelesaian proses turun 21%.</li>
+                              <li>Ekspansi kemitraan di tiga wilayah baru.</li>
+                              <li>
+                                Adopsi fitur digital meningkat secara konsisten.
+                              </li>
+                            </ul>
+                          </section>
+                          <section>
+                            <h3 class="subhead">Fokus peningkatan</h3>
+                            <ul class="bullet-list">
+                              <li>Percepatan onboarding mitra strategis.</li>
+                              <li>Optimalisasi biaya akuisisi pelanggan.</li>
+                              <li>Peningkatan konsistensi kualitas layanan.</li>
+                              <li>Penguatan pelaporan dan tata kelola data.</li>
+                            </ul>
+                          </section>
+                        </div>
+                        <div class="doc-callout">
+                          <strong>Catatan:</strong> Prioritas kuartal keempat
+                          adalah menjaga kualitas pertumbuhan. Seluruh tim
+                          diminta menyelaraskan target operasional dengan
+                          indikator pengalaman pelanggan dan profitabilitas.
+                        </div>
+                        <h2
+                          class="doc-section-title"
+                          style="font-size: 18px; margin-top: 25px"
+                        >
+                          Indikator operasional
+                        </h2>
+                        <p class="doc-copy">
+                          Efisiensi proses meningkat di sebagian besar unit.
+                          Area layanan pelanggan mencatat penurunan waktu
+                          respons rata-rata, sedangkan tingkat penyelesaian pada
+                          kontak pertama terus membaik.
+                        </p>
+                        <div class="page-footer">
+                          <span>INTERNAL · BUSINESS REVIEW 2026</span
+                          ><span>02 / 03</span>
+                        </div>
+                      </article>
+                      <!-- HALAMAN 3 -->
+                      <article class="paper" data-doc-page="3">
+                        <div class="p2-header">
+                          <span>Business Review · Q3 2026</span
+                          ><span>Rencana tindak lanjut</span>
+                        </div>
+                        <div class="doc-kicker">Roadmap · Kuartal IV 2026</div>
+                        <h1
+                          class="p2-title"
+                          style="font-size: 32px; margin-top: 13px"
+                        >
+                          Prioritas berikutnya
+                        </h1>
+                        <p class="p2-sub">
+                          Agenda kuartal mendatang disusun untuk
+                          mengonsolidasikan pertumbuhan, memperkuat fondasi
+                          operasional, dan mempercepat inisiatif strategis.
+                        </p>
+                        <table class="doc-table">
+                          <thead>
+                            <tr>
+                              <th>Inisiatif</th>
+                              <th>Penanggung jawab</th>
+                              <th>Target</th>
+                              <th>Prioritas</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td>Customer experience 2.0</td>
+                              <td>Product &amp; CX</td>
+                              <td>Nov 2026</td>
+                              <td>Tinggi</td>
+                            </tr>
+                            <tr>
+                              <td>Partner acceleration</td>
+                              <td>Business Dev.</td>
+                              <td>Des 2026</td>
+                              <td>Tinggi</td>
+                            </tr>
+                            <tr>
+                              <td>Process automation</td>
+                              <td>Operations</td>
+                              <td>Des 2026</td>
+                              <td>Menengah</td>
+                            </tr>
+                            <tr>
+                              <td>Data governance</td>
+                              <td>Technology</td>
+                              <td>Jan 2027</td>
+                              <td>Menengah</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                        <h2
+                          class="doc-section-title"
+                          style="font-size: 18px; margin-top: 34px"
+                        >
+                          Langkah selanjutnya
+                        </h2>
+                        <p class="doc-copy">
+                          Setiap pemilik inisiatif akan menyusun rencana kerja
+                          terperinci beserta indikator keberhasilan, kebutuhan
+                          sumber daya, dan jadwal checkpoint. Pembaruan progres
+                          akan ditinjau dalam forum koordinasi bulanan.
+                        </p>
+                        <div class="doc-callout">
+                          <strong>Prinsip pelaksanaan:</strong> fokus pada hasil
+                          yang terukur, kolaborasi lintas fungsi, dan keputusan
+                          berbasis data. Risiko utama perlu dieskalasikan sejak
+                          dini agar mitigasi dapat dilakukan secara proaktif.
+                        </div>
+                        <div class="signature">
+                          <div class="signature-line">
+                            Disiapkan oleh · Strategy &amp; Operations
+                          </div>
+                          <div class="signature-line">
+                            Tinjauan · Leadership Team
+                          </div>
+                        </div>
+                        <div class="page-footer">
+                          <span>INTERNAL · BUSINESS REVIEW 2026</span
+                          ><span>03 / 03</span>
+                        </div>
+                      </article>
+                    </div>
+                  </div>
+
+                  <!-- Find in document -->
+                  <div class="gv-find" id="gvFind" hidden>
+                    <div class="row">
+                      <input
+                        id="findInput"
+                        type="search"
+                        placeholder="Cari dalam dokumen"
+                        aria-label="Cari dalam dokumen"
+                      />
+                      <button class="fbtn" id="findPrev" title="Sebelumnya">
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="17"
+                          height="17"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.9"
+                        >
+                          <path
+                            d="m6 14 6-6 6 6"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </button>
+                      <button class="fbtn" id="findNext" title="Berikutnya">
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="17"
+                          height="17"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.9"
+                        >
+                          <path
+                            d="m6 10 6 6 6-6"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </button>
+                      <button class="fbtn" id="findClose" title="Tutup">
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="17"
+                          height="17"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.9"
+                        >
+                          <path
+                            d="m6 6 12 12M18 6 6 18"
+                            stroke-linecap="round"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                    <div class="note" id="findNote">
+                      Ketik kata atau frasa untuk mencari.
+                    </div>
+                  </div>
+
+                  <!-- Pill navigasi halaman -->
+                  <div class="pill page-pill">
+                    <button
+                      class="pbtn"
+                      id="prevPage"
+                      title="Halaman sebelumnya"
+                      aria-label="Halaman sebelumnya"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.9"
+                      >
+                        <path
+                          d="m6 14 6-6 6 6"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </button>
+                    <input
+                      type="number"
+                      id="pageInput"
+                      value="1"
+                      min="1"
+                      max="3"
+                      aria-label="Nomor halaman"
+                    />
+                    <span class="of">/ 3</span>
+                    <button
+                      class="pbtn"
+                      id="nextPage"
+                      title="Halaman berikutnya"
+                      aria-label="Halaman berikutnya"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.9"
+                      >
+                        <path
+                          d="m6 10 6 6 6-6"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <!-- Pill zoom -->
+                  <div class="pill zoom-pill">
+                    <button
+                      class="pbtn"
+                      id="zoomOut"
+                      title="Perkecil (−)"
+                      aria-label="Perkecil"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.9"
+                      >
+                        <circle cx="10.8" cy="10.8" r="6.8" />
+                        <path
+                          d="M7.8 10.8h6M16 16l4.5 4.5"
+                          stroke-linecap="round"
+                        />
+                      </svg>
+                    </button>
+                    <select id="zoomSelect" aria-label="Tingkat zoom">
+                      <option value="50">50%</option>
+                      <option value="75">75%</option>
+                      <option value="90">90%</option>
+                      <option value="100" selected>100%</option>
+                      <option value="125">125%</option>
+                      <option value="150">150%</option>
+                      <option value="200">200%</option>
+                      <option value="fit">Sesuaikan lebar</option>
+                    </select>
+                    <button
+                      class="pbtn"
+                      id="zoomIn"
+                      title="Perbesar (+)"
+                      aria-label="Perbesar"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.9"
+                      >
+                        <circle cx="10.8" cy="10.8" r="6.8" />
+                        <path
+                          d="M10.8 7.8v6m-3-3h6M16 16l4.5 4.5"
+                          stroke-linecap="round"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Panel detail -->
+              <aside class="gv-details" id="gvDetails" aria-label="Detail file">
+                <div class="dt-tabs">
+                  <button class="dt-tab on" id="tabDetail">Detail</button>
+                  <button class="dt-tab" id="tabActivity">Aktivitas</button>
+                  <button
+                    class="dt-close"
+                    id="closeDetails"
+                    title="Tutup"
+                    aria-label="Tutup detail"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="18"
+                      height="18"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.9"
+                    >
+                      <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
+                    </svg>
+                  </button>
+                </div>
+                <div class="dt-body" id="dtDetailBody">
+                  <div class="dt-prev">
+                    <div class="mini">
+                      <div class="mn-t"></div>
+                      <div class="mn-l"></div>
+                      <div class="mn-l s"></div>
+                      <div class="mn-b"></div>
+                      <div
+                        class="mn-t"
+                        style="width: 42%; margin-top: 10px"
+                      ></div>
+                      <div class="mn-l"></div>
+                    </div>
+                  </div>
+                  <div class="dt-row">
+                    <div class="l">Deskripsi</div>
+                    <div class="v">
+                      Ringkasan kinerja bisnis kuartal ketiga 2026 — internal.
+                    </div>
+                  </div>
+                  <div class="dt-row">
+                    <div class="l">Nama file</div>
+                    <div class="v">Quarterly Business Review — 2026.pdf</div>
+                  </div>
+                  <div class="dt-row">
+                    <div class="l">Jenis file</div>
+                    <div class="v">Dokumen PDF</div>
+                  </div>
+                  <div class="dt-row">
+                    <div class="l">Ukuran</div>
+                    <div class="v">2,4 MB</div>
+                  </div>
+                  <div class="dt-row">
+                    <div class="l">Pemilik</div>
+                    <div class="v">Anda</div>
+                  </div>
+                  <div class="dt-row">
+                    <div class="l">Terakhir dimodifikasi</div>
+                    <div class="v">28 Oktober 2026, 16.42</div>
+                  </div>
+                  <div class="dt-row">
+                    <div class="l">Lokasi</div>
+                    <div class="v">Drive Saya / Laporan / 2026</div>
+                  </div>
+                  <div class="dt-row">
+                    <div class="l">Dibuka dengan</div>
+                    <div class="v">Google Viewer</div>
+                  </div>
+                </div>
+                <div class="dt-body" id="dtActivityBody" hidden>
+                  <div class="act">
+                    <div class="av" style="background: #7e57c2">A</div>
+                    <div>
+                      <div class="t">
+                        <strong>Anda</strong> membuka file ini dengan Google
+                        Viewer
+                      </div>
+                      <div class="w">Hari ini · 10.42</div>
+                    </div>
+                  </div>
+                  <div class="act">
+                    <div class="av" style="background: #ea4335">R</div>
+                    <div>
+                      <div class="t">
+                        <strong>Rani S.</strong> mengunggah versi baru (v4)
+                      </div>
+                      <div class="w">28 Okt 2026 · 16.42</div>
+                    </div>
+                  </div>
+                  <div class="act">
+                    <div class="av" style="background: #34a853">D</div>
+                    <div>
+                      <div class="t">
+                        <strong>Dimas P.</strong> membagikan kepada Tim Produk
+                      </div>
+                      <div class="w">27 Okt 2026 · 09.15</div>
+                    </div>
+                  </div>
+                  <div class="act">
+                    <div class="av" style="background: #f9ab00">S</div>
+                    <div>
+                      <div class="t">
+                        <strong>Sari W.</strong> menambahkan komentar di halaman
+                        2
+                      </div>
+                      <div class="w">26 Okt 2026 · 14.03</div>
+                    </div>
+                  </div>
+                </div>
+              </aside>
+
+              <div
+                class="gv-toast"
+                id="gvToast"
+                role="status"
+                aria-live="polite"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================================================== -->
+      <!-- ================  VIEW: MOBILE  ==================== -->
+      <!-- ==================================================== -->
+      <section
+        class="view"
+        id="viewMobile"
+        aria-label="Tampilan mobile (frame Pixel)"
+      >
+        <div class="phone-wrap" id="phoneWrap">
+          <div class="pixel" id="pixel">
+            <div class="px-btn vol"></div>
+            <div class="px-btn pwr"></div>
+            <div class="px-screen">
+              <div class="m-app">
+                <div class="m-status">
+                  <span id="mClock">10.46</span>
+                  <div class="m-sicons">
+                    <svg
+                      width="15"
+                      height="12"
+                      viewBox="0 0 15 12"
+                      fill="#e8eaed"
+                    >
+                      <path d="M0 12 7.5 2 15 12z" opacity=".95" />
+                    </svg>
+                    <svg
+                      width="16"
+                      height="12"
+                      viewBox="0 0 16 12"
+                      fill="none"
+                      stroke="#e8eaed"
+                      stroke-width="1.7"
+                      stroke-linecap="round"
+                    >
+                      <path
+                        d="M1.2 4.2a10 10 0 0 1 13.6 0M3.7 6.9a6.4 6.4 0 0 1 8.6 0"
+                      />
+                      <circle
+                        cx="8"
+                        cy="10"
+                        r="1.3"
+                        fill="#e8eaed"
+                        stroke="none"
+                      />
+                    </svg>
+                    <svg width="22" height="12" viewBox="0 0 22 12">
+                      <rect
+                        x=".8"
+                        y="1"
+                        width="17"
+                        height="10"
+                        rx="2.6"
+                        fill="none"
+                        stroke="#e8eaed"
+                        stroke-width="1.3"
+                      />
+                      <rect
+                        x="2.8"
+                        y="3"
+                        width="10.5"
+                        height="6"
+                        rx="1.2"
+                        fill="#e8eaed"
+                      />
+                      <path
+                        d="M20 4.2v3.6"
+                        stroke="#e8eaed"
+                        stroke-width="1.7"
+                        stroke-linecap="round"
+                      />
+                    </svg>
+                  </div>
+                </div>
+
+                <header class="m-appbar">
+                  <button
+                    class="dbtn"
+                    id="mBack"
+                    title="Kembali"
+                    aria-label="Kembali"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.9"
+                    >
+                      <path
+                        d="M19 12H5m0 0 6-6m-6 6 6 6"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <div class="m-title-wrap">
+                    <div class="m-title">
+                      Quarterly Business Review — 2026.pdf
+                    </div>
+                    <div class="m-sub">
+                      PDF · 2,4 MB · Dibuka dengan Google Viewer
+                    </div>
+                  </div>
+                  <button
+                    class="dbtn"
+                    id="mFind"
+                    title="Cari"
+                    aria-label="Cari"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                    >
+                      <circle cx="10.8" cy="10.8" r="6.8" />
+                      <path d="m16 16 4.5 4.5" stroke-linecap="round" />
+                    </svg>
+                  </button>
+                  <button
+                    class="dbtn"
+                    id="mMore"
+                    title="Lainnya"
+                    aria-label="Menu lainnya"
+                  >
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="12" cy="5" r="1.7" />
+                      <circle cx="12" cy="12" r="1.7" />
+                      <circle cx="12" cy="19" r="1.7" />
+                    </svg>
+                  </button>
+                </header>
+
+                <div class="m-canvas" id="mCanvas">
+                  <div class="m-pages" id="mPages">
+                    <!-- halaman disalin via JS -->
+                  </div>
+                </div>
+
+                <div class="m-pill">
+                  <button
+                    class="pbtn"
+                    id="mPrev"
+                    aria-label="Halaman sebelumnya"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.9"
+                    >
+                      <path
+                        d="m6 14 6-6 6 6"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <span class="m-count" id="mCount"><b>1</b> / 3</span>
+                  <button
+                    class="pbtn"
+                    id="mNext"
+                    aria-label="Halaman berikutnya"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.9"
+                    >
+                      <path
+                        d="m6 10 6 6 6-6"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <div class="m-zoom">
+                  <button
+                    class="pbtn"
+                    id="mZoomIn"
+                    title="Perbesar"
+                    aria-label="Perbesar"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.9"
+                    >
+                      <path d="M12 5v14M5 12h14" stroke-linecap="round" />
+                    </svg>
+                  </button>
+                  <div class="sep"></div>
+                  <button
+                    class="pbtn"
+                    id="mZoomOut"
+                    title="Perkecil"
+                    aria-label="Perkecil"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.9"
+                    >
+                      <path d="M5 12h14" stroke-linecap="round" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div class="m-scrim" id="mScrim"></div>
+
+                <div
+                  class="m-sheet"
+                  id="mSheet"
+                  role="dialog"
+                  aria-label="Menu file"
+                >
+                  <div class="m-handle"></div>
+                  <button class="m-item" data-act="share">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                    >
+                      <circle cx="12" cy="7.5" r="2.6" />
+                      <path
+                        d="M12 10.2V15m-4.8 4a4.8 4.8 0 0 1 9.6 0"
+                        stroke-linecap="round"
+                      /></svg
+                    >Bagikan
+                  </button>
+                  <button class="m-item" data-act="dl">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                    >
+                      <path
+                        d="M12 3v12m0 0 4.5-4.5M12 15 7.5 10.5M5 19h14"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      /></svg
+                    >Download
+                  </button>
+                  <button class="m-item" data-act="print">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                    >
+                      <path
+                        d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
+                      />
+                      <path d="M7 14h10v7H7z" /></svg
+                    >Cetak
+                  </button>
+                  <button class="m-item" data-act="rotate">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                    >
+                      <path
+                        d="M20 7v5h-5M19 12a7.5 7.5 0 1 1-2.1-5.2L20 10"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      /></svg
+                    >Putar
+                  </button>
+                  <button class="m-item" data-act="details">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                    >
+                      <circle cx="12" cy="12" r="9" />
+                      <path
+                        d="M12 11v5M12 7.5h.01"
+                        stroke-linecap="round"
+                      /></svg
+                    >Detail file
+                  </button>
+                  <button class="m-item" data-act="drive">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                    >
+                      <path
+                        d="M9 4h6l6 10-3 5H6l-3-5L9 4Zm3 0 6 10M6 14h12"
+                        stroke-linejoin="round"
+                      /></svg
+                    >Buka di Drive
+                  </button>
+                </div>
+
+                <div
+                  class="m-sheet"
+                  id="mSheetDetails"
+                  role="dialog"
+                  aria-label="Detail file"
+                >
+                  <div class="m-handle"></div>
+                  <div class="m-sheet-head">
+                    <h3>Detail file</h3>
+                    <button
+                      class="pbtn"
+                      id="mDetailsClose"
+                      aria-label="Tutup detail"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="18"
+                        height="18"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.9"
+                      >
+                        <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="m-drow">
+                    <div class="l">Nama file</div>
+                    <div class="v">Quarterly Business Review — 2026.pdf</div>
+                  </div>
+                  <div class="m-drow">
+                    <div class="l">Jenis</div>
+                    <div class="v">Dokumen PDF · 3 halaman</div>
+                  </div>
+                  <div class="m-drow">
+                    <div class="l">Ukuran</div>
+                    <div class="v">2,4 MB</div>
+                  </div>
+                  <div class="m-drow">
+                    <div class="l">Pemilik</div>
+                    <div class="v">Anda</div>
+                  </div>
+                  <div class="m-drow">
+                    <div class="l">Dimodifikasi</div>
+                    <div class="v">28 Oktober 2026, 16.42</div>
+                  </div>
+                  <div class="m-drow">
+                    <div class="l">Lokasi</div>
+                    <div class="v">Drive Saya / Laporan / 2026</div>
+                  </div>
+                </div>
+
+                <div
+                  class="m-toast"
+                  id="mToast"
+                  role="status"
+                  aria-live="polite"
+                ></div>
+                <div class="m-gesture"></div>
+                <div class="punch" aria-hidden="true"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-caption">
+          <svg
+            width="16"
+            height="14"
+            viewBox="0 0 16 14"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path d="M8 1.2c-3.9 0-7 3.1-7 7h14c0-3.9-3.1-7-7-7Z" />
+            <circle cx="5.3" cy="5.4" r=".9" fill="#fff" />
+            <circle cx="10.7" cy="5.4" r=".9" fill="#fff" />
+            <path
+              d="M2.6 1.4 4 3.2M13.4 1.4 12 3.2"
+              stroke="currentColor"
+              stroke-width="1.1"
+              stroke-linecap="round"
+            />
+          </svg>
+          Pixel 9 Pro · Android 16 · pratinjau Google Drive
+        </div>
+      </section>
+    </main>
+
+    <script>
+      (() => {
+        "use strict";
+        const $ = (id) => document.getElementById(id);
+        const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+        /* =============== UTIL =============== */
+        function makeNotify(el) {
+          let t;
+          return (msg) => {
+            el.textContent = msg;
+            el.classList.remove("show");
+            void el.offsetWidth;
+            el.classList.add("show");
+            clearTimeout(t);
+            t = setTimeout(() => el.classList.remove("show"), 2400);
+          };
+        }
+        function makeDownloadFn(notify) {
+          return () => {
+            const content =
+              "Quarterly Business Review — 2026\n\nDemo dokumen Google Viewer Clone.\nKonten contoh untuk demonstrasi antarmuka (tanpa backend).";
+            const blob = new Blob([content], {
+              type: "text/plain;charset=utf-8",
+            });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "quarterly-business-review-demo.txt";
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 2000);
+            notify("File contoh berhasil diunduh");
+          };
+        }
+        const CAN_ZOOM =
+          typeof CSS !== "undefined" &&
+          CSS.supports &&
+          CSS.supports("zoom", "1");
+
+        /* =============== ELEMEN UTAMA =============== */
+        const gvCanvas = $("gvCanvas"),
+          gvPages = $("gvPages");
+        const papers = [...document.querySelectorAll("#gvPages .paper")];
+        const thumbs = [...document.querySelectorAll(".th-item")];
+        const pageInput = $("pageInput"),
+          zoomSelect = $("zoomSelect");
+        const notifyD = makeNotify($("gvToast"));
+        const PAGE_COUNT = 3;
+        let currentPage = 1,
+          zoom = 100,
+          rot = 0,
+          starred = false;
+
+        /* =============== STAGE SWITCH (Desktop/Mobile) =============== */
+        const viewDesktop = $("viewDesktop"),
+          viewMobile = $("viewMobile");
+        const btnDesktop = $("btnDesktop"),
+          btnMobile = $("btnMobile");
+        const swThumb = $("swThumb"),
+          viewStatus = $("viewStatus");
+        let currentView = "desktop";
+
+        function placeThumb(btn) {
+          swThumb.style.left = btn.offsetLeft + "px";
+          swThumb.style.width = btn.offsetWidth + "px";
+        }
+        function setView(mode, announce = true) {
+          currentView = mode;
+          const desk = mode === "desktop";
+          viewDesktop.classList.toggle("on", desk);
+          viewMobile.classList.toggle("on", !desk);
+          btnDesktop.classList.toggle("on", desk);
+          btnMobile.classList.toggle("on", !desk);
+          btnDesktop.setAttribute("aria-selected", desk);
+          btnMobile.setAttribute("aria-selected", !desk);
+          placeThumb(desk ? btnDesktop : btnMobile);
+          viewDesktop.toggleAttribute("inert", !desk);
+          viewMobile.toggleAttribute("inert", desk);
+          if (announce)
+            viewStatus.textContent =
+              "Tampilan " + (desk ? "desktop" : "mobile") + " aktif";
+          if (!desk) requestAnimationFrame(fitPhone);
+        }
+        btnDesktop.addEventListener("click", () => setView("desktop"));
+        btnMobile.addEventListener("click", () => setView("mobile"));
+        window.addEventListener("resize", () => {
+          placeThumb(currentView === "desktop" ? btnDesktop : btnMobile);
+          fitPhone();
+        });
+        if (document.fonts && document.fonts.ready)
+          document.fonts.ready.then(() => placeThumb(btnDesktop));
+
+        /* =============== SKALA FRAME PIXEL =============== */
+        const PX_W = 414,
+          PX_H = 868; // 392x846 layar + bezel
+        const phoneWrap = $("phoneWrap"),
+          pixel = $("pixel");
+        function fitPhone() {
+          const r = viewMobile.getBoundingClientRect();
+          const availH = Math.max(r.height - 64, 300),
+            availW = Math.max(r.width - 16, 280);
+          const s = Math.min(availH / PX_H, availW / PX_W, 1.05);
+          phoneWrap.style.width = PX_W * s + "px";
+          phoneWrap.style.height = PX_H * s + "px";
+          pixel.style.transform = "scale(" + s + ")";
+        }
+
+        /* =============== JAM STATUS BAR =============== */
+        function tickClock() {
+          const d = new Date();
+          $("mClock").textContent =
+            String(d.getHours()).padStart(2, "0") +
+            "." +
+            String(d.getMinutes()).padStart(2, "0");
+        }
+        tickClock();
+        setInterval(tickClock, 30000);
+
+        /* =============== DESKTOP: HALAMAN & SCROLL =============== */
+        function pageFromScroll() {
+          let idx = 1;
+          papers.forEach((p, i) => {
+            if (p.offsetTop <= gvCanvas.scrollTop + gvCanvas.clientHeight * 0.4)
+              idx = i + 1;
+          });
+          return idx;
+        }
+        function updatePageUI(p) {
+          currentPage = p;
+          pageInput.value = p;
+          $("prevPage").disabled = p === 1;
+          $("nextPage").disabled = p === PAGE_COUNT;
+          thumbs.forEach((t) =>
+            t.classList.toggle("active", Number(t.dataset.page) === p),
+          );
+        }
+        function goToPage(p, instant) {
+          p = clamp(Number(p) || 1, 1, PAGE_COUNT);
+          updatePageUI(p);
+          gvCanvas.scrollTo({
+            top: papers[p - 1].offsetTop - 14,
+            behavior: instant ? "auto" : "smooth",
+          });
+        }
+        gvCanvas.addEventListener(
+          "scroll",
+          () => {
+            const p = pageFromScroll();
+            if (p !== currentPage) updatePageUI(p);
+          },
+          { passive: true },
+        );
+        $("prevPage").addEventListener("click", () =>
+          goToPage(currentPage - 1),
+        );
+        $("nextPage").addEventListener("click", () =>
+          goToPage(currentPage + 1),
+        );
+        pageInput.addEventListener("change", (e) => goToPage(e.target.value));
+        thumbs.forEach((t) =>
+          t.addEventListener("click", () => goToPage(t.dataset.page)),
+        );
+
+        /* =============== DESKTOP: ZOOM & ROTASI =============== */
+        function applyTransform() {
+          if (CAN_ZOOM) gvPages.style.zoom = (zoom / 100).toString();
+          else gvPages.style.transform = "scale(" + zoom / 100 + ")";
+          gvPages.style.setProperty("--rot", rot + "deg");
+          gvPages.classList.toggle("rot", rot !== 0);
+        }
+        function setZoom(v) {
+          if (v === "fit") {
+            zoom = clamp(
+              Math.round(((gvCanvas.clientWidth - 84) / 816) * 100),
+              50,
+              200,
+            );
+            zoomSelect.value = "fit";
+            [...zoomSelect.options].find((o) => o.value === "fit").textContent =
+              "Sesuaikan lebar (" + zoom + "%)";
+          } else {
+            zoom = clamp(Math.round(Number(v)), 50, 200);
+            zoomSelect.value = String(zoom);
+            if (!zoomSelect.value) {
+              zoomSelect.value = "fit";
+            }
+            [...zoomSelect.options].find((o) => o.value === "fit").textContent =
+              "Sesuaikan lebar";
+          }
+          applyTransform();
+        }
+        zoomSelect.addEventListener("change", (e) => setZoom(e.target.value));
+        $("zoomIn").addEventListener("click", () => setZoom(zoom + 10));
+        $("zoomOut").addEventListener("click", () => setZoom(zoom - 10));
+        window.addEventListener("resize", () => {
+          if (zoomSelect.value === "fit") setZoom("fit");
+        });
+
+        function rotate() {
+          rot = (rot + 90) % 360;
+          gvPages.classList.add("anim");
+          applyTransform();
+          setTimeout(() => gvPages.classList.remove("anim"), 350);
+          notifyD("Tampilan dokumen diputar");
+        }
+
+        /* =============== DESKTOP: THUMBNAIL RAIL =============== */
+        $("thClose").addEventListener("click", () => {
+          $("gvThumbs").classList.add("hide");
+          $("gvEdge").hidden = false;
+        });
+        $("gvEdge").addEventListener("click", () => {
+          $("gvThumbs").classList.remove("hide");
+          $("gvEdge").hidden = true;
+        });
+
+        /* =============== DESKTOP: MENU, DETAIL, FIND =============== */
+        const gvMenu = $("gvMenu");
+        function closeMenu() {
+          gvMenu.classList.remove("open");
+        }
+        $("moreBtn").addEventListener("click", (e) => {
+          e.stopPropagation();
+          gvMenu.classList.toggle("open");
+        });
+        document.addEventListener("click", (e) => {
+          if (!gvMenu.contains(e.target) && !$("moreBtn").contains(e.target))
+            closeMenu();
+        });
+        $("miShare").addEventListener("click", () => {
+          closeMenu();
+          notifyD("Fitur berbagi hanya tampilan demo (tanpa backend)");
+        });
+        $("miDl").addEventListener("click", () => {
+          closeMenu();
+          makeDownloadFn(notifyD)();
+        });
+        $("miPrint").addEventListener("click", () => {
+          closeMenu();
+          window.print();
+        });
+        $("miRotate").addEventListener("click", () => {
+          closeMenu();
+          rotate();
+        });
+        $("miPop").addEventListener("click", () => {
+          closeMenu();
+          notifyD("Demo: membuka file di tab baru");
+        });
+        $("miHelp").addEventListener("click", () => {
+          closeMenu();
+          notifyD("Pintasan: Ctrl+F cari · +/− zoom · R putar · ←/→ halaman");
+        });
+        $("dlBtnTop").addEventListener("click", makeDownloadFn(notifyD));
+        $("printBtnTop").addEventListener("click", () => window.print());
+        $("fsBtn").addEventListener("click", async () => {
+          try {
+            const el = document.querySelector(".browser");
+            if (!document.fullscreenElement) await el.requestFullscreen();
+            else await document.exitFullscreen();
+          } catch {
+            notifyD("Mode layar penuh tidak tersedia di browser ini");
+          }
+        });
+
+        const gvDetails = $("gvDetails");
+        function openDetails() {
+          gvDetails.classList.add("open");
+        }
+        $("miDetails").addEventListener("click", () => {
+          closeMenu();
+          openDetails();
+        });
+        $("closeDetails").addEventListener("click", () =>
+          gvDetails.classList.remove("open"),
+        );
+        $("tabDetail").addEventListener("click", () => {
+          $("tabDetail").classList.add("on");
+          $("tabActivity").classList.remove("on");
+          $("dtDetailBody").hidden = false;
+          $("dtActivityBody").hidden = true;
+        });
+        $("tabActivity").addEventListener("click", () => {
+          $("tabActivity").classList.add("on");
+          $("tabDetail").classList.remove("on");
+          $("dtActivityBody").hidden = false;
+          $("dtDetailBody").hidden = true;
+        });
+
+        $("starBtn").addEventListener("click", () => {
+          starred = !starred;
+          const b = $("starBtn");
+          b.classList.toggle("starred", starred);
+          b.innerHTML = starred
+            ? '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"/></svg>'
+            : '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"/></svg>';
+          notifyD(
+            starred ? "Ditambahkan ke berbintang" : "Dihapus dari berbintang",
+          );
+        });
+
+        /* --- Find --- */
+        const gvFind = $("gvFind"),
+          findInput = $("findInput"),
+          findNote = $("findNote");
+        let findMatches = [];
+        function runFind() {
+          const q = findInput.value.trim().toLocaleLowerCase("id");
+          findMatches = [];
+          papers.forEach((p) => {
+            if (q && p.textContent.toLocaleLowerCase("id").includes(q))
+              findMatches.push(Number(p.dataset.docPage));
+          });
+          findNote.textContent = !q
+            ? "Ketik kata atau frasa untuk mencari."
+            : findMatches.length
+              ? "Ditemukan di halaman: " + findMatches.join(", ")
+              : "Tidak ada hasil yang cocok.";
+          if (findMatches.length) goToPage(findMatches[0]);
+        }
+        $("findBtn").addEventListener("click", () => {
+          gvFind.hidden = false;
+          findInput.focus();
+        });
+        $("findClose").addEventListener("click", () => {
+          gvFind.hidden = true;
+          findInput.value = "";
+          findNote.textContent = "Ketik kata atau frasa untuk mencari.";
+        });
+        findInput.addEventListener("input", runFind);
+        $("findNext").addEventListener("click", () => {
+          if (!findMatches.length) return;
+          const i = findMatches.indexOf(currentPage);
+          goToPage(findMatches[(i + 1) % findMatches.length]);
+        });
+        $("findPrev").addEventListener("click", () => {
+          if (!findMatches.length) return;
+          const i = findMatches.indexOf(currentPage);
+          goToPage(
+            findMatches[(i - 1 + findMatches.length) % findMatches.length],
+          );
+        });
+
+        /* =============== KEYBOARD =============== */
+        document.addEventListener("keydown", (e) => {
+          const typing = /^(INPUT|SELECT|TEXTAREA)$/.test(
+            document.activeElement.tagName,
+          );
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f") {
+            e.preventDefault();
+            gvFind.hidden = false;
+            findInput.focus();
+            return;
+          }
+          if (e.key === "Escape") {
+            closeMenu();
+            gvDetails.classList.remove("open");
+            gvFind.hidden = true;
+            closeMobileSheets();
+            return;
+          }
+          if (typing) return;
+          if (e.key === "ArrowRight" || e.key === "ArrowDown")
+            goToPage(currentPage + 1);
+          if (e.key === "ArrowLeft" || e.key === "ArrowUp")
+            goToPage(currentPage - 1);
+          if (e.key === "+" || e.key === "=") setZoom(zoom + 10);
+          if (e.key === "-") setZoom(zoom - 10);
+          if (e.key.toLowerCase() === "r") rotate();
+          if (e.key.toLowerCase() === "d") setView("desktop");
+          if (e.key.toLowerCase() === "m") setView("mobile");
+        });
+
+        /* =============== PRINT HOOK =============== */
+        let savedZoomSel = "100";
+        window.addEventListener("beforeprint", () => {
+          savedZoomSel = zoomSelect.value;
+          gvPages.style.zoom = "1";
+          gvPages.style.transform = "none";
+        });
+        window.addEventListener("afterprint", () => {
+          zoomSelect.value = savedZoomSel;
+          setZoom(savedZoomSel);
+        });
+
+        /* =============== LOADING + ENTRANCE =============== */
+        function startDesktop() {
+          setTimeout(() => {
+            $("gvLoading").classList.add("bye");
+            papers.forEach((p, i) =>
+              setTimeout(() => p.classList.add("in"), 160 + i * 150),
+            );
+            setTimeout(() => setZoom("fit"), 250);
+            setTimeout(() => ($("gvLoading").hidden = true), 600);
+          }, 950);
+        }
+
+        /* =============== MOBILE: SALIN HALAMAN =============== */
+        const mCanvas = $("mCanvas"),
+          mPages = $("mPages");
+        const mWrappers = [],
+          mPapers = [];
+        papers.forEach((p, i) => {
+          const w = document.createElement("div");
+          w.className = "m-page";
+          w.dataset.p = i + 1;
+          const c = p.cloneNode(true);
+          c.classList.add("in");
+          w.appendChild(c);
+          mPages.appendChild(w);
+          mWrappers.push(w);
+          mPapers.push(c);
+        });
+        let mZoom = 100,
+          mRot = 0,
+          mPage = 1;
+        let baseMs = 1,
+          baseMs2 = 1;
+        function measureMobile() {
+          const avail = mCanvas.clientWidth - 24;
+          baseMs = avail / 816;
+          baseMs2 = avail / 1056;
+        }
+        function applyMobile() {
+          const isRot = mRot % 180 !== 0;
+          const ms = (isRot ? baseMs2 : baseMs) * (mZoom / 100);
+          mPages.style.setProperty("--msw", (isRot ? 1056 : 816) * ms + "px");
+          mPages.style.setProperty("--msh", (isRot ? 816 : 1056) * ms + "px");
+          mPapers.forEach((pp) => {
+            pp.style.transform =
+              mRot === 0
+                ? "scale(" + ms + ")"
+                : mRot === 90
+                  ? "translateX(" +
+                    1056 * ms +
+                    "px) rotate(90deg) scale(" +
+                    ms +
+                    ")"
+                  : mRot === 180
+                    ? "translate(" +
+                      816 * ms +
+                      "px," +
+                      1056 * ms +
+                      "px) rotate(180deg) scale(" +
+                      ms +
+                      ")"
+                    : "translateY(" +
+                      816 * ms +
+                      "px) rotate(270deg) scale(" +
+                      ms +
+                      ")";
+          });
+        }
+        function updateMCount(p) {
+          mPage = p;
+          $("mCount").innerHTML = "<b>" + p + "</b> / " + PAGE_COUNT;
+        }
+        function goM(p) {
+          p = clamp(p, 1, PAGE_COUNT);
+          updateMCount(p);
+          mCanvas.scrollTo({
+            top: mWrappers[p - 1].offsetTop - 10,
+            behavior: "smooth",
+          });
+        }
+        mCanvas.addEventListener(
+          "scroll",
+          () => {
+            let idx = 1;
+            mWrappers.forEach((w, i) => {
+              if (w.offsetTop <= mCanvas.scrollTop + mCanvas.clientHeight * 0.4)
+                idx = i + 1;
+            });
+            if (idx !== mPage) updateMCount(idx);
+          },
+          { passive: true },
+        );
+        $("mPrev").addEventListener("click", () => goM(mPage - 1));
+        $("mNext").addEventListener("click", () => goM(mPage + 1));
+        $("mZoomIn").addEventListener("click", () => {
+          mZoom = clamp(mZoom + 10, 60, 220);
+          applyMobile();
+        });
+        $("mZoomOut").addEventListener("click", () => {
+          mZoom = clamp(mZoom - 10, 60, 220);
+          applyMobile();
+        });
+
+        /* =============== MOBILE: SHEET & TOAST =============== */
+        const mScrim = $("mScrim"),
+          mSheet = $("mSheet"),
+          mSheetDetails = $("mSheetDetails");
+        const notifyM = makeNotify($("mToast"));
+        function closeMobileSheets() {
+          mScrim.classList.remove("on");
+          mSheet.classList.remove("on");
+          mSheetDetails.classList.remove("on");
+        }
+        function openSheet(el) {
+          mScrim.classList.add("on");
+          el.classList.add("on");
+        }
+        mScrim.addEventListener("click", closeMobileSheets);
+        $("mMore").addEventListener("click", () => openSheet(mSheet));
+        $("mDetailsClose").addEventListener("click", closeMobileSheets);
+        $("mBack").addEventListener("click", () =>
+          notifyM("Demo UI — tidak ada halaman sebelumnya"),
+        );
+        $("mFind").addEventListener("click", () =>
+          notifyM("Pencarian dokumen tersedia di mode desktop"),
+        );
+        $("mSheet").addEventListener("click", (e) => {
+          const btn = e.target.closest(".m-item");
+          if (!btn) return;
+          const act = btn.dataset.act;
+          closeMobileSheets();
+          if (act === "share")
+            notifyM("Fitur berbagi hanya tampilan demo (tanpa backend)");
+          else if (act === "dl") makeDownloadFn(notifyM)();
+          else if (act === "print") notifyM("Demo: menyiapkan cetakan…");
+          else if (act === "rotate") {
+            mRot = (mRot + 90) % 360;
+            applyMobile();
+            notifyM("Tampilan diputar");
+          } else if (act === "details")
+            setTimeout(() => openSheet(mSheetDetails), 200);
+          else if (act === "drive") notifyM("Demo: membuka aplikasi Drive");
+        });
+
+        /* =============== INIT =============== */
+        measureMobile();
+        applyMobile();
+        setView(innerWidth < 820 ? "mobile" : "desktop", false);
+        startDesktop();
+        window.addEventListener("load", () => {
+          placeThumb(currentView === "desktop" ? btnDesktop : btnMobile);
+          fitPhone();
+        });
+      })();
+    </script>
+  </body>
+</html>

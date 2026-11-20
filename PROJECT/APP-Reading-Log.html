@@ -1,0 +1,2730 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Aplikasi Catatan Bacaan &amp; Buku</title>
+    <style>
+      :root {
+        --bg: #f6f5f1;
+        --surface: #ffffff;
+        --ink: #1e1c1a;
+        --ink-2: #57534e;
+        --ink-3: #8a857e;
+        --line: #e7e3db;
+        --line-2: #d8d3c8;
+        --accent: #a8502c;
+        --accent-ink: #8a3f20;
+        --accent-soft: #f5e7e0;
+        --amber: #9a7328;
+        --amber-soft: #f4ecda;
+        --green: #3f6b4f;
+        --green-soft: #e6eee8;
+        --danger: #b3261e;
+        --radius: 12px;
+        --shadow:
+          0 1px 2px rgba(30, 28, 26, 0.05), 0 8px 24px rgba(30, 28, 26, 0.07);
+        --shadow-lg: 0 24px 64px rgba(30, 28, 26, 0.18);
+        --serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+        --sans:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        font-family: var(--sans);
+        background: var(--bg);
+        color: var(--ink);
+        font-size: 15px;
+        line-height: 1.55;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      button {
+        font-family: inherit;
+      }
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+      .container {
+        width: 100%;
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+
+      /* ---------- icons ---------- */
+      .icon {
+        width: 18px;
+        height: 18px;
+        flex: none;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .icon-sm {
+        width: 15px;
+        height: 15px;
+      }
+      .icon-lg {
+        width: 44px;
+        height: 44px;
+        stroke-width: 1.3;
+      }
+
+      /* ---------- header ---------- */
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        background: rgba(246, 245, 241, 0.94);
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid var(--line);
+      }
+      .header-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        min-height: 64px;
+        flex-wrap: wrap;
+        padding-top: 8px;
+        padding-bottom: 8px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .brand-mark {
+        width: 38px;
+        height: 38px;
+        border: 1px solid var(--line-2);
+        background: var(--surface);
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        color: var(--accent);
+      }
+      .brand-text h1 {
+        font-family: var(--serif);
+        font-size: 19px;
+        font-weight: 700;
+        line-height: 1.15;
+        letter-spacing: 0.2px;
+      }
+      .brand-text p {
+        font-size: 12px;
+        color: var(--ink-3);
+      }
+      .tabs {
+        display: flex;
+        gap: 4px;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .tabs::-webkit-scrollbar {
+        display: none;
+      }
+      .tab {
+        appearance: none;
+        border: 1px solid transparent;
+        background: none;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--ink-2);
+        padding: 8px 14px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        cursor: pointer;
+        white-space: nowrap;
+        transition:
+          background 0.15s,
+          color 0.15s;
+      }
+      .tab:hover {
+        color: var(--ink);
+        background: rgba(30, 28, 26, 0.05);
+      }
+      .tab.active {
+        color: var(--ink);
+        background: var(--surface);
+        border-color: var(--line);
+        box-shadow: 0 1px 2px rgba(30, 28, 26, 0.04);
+      }
+
+      /* ---------- layout ---------- */
+      main {
+        flex: 1;
+        padding: 30px 0 64px;
+      }
+      .view {
+        display: none;
+      }
+      .view.active {
+        display: block;
+        animation: fade 0.25s ease;
+      }
+      @keyframes fade {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      .view-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+      .view-head h2 {
+        font-family: var(--serif);
+        font-size: 26px;
+        font-weight: 700;
+        line-height: 1.2;
+      }
+      .view-head .sub {
+        color: var(--ink-2);
+        font-size: 13.5px;
+        margin-top: 5px;
+      }
+
+      /* ---------- buttons ---------- */
+      .btn {
+        appearance: none;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        font-size: 13.5px;
+        font-weight: 600;
+        padding: 9px 16px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        line-height: 1;
+        transition:
+          background 0.15s,
+          border-color 0.15s,
+          color 0.15s;
+        text-decoration: none;
+      }
+      .btn-sm {
+        padding: 7px 12px;
+        font-size: 12.5px;
+      }
+      .btn-primary {
+        background: var(--ink);
+        color: #fff;
+      }
+      .btn-primary:hover {
+        background: #000;
+      }
+      .btn-accent {
+        background: var(--accent);
+        color: #fff;
+      }
+      .btn-accent:hover {
+        background: var(--accent-ink);
+      }
+      .btn-outline {
+        background: var(--surface);
+        border-color: var(--line-2);
+        color: var(--ink);
+      }
+      .btn-outline:hover {
+        border-color: var(--ink-3);
+      }
+      .btn-ghost {
+        background: transparent;
+        color: var(--ink-2);
+      }
+      .btn-ghost:hover {
+        background: rgba(30, 28, 26, 0.06);
+        color: var(--ink);
+      }
+      .btn-danger {
+        background: var(--danger);
+        color: #fff;
+      }
+      .btn-danger:hover {
+        background: #99201a;
+      }
+      .btn-link {
+        appearance: none;
+        border: 0;
+        background: none;
+        color: var(--accent);
+        font-size: inherit;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 0;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+      .btn-link:hover {
+        color: var(--accent-ink);
+      }
+      .icon-btn {
+        width: 32px;
+        height: 32px;
+        display: inline-grid;
+        place-items: center;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--ink-3);
+        border-radius: 7px;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          color 0.15s;
+      }
+      .icon-btn:hover {
+        color: var(--ink);
+        background: rgba(30, 28, 26, 0.06);
+      }
+      .icon-btn.danger:hover {
+        color: var(--danger);
+        background: rgba(179, 38, 30, 0.08);
+      }
+      .icon-btn.small {
+        width: 28px;
+        height: 28px;
+      }
+
+      /* ---------- cards ---------- */
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 20px;
+      }
+      .card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+      .card-title {
+        font-family: var(--serif);
+        font-size: 16.5px;
+        font-weight: 700;
+        display: flex;
+        gap: 9px;
+        align-items: center;
+      }
+      .card-title .icon {
+        color: var(--accent);
+        width: 17px;
+        height: 17px;
+      }
+      .muted {
+        color: var(--ink-2);
+      }
+      .muted-sm {
+        font-size: 12px;
+        color: var(--ink-3);
+      }
+
+      /* ---------- stat cards ---------- */
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 16px;
+      }
+      .stat-label {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+        display: flex;
+        gap: 7px;
+        align-items: center;
+      }
+      .stat-label .icon {
+        width: 14px;
+        height: 14px;
+      }
+      .stat-value {
+        font-family: var(--serif);
+        font-size: 28px;
+        font-weight: 700;
+        margin-top: 8px;
+        line-height: 1.1;
+      }
+      .stat-sub {
+        font-size: 12.5px;
+        color: var(--ink-2);
+        margin-top: 4px;
+      }
+      .target-card {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
+      .ring-wrap {
+        position: relative;
+        width: 96px;
+        height: 96px;
+        flex: none;
+      }
+      .ring-wrap svg {
+        display: block;
+        transform: rotate(-90deg);
+      }
+      .ring-center {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-content: center;
+        text-align: center;
+        line-height: 1.15;
+      }
+      .ring-center b {
+        font-family: var(--serif);
+        font-size: 21px;
+        font-weight: 700;
+      }
+      .ring-center span {
+        font-size: 11px;
+        color: var(--ink-3);
+      }
+      .target-edit {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 12.5px;
+        color: var(--ink-2);
+        margin-top: 8px;
+        flex-wrap: wrap;
+      }
+      .target-edit input {
+        width: 60px;
+        padding: 4px 8px;
+        font-size: 13px;
+        border-radius: 6px;
+      }
+
+      /* ---------- dashboard ---------- */
+      .dash-grid {
+        display: grid;
+        grid-template-columns: 1.6fr 1fr;
+        gap: 14px;
+        margin-bottom: 16px;
+      }
+      .read-item {
+        padding: 12px 0;
+        border-top: 1px solid var(--line);
+      }
+      .read-item:first-of-type {
+        border-top: 0;
+        padding-top: 2px;
+      }
+      .read-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+      }
+      .read-meta b {
+        font-family: var(--serif);
+        font-size: 15.5px;
+        display: block;
+        line-height: 1.3;
+      }
+      .read-meta span {
+        font-size: 12px;
+        color: var(--ink-3);
+      }
+      .page-form {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .page-form input {
+        width: 76px;
+        padding: 6px 9px;
+        font-size: 13.5px;
+        border-radius: 7px;
+      }
+      .page-form .of {
+        font-size: 12.5px;
+        color: var(--ink-3);
+      }
+      .sess-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 0;
+        border-top: 1px solid var(--line);
+      }
+      .sess-row:first-of-type {
+        border-top: 0;
+        padding-top: 2px;
+      }
+      .sess-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .sess-info b {
+        display: block;
+        font-size: 13.5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .sess-info span {
+        font-size: 12px;
+        color: var(--ink-3);
+      }
+      .sess-min {
+        font-size: 12.5px;
+        font-weight: 700;
+        color: var(--ink-2);
+        white-space: nowrap;
+      }
+      .mini-quote {
+        padding: 12px 0;
+        border-top: 1px solid var(--line);
+      }
+      .mini-quote:first-of-type {
+        border-top: 0;
+        padding-top: 2px;
+      }
+      .mini-quote blockquote {
+        font-family: var(--serif);
+        font-style: italic;
+        font-size: 15.5px;
+        line-height: 1.55;
+      }
+      .mini-quote figcaption {
+        margin-top: 6px;
+        font-size: 12.5px;
+        color: var(--ink-2);
+      }
+      .card-foot {
+        margin-top: 14px;
+        display: flex;
+        justify-content: flex-start;
+      }
+
+      /* ---------- chips ---------- */
+      .chips {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+      }
+      .chip {
+        border: 1px solid var(--line-2);
+        background: var(--surface);
+        border-radius: 999px;
+        padding: 7px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--ink-2);
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .chip:hover {
+        color: var(--ink);
+      }
+      .chip.active {
+        background: var(--ink);
+        border-color: var(--ink);
+        color: #fff;
+      }
+      .chip .count {
+        opacity: 0.6;
+        font-weight: 500;
+      }
+
+      /* ---------- books ---------- */
+      .book-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 14px;
+      }
+      .book-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 11px;
+        transition:
+          border-color 0.15s,
+          box-shadow 0.15s;
+      }
+      .book-card:hover {
+        border-color: var(--line-2);
+        box-shadow: var(--shadow);
+      }
+      .book-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .icon-row {
+        display: flex;
+        gap: 2px;
+      }
+      .book-title {
+        font-family: var(--serif);
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1.25;
+      }
+      .book-author {
+        font-size: 13px;
+        color: var(--ink-2);
+        margin-top: 2px;
+      }
+      .book-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12.5px;
+        color: var(--ink-2);
+        flex-wrap: wrap;
+      }
+      .book-meta .sep {
+        color: var(--line-2);
+      }
+      .prog-line {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: var(--ink-2);
+        margin-bottom: 5px;
+      }
+      .prog-line b {
+        color: var(--ink);
+      }
+      .bar {
+        height: 5px;
+        background: #ece8e0;
+        border-radius: 99px;
+        overflow: hidden;
+      }
+      .bar-fill {
+        height: 100%;
+        background: var(--accent);
+        border-radius: 99px;
+      }
+      .done-line,
+      .want-line {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--green);
+        font-weight: 600;
+      }
+      .want-line {
+        color: var(--ink-2);
+      }
+      .book-card .page-form {
+        margin-top: 2px;
+      }
+      .book-card .page-form .btn {
+        white-space: nowrap;
+      }
+      .book-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: auto;
+        padding-top: 4px;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        padding: 3px 10px;
+        border-radius: 999px;
+        white-space: nowrap;
+      }
+      .badge::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      .badge-reading {
+        color: var(--accent);
+        background: var(--accent-soft);
+      }
+      .badge-want {
+        color: var(--amber);
+        background: var(--amber-soft);
+      }
+      .badge-finished {
+        color: var(--green);
+        background: var(--green-soft);
+      }
+      .tag {
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--ink-2);
+        background: var(--bg);
+        border: 1px solid var(--line);
+        padding: 2px 9px;
+        border-radius: 999px;
+        white-space: nowrap;
+      }
+
+      /* ---------- quotes ---------- */
+      .quotes-tools {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 18px;
+        flex-wrap: wrap;
+      }
+      .select-sm {
+        font-size: 13px;
+        padding: 7px 10px;
+        border-radius: 8px;
+      }
+      .quote-cols {
+        columns: 2;
+        column-gap: 14px;
+      }
+      .quote-card {
+        break-inside: avoid;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 20px;
+        margin-bottom: 14px;
+      }
+      .quote-card .q-icon {
+        color: var(--accent);
+        width: 22px;
+        height: 22px;
+        margin-bottom: 10px;
+      }
+      .quote-card blockquote {
+        font-family: var(--serif);
+        font-style: italic;
+        font-size: 17px;
+        line-height: 1.6;
+        overflow-wrap: break-word;
+      }
+      .quote-attr {
+        margin-top: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .quote-attr .who {
+        font-size: 13px;
+        color: var(--ink-2);
+      }
+      .quote-attr .when {
+        font-size: 12px;
+        color: var(--ink-3);
+      }
+
+      /* ---------- stats ---------- */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      .stats-wide {
+        grid-column: 1/-1;
+      }
+      .chart-stats {
+        display: flex;
+        gap: 36px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+      }
+      .cs-label {
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+        margin-bottom: 5px;
+      }
+      .cs-value {
+        font-family: var(--serif);
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 1.1;
+      }
+      .chart-wrap svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .ct {
+        font-size: 11px;
+        font-weight: 600;
+        fill: var(--ink-2);
+      }
+      .ct2 {
+        font-size: 11px;
+        fill: var(--ink-3);
+      }
+      .gt {
+        font-size: 12.5px;
+        fill: var(--ink);
+      }
+      .gt2 {
+        font-size: 11.5px;
+        font-weight: 600;
+        fill: var(--ink-2);
+      }
+      .chart-note {
+        margin-top: 10px;
+        font-size: 11.5px;
+        color: var(--ink-3);
+      }
+      .chart-empty {
+        padding: 28px 0;
+        text-align: center;
+        color: var(--ink-2);
+        font-size: 14px;
+      }
+      .fav-genre {
+        padding: 4px 0 16px;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 16px;
+      }
+      .fav-genre .fg-label {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+      }
+      .fav-genre b {
+        display: block;
+        font-family: var(--serif);
+        font-size: 26px;
+        font-weight: 700;
+        line-height: 1.2;
+        margin: 4px 0 2px;
+      }
+      .fav-genre span:last-child {
+        font-size: 12.5px;
+        color: var(--ink-2);
+      }
+      .legend {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        margin: 14px 0 18px;
+        font-size: 12.5px;
+        color: var(--ink-2);
+      }
+      .legend i {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        margin-right: 6px;
+        vertical-align: 1px;
+      }
+      .mini-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      .mini-grid .cs-value {
+        font-size: 20px;
+      }
+
+      /* ---------- empty state ---------- */
+      .empty {
+        text-align: center;
+        padding: 56px 24px;
+        border: 1px dashed var(--line-2);
+        border-radius: var(--radius);
+        background: rgba(255, 255, 255, 0.55);
+      }
+      .empty .icon-lg {
+        color: var(--ink-3);
+        margin: 0 auto 14px;
+        display: block;
+      }
+      .empty h3 {
+        font-family: var(--serif);
+        font-size: 19px;
+        margin-bottom: 6px;
+      }
+      .empty p {
+        color: var(--ink-2);
+        font-size: 14px;
+        margin-bottom: 18px;
+      }
+      .empty .empty-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      /* ---------- forms ---------- */
+      input,
+      select,
+      textarea {
+        font: inherit;
+        font-size: 14px;
+        color: var(--ink);
+        background: var(--surface);
+        border: 1px solid var(--line-2);
+        border-radius: 8px;
+        padding: 9px 12px;
+        outline: none;
+        transition:
+          border-color 0.15s,
+          box-shadow 0.15s;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(168, 80, 44, 0.12);
+      }
+      input::placeholder,
+      textarea::placeholder {
+        color: var(--ink-3);
+      }
+      textarea {
+        resize: vertical;
+        min-height: 90px;
+        width: 100%;
+      }
+      .field label {
+        display: block;
+        font-size: 12.5px;
+        font-weight: 700;
+        color: var(--ink-2);
+        margin-bottom: 6px;
+      }
+      .field input,
+      .field select {
+        width: 100%;
+      }
+      .row2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      .hint {
+        font-size: 11.5px;
+        color: var(--ink-3);
+        margin-top: 5px;
+      }
+
+      /* ---------- modal ---------- */
+      dialog.modal {
+        border: 0;
+        border-radius: 14px;
+        padding: 0;
+        width: min(540px, calc(100vw - 40px));
+        background: var(--surface);
+        box-shadow: var(--shadow-lg);
+        color: var(--ink);
+      }
+      dialog.modal::backdrop {
+        background: rgba(28, 26, 24, 0.45);
+      }
+      .modal-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 22px;
+        border-bottom: 1px solid var(--line);
+      }
+      .modal-head h3 {
+        font-family: var(--serif);
+        font-size: 18px;
+        font-weight: 700;
+      }
+      .modal-body {
+        padding: 20px 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        max-height: min(66vh, 560px);
+        overflow: auto;
+      }
+      .modal-foot {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 15px 22px;
+        border-top: 1px solid var(--line);
+      }
+
+      /* ---------- toast ---------- */
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 28px;
+        transform: translateX(-50%) translateY(16px);
+        background: var(--ink);
+        color: #fff;
+        font-size: 13.5px;
+        font-weight: 600;
+        padding: 10px 18px;
+        border-radius: 999px;
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity 0.25s,
+          transform 0.25s;
+        z-index: 99;
+        max-width: calc(100vw - 40px);
+        text-align: center;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* ---------- footer ---------- */
+      .site-footer {
+        border-top: 1px solid var(--line);
+        padding: 22px 0 30px;
+      }
+      .footer-inner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        font-size: 12.5px;
+        color: var(--ink-3);
+      }
+      .footer-actions {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+      }
+
+      /* ---------- responsive ---------- */
+      @media (max-width: 960px) {
+        .stat-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .dash-grid {
+          grid-template-columns: 1fr;
+        }
+        .stats-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (max-width: 640px) {
+        .stat-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .quote-cols {
+          columns: 1;
+        }
+        .row2 {
+          grid-template-columns: 1fr;
+        }
+        .header-inner {
+          padding-top: 10px;
+          padding-bottom: 10px;
+        }
+        .tabs {
+          width: 100%;
+        }
+        .chart-stats {
+          gap: 22px;
+        }
+        .view-head h2 {
+          font-size: 22px;
+        }
+        .target-card {
+          flex-direction: column;
+          text-align: center;
+          align-items: center;
+        }
+        .target-edit {
+          justify-content: center;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      style="display: none"
+      aria-hidden="true"
+    >
+      <symbol id="i-book-open" viewBox="0 0 24 24">
+        <path d="M2 4.5h6a4 4 0 0 1 4 4V20a3 3 0 0 0-3-3H2z" />
+        <path d="M22 4.5h-6a4 4 0 0 0-4 4V20a3 3 0 0 1 3-3h7z" />
+      </symbol>
+      <symbol id="i-home" viewBox="0 0 24 24">
+        <path d="M3 9.5 12 2l9 7.5V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+        <path d="M9 22V12h6v10" />
+      </symbol>
+      <symbol id="i-library" viewBox="0 0 24 24">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+        <path
+          d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
+        />
+      </symbol>
+      <symbol id="i-target" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9.5" />
+        <circle cx="12" cy="12" r="5.5" />
+        <circle cx="12" cy="12" r="1.4" />
+      </symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9.5" />
+        <path d="M12 6.5V12l3.5 2" />
+      </symbol>
+      <symbol id="i-quote" viewBox="0 0 24 24">
+        <path
+          fill="currentColor"
+          stroke="none"
+          d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z"
+        />
+      </symbol>
+      <symbol id="i-chart" viewBox="0 0 24 24">
+        <path d="M6 20V10" />
+        <path d="M12 20V4" />
+        <path d="M18 20v-6" />
+      </symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24">
+        <path d="M12 5v14M5 12h14" />
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 24 24">
+        <path d="M20 6 9 17l-5-5" />
+      </symbol>
+      <symbol id="i-x" viewBox="0 0 24 24">
+        <path d="M18 6 6 18M6 6l12 12" />
+      </symbol>
+      <symbol id="i-edit" viewBox="0 0 24 24">
+        <path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z" />
+      </symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24">
+        <path d="M3 6h18" />
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+        <path d="M10 11v6M14 11v6" />
+      </symbol>
+      <symbol id="i-calendar" viewBox="0 0 24 24">
+        <rect x="3" y="4" width="18" height="17" rx="2.5" />
+        <path d="M16 2v4M8 2v4M3 9.5h18" />
+      </symbol>
+      <symbol id="i-download" viewBox="0 0 24 24">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <path d="M7 10l5 5 5-5" />
+        <path d="M12 15V3" />
+      </symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <path d="M7 8l5-5 5 5" />
+        <path d="M12 3v12" />
+      </symbol>
+      <symbol id="i-play" viewBox="0 0 24 24">
+        <path d="M6 4.5 19 12 6 19.5z" />
+      </symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24">
+        <path d="M23 4v6h-6" />
+        <path d="M1 20v-6h6" />
+        <path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10" />
+        <path d="M1 14l4.6 4.4A9 9 0 0 0 20.5 15" />
+      </symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24">
+        <path d="M5 12h14" />
+        <path d="M13 6l6 6-6 6" />
+      </symbol>
+      <symbol id="i-book" viewBox="0 0 24 24">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+        <path
+          d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
+        />
+      </symbol>
+      <symbol id="i-bookmark" viewBox="0 0 24 24">
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+      </symbol>
+    </svg>
+
+    <header class="site-header">
+      <div class="container header-inner">
+        <div class="brand">
+          <span class="brand-mark"
+            ><svg class="icon" aria-hidden="true">
+              <use href="#i-book-open" /></svg
+          ></span>
+          <div class="brand-text">
+            <h1>Rak Baca</h1>
+            <p>Catatan bacaan pribadi</p>
+          </div>
+        </div>
+        <nav class="tabs" aria-label="Navigasi utama">
+          <button
+            class="tab active"
+            data-action="switch-view"
+            data-view="dashboard"
+          >
+            <svg class="icon icon-sm" aria-hidden="true">
+              <use href="#i-home" /></svg
+            >Ringkasan
+          </button>
+          <button class="tab" data-action="switch-view" data-view="books">
+            <svg class="icon icon-sm" aria-hidden="true">
+              <use href="#i-library" /></svg
+            >Rak Buku
+          </button>
+          <button class="tab" data-action="switch-view" data-view="quotes">
+            <svg class="icon icon-sm" aria-hidden="true">
+              <use href="#i-quote" /></svg
+            >Kutipan
+          </button>
+          <button class="tab" data-action="switch-view" data-view="stats">
+            <svg class="icon icon-sm" aria-hidden="true">
+              <use href="#i-chart" /></svg
+            >Statistik
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <section
+        class="view active"
+        id="view-dashboard"
+        aria-label="Ringkasan"
+      ></section>
+      <section class="view" id="view-books" aria-label="Rak Buku"></section>
+      <section class="view" id="view-quotes" aria-label="Kutipan"></section>
+      <section class="view" id="view-stats" aria-label="Statistik"></section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <p>
+          Semua data tersimpan lokal di peramban Anda — tanpa akun, tanpa
+          server.
+        </p>
+        <div class="footer-actions">
+          <button class="btn btn-ghost btn-sm" data-action="export-data">
+            <svg class="icon icon-sm" aria-hidden="true">
+              <use href="#i-download" /></svg
+            >Ekspor
+          </button>
+          <button class="btn btn-ghost btn-sm" data-action="import-data">
+            <svg class="icon icon-sm" aria-hidden="true">
+              <use href="#i-upload" /></svg
+            >Impor
+          </button>
+          <button class="btn btn-ghost btn-sm" data-action="load-sample">
+            <svg class="icon icon-sm" aria-hidden="true">
+              <use href="#i-refresh" /></svg
+            >Contoh Data
+          </button>
+          <button class="btn btn-ghost btn-sm" data-action="reset-data">
+            <svg class="icon icon-sm" aria-hidden="true">
+              <use href="#i-trash" /></svg
+            >Hapus Data
+          </button>
+        </div>
+      </div>
+    </footer>
+
+    <dialog class="modal" id="bookModal" aria-labelledby="bookModalTitle">
+      <div class="modal-head">
+        <h3 id="bookModalTitle">Tambah Buku</h3>
+        <button class="icon-btn" type="button" data-close title="Tutup">
+          <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
+        </button>
+      </div>
+      <form id="bookForm" novalidate>
+        <div class="modal-body">
+          <div class="field">
+            <label for="f-title">Judul buku</label>
+            <input
+              id="f-title"
+              name="title"
+              type="text"
+              required
+              placeholder="cth: Laut Bercerita"
+            />
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="f-author">Penulis</label>
+              <input
+                id="f-author"
+                name="author"
+                type="text"
+                placeholder="Nama penulis"
+              />
+            </div>
+            <div class="field">
+              <label for="f-genre">Genre</label>
+              <input
+                id="f-genre"
+                name="genre"
+                type="text"
+                list="genreList"
+                placeholder="cth: Fiksi"
+              />
+              <datalist id="genreList">
+                <option value="Fiksi"></option>
+                <option value="Nonfiksi"></option>
+                <option value="Filsafat"></option>
+                <option value="Sejarah"></option>
+                <option value="Sains"></option>
+                <option value="Psikologi"></option>
+                <option value="Pengembangan Diri"></option>
+                <option value="Biografi"></option>
+                <option value="Bisnis"></option>
+                <option value="Teknologi"></option>
+                <option value="Puisi"></option>
+                <option value="Komik"></option>
+                <option value="Anak"></option>
+                <option value="Agama"></option>
+                <option value="Seni"></option>
+              </datalist>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="f-total">Total halaman</label>
+              <input
+                id="f-total"
+                name="totalPages"
+                type="number"
+                min="1"
+                step="1"
+                required
+                placeholder="cth: 350"
+              />
+            </div>
+            <div class="field">
+              <label for="f-status">Status</label>
+              <select id="f-status" name="status">
+                <option value="reading">Sedang Dibaca</option>
+                <option value="want">Ingin Dibaca</option>
+                <option value="finished">Selesai Dibaca</option>
+              </select>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="f-page">Halaman terakhir dibaca</label>
+              <input
+                id="f-page"
+                name="currentPage"
+                type="number"
+                min="0"
+                step="1"
+                value="0"
+              />
+              <p class="hint">Kosongkan 0 jika belum dimulai.</p>
+            </div>
+            <div class="field">
+              <label for="f-start">Tanggal mulai</label>
+              <input id="f-start" name="startedAt" type="date" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="f-finish">Tanggal selesai</label>
+            <input id="f-finish" name="finishedAt" type="date" />
+            <p class="hint">
+              Diisi otomatis hari ini saat buku ditandai selesai.
+            </p>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost" type="button" data-close>Batal</button>
+          <button class="btn btn-primary" type="submit">Simpan Buku</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="modal" id="sessionModal" aria-labelledby="sessionModalTitle">
+      <div class="modal-head">
+        <h3 id="sessionModalTitle">Catat Sesi Baca</h3>
+        <button class="icon-btn" type="button" data-close title="Tutup">
+          <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
+        </button>
+      </div>
+      <form id="sessionForm" novalidate>
+        <div class="modal-body">
+          <div class="field">
+            <label for="s-book">Buku</label>
+            <select id="s-book" name="bookId"></select>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="s-date">Tanggal</label>
+              <input id="s-date" name="date" type="date" required />
+            </div>
+            <div class="field">
+              <label for="s-min">Durasi (menit)</label>
+              <input
+                id="s-min"
+                name="minutes"
+                type="number"
+                min="1"
+                max="1440"
+                step="1"
+                value="30"
+                required
+              />
+            </div>
+          </div>
+          <p class="hint">
+            Sesi baca dipakai untuk menghitung statistik waktu baca Anda.
+          </p>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost" type="button" data-close>Batal</button>
+          <button class="btn btn-primary" type="submit">Simpan Sesi</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="modal" id="quoteModal" aria-labelledby="quoteModalTitle">
+      <div class="modal-head">
+        <h3 id="quoteModalTitle">Tambah Kutipan</h3>
+        <button class="icon-btn" type="button" data-close title="Tutup">
+          <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
+        </button>
+      </div>
+      <form id="quoteForm" novalidate>
+        <div class="modal-body">
+          <div class="field">
+            <label for="q-text">Kutipan</label>
+            <textarea
+              id="q-text"
+              name="text"
+              required
+              placeholder="Tuliskan kalimat yang menarik perhatian Anda…"
+            ></textarea>
+          </div>
+          <div class="field">
+            <label for="q-book">Dari buku</label>
+            <select id="q-book" name="bookId"></select>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="q-page">Halaman</label>
+              <input
+                id="q-page"
+                name="page"
+                type="number"
+                min="1"
+                step="1"
+                placeholder="opsional"
+              />
+            </div>
+            <div class="field">
+              <label for="q-date">Tanggal</label>
+              <input id="q-date" name="date" type="date" required />
+            </div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost" type="button" data-close>Batal</button>
+          <button class="btn btn-primary" type="submit">Simpan Kutipan</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="modal" id="confirmModal" aria-labelledby="confirmMsg">
+      <div class="modal-head">
+        <h3>Konfirmasi</h3>
+        <button class="icon-btn" type="button" data-close title="Tutup">
+          <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
+        </button>
+      </div>
+      <form id="confirmForm">
+        <div class="modal-body">
+          <p id="confirmMsg" style="font-size: 14px; line-height: 1.6"></p>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost" type="button" data-close>Batal</button>
+          <button class="btn btn-danger" type="submit" id="confirmOk">
+            Ya, Lanjutkan
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <input type="file" id="importFile" accept="application/json,.json" hidden />
+    <script>
+      "use strict";
+      /* ================= data & helpers ================= */
+      const STORE_KEY = "rak-baca-v1";
+      const YEAR = new Date().getFullYear();
+      const MONTHS = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "Mei",
+        "Jun",
+        "Jul",
+        "Agu",
+        "Sep",
+        "Okt",
+        "Nov",
+        "Des",
+      ];
+      const DAYS = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+      const STATUS = {
+        reading: { label: "Sedang Dibaca", cls: "reading", short: "Sedang" },
+        want: { label: "Ingin Dibaca", cls: "want", short: "Ingin" },
+        finished: {
+          label: "Selesai Dibaca",
+          cls: "finished",
+          short: "Selesai",
+        },
+      };
+      const $ = (s) => document.querySelector(s);
+
+      let state = null;
+      let currentView = "dashboard";
+      let bookFilter = "all";
+      let quoteFilter = "all";
+      let editingBookId = null;
+      let confirmCb = null;
+
+      function uid() {
+        return window.crypto && crypto.randomUUID
+          ? crypto.randomUUID()
+          : "id-" + Date.now() + "-" + Math.round(Math.random() * 1e9);
+      }
+      function esc(s) {
+        return String(s == null ? "" : s).replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      }
+      function isoOf(d) {
+        return (
+          d.getFullYear() +
+          "-" +
+          String(d.getMonth() + 1).padStart(2, "0") +
+          "-" +
+          String(d.getDate()).padStart(2, "0")
+        );
+      }
+      function todayISO() {
+        return isoOf(new Date());
+      }
+      function dateOffset(n) {
+        const d = new Date();
+        d.setDate(d.getDate() + n);
+        return isoOf(d);
+      }
+      function fmtDate(iso) {
+        if (!iso) return "—";
+        const d = new Date(iso + "T00:00:00");
+        if (isNaN(d)) return iso;
+        return d.getDate() + " " + MONTHS[d.getMonth()] + " " + d.getFullYear();
+      }
+      function fmtDateRel(iso) {
+        if (!iso) return "—";
+        if (iso === todayISO()) return "Hari ini";
+        if (iso === dateOffset(-1)) return "Kemarin";
+        return fmtDate(iso);
+      }
+      function fmtDur(min) {
+        min = Math.round(min);
+        if (min < 60) return min + " mnt";
+        const h = Math.floor(min / 60),
+          m = min % 60;
+        return h + " j" + (m ? " " + m + " mnt" : "");
+      }
+      function fmtShortDur(min) {
+        min = Math.round(min);
+        if (min < 60) return min + "m";
+        const h = Math.floor(min / 60),
+          m = min % 60;
+        return h + "j" + (m ? m + "m" : "");
+      }
+      function fmtHours(min) {
+        return (
+          (min / 60).toLocaleString("id-ID", { maximumFractionDigits: 1 }) +
+          " jam"
+        );
+      }
+      function pct(a, b) {
+        return b > 0 ? Math.min(100, Math.round((a / b) * 100)) : 0;
+      }
+
+      function defaultState() {
+        return { target: 12, books: [], sessions: [], quotes: [] };
+      }
+      function normalize(d) {
+        return {
+          target: Math.max(1, Math.min(999, parseInt(d.target, 10) || 12)),
+          books: (d.books || []).map((b) => ({
+            id: b.id || uid(),
+            title: String(b.title || "Tanpa Judul"),
+            author: String(b.author || ""),
+            genre: String(b.genre || ""),
+            totalPages: Math.max(1, parseInt(b.totalPages, 10) || 1),
+            status: STATUS[b.status] ? b.status : "want",
+            currentPage: Math.max(0, parseInt(b.currentPage, 10) || 0),
+            startedAt: b.startedAt || "",
+            finishedAt: b.finishedAt || "",
+          })),
+          sessions: (d.sessions || []).map((s) => ({
+            id: s.id || uid(),
+            bookId: s.bookId || null,
+            bookTitle: String(s.bookTitle || ""),
+            date: s.date || todayISO(),
+            minutes: Math.max(1, parseInt(s.minutes, 10) || 1),
+          })),
+          quotes: (d.quotes || []).map((q) => ({
+            id: q.id || uid(),
+            bookId: q.bookId || null,
+            bookTitle: String(q.bookTitle || ""),
+            text: String(q.text || ""),
+            page: q.page ? parseInt(q.page, 10) : null,
+            date: q.date || todayISO(),
+          })),
+        };
+      }
+      function save() {
+        try {
+          localStorage.setItem(STORE_KEY, JSON.stringify(state));
+        } catch (e) {}
+      }
+      function load() {
+        try {
+          const raw = localStorage.getItem(STORE_KEY);
+          if (raw) {
+            const d = JSON.parse(raw);
+            if (d && Array.isArray(d.books)) return normalize(d);
+          }
+        } catch (e) {}
+        return null;
+      }
+
+      /* ================= derived stats ================= */
+      function bookById(id) {
+        return state.books.find((b) => b.id === id);
+      }
+      function readingBooks() {
+        return state.books.filter((b) => b.status === "reading");
+      }
+      function finishedThisYear() {
+        return state.books.filter(
+          (b) =>
+            b.status === "finished" &&
+            b.finishedAt &&
+            String(b.finishedAt).startsWith(String(YEAR)),
+        ).length;
+      }
+      function minutesInYear() {
+        return state.sessions
+          .filter((s) => String(s.date).startsWith(String(YEAR)))
+          .reduce((a, s) => a + s.minutes, 0);
+      }
+      function sessionsInYear() {
+        return state.sessions.filter((s) =>
+          String(s.date).startsWith(String(YEAR)),
+        ).length;
+      }
+      function last7() {
+        const arr = [];
+        for (let i = 6; i >= 0; i--) {
+          const iso = dateOffset(-i);
+          arr.push({
+            iso,
+            minutes: state.sessions
+              .filter((s) => s.date === iso)
+              .reduce((a, s) => a + s.minutes, 0),
+          });
+        }
+        return arr;
+      }
+      function pagesRead() {
+        return state.books.reduce(
+          (a, b) =>
+            a +
+            (b.status === "finished"
+              ? b.totalPages
+              : b.status === "reading"
+                ? Math.min(b.currentPage, b.totalPages)
+                : 0),
+          0,
+        );
+      }
+      function genreCounts() {
+        const m = {};
+        for (const b of state.books) {
+          const g = (b.genre || "").trim() || "Tanpa Genre";
+          m[g] = (m[g] || 0) + 1;
+        }
+        return Object.entries(m).sort(
+          (a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
+        );
+      }
+
+      /* ================= svg charts ================= */
+      function ringSVG(fin, target) {
+        const C = 2 * Math.PI * 42,
+          p = pct(fin, target);
+        return `<div class="ring-wrap"><svg viewBox="0 0 96 96" width="96" height="96" aria-hidden="true">
+    <circle cx="48" cy="48" r="42" fill="none" stroke="var(--line)" stroke-width="8"/>
+    <circle cx="48" cy="48" r="42" fill="none" stroke="var(--accent)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - p / 100)).toFixed(1)}"/>
+  </svg><div class="ring-center"><b>${fin}</b><span>/ ${target} buku</span></div></div>`;
+      }
+      function timeChartSVG(arr) {
+        const W = 720,
+          H = 212,
+          padL = 6,
+          padR = 6,
+          base = 174,
+          top = 28;
+        const max = Math.max.apply(
+          null,
+          arr.map((x) => x.minutes),
+        );
+        const nice = Math.max(30, Math.ceil(max / 30) * 30);
+        const bw = 46,
+          gap = (W - padL - padR - 7 * bw) / 6;
+        const cx = (i) => padL + i * (bw + gap) + bw / 2;
+        let out = `<line x1="0" y1="${base}" x2="${W}" y2="${base}" style="stroke:var(--line-2)"></line>`;
+        arr.forEach((d, i) => {
+          const x = cx(i);
+          if (d.minutes > 0) {
+            const h = Math.max(
+              4,
+              Math.round((d.minutes / nice) * (base - top)),
+            );
+            const y = base - h;
+            const today = i === arr.length - 1;
+            out += `<rect x="${(x - bw / 2).toFixed(1)}" y="${y}" width="${bw}" height="${h}" rx="4" style="fill:${today ? "var(--accent)" : "var(--ink)"};opacity:${today ? 1 : 0.85}"></rect>`;
+            out += `<text x="${x.toFixed(1)}" y="${y - 7}" text-anchor="middle" class="ct">${fmtShortDur(d.minutes)}</text>`;
+          } else {
+            out += `<rect x="${(x - bw / 2).toFixed(1)}" y="${base - 3}" width="${bw}" height="3" rx="1.5" style="fill:var(--line-2)"></rect>`;
+          }
+          const dw = DAYS[new Date(d.iso + "T00:00:00").getDay()];
+          out += `<text x="${x.toFixed(1)}" y="${base + 20}" text-anchor="middle" class="ct2">${dw}</text>`;
+        });
+        return `<div class="chart-wrap"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Grafik batang waktu baca tujuh hari terakhir">${out}</svg><p class="chart-note">Menit baca per hari · batang berwarna adalah hari ini</p></div>`;
+      }
+      function genreChartSVG(genres) {
+        const rows = genres.slice(0, 7);
+        const max = Math.max.apply(
+          null,
+          rows.map((r) => r[1]),
+        );
+        const rowH = 34,
+          LX = 0,
+          BX = 118,
+          BW = 250,
+          CX = 452;
+        let out = "";
+        rows.forEach((r, i) => {
+          const cy = i * rowH + rowH / 2;
+          const bw = Math.max(4, Math.round((r[1] / max) * BW));
+          const name = r[0].length > 17 ? r[0].slice(0, 16) + "…" : r[0];
+          out += `<text x="${LX}" y="${(cy + 4).toFixed(1)}" class="gt">${esc(name)}</text>`;
+          out += `<rect x="${BX}" y="${(cy - 8).toFixed(1)}" width="${bw}" height="16" rx="4" style="fill:${i === 0 ? "var(--accent)" : "var(--line-2)"}"></rect>`;
+          out += `<text x="${CX}" y="${(cy + 4).toFixed(1)}" text-anchor="end" class="gt2">${r[1]} buku</text>`;
+        });
+        return `<div class="chart-wrap"><svg viewBox="0 0 460 ${rows.length * rowH}" role="img" aria-label="Grafik jumlah buku per genre">${out}</svg></div>`;
+      }
+      function stackedBarSVG(r, w, f) {
+        const total = r + w + f,
+          W = 440;
+        if (total === 0)
+          return `<div class="chart-wrap"><svg viewBox="0 0 ${W} 14" role="img" aria-label="Distribusi status buku"><rect x="0" y="0" width="${W}" height="14" rx="7" style="fill:var(--line)"></svg></div>`;
+        const wr = (r / total) * W,
+          ww = (w / total) * W,
+          wf = (f / total) * W;
+        let out = `<rect x="0" y="0" width="${W}" height="14" rx="7" style="fill:var(--line)"></rect>`;
+        let x = 0;
+        [
+          [wr, "var(--accent)"],
+          [ww, "var(--amber)"],
+          [wf, "var(--green)"],
+        ].forEach((seg) => {
+          if (seg[0] > 0)
+            out += `<rect x="${x.toFixed(1)}" y="2" width="${Math.max(0, seg[0] - 2).toFixed(1)}" height="10" rx="4" style="fill:${seg[1]}"></rect>`;
+          x += seg[0];
+        });
+        return `<div class="chart-wrap"><svg viewBox="0 0 ${W} 14" preserveAspectRatio="none" style="width:100%;height:14px;display:block" role="img" aria-label="Distribusi status buku">${out}</svg></div>`;
+      }
+
+      /* ================= view: dashboard ================= */
+      function renderDashboard() {
+        const fin = finishedThisYear(),
+          target = state.target,
+          p = pct(fin, target);
+        const reading = readingBooks();
+        const minYear = minutesInYear(),
+          sesYear = sessionsInYear();
+        const recentSessions = [...state.sessions]
+          .sort((a, b) => b.date.localeCompare(a.date))
+          .slice(0, 5);
+        const recentQuotes = [...state.quotes]
+          .sort((a, b) => b.date.localeCompare(a.date))
+          .slice(0, 2);
+
+        const readHTML = reading.length
+          ? reading
+              .map((b) => {
+                const pp = pct(b.currentPage, b.totalPages);
+                return `<div class="read-item">
+      <div class="read-top">
+        <div class="read-meta"><b>${esc(b.title)}</b><span>${esc(b.author || "Tanpa penulis")}${b.genre ? " · " + esc(b.genre) : ""}</span></div>
+        <form class="page-form" data-page-form data-id="${b.id}">
+          <input type="number" inputmode="numeric" min="0" max="${b.totalPages}" step="1" value="${b.currentPage}" aria-label="Halaman terakhir ${esc(b.title)}">
+          <span class="of">/ ${b.totalPages}</span>
+          <button class="icon-btn small" type="submit" title="Simpan progres"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-check"/></svg></button>
+        </form>
+      </div>
+      <div class="bar"><div class="bar-fill" style="width:${pp}%"></div></div>
+    </div>`;
+              })
+              .join("")
+          : `<p class="muted" style="font-size:14px;padding:8px 0 4px">Belum ada buku yang sedang dibaca.</p>`;
+
+        const sessHTML = recentSessions.length
+          ? recentSessions
+              .map(
+                (s) => `
+    <div class="sess-row">
+      <div class="sess-info"><b>${esc(s.bookTitle || "Bacaan umum")}</b><span>${fmtDateRel(s.date)}</span></div>
+      <span class="sess-min">${fmtDur(s.minutes)}</span>
+      <button class="icon-btn small danger" type="button" data-action="delete-session" data-id="${s.id}" title="Hapus sesi"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>`,
+              )
+              .join("")
+          : `<p class="muted" style="font-size:14px;padding:8px 0 4px">Belum ada sesi baca tercatat.</p>`;
+
+        const quoteHTML = recentQuotes.length
+          ? recentQuotes
+              .map((q) => {
+                const t =
+                  q.text.length > 150
+                    ? q.text.slice(0, 150).trimEnd() + "…"
+                    : q.text;
+                return `<figure class="mini-quote">
+      <blockquote>“${esc(t)}”</blockquote>
+      <figcaption>— ${esc(q.bookTitle || "Catatan pribadi")}${q.page ? ", hlm. " + q.page : ""} · ${fmtDate(q.date)}</figcaption>
+    </figure>`;
+              })
+              .join("")
+          : `<p class="muted" style="font-size:14px;padding:8px 0 4px">Belum ada kutipan tersimpan.</p>`;
+
+        $("#view-dashboard").innerHTML = `
+  <div class="stat-grid">
+    <div class="card target-card">
+      ${ringSVG(fin, target)}
+      <div>
+        <div class="stat-label"><svg class="icon" aria-hidden="true"><use href="#i-target"/></svg>Target Tahunan ${YEAR}</div>
+        <div class="stat-value">${p}%</div>
+        <div class="stat-sub">${fin} buku selesai dari target</div>
+        <label class="target-edit">Ubah target:
+          <input type="number" id="targetInput" min="1" max="999" step="1" value="${target}" aria-label="Target buku per tahun">
+          <span>buku / tahun</span>
+        </label>
+      </div>
+    </div>
+    <div class="card">
+      <div class="stat-label"><svg class="icon" aria-hidden="true"><use href="#i-book-open"/></svg>Sedang Dibaca</div>
+      <div class="stat-value">${reading.length}</div>
+      <div class="stat-sub">judul aktif dalam progres</div>
+    </div>
+    <div class="card">
+      <div class="stat-label"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>Waktu Baca ${YEAR}</div>
+      <div class="stat-value">${fmtHours(minYear)}</div>
+      <div class="stat-sub">${sesYear} sesi tercatat</div>
+    </div>
+    <div class="card">
+      <div class="stat-label"><svg class="icon" aria-hidden="true"><use href="#i-quote"/></svg>Kutipan</div>
+      <div class="stat-value">${state.quotes.length}</div>
+      <div class="stat-sub">tersimpan dari semua buku</div>
+    </div>
+  </div>
+  <div class="dash-grid">
+    <div class="card">
+      <div class="card-head">
+        <h3 class="card-title"><svg class="icon" aria-hidden="true"><use href="#i-book-open"/></svg>Lagi Dibaca</h3>
+        <button class="btn btn-outline btn-sm" type="button" data-action="add-book"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-plus"/></svg>Tambah Buku</button>
+      </div>
+      ${readHTML}
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <h3 class="card-title"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>Sesi Baca Terakhir</h3>
+        <button class="btn btn-outline btn-sm" type="button" data-action="log-session"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-plus"/></svg>Catat</button>
+      </div>
+      ${sessHTML}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <h3 class="card-title"><svg class="icon" aria-hidden="true"><use href="#i-quote"/></svg>Kutipan Terbaru</h3>
+      <button class="btn btn-ghost btn-sm" type="button" data-action="switch-view" data-view="quotes">Lihat semua<svg class="icon icon-sm" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+    </div>
+    ${quoteHTML}
+  </div>`;
+      }
+
+      /* ================= view: books ================= */
+      function bookCardHTML(b) {
+        const st = STATUS[b.status],
+          pp = pct(b.currentPage, b.totalPages);
+        const actions = [];
+        if (b.status === "reading") {
+          actions.push(
+            `<button class="btn btn-outline btn-sm" type="button" data-action="log-session" data-id="${b.id}"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-clock"/></svg>Catat Sesi</button>`,
+          );
+          actions.push(
+            `<button class="btn btn-primary btn-sm" type="button" data-action="finish-book" data-id="${b.id}"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-check"/></svg>Selesaikan</button>`,
+          );
+        } else if (b.status === "want") {
+          actions.push(
+            `<button class="btn btn-primary btn-sm" type="button" data-action="start-reading" data-id="${b.id}"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-play"/></svg>Mulai Baca</button>`,
+          );
+        }
+        let prog = "";
+        if (b.status === "reading") {
+          prog = `
+      <div class="prog-line"><span>Hal. <b>${b.currentPage}</b> / ${b.totalPages}</span><span>${pp}%</span></div>
+      <div class="bar"><div class="bar-fill" style="width:${pp}%"></div></div>
+      <form class="page-form" data-page-form data-id="${b.id}">
+        <input type="number" inputmode="numeric" min="0" max="${b.totalPages}" step="1" value="${b.currentPage}" aria-label="Perbarui halaman terakhir ${esc(b.title)}">
+        <button class="btn btn-outline btn-sm" type="submit"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-check"/></svg>Simpan Halaman</button>
+      </form>`;
+        } else if (b.status === "finished") {
+          prog = `<div class="done-line"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-check"/></svg>Selesai dibaca ${fmtDate(b.finishedAt)}${b.startedAt ? " · mulai " + fmtDate(b.startedAt) : ""}</div>`;
+        } else {
+          prog = `<div class="want-line"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-bookmark"/></svg>Belum dimulai · ${b.totalPages} halaman</div>`;
+        }
+        return `<article class="book-card">
+    <div class="book-top">
+      <span class="badge badge-${st.cls}">${st.label}</span>
+      <div class="icon-row">
+        <button class="icon-btn small" type="button" data-action="edit-book" data-id="${b.id}" title="Ubah buku"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-edit"/></svg></button>
+        <button class="icon-btn small danger" type="button" data-action="delete-book" data-id="${b.id}" title="Hapus buku"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-trash"/></svg></button>
+      </div>
+    </div>
+    <div>
+      <h3 class="book-title">${esc(b.title)}</h3>
+      <p class="book-author">${esc(b.author || "Tanpa penulis")}</p>
+    </div>
+    <div class="book-meta">
+      ${b.genre ? `<span class="tag">${esc(b.genre)}</span>` : ""}
+      <span>${b.totalPages} halaman</span>
+    </div>
+    ${prog}
+    ${actions.length ? `<div class="book-actions">${actions.join("")}</div>` : ""}
+  </article>`;
+      }
+      function renderBooks() {
+        const counts = {
+          all: state.books.length,
+          reading: state.books.filter((b) => b.status === "reading").length,
+          want: state.books.filter((b) => b.status === "want").length,
+          finished: state.books.filter((b) => b.status === "finished").length,
+        };
+        const chips = [
+          ["all", "Semua"],
+          ["reading", "Sedang"],
+          ["want", "Ingin"],
+          ["finished", "Selesai"],
+        ]
+          .map(
+            ([k, l]) =>
+              `<button class="chip ${bookFilter === k ? "active" : ""}" type="button" data-action="filter-books" data-filter="${k}">${l} <span class="count">${counts[k]}</span></button>`,
+          )
+          .join("");
+        const list = state.books.filter(
+          (b) => bookFilter === "all" || b.status === bookFilter,
+        );
+        let body;
+        if (list.length) {
+          body = `<div class="book-grid">${list.map(bookCardHTML).join("")}</div>`;
+        } else if (state.books.length === 0) {
+          body = `<div class="empty">
+      <svg class="icon icon-lg" aria-hidden="true"><use href="#i-book-open"/></svg>
+      <h3>Rak Anda masih kosong</h3>
+      <p>Tambahkan buku pertama Anda, atau muat data contoh untuk melihat cara kerja aplikasi.</p>
+      <div class="empty-actions">
+        <button class="btn btn-primary" type="button" data-action="add-book"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-plus"/></svg>Tambah Buku</button>
+        <button class="btn btn-outline" type="button" data-action="load-sample"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-refresh"/></svg>Muat Contoh Data</button>
+      </div>
+    </div>`;
+        } else {
+          body = `<div class="empty">
+      <svg class="icon icon-lg" aria-hidden="true"><use href="#i-bookmark"/></svg>
+      <h3>Tidak ada buku pada filter ini</h3>
+      <p>Coba pilih filter lain atau tambahkan buku baru.</p>
+    </div>`;
+        }
+        $("#view-books").innerHTML = `
+  <div class="view-head">
+    <div>
+      <h2>Rak Buku</h2>
+      <p class="sub">${counts.all} buku tersimpan · ${counts.finished} selesai · ${counts.reading} sedang dibaca · ${counts.want} ingin dibaca</p>
+    </div>
+    <button class="btn btn-primary" type="button" data-action="add-book"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-plus"/></svg>Tambah Buku</button>
+  </div>
+  <div class="chips">${chips}</div>
+  ${body}`;
+      }
+      /* ================= view: quotes ================= */
+      function renderQuotes() {
+        const withBooks = state.quotes.filter((q) => q.bookId).length;
+        const bookOptions = [...state.books]
+          .sort(
+            (a, b) =>
+              (a.status === "reading" ? 0 : 1) -
+              (b.status === "reading" ? 0 : 1),
+          )
+          .map((b) => `<option value="${b.id}">${esc(b.title)}</option>`)
+          .join("");
+        const quotedIds = [
+          ...new Set(state.quotes.filter((q) => q.bookId).map((q) => q.bookId)),
+        ];
+        const filterOptions =
+          `<option value="all">Semua kutipan</option>
+    <option value="none">Catatan pribadi</option>` +
+          quotedIds
+            .map((id) => {
+              const b = bookById(id);
+              return b ? `<option value="${id}">${esc(b.title)}</option>` : "";
+            })
+            .join("");
+        const list = [...state.quotes]
+          .sort((a, b) => b.date.localeCompare(a.date))
+          .filter(
+            (q) =>
+              quoteFilter === "all" ||
+              (quoteFilter === "none" ? !q.bookId : q.bookId === quoteFilter),
+          );
+        let body;
+        if (list.length) {
+          body = `<div class="quote-cols">${list
+            .map(
+              (q) => `
+      <figure class="quote-card">
+        <svg class="icon q-icon" aria-hidden="true"><use href="#i-quote"/></svg>
+        <blockquote>${esc(q.text).replace(/\n/g, "<br>")}</blockquote>
+        <div class="quote-attr">
+          <div class="who">— ${esc(q.bookTitle || "Catatan pribadi")}${q.page ? ", hlm. " + q.page : ""}</div>
+          <div class="when">${fmtDate(q.date)}
+            <button class="icon-btn small danger" type="button" data-action="delete-quote" data-id="${q.id}" title="Hapus kutipan" style="vertical-align:-7px;margin-left:4px"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-trash"/></svg></button>
+          </div>
+        </div>
+      </figure>`,
+            )
+            .join("")}</div>`;
+        } else {
+          body = `<div class="empty">
+      <svg class="icon icon-lg" aria-hidden="true"><use href="#i-quote"/></svg>
+      <h3>${state.quotes.length === 0 ? "Belum ada kutipan" : "Tidak ada kutipan pada filter ini"}</h3>
+      <p>${state.quotes.length === 0 ? "Simpan kalimat menarik dari buku yang Anda baca agar mudah ditemukan kembali." : "Coba pilih filter lain."}</p>
+      ${state.quotes.length === 0 ? `<div class="empty-actions"><button class="btn btn-primary" type="button" data-action="add-quote"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-plus"/></svg>Tambah Kutipan</button></div>` : ""}
+    </div>`;
+        }
+        $("#view-quotes").innerHTML = `
+  <div class="view-head">
+    <div>
+      <h2>Kutipan</h2>
+      <p class="sub">${state.quotes.length} kutipan tersimpan · ${withBooks} terhubung dengan buku</p>
+    </div>
+    <button class="btn btn-primary" type="button" data-action="add-quote"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-plus"/></svg>Tambah Kutipan</button>
+  </div>
+  ${
+    state.quotes.length
+      ? `<div class="quotes-tools">
+    <select id="quoteFilter" class="select-sm" aria-label="Saring kutipan berdasarkan buku">
+      ${filterOptions}
+    </select>
+  </div>`
+      : ""
+  }
+  ${body}`;
+        const sel = $("#quoteFilter");
+        if (sel) sel.value = quoteFilter;
+      }
+
+      /* ================= view: stats ================= */
+      function renderStats() {
+        const minYear = minutesInYear(),
+          sesYear = sessionsInYear();
+        const arr = last7(),
+          last7Total = arr.reduce((a, x) => a + x.minutes, 0);
+        const dayOfYear = Math.max(
+          1,
+          Math.ceil((new Date() - new Date(YEAR, 0, 1)) / 86400000),
+        );
+        const avg = Math.round(minYear / dayOfYear);
+        const avgDisplay =
+          avg < 10 && avg > 0
+            ? (minYear / dayOfYear).toLocaleString("id-ID", {
+                maximumFractionDigits: 1,
+              }) + " mnt"
+            : fmtDur(avg);
+        const genres = genreCounts(),
+          fav = genres[0] || null;
+        const r = state.books.filter((b) => b.status === "reading").length;
+        const w = state.books.filter((b) => b.status === "want").length;
+        const f = state.books.filter((b) => b.status === "finished").length;
+
+        const timeCard = `
+  <div class="card stats-wide">
+    <div class="card-head">
+      <h3 class="card-title"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>Waktu Baca</h3>
+      <span class="muted-sm">periode ${YEAR} · tujuh hari terakhir</span>
+    </div>
+    <div class="chart-stats">
+      <div><span class="cs-label">Total ${YEAR}</span><b class="cs-value">${fmtHours(minYear)}</b></div>
+      <div><span class="cs-label">7 Hari Terakhir</span><b class="cs-value">${fmtDur(last7Total)}</b></div>
+      <div><span class="cs-label">Rata-rata / Hari</span><b class="cs-value">${avgDisplay}</b></div>
+      <div><span class="cs-label">Sesi Tercatat</span><b class="cs-value">${sesYear} sesi</b></div>
+    </div>
+    ${arr.some((x) => x.minutes > 0) ? timeChartSVG(arr) : `<p class="chart-empty">Belum ada sesi baca dalam 7 hari terakhir. <button class="btn-link" type="button" data-action="log-session">Catat sesi pertama</button></p>`}
+  </div>`;
+
+        const genreCard = `
+  <div class="card">
+    <div class="card-head">
+      <h3 class="card-title"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>Genre</h3>
+      <span class="muted-sm">berdasarkan jumlah buku</span>
+    </div>
+    ${
+      fav
+        ? `
+      <div class="fav-genre">
+        <span class="fg-label">Genre favorit Anda</span>
+        <b>${esc(fav[0])}</b>
+        <span>${fav[1]} dari ${state.books.length} buku di rak (${pct(fav[1], state.books.length)}%)</span>
+      </div>
+      ${genreChartSVG(genres)}`
+        : `
+      <p class="chart-empty">Belum ada buku dengan genre. Tambahkan buku beserta genre-nya untuk melihat statistik genre.</p>`
+    }
+  </div>`;
+
+        const collCard = `
+  <div class="card">
+    <div class="card-head">
+      <h3 class="card-title"><svg class="icon" aria-hidden="true"><use href="#i-library"/></svg>Koleksi</h3>
+      <span class="muted-sm">${state.books.length} buku di rak</span>
+    </div>
+    ${stackedBarSVG(r, w, f)}
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>Sedang dibaca · ${r}</span>
+      <span><i style="background:var(--amber)"></i>Ingin dibaca · ${w}</span>
+      <span><i style="background:var(--green)"></i>Selesai · ${f}</span>
+    </div>
+    <div class="mini-grid">
+      <div><span class="cs-label">Total buku</span><b class="cs-value">${state.books.length}</b></div>
+      <div><span class="cs-label">Selesai ${YEAR}</span><b class="cs-value">${finishedThisYear()}</b></div>
+      <div><span class="cs-label">Halaman dibaca</span><b class="cs-value">${pagesRead().toLocaleString("id-ID")}</b></div>
+      <div><span class="cs-label">Total sesi</span><b class="cs-value">${state.sessions.length}</b></div>
+    </div>
+  </div>`;
+
+        $("#view-stats").innerHTML = `
+  <div class="view-head">
+    <div>
+      <h2>Statistik</h2>
+      <p class="sub">Ringkasan waktu baca, genre favorit, dan koleksi buku Anda</p>
+    </div>
+  </div>
+  <div class="stats-grid">
+    ${timeCard}
+    ${genreCard}
+    ${collCard}
+  </div>`;
+      }
+
+      /* ================= view switching & render all ================= */
+      function showView(v) {
+        currentView = v;
+        document.querySelectorAll(".tab").forEach((t) => {
+          const on = t.dataset.view === v;
+          t.classList.toggle("active", on);
+          t.setAttribute("aria-current", on ? "page" : "false");
+        });
+        document
+          .querySelectorAll(".view")
+          .forEach((s) => s.classList.toggle("active", s.id === "view-" + v));
+        renderAll();
+      }
+      function renderAll() {
+        renderDashboard();
+        renderBooks();
+        renderQuotes();
+        renderStats();
+      }
+
+      /* ================= toast & confirm ================= */
+      let toastTimer = null;
+      function toast(msg) {
+        const el = $("#toast");
+        el.textContent = msg;
+        el.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
+      }
+      function askConfirm(msg, cb) {
+        $("#confirmMsg").textContent = msg;
+        confirmCb = cb;
+        $("#confirmModal").showModal();
+      }
+
+      /* ================= mutations ================= */
+      function finishBook(id, silent) {
+        const b = bookById(id);
+        if (!b) return;
+        b.status = "finished";
+        b.currentPage = b.totalPages;
+        if (!b.finishedAt) b.finishedAt = todayISO();
+        save();
+        renderAll();
+        if (!silent) toast(`"${b.title}" ditandai selesai. Selamat!`);
+        else toast(`Selamat — "${b.title}" tamat!`);
+      }
+      function startReading(id) {
+        const b = bookById(id);
+        if (!b) return;
+        b.status = "reading";
+        if (!b.startedAt) b.startedAt = todayISO();
+        if (!b.currentPage) b.currentPage = 1;
+        save();
+        renderAll();
+        toast(`Selamat membaca "${b.title}"`);
+      }
+
+      /* ================= modals ================= */
+      function openBookModal(b) {
+        editingBookId = b ? b.id : null;
+        $("#bookModalTitle").textContent = b ? "Ubah Buku" : "Tambah Buku";
+        const f = $("#bookForm");
+        f.reset();
+        if (b) {
+          f.title.value = b.title;
+          f.author.value = b.author;
+          f.genre.value = b.genre;
+          f.totalPages.value = b.totalPages;
+          f.status.value = b.status;
+          f.currentPage.value = b.currentPage;
+          f.startedAt.value = b.startedAt || "";
+          f.finishedAt.value = b.finishedAt || "";
+        } else {
+          f.status.value = "reading";
+          f.currentPage.value = 0;
+          f.startedAt.value = todayISO();
+        }
+        $("#bookModal").showModal();
+      }
+      function openSessionModal(presetId) {
+        const sel = $("#s-book");
+        const ordered = [...state.books].sort(
+          (a, b) =>
+            (a.status === "reading" ? 0 : 1) - (b.status === "reading" ? 0 : 1),
+        );
+        sel.innerHTML =
+          `<option value="">Bacaan umum (tanpa buku)</option>` +
+          ordered
+            .map((b) => `<option value="${b.id}">${esc(b.title)}</option>`)
+            .join("");
+        if (presetId && bookById(presetId)) sel.value = presetId;
+        else if (readingBooks().length) sel.value = readingBooks()[0].id;
+        else sel.value = "";
+        $("#s-date").value = todayISO();
+        $("#s-min").value = 30;
+        $("#sessionModal").showModal();
+      }
+      function openQuoteModal() {
+        const sel = $("#q-book");
+        const ordered = [...state.books].sort(
+          (a, b) =>
+            (a.status === "reading" ? 0 : 1) - (b.status === "reading" ? 0 : 1),
+        );
+        sel.innerHTML =
+          `<option value="">Catatan pribadi (tanpa buku)</option>` +
+          ordered
+            .map((b) => `<option value="${b.id}">${esc(b.title)}</option>`)
+            .join("");
+        $("#quoteForm").reset();
+        if (readingBooks().length) sel.value = readingBooks()[0].id;
+        else sel.value = "";
+        $("#q-date").value = todayISO();
+        $("#quoteModal").showModal();
+      }
+
+      /* ================= import / export / sample ================= */
+      function exportData() {
+        const blob = new Blob([JSON.stringify(state, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "rak-baca-" + todayISO() + ".json";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        toast("Data diekspor sebagai berkas JSON");
+      }
+      function handleImportFile(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const d = JSON.parse(reader.result);
+            if (!d || !Array.isArray(d.books))
+              throw new Error("struktur tidak sesuai");
+            state = normalize(d);
+            save();
+            renderAll();
+            toast("Data berhasil diimpor");
+          } catch (e) {
+            toast("Impor gagal: berkas tidak valid");
+          }
+        };
+        reader.readAsText(file);
+      }
+      function sampleState() {
+        const mk = (
+          title,
+          author,
+          genre,
+          total,
+          status,
+          currentPage,
+          startedAt,
+          finishedAt,
+        ) => ({
+          id: uid(),
+          title,
+          author,
+          genre,
+          totalPages: total,
+          status,
+          currentPage,
+          startedAt,
+          finishedAt,
+        });
+        const bumi = mk(
+          "Bumi",
+          "Tere Liye",
+          "Fiksi",
+          440,
+          "reading",
+          214,
+          dateOffset(-18),
+          "",
+        );
+        const laut = mk(
+          "Laut Bercerita",
+          "Leila S. Chudori",
+          "Fiksi",
+          379,
+          "finished",
+          379,
+          dateOffset(-40),
+          dateOffset(-12),
+        );
+        const filo = mk(
+          "Filosofi Teras",
+          "Henry Manampiring",
+          "Filsafat",
+          344,
+          "finished",
+          344,
+          dateOffset(-70),
+          dateOffset(-45),
+        );
+        const books = [
+          mk(
+            "Atomic Habits",
+            "James Clear",
+            "Pengembangan Diri",
+            332,
+            "finished",
+            332,
+            dateOffset(-120),
+            dateOffset(-95),
+          ),
+          mk(
+            "Hujan Bulan Juni",
+            "Sapardi Djoko Damono",
+            "Puisi",
+            120,
+            "finished",
+            120,
+            "2025-08-02",
+            "2025-08-20",
+          ),
+          bumi,
+          laut,
+          filo,
+          mk(
+            "Sapiens: Sejarah Singkat Umat Manusia",
+            "Yuval Noah Harari",
+            "Sejarah",
+            528,
+            "want",
+            0,
+            "",
+            "",
+          ),
+          mk(
+            "The Midnight Library",
+            "Matt Haig",
+            "Fiksi",
+            304,
+            "want",
+            0,
+            "",
+            "",
+          ),
+        ];
+        const rows = [
+          [0, bumi.id, "Bumi", 45],
+          [1, bumi.id, "Bumi", 30],
+          [2, bumi.id, "Bumi", 55],
+          [4, bumi.id, "Bumi", 40],
+          [5, bumi.id, "Bumi", 35],
+          [6, laut.id, "Laut Bercerita", 50],
+          [8, laut.id, "Laut Bercerita", 65],
+          [9, filo.id, "Filosofi Teras", 40],
+          [11, bumi.id, "Bumi", 25],
+          [12, bumi.id, "Bumi", 45],
+          [14, laut.id, "Laut Bercerita", 35],
+        ].map((r) => ({
+          id: uid(),
+          bookId: r[1],
+          bookTitle: r[2],
+          date: dateOffset(-r[0]),
+          minutes: r[3],
+        }));
+        const quotes = [
+          {
+            id: uid(),
+            bookId: null,
+            bookTitle: "",
+            text: "Membaca bukan untuk lari dari dunia, melainkan untuk pulang ke diri sendiri dengan lebih sabar.",
+            page: null,
+            date: dateOffset(-3),
+          },
+          {
+            id: uid(),
+            bookId: null,
+            bookTitle: "",
+            text: "Ada buku yang selesai dibaca di halaman terakhir, dan ada yang baru selesai dibaca bertahun-tahun kemudian.",
+            page: null,
+            date: dateOffset(-10),
+          },
+        ];
+        return normalize({ target: 12, books, sessions: rows, quotes });
+      }
+
+      /* ================= events ================= */
+      document.addEventListener("click", (e) => {
+        const closer = e.target.closest("[data-close]");
+        if (closer) {
+          const d = closer.closest("dialog");
+          if (d) d.close();
+          return;
+        }
+        const btn = e.target.closest("[data-action]");
+        if (!btn) return;
+        const a = btn.dataset.action,
+          id = btn.dataset.id;
+        if (a === "switch-view") {
+          showView(btn.dataset.view);
+        } else if (a === "add-book") {
+          openBookModal(null);
+        } else if (a === "edit-book") {
+          const b = bookById(id);
+          if (b) openBookModal(b);
+        } else if (a === "delete-book") {
+          const b = bookById(id);
+          if (b)
+            askConfirm(
+              `Hapus "${b.title}" dari rak? Tindakan ini tidak dapat dibatalkan.`,
+              () => {
+                state.books = state.books.filter((x) => x.id !== id);
+                save();
+                renderAll();
+                toast("Buku dihapus dari rak");
+              },
+            );
+        } else if (a === "start-reading") {
+          startReading(id);
+        } else if (a === "finish-book") {
+          finishBook(id, false);
+        } else if (a === "log-session") {
+          openSessionModal(id || null);
+        } else if (a === "add-quote") {
+          openQuoteModal();
+        } else if (a === "delete-quote") {
+          const q = state.quotes.find((x) => x.id === id);
+          if (q)
+            askConfirm("Hapus kutipan ini?", () => {
+              state.quotes = state.quotes.filter((x) => x.id !== id);
+              save();
+              renderAll();
+              toast("Kutipan dihapus");
+            });
+        } else if (a === "delete-session") {
+          state.sessions = state.sessions.filter((x) => x.id !== id);
+          save();
+          renderAll();
+          toast("Sesi baca dihapus");
+        } else if (a === "filter-books") {
+          bookFilter = btn.dataset.filter;
+          renderBooks();
+        } else if (a === "load-sample") {
+          askConfirm(
+            "Muat data contoh? Seluruh data saat ini akan diganti dengan data contoh.",
+            () => {
+              state = sampleState();
+              save();
+              renderAll();
+              toast("Data contoh dimuat");
+            },
+          );
+        } else if (a === "export-data") {
+          exportData();
+        } else if (a === "import-data") {
+          $("#importFile").click();
+        } else if (a === "reset-data") {
+          askConfirm(
+            "Hapus seluruh data? Semua buku, sesi baca, dan kutipan akan dihapus permanen.",
+            () => {
+              state = defaultState();
+              save();
+              renderAll();
+              toast("Semua data telah dihapus");
+            },
+          );
+        }
+      });
+
+      document.addEventListener("submit", (e) => {
+        const f = e.target;
+        if (f.matches("[data-page-form]")) {
+          e.preventDefault();
+          const b = bookById(f.dataset.id);
+          if (!b) return;
+          const input = f.querySelector("input");
+          let p = parseInt(input.value, 10);
+          if (isNaN(p) || p < 0) p = 0;
+          p = Math.min(p, b.totalPages);
+          if (p >= b.totalPages && b.totalPages > 0) {
+            finishBook(b.id, true);
+          } else {
+            b.currentPage = p;
+            if (!b.startedAt) b.startedAt = todayISO();
+            save();
+            renderAll();
+            toast(
+              `Progres "${b.title}" disimpan — hal. ${p} dari ${b.totalPages}`,
+            );
+          }
+          return;
+        }
+        if (f.id === "bookForm") {
+          e.preventDefault();
+          const fd = new FormData(f);
+          const title = String(fd.get("title") || "").trim();
+          if (!title) {
+            toast("Judul buku wajib diisi");
+            return;
+          }
+          const totalPages = Math.max(
+            1,
+            parseInt(fd.get("totalPages"), 10) || 1,
+          );
+          const statusRaw = String(fd.get("status") || "reading");
+          const status = STATUS[statusRaw] ? statusRaw : "reading";
+          let currentPage = Math.max(
+            0,
+            parseInt(fd.get("currentPage"), 10) || 0,
+          );
+          currentPage = Math.min(currentPage, totalPages);
+          if (status === "want") currentPage = 0;
+          if (status === "finished") currentPage = totalPages;
+          let startedAt = String(fd.get("startedAt") || "");
+          let finishedAt = String(fd.get("finishedAt") || "");
+          if (status === "finished" && !finishedAt) finishedAt = todayISO();
+          if (status !== "finished") finishedAt = "";
+          const data = {
+            title,
+            author: String(fd.get("author") || "").trim(),
+            genre: String(fd.get("genre") || "").trim(),
+            totalPages,
+            status,
+            currentPage,
+            startedAt,
+            finishedAt,
+          };
+          if (editingBookId) {
+            const b = bookById(editingBookId);
+            if (b) {
+              Object.assign(b, data);
+              state.quotes.forEach((q) => {
+                if (q.bookId === b.id) q.bookTitle = b.title;
+              });
+              state.sessions.forEach((s) => {
+                if (s.bookId === b.id) s.bookTitle = b.title;
+              });
+              toast("Buku diperbarui");
+            }
+          } else {
+            state.books.push(Object.assign({ id: uid() }, data));
+            toast("Buku ditambahkan ke rak");
+          }
+          save();
+          $("#bookModal").close();
+          renderAll();
+          return;
+        }
+        if (f.id === "sessionForm") {
+          e.preventDefault();
+          const fd = new FormData(f);
+          const bookId = String(fd.get("bookId") || "") || null;
+          const b = bookId ? bookById(bookId) : null;
+          const minutes = Math.max(
+            1,
+            Math.min(1440, parseInt(fd.get("minutes"), 10) || 30),
+          );
+          const date = String(fd.get("date") || "") || todayISO();
+          state.sessions.push({
+            id: uid(),
+            bookId,
+            bookTitle: b ? b.title : "",
+            date,
+            minutes,
+          });
+          save();
+          $("#sessionModal").close();
+          renderAll();
+          toast(`Sesi baca ${fmtDur(minutes)} dicatat`);
+          return;
+        }
+        if (f.id === "quoteForm") {
+          e.preventDefault();
+          const fd = new FormData(f);
+          const text = String(fd.get("text") || "").trim();
+          if (!text) {
+            toast("Teks kutipan wajib diisi");
+            return;
+          }
+          const bookId = String(fd.get("bookId") || "") || null;
+          const b = bookId ? bookById(bookId) : null;
+          const pageRaw = parseInt(fd.get("page"), 10);
+          state.quotes.push({
+            id: uid(),
+            bookId,
+            bookTitle: b ? b.title : "",
+            text,
+            page: isNaN(pageRaw) ? null : pageRaw,
+            date: String(fd.get("date") || "") || todayISO(),
+          });
+          save();
+          $("#quoteModal").close();
+          renderAll();
+          toast("Kutipan tersimpan");
+          return;
+        }
+        if (f.id === "confirmForm") {
+          e.preventDefault();
+          $("#confirmModal").close();
+          if (confirmCb) {
+            const cb = confirmCb;
+            confirmCb = null;
+            cb();
+          }
+          return;
+        }
+      });
+
+      document.addEventListener("change", (e) => {
+        if (e.target.id === "targetInput") {
+          let v = parseInt(e.target.value, 10);
+          if (isNaN(v) || v < 1) v = 12;
+          v = Math.min(999, v);
+          state.target = v;
+          save();
+          renderDashboard();
+          renderStats();
+          toast("Target tahunan diperbarui: " + v + " buku");
+        } else if (e.target.id === "quoteFilter") {
+          quoteFilter = e.target.value || "all";
+          renderQuotes();
+        } else if (e.target.id === "importFile") {
+          handleImportFile(e.target.files && e.target.files[0]);
+          e.target.value = "";
+        }
+      });
+
+      /* ================= init ================= */
+      state = load() || defaultState();
+      renderAll();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,3477 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#eef2ef" />
+    <title>Google Play Games — Desktop & Mobile UI Clone</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ============ TOKENS ============ */
+      :root {
+        --ink: #202124;
+        --muted: #5f6368;
+        --faint: #80868b;
+        --line: #e6e9eb;
+        --chip: #f1f3f4;
+        --blue: #1a73e8;
+        --blue-soft: #e8f0fe;
+        --green: #0b8043;
+        --pg: #01875f; /* Play Games green */
+        --pg-soft: #d7f3e5;
+        --star: #e8a526;
+        --radius-w: 18px;
+        --shadow-w: 0 30px 80px rgba(23, 43, 35, 0.28);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "Google Sans", "Roboto", "Segoe UI", Arial, sans-serif;
+        color: var(--ink);
+        background: #eef2ef;
+        letter-spacing: -0.01em;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      svg {
+        display: block;
+      }
+      .star {
+        color: var(--star);
+        font-style: normal;
+      }
+
+      /* ============ STAGE BACKDROP ============ */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -2;
+        background:
+          radial-gradient(
+            600px 420px at 12% -5%,
+            rgba(66, 133, 244, 0.1),
+            transparent 62%
+          ),
+          radial-gradient(
+            640px 460px at 92% 12%,
+            rgba(52, 168, 83, 0.11),
+            transparent 62%
+          ),
+          radial-gradient(
+            560px 420px at 82% 96%,
+            rgba(251, 188, 5, 0.1),
+            transparent 62%
+          ),
+          radial-gradient(
+            520px 400px at 4% 90%,
+            rgba(234, 67, 53, 0.07),
+            transparent 60%
+          ),
+          #eef2ef;
+        animation: bgDrift 26s ease-in-out infinite alternate;
+      }
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background-image: radial-gradient(
+          rgba(32, 33, 36, 0.055) 1px,
+          transparent 1.4px
+        );
+        background-size: 22px 22px;
+      }
+      @keyframes bgDrift {
+        to {
+          background-position:
+            30px 14px,
+            -26px -10px,
+            18px -22px,
+            -14px 16px;
+        }
+      }
+
+      /* ============ SWITCHER BAR ============ */
+      .switchbar {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 0 24px;
+        background: rgba(255, 255, 255, 0.86);
+        backdrop-filter: blur(14px);
+        border-bottom: 1px solid var(--line);
+      }
+      .sb-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 500;
+        font-size: 15px;
+        letter-spacing: -0.02em;
+      }
+      .sb-brand small {
+        color: var(--muted);
+        font-weight: 400;
+        font-size: 12px;
+      }
+      .seg {
+        margin-inline: auto;
+        display: flex;
+        gap: 4px;
+        padding: 4px;
+        background: var(--chip);
+        border-radius: 26px;
+      }
+      .seg button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 0;
+        background: transparent;
+        border-radius: 22px;
+        padding: 8px 18px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--muted);
+        transition: 0.18s ease;
+      }
+      .seg button svg {
+        width: 16px;
+        height: 16px;
+        stroke-width: 1.9;
+      }
+      .seg button:hover {
+        color: var(--ink);
+      }
+      .seg button.active {
+        background: #fff;
+        color: var(--pg);
+        box-shadow: 0 2px 8px rgba(30, 60, 45, 0.14);
+      }
+      .sb-hint {
+        font-size: 11px;
+        color: var(--faint);
+        white-space: nowrap;
+      }
+      .sb-hint b {
+        display: inline-block;
+        min-width: 18px;
+        text-align: center;
+        border: 1px solid var(--line);
+        border-bottom-width: 2px;
+        border-radius: 5px;
+        padding: 1px 5px;
+        background: #fff;
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      /* ============ STAGES ============ */
+      .stage {
+        display: none;
+      }
+      .stage.on {
+        display: grid;
+        animation: stageIn 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+      }
+      @keyframes stageIn {
+        from {
+          opacity: 0;
+          transform: translateY(16px) scale(0.985);
+        }
+      }
+      .stage-desktop {
+        place-items: center;
+        padding: 26px 24px 34px;
+      }
+      .stage-mobile {
+        place-items: start center;
+        padding: 26px 16px 44px;
+      }
+      .device-cap {
+        margin: 16px auto 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .device-cap .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--pg);
+      }
+
+      /* ============ SCOPE (shared app pieces) ============ */
+      .scope {
+        position: relative;
+      }
+      .page {
+        display: none;
+      }
+      .page.on {
+        display: block;
+        animation: fadeUp 0.3s ease both;
+      }
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+      }
+
+      .pill {
+        border: 0;
+        border-radius: 20px;
+        padding: 8px 18px;
+        font-size: 12px;
+        font-weight: 500;
+        white-space: nowrap;
+        transition:
+          background 0.18s,
+          box-shadow 0.18s,
+          transform 0.12s;
+      }
+      .pill.play {
+        background: var(--pg-soft);
+        color: var(--pg);
+      }
+      .pill.play:hover {
+        background: #c4ecda;
+      }
+      .pill.install {
+        background: var(--pg);
+        color: #fff;
+        box-shadow: 0 1px 3px rgba(11, 128, 67, 0.35);
+      }
+      .pill.install:hover {
+        background: #0a7038;
+        transform: translateY(-1px);
+      }
+      .pill.loading {
+        position: relative;
+        overflow: hidden;
+        pointer-events: none;
+        background: #e6f2ec;
+        color: transparent;
+        min-width: 92px;
+      }
+      .pill.loading i {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 0;
+        background: rgba(1, 135, 95, 0.32);
+        animation: loadbar 1.6s ease-out forwards;
+      }
+      @keyframes loadbar {
+        to {
+          width: 100%;
+        }
+      }
+
+      .chip {
+        border: 0;
+        background: var(--chip);
+        color: var(--muted);
+        border-radius: 20px;
+        padding: 8px 15px;
+        font-size: 12px;
+        font-weight: 500;
+        white-space: nowrap;
+        transition: 0.16s;
+      }
+      .chip:hover {
+        background: #e6e9ec;
+        color: var(--ink);
+      }
+      .chip.active {
+        background: var(--pg-soft);
+        color: var(--pg);
+        font-weight: 700;
+      }
+
+      .chips-row {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        padding-bottom: 2px;
+      }
+      .chips-row::-webkit-scrollbar {
+        display: none;
+      }
+
+      .sec-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 14px;
+        margin: 26px 0 13px;
+      }
+      .sec-head h2 {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+      }
+      .sec-head p {
+        margin: 3px 0 0;
+        font-size: 11.5px;
+        color: var(--faint);
+      }
+      .link {
+        border: 0;
+        background: none;
+        color: var(--pg);
+        font-size: 12px;
+        font-weight: 700;
+        padding: 6px 2px;
+      }
+      .link:hover {
+        text-decoration: underline;
+      }
+
+      .p-head {
+        margin: 2px 0 18px;
+      }
+      .p-head h1 {
+        margin: 0;
+        font-size: 25px;
+        font-weight: 500;
+        letter-spacing: -0.03em;
+      }
+      .p-head p {
+        margin: 7px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.55;
+        max-width: 560px;
+      }
+      .p-head .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 9px;
+        color: var(--pg);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      /* ---- game artwork (CSS-only) ---- */
+      .c-art {
+        position: relative;
+        overflow: hidden;
+        isolation: isolate;
+      }
+      .c-art .orb,
+      .c-art .shape {
+        position: absolute;
+      }
+      .c-art .orb {
+        border-radius: 50%;
+      }
+      .c-art .cover-title {
+        position: absolute;
+        z-index: 2;
+        left: 13px;
+        bottom: 11px;
+        right: 10px;
+        color: #fff;
+        font-size: 15px;
+        line-height: 1.05;
+        font-weight: 900;
+        letter-spacing: -0.03em;
+        text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+      }
+      .c-art .cover-sub {
+        display: block;
+        font-size: 8px;
+        letter-spacing: 0.14em;
+        margin-bottom: 5px;
+        opacity: 0.8;
+        font-weight: 700;
+      }
+      .c-art::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          180deg,
+          transparent 46%,
+          rgba(0, 0, 0, 0.45)
+        );
+      }
+      .art-ml {
+        background: radial-gradient(
+          circle at 75% 20%,
+          #ffd889,
+          #b45c52 30%,
+          #382d61 72%,
+          #1e2949
+        );
+      }
+      .art-ml .orb {
+        width: 96px;
+        height: 96px;
+        right: 14px;
+        top: 12px;
+        background: linear-gradient(130deg, #fff0bd, #d9a45f 54%, #8d594b);
+        border: 4px solid rgba(255, 255, 255, 0.35);
+      }
+      .art-ml .shape {
+        width: 130px;
+        height: 100px;
+        left: -22px;
+        bottom: -26px;
+        background: linear-gradient(120deg, #303f74, #151f3a);
+        clip-path: polygon(0 100%, 35% 3%, 55% 35%, 75% 0, 100% 100%);
+      }
+      .art-ff {
+        background: linear-gradient(135deg, #f6cb64, #e65b2f 48%, #7e2047);
+      }
+      .art-ff .orb {
+        width: 92px;
+        height: 92px;
+        right: 22px;
+        top: 8px;
+        background: linear-gradient(135deg, #e8e1cd, #8b9a9e 50%, #333d56);
+        clip-path: polygon(50% 0, 85% 20%, 100% 70%, 64% 100%, 25% 85%, 0 38%);
+        border-radius: 25%;
+      }
+      .art-ff .shape {
+        width: 175px;
+        height: 54px;
+        right: -25px;
+        bottom: 10px;
+        background: linear-gradient(90deg, #3e2949, #d94834);
+        transform: rotate(-25deg);
+        opacity: 0.65;
+      }
+      .art-rb {
+        background: linear-gradient(145deg, #78d8e7, #3a76b9 55%, #1d315a);
+      }
+      .art-rb .orb {
+        width: 78px;
+        height: 78px;
+        left: 38%;
+        top: 20px;
+        border-radius: 18px;
+        background: #f2f5ed;
+        transform: rotate(18deg);
+      }
+      .art-rb .orb::after {
+        content: "";
+        position: absolute;
+        inset: 23px;
+        background: #2c5c8c;
+      }
+      .art-rb .shape {
+        width: 54px;
+        height: 54px;
+        right: 16px;
+        top: 12px;
+        border-radius: 14px;
+        background: #e7a84f;
+        transform: rotate(-18deg);
+        opacity: 0.9;
+      }
+      .art-pubg {
+        background: linear-gradient(145deg, #d9a66b, #6d503d 54%, #263d36);
+      }
+      .art-pubg .orb {
+        width: 84px;
+        height: 108px;
+        right: 24px;
+        top: 4px;
+        border-radius: 44% 44% 20% 20%;
+        background: linear-gradient(90deg, #e7d9bd, #8f8980 55%, #393f47);
+      }
+      .art-pubg .shape {
+        width: 160px;
+        height: 46px;
+        left: -17px;
+        bottom: 16px;
+        background: #243b38;
+        transform: rotate(-13deg);
+        opacity: 0.7;
+      }
+      .art-gen {
+        background: linear-gradient(145deg, #6fd5e2, #518eb9 48%, #554b83);
+      }
+      .art-gen .orb {
+        width: 92px;
+        height: 112px;
+        right: 22px;
+        top: 0;
+        background: linear-gradient(145deg, #fff0c9, #dfb58a 58%, #b86c7f);
+        border-radius: 45% 45% 20% 20%;
+      }
+      .art-gen .shape {
+        width: 130px;
+        height: 84px;
+        left: -10px;
+        bottom: -12px;
+        background: #d9eff1;
+        clip-path: polygon(0 100%, 25% 0, 44% 55%, 73% 10%, 100% 100%);
+        opacity: 0.5;
+      }
+      .art-can {
+        background: linear-gradient(145deg, #f9b1d2, #e36da0 52%, #853e8c);
+      }
+      .art-can .orb {
+        width: 84px;
+        height: 84px;
+        right: 26px;
+        top: 18px;
+        background: radial-gradient(
+          circle at 30% 25%,
+          #fff,
+          #ff709e 45%,
+          #a72d77
+        );
+        box-shadow: inset -7px -8px 0 rgba(111, 21, 91, 0.13);
+      }
+      .art-can .shape {
+        width: 32px;
+        height: 32px;
+        left: 24px;
+        top: 20px;
+        border-radius: 9px;
+        background: #ffe56d;
+        transform: rotate(35deg);
+        box-shadow:
+          40px 58px 0 #78dbcf,
+          92px 14px 0 #ffed9b;
+      }
+      .art-stu {
+        background: linear-gradient(145deg, #94e7d4, #58a9cb 50%, #3d4e91);
+      }
+      .art-stu .orb {
+        width: 66px;
+        height: 94px;
+        left: 42%;
+        top: 16px;
+        background: linear-gradient(90deg, #ffd5aa, #f3a46f);
+        border-radius: 32px 32px 16px 16px;
+      }
+      .art-stu .shape {
+        width: 36px;
+        height: 50px;
+        left: 55%;
+        top: 4px;
+        background: #f6d25f;
+        border-radius: 22px 22px 8px 8px;
+      }
+      .art-cla {
+        background: linear-gradient(145deg, #e6b66f, #bb653f 52%, #60374d);
+      }
+      .art-cla .orb {
+        width: 96px;
+        height: 96px;
+        right: 22px;
+        top: 14px;
+        background: linear-gradient(140deg, #f4d4a4, #b66f56 55%, #54415c);
+        border-radius: 48% 48% 25% 25%;
+      }
+      .art-cla .shape {
+        width: 100%;
+        height: 56px;
+        left: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, #394c44, #26363e);
+        clip-path: polygon(
+          0 100%,
+          0 40%,
+          28% 20%,
+          47% 52%,
+          71% 5%,
+          100% 34%,
+          100% 100%
+        );
+      }
+
+      .g-icon {
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-weight: 900;
+        font-size: 12px;
+        border-radius: 22%;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16);
+        flex: none;
+        letter-spacing: 0.01em;
+      }
+      .ic-ml {
+        background: linear-gradient(140deg, #f6cb76, #a3485b 60%, #343b72);
+      }
+      .ic-ff {
+        background: linear-gradient(140deg, #ffd766, #f04f28 55%, #7f2d53);
+      }
+      .ic-rb {
+        background: linear-gradient(140deg, #78d4e9, #3274b6);
+      }
+      .ic-pubg {
+        background: linear-gradient(140deg, #cba36a, #424f4d);
+      }
+      .ic-gen {
+        background: linear-gradient(140deg, #7cd9e1, #5c5b99);
+      }
+      .ic-can {
+        background: linear-gradient(140deg, #ffa4d1, #bc3686);
+      }
+      .ic-stu {
+        background: linear-gradient(140deg, #92e8d5, #4c6ac2);
+      }
+      .ic-cla {
+        background: linear-gradient(140deg, #eabe72, #a44b45);
+      }
+
+      .empty-state {
+        padding: 42px 20px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 13px;
+        grid-column: 1/-1;
+      }
+      .empty-state strong {
+        display: block;
+        color: var(--ink);
+        font-size: 15px;
+        margin-bottom: 6px;
+      }
+
+      .toast {
+        position: absolute;
+        left: 50%;
+        bottom: 26px;
+        transform: translate(-50%, 16px);
+        background: #23342d;
+        color: #fff;
+        padding: 11px 18px;
+        border-radius: 24px;
+        font-size: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+        opacity: 0;
+        pointer-events: none;
+        transition: 0.25s;
+        z-index: 70;
+        white-space: nowrap;
+        max-width: 92%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+
+      .stats-row {
+        display: flex;
+        margin: 14px 0 4px;
+      }
+      .stats-row > div {
+        flex: 1;
+        text-align: center;
+        padding: 2px 6px;
+      }
+      .stats-row > div + div {
+        border-left: 1px solid var(--line);
+      }
+      .stats-row b {
+        display: block;
+        font-size: 14px;
+      }
+      .stats-row span {
+        font-size: 10px;
+        color: var(--faint);
+      }
+
+      .logo-svg {
+        width: 30px;
+        height: 30px;
+      }
+
+      /* ============ DESKTOP WINDOW ============ */
+      .window {
+        width: min(1480px, 100%);
+        height: min(880px, max(600px, calc(100dvh - 118px)));
+        background: #fff;
+        border-radius: var(--radius-w);
+        overflow: hidden;
+        box-shadow: var(--shadow-w);
+        display: flex;
+        flex-direction: column;
+        animation: windowIn 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+      }
+      @keyframes windowIn {
+        from {
+          opacity: 0;
+          transform: translateY(18px) scale(0.98);
+        }
+      }
+      .titlebar {
+        height: 40px;
+        flex: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #f8faf9;
+        border-bottom: 1px solid var(--line);
+      }
+      .tb-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-left: 14px;
+        font-size: 12.5px;
+        font-weight: 500;
+        color: var(--muted);
+      }
+      .tb-title .logo-svg {
+        width: 18px;
+        height: 18px;
+      }
+      .tb-btns {
+        display: flex;
+        height: 100%;
+      }
+      .tb-btns button {
+        width: 46px;
+        height: 100%;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        display: grid;
+        place-items: center;
+        font-size: 13px;
+      }
+      .tb-btns button:hover {
+        background: #eceff1;
+        color: var(--ink);
+      }
+      .tb-btns .tb-close:hover {
+        background: #e81123;
+        color: #fff;
+      }
+
+      .d-body {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 252px minmax(0, 1fr);
+        min-height: 0;
+      }
+
+      .rail {
+        border-right: 1px solid var(--line);
+        padding: 16px 12px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        overflow-y: auto;
+        background: #fdfefd;
+      }
+      .rail-brand {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 6px 10px 18px;
+      }
+      .rail-brand h1 {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+      }
+      .rail-brand h1 span {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 400;
+      }
+      .rail-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+        color: #9aa59f;
+        padding: 12px 14px 8px;
+      }
+      .nav-item {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        height: 44px;
+        border-radius: 22px;
+        padding: 0 16px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        text-align: left;
+        color: var(--muted);
+        font-size: 13.5px;
+        font-weight: 500;
+        transition: 0.16s ease;
+      }
+      .nav-item svg {
+        width: 20px;
+        height: 20px;
+        stroke-width: 1.8;
+        flex: none;
+      }
+      .nav-item:hover {
+        background: #eef1ef;
+        color: var(--ink);
+      }
+      .nav-item.active {
+        background: var(--pg-soft);
+        color: var(--pg);
+        font-weight: 700;
+      }
+      .nav-item .cnt {
+        margin-left: auto;
+        font-size: 11px;
+        color: var(--faint);
+        font-weight: 500;
+      }
+      .rail-spacer {
+        flex: 1;
+      }
+      .rail-promo {
+        margin: 14px 4px 8px;
+        border-radius: 18px;
+        padding: 15px;
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(145deg, #e2f6e9, #f3f9f5);
+      }
+      .rail-promo::after {
+        content: "";
+        position: absolute;
+        width: 92px;
+        height: 92px;
+        border-radius: 50%;
+        right: -34px;
+        bottom: -40px;
+        background: rgba(30, 167, 111, 0.13);
+      }
+      .rail-promo strong {
+        display: block;
+        font-size: 12.5px;
+        line-height: 1.35;
+        position: relative;
+        z-index: 1;
+      }
+      .rail-promo p {
+        color: #63766b;
+        font-size: 10.5px;
+        line-height: 1.5;
+        margin: 6px 0 10px;
+        position: relative;
+        z-index: 1;
+      }
+      .mini-link {
+        color: var(--pg);
+        font-size: 11px;
+        font-weight: 700;
+        text-decoration: none;
+        position: relative;
+        z-index: 1;
+      }
+
+      .d-main {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        min-height: 0;
+      }
+      .d-topbar {
+        flex: none;
+        height: 68px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 0 26px;
+        border-bottom: 1px solid var(--line);
+      }
+      .d-search {
+        flex: 1;
+        max-width: 560px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        background: var(--chip);
+        border: 1px solid transparent;
+        border-radius: 24px;
+        padding: 0 16px;
+        transition: 0.2s;
+      }
+      .d-search:focus-within {
+        background: #fff;
+        border-color: #c6d8f7;
+        box-shadow: 0 1px 8px rgba(26, 115, 232, 0.14);
+      }
+      .d-search svg {
+        width: 18px;
+        height: 18px;
+        color: var(--muted);
+        flex: none;
+        stroke-width: 2;
+      }
+      .d-search input {
+        flex: 1;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        font-size: 13.5px;
+        color: var(--ink);
+      }
+      .icon-btn {
+        width: 40px;
+        height: 40px;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        transition: 0.15s;
+      }
+      .icon-btn:hover {
+        background: var(--chip);
+        color: var(--ink);
+      }
+      .icon-btn svg {
+        width: 19px;
+        height: 19px;
+        stroke-width: 1.8;
+      }
+      .avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        flex: none;
+        border: 0;
+        background: linear-gradient(145deg, #ffb35d, #d85a63 52%, #744bc2);
+      }
+      .d-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px 28px 46px;
+        scroll-behavior: smooth;
+      }
+
+      /* banner carousel (desktop) */
+      .banner {
+        position: relative;
+        height: 240px;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 12px 30px rgba(30, 60, 45, 0.12);
+      }
+      .b-slide {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity 0.6s ease;
+      }
+      .b-slide.on {
+        opacity: 1;
+      }
+      .b-inner {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        padding: 30px 36px;
+        color: #fff;
+      }
+      .b-copy {
+        max-width: 46%;
+        position: relative;
+        z-index: 3;
+      }
+      .b-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        background: rgba(255, 255, 255, 0.16);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 20px;
+        padding: 6px 12px;
+        font-size: 9.5px;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+        font-weight: 700;
+        margin-bottom: 13px;
+      }
+      .b-copy h3 {
+        margin: 0;
+        font-size: 30px;
+        font-weight: 900;
+        letter-spacing: -0.04em;
+        line-height: 1.05;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+      }
+      .b-copy p {
+        margin: 10px 0 16px;
+        font-size: 12.5px;
+        line-height: 1.55;
+        color: rgba(255, 255, 255, 0.85);
+        max-width: 340px;
+      }
+      .b-btn {
+        border: 0;
+        background: #fff;
+        color: #173a2c;
+        border-radius: 22px;
+        padding: 10px 20px;
+        font-size: 12px;
+        font-weight: 700;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+        transition: 0.16s;
+      }
+      .b-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.24);
+      }
+      .b-dots {
+        position: absolute;
+        right: 18px;
+        bottom: 15px;
+        display: flex;
+        gap: 6px;
+        z-index: 5;
+      }
+      .b-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 5px;
+        border: 0;
+        padding: 0;
+        background: rgba(255, 255, 255, 0.45);
+        transition: 0.25s;
+      }
+      .b-dot.on {
+        width: 20px;
+        background: #fff;
+      }
+
+      /* continue playing (desktop) */
+      .continue-row {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+      }
+      .cont-card {
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 14px;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        gap: 11px;
+        transition: 0.18s;
+      }
+      .cont-card:hover {
+        border-color: #cbe6d8;
+        box-shadow: 0 10px 24px rgba(30, 70, 51, 0.1);
+        transform: translateY(-2px);
+      }
+      .cont-top {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        min-width: 0;
+      }
+      .cont-top .g-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 13px;
+      }
+      .cont-top strong {
+        display: block;
+        font-size: 13px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .cont-top span {
+        display: block;
+        font-size: 10.5px;
+        color: var(--faint);
+        margin-top: 4px;
+      }
+      .pbar {
+        height: 5px;
+        border-radius: 4px;
+        background: #eef1ef;
+        overflow: hidden;
+      }
+      .pbar i {
+        display: block;
+        height: 100%;
+        border-radius: 4px;
+        background: var(--pg);
+      }
+      .cont-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 10.5px;
+        color: var(--faint);
+      }
+
+      /* tiles grid (desktop) */
+      .tiles {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+        gap: 20px 16px;
+      }
+      .tile {
+        cursor: pointer;
+        min-width: 0;
+      }
+      .tile .c-art {
+        height: 118px;
+        border-radius: 16px;
+        box-shadow: 0 4px 14px rgba(30, 60, 45, 0.1);
+        transition:
+          transform 0.22s,
+          box-shadow 0.22s;
+      }
+      .tile:hover .c-art {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 26px rgba(30, 60, 45, 0.17);
+      }
+      .tile .c-art .cover-title {
+        font-size: 12.5px;
+        left: 11px;
+        bottom: 9px;
+      }
+      .tile-row {
+        display: flex;
+        gap: 11px;
+        padding-top: 11px;
+      }
+      .tile-row .g-icon {
+        width: 40px;
+        height: 40px;
+      }
+      .tile-info {
+        min-width: 0;
+        flex: 1;
+      }
+      .tile-info strong {
+        display: block;
+        font-size: 13px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .tile-info .sub {
+        font-size: 11px;
+        color: var(--faint);
+        margin-top: 3px;
+      }
+      .tile-info .rate {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 3px;
+      }
+      .tile-col {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 5px;
+      }
+      .tile-col .pill {
+        padding: 7px 14px;
+        font-size: 11.5px;
+      }
+
+      /* top charts (desktop) */
+      .chart {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px 30px;
+      }
+      .chart-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 10px 10px;
+        border-radius: 14px;
+        cursor: pointer;
+        transition: 0.15s;
+      }
+      .chart-row:hover {
+        background: #f6faf7;
+      }
+      .chart-row .rk {
+        width: 26px;
+        text-align: center;
+        font-size: 17px;
+        font-weight: 500;
+        color: #b6bdb8;
+        flex: none;
+      }
+      .chart-row .g-icon {
+        width: 52px;
+        height: 52px;
+        font-size: 14px;
+      }
+      .chart-row .meta {
+        flex: 1;
+        min-width: 0;
+      }
+      .chart-row .meta strong {
+        display: block;
+        font-size: 13.5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .chart-row .meta span {
+        display: block;
+        font-size: 11px;
+        color: var(--faint);
+        margin-top: 4px;
+      }
+
+      .lib-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+      }
+      .sort-select {
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 8px 14px;
+        color: var(--muted);
+        background: #fff;
+        font-size: 12px;
+        outline: none;
+      }
+
+      /* profile (desktop) */
+      .profile-card {
+        background: linear-gradient(120deg, #134239, #0d8a5f);
+        border-radius: 20px;
+        padding: 26px 28px;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        position: relative;
+        overflow: hidden;
+      }
+      .profile-card::after {
+        content: "";
+        position: absolute;
+        width: 240px;
+        height: 240px;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        right: 40px;
+        top: -100px;
+        box-shadow:
+          0 0 0 30px rgba(255, 255, 255, 0.04),
+          0 0 0 60px rgba(255, 255, 255, 0.03);
+      }
+      .p-avatar {
+        width: 74px;
+        height: 74px;
+        border-radius: 50%;
+        flex: none;
+        display: grid;
+        place-items: center;
+        font-size: 24px;
+        font-weight: 700;
+        background: linear-gradient(145deg, #ffc46c, #e66f65 55%, #694fba);
+        box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.16);
+        position: relative;
+        z-index: 1;
+      }
+      .p-info {
+        position: relative;
+        z-index: 1;
+      }
+      .p-info h2 {
+        margin: 0;
+        font-size: 23px;
+        letter-spacing: -0.03em;
+      }
+      .p-info p {
+        margin: 5px 0 10px;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.75);
+      }
+      .level-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.16);
+        padding: 6px 12px;
+        font-size: 10.5px;
+        font-weight: 700;
+      }
+      .p-actions {
+        margin-left: auto;
+        position: relative;
+        z-index: 1;
+      }
+      .btn-ghost {
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        color: #fff;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 22px;
+        padding: 9px 16px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+      .btn-ghost:hover {
+        background: rgba(255, 255, 255, 0.18);
+      }
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 18px;
+      }
+      .stat-card {
+        padding: 18px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+      }
+      .stat-card span {
+        color: var(--muted);
+        font-size: 11.5px;
+      }
+      .stat-card strong {
+        display: block;
+        font-size: 25px;
+        letter-spacing: -0.04em;
+        margin-top: 7px;
+      }
+      .stat-card small {
+        display: block;
+        color: var(--green);
+        font-size: 10.5px;
+        margin-top: 4px;
+      }
+      .ach-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+      }
+      .ach {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 16px 12px;
+        text-align: center;
+        transition: 0.18s;
+      }
+      .ach:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 22px rgba(30, 60, 45, 0.09);
+      }
+      .ach-badge {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        margin: 0 auto 10px;
+        display: grid;
+        place-items: center;
+        font-size: 21px;
+        background: linear-gradient(145deg, #fff3c8, #f2ce82);
+        box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.55);
+      }
+      .ach strong {
+        display: block;
+        font-size: 11.5px;
+      }
+      .ach span {
+        color: var(--muted);
+        font-size: 9.5px;
+        display: block;
+        margin-top: 5px;
+        line-height: 1.4;
+      }
+
+      /* desktop dialog */
+      .overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 55;
+        display: none;
+      }
+      .overlay.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .ov-bg {
+        position: absolute;
+        inset: 0;
+        background: rgba(18, 32, 26, 0.45);
+        backdrop-filter: blur(4px);
+        animation: fadeIn 0.2s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+      }
+      .dialog {
+        position: relative;
+        width: min(480px, 100%);
+        background: #fff;
+        border-radius: 26px;
+        padding: 20px;
+        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.3);
+        animation: popIn 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+      }
+      @keyframes popIn {
+        from {
+          opacity: 0;
+          transform: scale(0.92) translateY(12px);
+        }
+      }
+      .dlg-cover {
+        height: 158px;
+        border-radius: 18px;
+        overflow: hidden;
+        margin-bottom: 16px;
+      }
+      .dlg-cover .c-art {
+        height: 100%;
+        border-radius: 0;
+      }
+      .dlg-head {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+      }
+      .dlg-head .g-icon {
+        width: 52px;
+        height: 52px;
+        font-size: 14px;
+      }
+      .dlg-head h3 {
+        margin: 0;
+        font-size: 19px;
+        letter-spacing: -0.02em;
+      }
+      .dlg-head p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 11.5px;
+      }
+      .dlg-desc {
+        color: var(--muted);
+        font-size: 12.5px;
+        line-height: 1.65;
+        margin: 13px 0 16px;
+      }
+      .dlg-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 9px;
+      }
+      .btn-flat {
+        border: 0;
+        background: var(--chip);
+        color: var(--muted);
+        border-radius: 20px;
+        padding: 10px 16px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+      .btn-flat:hover {
+        background: #e4e7e9;
+      }
+      .dlg-actions .pill {
+        padding: 10px 22px;
+      }
+
+      /* ============ PIXEL PHONE ============ */
+      .phone-wrap {
+        position: relative;
+        margin: 0 auto;
+      }
+      .phone {
+        width: 392px;
+        height: 850px;
+        transform-origin: top left;
+        position: relative;
+        border-radius: 58px;
+        padding: 11px;
+        background: linear-gradient(
+          155deg,
+          #4b4f55,
+          #16181b 32%,
+          #262a31 62%,
+          #0c0e11
+        );
+        box-shadow:
+          0 50px 100px rgba(18, 28, 23, 0.4),
+          0 18px 36px rgba(18, 28, 23, 0.25),
+          inset 0 0 0 2px rgba(255, 255, 255, 0.08),
+          inset 0 0 10px rgba(0, 0, 0, 0.65);
+      }
+      .phone::after {
+        content: "";
+        position: absolute;
+        left: -3.5px;
+        top: 170px;
+        width: 3.5px;
+        height: 108px;
+        border-radius: 3px 0 0 3px;
+        background: linear-gradient(180deg, #52565c, #23262b);
+        box-shadow: 0 -76px 0 #3d4147;
+      }
+      .phone::before {
+        content: "";
+        position: absolute;
+        right: -3.5px;
+        top: 232px;
+        width: 3.5px;
+        height: 60px;
+        border-radius: 0 3px 3px 0;
+        background: linear-gradient(180deg, #52565c, #23262b);
+      }
+      .screen {
+        width: 100%;
+        height: 100%;
+        background: #fff;
+        border-radius: 47px;
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55);
+      }
+      .punch {
+        position: absolute;
+        top: 13px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        z-index: 80;
+        background: radial-gradient(
+          circle at 36% 32%,
+          #2d3440 0 28%,
+          #05070a 62%
+        );
+        box-shadow:
+          inset 0 0 3px #000,
+          0 0 0 1px rgba(255, 255, 255, 0.05);
+      }
+      .statusbar {
+        flex: none;
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 28px 0;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--ink);
+        z-index: 70;
+        background: #fff;
+      }
+      .sb-icons {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .sb-icons svg {
+        height: 13px;
+        width: auto;
+      }
+
+      .m-scroll {
+        flex: 1;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: none;
+      }
+      .m-scroll::-webkit-scrollbar {
+        display: none;
+      }
+      .m-content {
+        padding: 0 16px 112px;
+      }
+
+      .m-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 2px 12px;
+      }
+      .m-header .avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 11px;
+      }
+      .m-header .m-title {
+        font-size: 18px;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+        margin-right: auto;
+      }
+      .m-search {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: 46px;
+        border-radius: 24px;
+        background: var(--chip);
+        padding: 0 16px;
+        margin-bottom: 14px;
+        border: 1px solid transparent;
+        transition: 0.2s;
+      }
+      .m-search:focus-within {
+        background: #fff;
+        border-color: #c6d8f7;
+        box-shadow: 0 1px 8px rgba(26, 115, 232, 0.15);
+      }
+      .m-search svg {
+        width: 17px;
+        height: 17px;
+        color: var(--muted);
+        flex: none;
+        stroke-width: 2;
+      }
+      .m-search input {
+        flex: 1;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        font-size: 14px;
+      }
+
+      /* mobile banners */
+      .m-banner-row {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        margin: 0 -16px;
+        padding: 2px 16px 6px;
+        scrollbar-width: none;
+      }
+      .m-banner-row::-webkit-scrollbar {
+        display: none;
+      }
+      .m-banner {
+        flex: 0 0 86%;
+        height: 134px;
+        border-radius: 20px;
+        overflow: hidden;
+        scroll-snap-align: center;
+        position: relative;
+        cursor: pointer;
+        box-shadow: 0 6px 16px rgba(30, 60, 45, 0.14);
+      }
+      .m-banner .c-art {
+        height: 100%;
+      }
+      .m-banner .b-cta {
+        position: absolute;
+        z-index: 3;
+        right: 12px;
+        bottom: 12px;
+        border: 0;
+        background: rgba(255, 255, 255, 0.94);
+        color: #173a2c;
+        border-radius: 18px;
+        padding: 7px 15px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      /* mobile continue */
+      .m-continue {
+        display: flex;
+        gap: 11px;
+        overflow-x: auto;
+        margin: 0 -16px;
+        padding: 2px 16px 6px;
+        scrollbar-width: none;
+      }
+      .m-continue::-webkit-scrollbar {
+        display: none;
+      }
+      .m-cont {
+        flex: 0 0 208px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 12px;
+        background: #fff;
+      }
+      .m-cont .cont-top {
+        margin-bottom: 10px;
+      }
+      .m-cont .cont-top .g-icon {
+        width: 38px;
+        height: 38px;
+        font-size: 11px;
+      }
+      .m-cont .cont-foot {
+        margin-top: 8px;
+      }
+
+      /* mobile list rows */
+      .m-list {
+        display: flex;
+        flex-direction: column;
+      }
+      .m-row {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        padding: 11px 4px;
+        border-radius: 14px;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .m-row:hover {
+        background: #f8faf9;
+      }
+      .m-row .rk {
+        width: 18px;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 500;
+        color: #b6bdb8;
+        flex: none;
+      }
+      .m-row .g-icon {
+        width: 54px;
+        height: 54px;
+        font-size: 14px;
+      }
+      .m-row .meta {
+        flex: 1;
+        min-width: 0;
+      }
+      .m-row .meta strong {
+        display: block;
+        font-size: 14px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .m-row .meta span {
+        display: block;
+        font-size: 11px;
+        color: var(--faint);
+        margin-top: 4px;
+        line-height: 1.4;
+      }
+      .m-row .pill {
+        padding: 7px 16px;
+        font-size: 11.5px;
+      }
+
+      .m-tiles {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px 12px;
+      }
+      .m-tiles .tile .c-art {
+        height: 96px;
+      }
+      .m-tiles .tile-col {
+        display: none;
+      }
+
+      .m-stat-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-top: 14px;
+      }
+      .m-stat-grid .stat-card {
+        padding: 13px 10px;
+        border-radius: 14px;
+      }
+      .m-stat-grid .stat-card strong {
+        font-size: 19px;
+      }
+      .m-ach-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 9px;
+      }
+      .m-profile .profile-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 24px 18px;
+        gap: 12px;
+      }
+      .m-profile .p-actions {
+        margin: 2px 0 0;
+      }
+
+      /* mobile bottom nav */
+      .m-nav {
+        flex: none;
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(14px);
+        border-top: 1px solid var(--line);
+        display: flex;
+        justify-content: space-around;
+        padding: 8px 6px 20px;
+        z-index: 20;
+      }
+      .m-nav-item {
+        border: 0;
+        background: transparent;
+        color: var(--faint);
+        min-width: 64px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        font-size: 10.5px;
+        font-weight: 500;
+      }
+      .m-nav-item svg {
+        width: 21px;
+        height: 21px;
+        stroke-width: 1.8;
+        padding: 5px 16px;
+        border-radius: 18px;
+        transition: 0.18s;
+      }
+      .m-nav-item.active {
+        color: var(--pg);
+        font-weight: 700;
+      }
+      .m-nav-item.active svg {
+        background: var(--pg-soft);
+      }
+      .gesture-bar {
+        position: absolute;
+        bottom: 7px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 118px;
+        height: 4px;
+        border-radius: 3px;
+        background: rgba(32, 33, 36, 0.85);
+        z-index: 30;
+      }
+
+      /* mobile bottom sheet */
+      .sheet-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(18, 32, 26, 0.45);
+        opacity: 0;
+        pointer-events: none;
+        transition: 0.3s;
+        z-index: 60;
+      }
+      .sheet-backdrop.show {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .sheet {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 61;
+        background: #fff;
+        border-radius: 28px 28px 0 0;
+        padding: 10px 20px 30px;
+        max-height: 84%;
+        overflow-y: auto;
+        transform: translateY(105%);
+        transition: transform 0.38s cubic-bezier(0.2, 0.9, 0.25, 1);
+        box-shadow: 0 -18px 50px rgba(0, 0, 0, 0.22);
+        scrollbar-width: none;
+      }
+      .sheet::-webkit-scrollbar {
+        display: none;
+      }
+      .sheet.show {
+        transform: translateY(0);
+      }
+      .sheet-grip {
+        width: 38px;
+        height: 4px;
+        border-radius: 3px;
+        background: #dadce0;
+        margin: 4px auto 14px;
+      }
+      .sheet .dlg-cover {
+        height: 128px;
+      }
+      .sheet .pill.big {
+        width: 100%;
+        padding: 13px;
+        font-size: 13.5px;
+        border-radius: 24px;
+      }
+
+      /* ============ RESPONSIVE ADJUSTMENTS ============ */
+      @media (max-width: 960px) {
+        .d-body {
+          grid-template-columns: 78px minmax(0, 1fr);
+        }
+        .rail {
+          padding: 14px 9px;
+        }
+        .rail-brand {
+          justify-content: center;
+          padding-bottom: 14px;
+        }
+        .rail-brand h1,
+        .rail-label,
+        .rail-promo,
+        .nav-item .lbl,
+        .nav-item .cnt {
+          display: none;
+        }
+        .nav-item {
+          justify-content: center;
+          padding: 0;
+        }
+        .chart {
+          grid-template-columns: 1fr;
+        }
+        .continue-row {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .sb-hint {
+          display: none;
+        }
+        .sb-brand small {
+          display: none;
+        }
+      }
+      @media (max-width: 640px) {
+        .switchbar {
+          padding: 0 14px;
+          gap: 10px;
+        }
+        .sb-brand span {
+          display: none;
+        }
+        .stage-desktop {
+          padding: 12px 8px 20px;
+        }
+        .window {
+          border-radius: 14px;
+          height: max(560px, calc(100dvh - 96px));
+        }
+        .d-topbar {
+          padding: 0 14px;
+          gap: 8px;
+        }
+        .d-scroll {
+          padding: 18px 14px 40px;
+        }
+        .banner {
+          height: 210px;
+        }
+        .b-copy {
+          max-width: 60%;
+        }
+        .b-copy h3 {
+          font-size: 21px;
+        }
+        .continue-row {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid {
+          grid-template-columns: 1fr;
+        }
+        .ach-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .profile-card {
+          flex-direction: column;
+          text-align: center;
+        }
+        .p-actions {
+          margin: 0;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ================= SWITCHER ================= -->
+    <header class="switchbar">
+      <div class="sb-brand">
+        <svg class="logo-svg" viewBox="0 0 40 40" aria-hidden="true">
+          <path
+            d="M10.5 6.4c-1.4-.8-3.1.2-3.1 1.8v23.6c0 1.6 1.7 2.6 3.1 1.8l21.1-11.8c1.5-.8 1.5-2.9 0-3.7L10.5 6.4Z"
+            fill="#10a66b"
+          />
+          <path
+            d="m7.7 31.4 13.8-13.2 4.9 4.5-15.9 8.9c-1 .6-2.2.3-2.8-.2Z"
+            fill="#087fba"
+          />
+          <path
+            d="m7.7 8.6 13.8 13.2 4.9-4.5-15.9-8.9c-1-.6-2.2-.3-2.8.2Z"
+            fill="#f5c04e"
+          />
+          <path
+            d="m21.5 17.8 5.1-4.9 5 2.8c1.5.8 1.5 2.9 0 3.7l-5.2 2.9-4.9-4.5Z"
+            fill="#e85b56"
+          />
+        </svg>
+        <span>Google Play Games</span> <small>· UI Clone</small>
+      </div>
+      <div class="seg" role="tablist" aria-label="Pilih tampilan perangkat">
+        <button id="segDesktop" class="active" role="tab" aria-selected="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="2.5" y="4" width="19" height="12.5" rx="2" />
+            <path d="M9 20.5h6M12 16.5v4" />
+          </svg>
+          Desktop
+        </button>
+        <button id="segMobile" role="tab" aria-selected="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="7" y="2.5" width="10" height="19" rx="2.6" />
+            <path d="M11 18.7h2" />
+          </svg>
+          Mobile
+        </button>
+      </div>
+      <div class="sb-hint">Pintasan: <b>D</b> Desktop · <b>M</b> Mobile</div>
+    </header>
+
+    <!-- ================= DESKTOP STAGE ================= -->
+    <section class="stage stage-desktop on" id="stageDesktop">
+      <div>
+        <div class="window scope" data-scope="desktop">
+          <div class="titlebar">
+            <div class="tb-title">
+              <svg class="logo-svg" viewBox="0 0 40 40" aria-hidden="true">
+                <path
+                  d="M10.5 6.4c-1.4-.8-3.1.2-3.1 1.8v23.6c0 1.6 1.7 2.6 3.1 1.8l21.1-11.8c1.5-.8 1.5-2.9 0-3.7L10.5 6.4Z"
+                  fill="#10a66b"
+                />
+                <path
+                  d="m7.7 31.4 13.8-13.2 4.9 4.5-15.9 8.9c-1 .6-2.2.3-2.8-.2Z"
+                  fill="#087fba"
+                />
+                <path
+                  d="m7.7 8.6 13.8 13.2 4.9-4.5-15.9-8.9c-1-.6-2.2-.3-2.8.2Z"
+                  fill="#f5c04e"
+                />
+                <path
+                  d="m21.5 17.8 5.1-4.9 5 2.8c1.5.8 1.5 2.9 0 3.7l-5.2 2.9-4.9-4.5Z"
+                  fill="#e85b56"
+                />
+              </svg>
+              Google Play Games <span style="color: #b6bdb8">— beta PC</span>
+            </div>
+            <div class="tb-btns">
+              <button data-win="min" aria-label="Minimalkan">—</button>
+              <button data-win="max" aria-label="Maksimalkan">▢</button>
+              <button class="tb-close" data-win="close" aria-label="Tutup">
+                ✕
+              </button>
+            </div>
+          </div>
+
+          <div class="d-body">
+            <aside class="rail">
+              <div class="rail-brand">
+                <svg class="logo-svg" viewBox="0 0 40 40" aria-hidden="true">
+                  <path
+                    d="M10.5 6.4c-1.4-.8-3.1.2-3.1 1.8v23.6c0 1.6 1.7 2.6 3.1 1.8l21.1-11.8c1.5-.8 1.5-2.9 0-3.7L10.5 6.4Z"
+                    fill="#10a66b"
+                  />
+                  <path
+                    d="m7.7 31.4 13.8-13.2 4.9 4.5-15.9 8.9c-1 .6-2.2.3-2.8-.2Z"
+                    fill="#087fba"
+                  />
+                  <path
+                    d="m7.7 8.6 13.8 13.2 4.9-4.5-15.9-8.9c-1-.6-2.2-.3-2.8.2Z"
+                    fill="#f5c04e"
+                  />
+                  <path
+                    d="m21.5 17.8 5.1-4.9 5 2.8c1.5.8 1.5 2.9 0 3.7l-5.2 2.9-4.9-4.5Z"
+                    fill="#e85b56"
+                  />
+                </svg>
+                <h1>Play Games <span>untuk PC</span></h1>
+              </div>
+              <nav aria-label="Navigasi utama">
+                <button class="nav-item active" data-page="home">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path
+                      d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z"
+                    />
+                  </svg>
+                  <span class="lbl">Beranda</span>
+                </button>
+                <button class="nav-item" data-page="library">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <rect x="4" y="3" width="16" height="18" rx="2" />
+                    <path d="M8 7h8M8 11h8M8 15h5" />
+                  </svg>
+                  <span class="lbl">Koleksi</span><span class="cnt">8</span>
+                </button>
+                <button class="nav-item" data-page="discover">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path
+                      d="M6 20.5h12M7.5 17h9l-1.3-8.2a4.7 4.7 0 1 0-6.4 0L7.5 17Z"
+                    />
+                  </svg>
+                  <span class="lbl">Peringkat teratas</span>
+                </button>
+                <button class="nav-item" data-page="profile">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="8" r="3.5" />
+                    <path d="M4.5 20c.7-3.5 3.2-5.3 7.5-5.3s6.8 1.8 7.5 5.3" />
+                  </svg>
+                  <span class="lbl">Profil pemain</span>
+                </button>
+              </nav>
+              <div class="rail-label">Lainnya</div>
+              <button class="nav-item" id="dSettings">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <circle cx="12" cy="12" r="3" />
+                  <path
+                    d="m19.4 15 .1.1 1.3 1-1.4 2.4-1.6-.6a8 8 0 0 1-1.7 1l-.3 1.7h-2.8l-.3-1.7a8 8 0 0 1-1.7-1l-1.6.6L6 16.1l1.3-1a7.4 7.4 0 0 1 0-2l-1.3-1 1.4-2.4 1.6.6a8 8 0 0 1 1.7-1l.3-1.7h2.8l.3 1.7a8 8 0 0 1 1.7 1l1.6-.6 1.4 2.4-1.3 1a7.4 7.4 0 0 1-.1 1.9Z"
+                  />
+                </svg>
+                <span class="lbl">Setelan</span>
+              </button>
+              <button class="nav-item" id="dHelp">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <circle cx="12" cy="12" r="9" />
+                  <path
+                    d="M9.7 9a2.4 2.4 0 1 1 4.2 1.6c-1.1 1.1-1.9 1.4-1.9 3"
+                  />
+                  <path d="M12 17.2h.01" />
+                </svg>
+                <span class="lbl">Bantuan</span>
+              </button>
+              <div class="rail-spacer"></div>
+              <div class="rail-promo">
+                <strong>Temukan game baru setiap hari</strong>
+                <p>Jelajahi pilihan yang cocok dengan gaya bermainmu.</p>
+                <a class="mini-link" href="#discover" data-goto="discover"
+                  >Jelajahi game →</a
+                >
+              </div>
+            </aside>
+
+            <div class="d-main">
+              <div class="d-topbar">
+                <label class="d-search">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="10.8" cy="10.8" r="6.8" />
+                    <path d="m16 16 4.5 4.5" />
+                  </svg>
+                  <input
+                    id="dSearch"
+                    type="search"
+                    placeholder="Cari game"
+                    autocomplete="off"
+                    aria-label="Cari game"
+                  />
+                </label>
+                <button
+                  class="icon-btn"
+                  id="dNotif"
+                  aria-label="Notifikasi"
+                  title="Notifikasi"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M18 16v-5a6 6 0 1 0-12 0v5l-1.6 2.4h15.2L18 16Z" />
+                    <path d="M10 20.6a2.2 2.2 0 0 0 4 0" />
+                  </svg>
+                </button>
+                <button
+                  class="avatar"
+                  data-page="profile"
+                  title="Profil pemain"
+                >
+                  AR
+                </button>
+              </div>
+
+              <div class="d-scroll" id="dScroll">
+                <!-- ===== HOME ===== -->
+                <section class="page on" data-pageid="home">
+                  <div class="banner" id="dBanner">
+                    <div class="b-slide on art-gen c-art">
+                      <div class="orb"></div>
+                      <div class="shape"></div>
+                      <div class="b-inner">
+                        <div class="b-copy">
+                          <span class="b-kicker">✦ Event baru</span>
+                          <h3>Genshin Impact</h3>
+                          <p>
+                            Archon Quest terbaru telah tiba. Jelajahi chapter
+                            baru dan karakter bintang lima gratis.
+                          </p>
+                          <button class="b-btn" data-open="Genshin Impact">
+                            Lihat detail
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="b-slide art-ml c-art">
+                      <div class="orb"></div>
+                      <div class="shape"></div>
+                      <div class="b-inner">
+                        <div class="b-copy">
+                          <span class="b-kicker">🏆 Turnamen</span>
+                          <h3>Mobile Legends</h3>
+                          <p>
+                            Babak playoff dimulai minggu ini. Dukung tim
+                            favoritmu dan klaim skin event.
+                          </p>
+                          <button class="b-btn" data-open="Mobile Legends">
+                            Lihat detail
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="b-slide art-ff c-art">
+                      <div class="orb"></div>
+                      <div class="shape"></div>
+                      <div class="b-inner">
+                        <div class="b-copy">
+                          <span class="b-kicker">🔥 Musim baru</span>
+                          <h3>Free Fire</h3>
+                          <p>
+                            Map baru, mode ranked baru, dan hadiah login harian
+                            menantimu di musim ini.
+                          </p>
+                          <button class="b-btn" data-open="Free Fire">
+                            Lihat detail
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="b-slide art-cla c-art">
+                      <div class="orb"></div>
+                      <div class="shape"></div>
+                      <div class="b-inner">
+                        <div class="b-copy">
+                          <span class="b-kicker">⚔️ Perang klan</span>
+                          <h3>Clash of Clans</h3>
+                          <p>
+                            Trofi liga menunggu. Perkuat desamu dan bawa klanmu
+                            ke puncak klasemen.
+                          </p>
+                          <button class="b-btn" data-open="Clash of Clans">
+                            Lihat detail
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="b-dots" id="dDots"></div>
+                  </div>
+
+                  <div class="sec-head">
+                    <div>
+                      <h2>Lanjutkan bermain</h2>
+                      <p>Game yang terakhir kamu mainkan di PC</p>
+                    </div>
+                    <button class="link" data-goto="library">
+                      Lihat semua
+                    </button>
+                  </div>
+                  <div class="continue-row" id="dContinue"></div>
+
+                  <div class="sec-head">
+                    <div>
+                      <h2>Disarankan untukmu</h2>
+                      <p>Berdasarkan game yang kamu mainkan</p>
+                    </div>
+                    <button class="link" data-goto="discover">Lainnya</button>
+                  </div>
+                  <div class="tiles" id="dSuggested"></div>
+
+                  <div class="sec-head">
+                    <div>
+                      <h2>Peringkat teratas</h2>
+                      <p>Game paling populer minggu ini</p>
+                    </div>
+                    <button class="link" data-goto="discover">
+                      Lihat chart
+                    </button>
+                  </div>
+                  <div class="chart" id="dTopChart"></div>
+                </section>
+
+                <!-- ===== LIBRARY ===== -->
+                <section class="page" data-pageid="library">
+                  <div class="p-head">
+                    <span class="eyebrow">▣ Koleksimu</span>
+                    <h1>Koleksi game</h1>
+                    <p>
+                      Semua game milikmu, siap dimainkan kembali kapan saja.
+                    </p>
+                  </div>
+                  <div class="lib-toolbar">
+                    <div class="chips-row" id="dLibChips">
+                      <button class="chip active" data-lib="all">Semua</button>
+                      <button class="chip" data-lib="installed">
+                        Terpasang
+                      </button>
+                      <button class="chip" data-lib="saved">Disimpan</button>
+                    </div>
+                    <select class="sort-select" id="dSort" aria-label="Urutkan">
+                      <option value="recent">Terakhir dimainkan</option>
+                      <option value="az">Nama A–Z</option>
+                      <option value="rating">Rating tertinggi</option>
+                    </select>
+                  </div>
+                  <div class="chart" id="dLibGrid"></div>
+                </section>
+
+                <!-- ===== DISCOVER ===== -->
+                <section class="page" data-pageid="discover">
+                  <div class="p-head">
+                    <span class="eyebrow">🏆 Chart</span>
+                    <h1>Peringkat teratas</h1>
+                    <p>
+                      Game paling populer, difilter berdasarkan kategori
+                      favoritmu.
+                    </p>
+                  </div>
+                  <div
+                    class="chips-row"
+                    id="dCatChips"
+                    style="margin-bottom: 18px"
+                  >
+                    <button class="chip active" data-cat="all">
+                      Untuk kamu
+                    </button>
+                    <button class="chip" data-cat="aksi">Aksi</button>
+                    <button class="chip" data-cat="strategi">Strategi</button>
+                    <button class="chip" data-cat="kasual">Kasual</button>
+                    <button class="chip" data-cat="petualangan">
+                      Petualangan
+                    </button>
+                    <button class="chip" data-cat="rpg">RPG</button>
+                  </div>
+                  <div class="chart" id="dDiscover"></div>
+                </section>
+
+                <!-- ===== PROFILE ===== -->
+                <section class="page" data-pageid="profile">
+                  <div class="p-head">
+                    <span class="eyebrow">♙ Identitas pemain</span>
+                    <h1>Profil pemain</h1>
+                    <p>Lihat progres, pencapaian, dan perjalanan bermainmu.</p>
+                  </div>
+                  <div class="profile-card">
+                    <div class="p-avatar">AR</div>
+                    <div class="p-info">
+                      <h2>Alex R.</h2>
+                      <p>@alexplayer · Bergabung sejak 2022</p>
+                      <span class="level-pill"
+                        >✦ Level 18 · Gamer berpengalaman</span
+                      >
+                    </div>
+                    <div class="p-actions">
+                      <button class="btn-ghost" id="dEdit">Edit profil</button>
+                    </div>
+                  </div>
+                  <div class="stat-grid">
+                    <div class="stat-card">
+                      <span>Total pencapaian</span><strong>128</strong
+                      ><small>↑ 12 bulan ini</small>
+                    </div>
+                    <div class="stat-card">
+                      <span>Game dimainkan</span><strong>24</strong
+                      ><small>8 ada di koleksi</small>
+                    </div>
+                    <div class="stat-card">
+                      <span>Waktu bermain</span><strong>346j</strong
+                      ><small>Sepanjang waktu</small>
+                    </div>
+                  </div>
+                  <div class="sec-head">
+                    <div>
+                      <h2>Pencapaian terbaru</h2>
+                      <p>Lencana yang berhasil kamu dapatkan</p>
+                    </div>
+                    <button class="link" id="dAchAll">Lihat semua</button>
+                  </div>
+                  <div class="ach-grid">
+                    <div class="ach">
+                      <div class="ach-badge">🏆</div>
+                      <strong>Juara bertahan</strong
+                      ><span>Menang 10 pertandingan</span>
+                    </div>
+                    <div class="ach">
+                      <div
+                        class="ach-badge"
+                        style="
+                          background: linear-gradient(145deg, #d9efff, #7eb6df);
+                        "
+                      >
+                        ⚡
+                      </div>
+                      <strong>Gerak cepat</strong
+                      ><span>Selesaikan misi harian</span>
+                    </div>
+                    <div class="ach">
+                      <div
+                        class="ach-badge"
+                        style="
+                          background: linear-gradient(145deg, #e8dfff, #a891d9);
+                        "
+                      >
+                        💎
+                      </div>
+                      <strong>Kolektor</strong><span>Buka 50 pencapaian</span>
+                    </div>
+                    <div class="ach">
+                      <div
+                        class="ach-badge"
+                        style="
+                          background: linear-gradient(145deg, #ffe0d7, #e99c83);
+                        "
+                      >
+                        🔥
+                      </div>
+                      <strong>Streak 7 hari</strong
+                      ><span>Main 7 hari berturut-turut</span>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
+
+          <!-- desktop dialog -->
+          <div class="overlay" id="dOverlay" role="dialog" aria-modal="true">
+            <div class="ov-bg" data-close></div>
+            <div class="dialog">
+              <div class="dlg-cover c-art" id="dCover"></div>
+              <div class="dlg-head">
+                <div class="g-icon" id="dIcon">G</div>
+                <div>
+                  <h3 id="dTitle">Game</h3>
+                  <p id="dMeta">—</p>
+                </div>
+              </div>
+              <div class="stats-row" id="dStats"></div>
+              <p class="dlg-desc" id="dDesc"></p>
+              <div class="dlg-actions">
+                <button class="btn-flat" data-close>Tutup</button>
+                <button class="pill install" id="dAction" data-inst="">
+                  Instal
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="toast" id="dToast" role="status"></div>
+        </div>
+        <div class="device-cap">
+          <span class="dot"></span> Google Play Games — beta PC · Windows
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= MOBILE STAGE ================= -->
+    <section class="stage stage-mobile" id="stageMobile">
+      <div>
+        <div class="phone-wrap" id="phoneWrap">
+          <div class="phone">
+            <div class="screen scope" data-scope="mobile">
+              <div class="punch"></div>
+              <div class="statusbar">
+                <span id="mTime">10.24</span>
+                <div class="sb-icons">
+                  <svg viewBox="0 0 16 12" fill="currentColor">
+                    <path
+                      d="M8 9.6a1.5 1.5 0 1 1 0 2.4 1.5 1.5 0 0 1 0-2.4ZM8 6.2c1.3 0 2.5.5 3.4 1.4l-1.2 1.2A3.2 3.2 0 0 0 8 7.9c-.9 0-1.6.3-2.2.9L4.6 7.6A5 5 0 0 1 8 6.2Zm0-3.4c2.2 0 4.2.9 5.7 2.3l-1.2 1.2A6.4 6.4 0 0 0 8 4.5c-1.8 0-3.4.7-4.5 1.8L2.3 5.1A8 8 0 0 1 8 2.8Z"
+                    />
+                  </svg>
+                  <svg viewBox="0 0 16 12" fill="currentColor">
+                    <path d="m1 11 7-9.5L15 11H1Z" />
+                  </svg>
+                  <svg viewBox="0 0 25 13" fill="none" stroke="currentColor">
+                    <rect
+                      x="1"
+                      y="1.5"
+                      width="19"
+                      height="10"
+                      rx="2.8"
+                      stroke-width="1.4"
+                    />
+                    <rect
+                      x="3.2"
+                      y="3.7"
+                      width="12"
+                      height="5.6"
+                      rx="1.2"
+                      fill="currentColor"
+                      stroke="none"
+                    />
+                    <path
+                      d="M22.6 4.6v3.8"
+                      stroke-width="1.6"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </div>
+              </div>
+
+              <div class="m-scroll" id="mScroll">
+                <div class="m-content">
+                  <div class="m-header">
+                    <button
+                      class="avatar"
+                      data-page="profile"
+                      aria-label="Profil"
+                    >
+                      AR
+                    </button>
+                    <div class="m-title">Play Games</div>
+                    <button class="icon-btn" id="mCast" aria-label="Cast">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                      >
+                        <path
+                          d="M2.5 8.5a8 8 0 0 1 13 0M2.5 4.5a13 13 0 0 1 19 0"
+                        />
+                        <circle cx="12" cy="17" r="2.6" />
+                      </svg>
+                    </button>
+                    <button class="icon-btn" id="mMore" aria-label="Lainnya">
+                      <svg viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="12" cy="5" r="1.7" />
+                        <circle cx="12" cy="12" r="1.7" />
+                        <circle cx="12" cy="19" r="1.7" />
+                      </svg>
+                    </button>
+                  </div>
+                  <label class="m-search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <circle cx="10.8" cy="10.8" r="6.8" />
+                      <path d="m16 16 4.5 4.5" />
+                    </svg>
+                    <input
+                      id="mSearch"
+                      type="search"
+                      placeholder="Cari game"
+                      autocomplete="off"
+                      aria-label="Cari game"
+                    />
+                  </label>
+
+                  <!-- HOME -->
+                  <section class="page on" data-pageid="home">
+                    <div class="m-banner-row">
+                      <div class="m-banner" data-open="Genshin Impact">
+                        <div class="c-art art-gen">
+                          <div class="orb"></div>
+                          <div class="shape"></div>
+                          <div class="cover-title">
+                            <span class="cover-sub">EVENT BARU</span>Genshin
+                            Impact
+                          </div>
+                        </div>
+                        <button class="b-cta">Detail</button>
+                      </div>
+                      <div class="m-banner" data-open="Mobile Legends">
+                        <div class="c-art art-ml">
+                          <div class="orb"></div>
+                          <div class="shape"></div>
+                          <div class="cover-title">
+                            <span class="cover-sub">TURNAMEN</span>Mobile
+                            Legends
+                          </div>
+                        </div>
+                        <button class="b-cta">Detail</button>
+                      </div>
+                      <div class="m-banner" data-open="Clash of Clans">
+                        <div class="c-art art-cla">
+                          <div class="orb"></div>
+                          <div class="shape"></div>
+                          <div class="cover-title">
+                            <span class="cover-sub">PERANG KLAN</span>Clash of
+                            Clans
+                          </div>
+                        </div>
+                        <button class="b-cta">Detail</button>
+                      </div>
+                    </div>
+
+                    <div class="sec-head" style="margin-top: 20px">
+                      <div><h2>Lanjutkan bermain</h2></div>
+                      <button class="link" data-goto="library">Semua</button>
+                    </div>
+                    <div class="m-continue" id="mContinue"></div>
+
+                    <div class="sec-head">
+                      <div><h2>Disarankan untukmu</h2></div>
+                    </div>
+                    <div
+                      class="chips-row"
+                      id="mHomeChips"
+                      style="margin-bottom: 12px"
+                    >
+                      <button class="chip active" data-hcat="all">
+                        Untuk kamu
+                      </button>
+                      <button class="chip" data-hcat="aksi">Aksi</button>
+                      <button class="chip" data-hcat="strategi">
+                        Strategi
+                      </button>
+                      <button class="chip" data-hcat="kasual">Kasual</button>
+                      <button class="chip" data-hcat="rpg">RPG</button>
+                    </div>
+                    <div class="m-list" id="mSuggested"></div>
+                  </section>
+
+                  <!-- LIBRARY -->
+                  <section class="page" data-pageid="library">
+                    <div class="p-head">
+                      <span class="eyebrow">▣ Koleksimu</span>
+                      <h1>Koleksi</h1>
+                    </div>
+                    <div
+                      class="chips-row"
+                      id="mLibChips"
+                      style="margin-bottom: 12px"
+                    >
+                      <button class="chip active" data-lib="all">Semua</button>
+                      <button class="chip" data-lib="installed">
+                        Terpasang
+                      </button>
+                      <button class="chip" data-lib="saved">Disimpan</button>
+                    </div>
+                    <div class="m-list" id="mLibGrid"></div>
+                  </section>
+
+                  <!-- DISCOVER -->
+                  <section class="page" data-pageid="discover">
+                    <div class="p-head">
+                      <span class="eyebrow">🏆 Chart</span>
+                      <h1>Peringkat teratas</h1>
+                    </div>
+                    <div
+                      class="chips-row"
+                      id="mCatChips"
+                      style="margin-bottom: 12px"
+                    >
+                      <button class="chip active" data-cat="all">
+                        Untuk kamu
+                      </button>
+                      <button class="chip" data-cat="aksi">Aksi</button>
+                      <button class="chip" data-cat="strategi">Strategi</button>
+                      <button class="chip" data-cat="kasual">Kasual</button>
+                      <button class="chip" data-cat="rpg">RPG</button>
+                    </div>
+                    <div class="m-list" id="mDiscover"></div>
+                  </section>
+
+                  <!-- PROFILE -->
+                  <section class="page m-profile" data-pageid="profile">
+                    <div class="profile-card">
+                      <div
+                        class="p-avatar"
+                        style="width: 62px; height: 62px; font-size: 20px"
+                      >
+                        AR
+                      </div>
+                      <div class="p-info">
+                        <h2 style="font-size: 20px">Alex R.</h2>
+                        <p>@alexplayer · sejak 2022</p>
+                        <span class="level-pill">✦ Level 18</span>
+                      </div>
+                      <div class="p-actions">
+                        <button class="btn-ghost" id="mEdit">
+                          Edit profil
+                        </button>
+                      </div>
+                    </div>
+                    <div class="m-stat-grid">
+                      <div class="stat-card">
+                        <span>Pencapaian</span><strong>128</strong>
+                      </div>
+                      <div class="stat-card">
+                        <span>Game</span><strong>24</strong>
+                      </div>
+                      <div class="stat-card">
+                        <span>Main</span><strong>346j</strong>
+                      </div>
+                    </div>
+                    <div class="sec-head">
+                      <div><h2>Pencapaian terbaru</h2></div>
+                    </div>
+                    <div class="m-ach-grid">
+                      <div class="ach">
+                        <div class="ach-badge">🏆</div>
+                        <strong>Juara bertahan</strong>
+                      </div>
+                      <div class="ach">
+                        <div
+                          class="ach-badge"
+                          style="
+                            background: linear-gradient(
+                              145deg,
+                              #d9efff,
+                              #7eb6df
+                            );
+                          "
+                        >
+                          ⚡
+                        </div>
+                        <strong>Gerak cepat</strong>
+                      </div>
+                      <div class="ach">
+                        <div
+                          class="ach-badge"
+                          style="
+                            background: linear-gradient(
+                              145deg,
+                              #e8dfff,
+                              #a891d9
+                            );
+                          "
+                        >
+                          💎
+                        </div>
+                        <strong>Kolektor</strong>
+                      </div>
+                      <div class="ach">
+                        <div
+                          class="ach-badge"
+                          style="
+                            background: linear-gradient(
+                              145deg,
+                              #ffe0d7,
+                              #e99c83
+                            );
+                          "
+                        >
+                          🔥
+                        </div>
+                        <strong>Streak 7 hari</strong>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              </div>
+
+              <nav class="m-nav" aria-label="Navigasi bawah">
+                <button class="m-nav-item active" data-page="home">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path
+                      d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z"
+                    />
+                  </svg>
+                  Games
+                </button>
+                <button class="m-nav-item" data-page="library">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <rect x="4" y="3" width="16" height="18" rx="2" />
+                    <path d="M8 7h8M8 11h8M8 15h5" />
+                  </svg>
+                  Koleksi
+                </button>
+                <button class="m-nav-item" data-page="discover">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path
+                      d="M6 20.5h12M7.5 17h9l-1.3-8.2a4.7 4.7 0 1 0-6.4 0L7.5 17Z"
+                    />
+                  </svg>
+                  Chart
+                </button>
+                <button class="m-nav-item" data-page="profile">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="8" r="3.5" />
+                    <path d="M4.5 20c.7-3.5 3.2-5.3 7.5-5.3s6.8 1.8 7.5 5.3" />
+                  </svg>
+                  Profil
+                </button>
+              </nav>
+              <div class="gesture-bar"></div>
+
+              <!-- mobile bottom sheet -->
+              <div class="sheet-backdrop" id="sBackdrop" data-close></div>
+              <div class="sheet" id="mSheet" role="dialog" aria-modal="true">
+                <div class="sheet-grip"></div>
+                <div class="dlg-cover c-art" id="sCover"></div>
+                <div class="dlg-head" style="margin-top: 14px">
+                  <div class="g-icon" id="sIcon">G</div>
+                  <div>
+                    <h3 id="sTitle">Game</h3>
+                    <p id="sMeta">—</p>
+                  </div>
+                </div>
+                <div class="stats-row" id="sStats"></div>
+                <p class="dlg-desc" id="sDesc"></p>
+                <button class="pill install big" id="sAction" data-inst="">
+                  Instal
+                </button>
+              </div>
+              <div class="toast" id="mToast" role="status"></div>
+            </div>
+          </div>
+        </div>
+        <div class="device-cap">
+          <span class="dot"></span> Pixel 8 Pro · Android 15
+        </div>
+      </div>
+    </section>
+
+    <script>
+      /* ================= DATA ================= */
+      const games = [
+        {
+          name: "Mobile Legends",
+          category: "Strategi · Aksi",
+          tags: ["strategi", "aksi"],
+          rating: 4.4,
+          dl: "100 jt+",
+          size: "150 MB",
+          time: "2 jam lalu",
+          installed: true,
+          saved: true,
+          cls: "ml",
+          icon: "ML",
+        },
+        {
+          name: "Free Fire",
+          category: "Aksi · Survival",
+          tags: ["aksi"],
+          rating: 4.2,
+          dl: "1 M+",
+          size: "420 MB",
+          time: "Kemarin",
+          installed: true,
+          saved: false,
+          cls: "ff",
+          icon: "FF",
+        },
+        {
+          name: "Roblox",
+          category: "Petualangan · Sandbox",
+          tags: ["petualangan", "kasual"],
+          rating: 4.3,
+          dl: "1 M+",
+          size: "180 MB",
+          time: "3 hari lalu",
+          installed: true,
+          saved: true,
+          cls: "rb",
+          icon: "R",
+        },
+        {
+          name: "PUBG MOBILE",
+          category: "Aksi · Battle royale",
+          tags: ["aksi"],
+          rating: 4.1,
+          dl: "500 jt+",
+          size: "1,2 GB",
+          time: "5 hari lalu",
+          installed: false,
+          saved: true,
+          cls: "pubg",
+          icon: "P",
+        },
+        {
+          name: "Genshin Impact",
+          category: "RPG · Petualangan",
+          tags: ["rpg", "petualangan"],
+          rating: 4.2,
+          dl: "100 jt+",
+          size: "3,8 GB",
+          time: "1 minggu lalu",
+          installed: true,
+          saved: true,
+          cls: "gen",
+          icon: "GI",
+        },
+        {
+          name: "Candy Crush Saga",
+          category: "Kasual · Puzzle",
+          tags: ["kasual"],
+          rating: 4.5,
+          dl: "1 M+",
+          size: "95 MB",
+          time: "2 minggu lalu",
+          installed: false,
+          saved: false,
+          cls: "can",
+          icon: "CC",
+        },
+        {
+          name: "Stumble Guys",
+          category: "Kasual · Aksi",
+          tags: ["kasual", "aksi"],
+          rating: 4.3,
+          dl: "500 jt+",
+          size: "210 MB",
+          time: "3 minggu lalu",
+          installed: false,
+          saved: true,
+          cls: "stu",
+          icon: "SG",
+        },
+        {
+          name: "Clash of Clans",
+          category: "Strategi · Simulasi",
+          tags: ["strategi"],
+          rating: 4.5,
+          dl: "500 jt+",
+          size: "320 MB",
+          time: "1 bulan lalu",
+          installed: false,
+          saved: true,
+          cls: "cla",
+          icon: "COC",
+        },
+      ];
+      const descriptions = {
+        "Mobile Legends":
+          "Bentuk tim, susun strategi, dan bertarung dalam arena MOBA 5v5 yang kompetitif. Match cepat 10 menit, ranked seru tanpa batas.",
+        "Free Fire":
+          "Bertahan menjadi yang terakhir dalam pertempuran battle royale 10 menit yang cepat dan intens bersama 50 pemain lainnya.",
+        Roblox:
+          "Jelajahi jutaan pengalaman buatan komunitas, bermain bersama teman, dan ciptakan duniamu sendiri.",
+        "PUBG MOBILE":
+          "Terjun ke medan pertempuran, kumpulkan perlengkapan, dan berjuang menjadi yang terakhir dari 100 pemain.",
+        "Genshin Impact":
+          "Jelajahi dunia fantasi Teyvat yang luas, temui karakter unik, dan ungkap misteri elemen di dalamnya.",
+        "Candy Crush Saga":
+          "Cocokkan permen, pecahkan puzzle manis, dan lewati ribuan level penuh warna.",
+        "Stumble Guys":
+          "Berlomba melewati rintangan kocak bersama 32 pemain dan jadilah yang terakhir bertahan.",
+        "Clash of Clans":
+          "Bangun desa, latih pasukan, dan susun strategi untuk memenangkan perang klan.",
+      };
+      const progress = {
+        "Mobile Legends": 64,
+        "Free Fire": 38,
+        Roblox: 82,
+        "Genshin Impact": 21,
+      };
+      const inst = {};
+      games.forEach((g) => (inst[g.name] = g.installed ? "play" : "install"));
+
+      /* ================= HELPERS ================= */
+      const $ = (s, c = document) => c.querySelector(s);
+      const $$ = (s, c = document) => [...c.querySelectorAll(s)];
+      const fmtR = (r) => r.toFixed(1).replace(".", ",");
+      const artHTML = (g) =>
+        `<div class="orb"></div><div class="shape"></div>` +
+        `<div class="cover-title"><span class="cover-sub">${g.tags[0].toUpperCase()}</span>${g.name}</div>`;
+      const pillHTML = (g) =>
+        inst[g.name] === "play"
+          ? `<button class="pill play" data-inst="${g.name}">Mainkan</button>`
+          : `<button class="pill install" data-inst="${g.name}">Instal</button>`;
+
+      const scopeDesktop = $('.scope[data-scope="desktop"]');
+      const scopeMobile = $('.scope[data-scope="mobile"]');
+      const byScope = {
+        desktop: {
+          root: scopeDesktop,
+          scroll: $("#dScroll"),
+          search: $("#dSearch"),
+          toast: $("#dToast"),
+          pages: $$(".page", scopeDesktop),
+          nav: $$("[data-page]", scopeDesktop),
+          suggested: $("#dSuggested"),
+          chart: $("#dTopChart"),
+          cont: $("#dContinue"),
+          lib: $("#dLibGrid"),
+          disc: $("#dDiscover"),
+        },
+        mobile: {
+          root: scopeMobile,
+          scroll: $("#mScroll"),
+          search: $("#mSearch"),
+          toast: $("#mToast"),
+          pages: $$(".page", scopeMobile),
+          nav: $$("[data-page]", scopeMobile),
+          suggested: $("#mSuggested"),
+          chart: null,
+          cont: $("#mContinue"),
+          lib: $("#mLibGrid"),
+          disc: $("#mDiscover"),
+        },
+      };
+      const state = {
+        desktop: { page: "home", lib: "all", cat: "all", hcat: "all" },
+        mobile: { page: "home", lib: "all", cat: "all", hcat: "all" },
+      };
+
+      function showToast(sc, msg) {
+        const el = byScope[sc].toast;
+        el.textContent = msg;
+        el.classList.add("show");
+        clearTimeout(el._t);
+        el._t = setTimeout(() => el.classList.remove("show"), 2400);
+      }
+      function emptyHTML(msg) {
+        return `<div class="empty-state"><strong>Tidak ada game ditemukan</strong>${msg}</div>`;
+      }
+
+      /* ---- templates ---- */
+      function tileHTML(g) {
+        return `<article class="tile" data-open="${g.name}">
+          <div class="c-art art-${g.cls}">${artHTML(g)}</div>
+          <div class="tile-row">
+            <div class="g-icon ic-${g.cls}">${g.icon}</div>
+            <div class="tile-info">
+              <strong>${g.name}</strong>
+              <div class="sub">${g.category}</div>
+              <div class="rate"><i class="star">★</i> ${fmtR(g.rating)} · ${g.size}</div>
+            </div>
+            <div class="tile-col">${pillHTML(g)}</div>
+          </div>
+        </article>`;
+      }
+      function chartRowHTML(g, i) {
+        return `<div class="chart-row" data-open="${g.name}">
+          <div class="rk">${i}</div>
+          <div class="g-icon ic-${g.cls}">${g.icon}</div>
+          <div class="meta"><strong>${g.name}</strong><span>${g.category} · <i class="star">★</i> ${fmtR(g.rating)}</span></div>
+          ${pillHTML(g)}
+        </div>`;
+      }
+      function mRowHTML(g, i) {
+        return `<div class="m-row" data-open="${g.name}">
+          ${i ? `<div class="rk">${i}</div>` : ""}
+          <div class="g-icon ic-${g.cls}">${g.icon}</div>
+          <div class="meta"><strong>${g.name}</strong><span>${g.category} · <i class="star">★</i> ${fmtR(g.rating)} · ${g.size}</span></div>
+          ${pillHTML(g)}
+        </div>`;
+      }
+      function contHTML(g, sc) {
+        const p = progress[g.name] || 0;
+        return `<div class="cont-card ${sc === "mobile" ? "m-cont" : ""}">
+          <div class="cont-top">
+            <div class="g-icon ic-${g.cls}">${g.icon}</div>
+            <div style="min-width:0"><strong>${g.name}</strong><span>Terakhir · ${g.time}</span></div>
+          </div>
+          <div class="pbar"><i style="width:${p}%"></i></div>
+          <div class="cont-foot"><span>Progres ${p}%</span><button class="pill play" data-play="${g.name}" style="padding:6px 14px;font-size:11px">Lanjutkan</button></div>
+        </div>`;
+      }
+
+      /* ---- rendering ---- */
+      function filterGames(cat, q, list = games) {
+        return list.filter(
+          (g) =>
+            (cat === "all" || g.tags.includes(cat)) &&
+            (!q || (g.name + " " + g.category).toLowerCase().includes(q)),
+        );
+      }
+      function renderSuggested(sc) {
+        const st = state[sc],
+          q = byScope[sc].search.value.trim().toLowerCase();
+        const list = filterGames(st.hcat, q);
+        byScope[sc].suggested.innerHTML = list.length
+          ? list
+              .map((g) => (sc === "desktop" ? tileHTML(g) : mRowHTML(g)))
+              .join("")
+          : emptyHTML("Coba kata kunci lain.");
+      }
+      function renderTopChart() {
+        byScope.desktop.chart.innerHTML = games
+          .slice(0, 8)
+          .map((g, i) => chartRowHTML(g, i + 1))
+          .join("");
+      }
+      function renderContinue(sc) {
+        const names = Object.keys(progress);
+        byScope[sc].cont.innerHTML = names
+          .map((n) =>
+            contHTML(
+              games.find((g) => g.name === n),
+              sc,
+            ),
+          )
+          .join("");
+      }
+      function renderLibrary(sc) {
+        const st = state[sc],
+          q = byScope[sc].search.value.trim().toLowerCase();
+        let list = games.filter(
+          (g) =>
+            st.lib === "all" ||
+            (st.lib === "installed" ? g.installed : g.saved),
+        );
+        if (sc === "desktop") {
+          const sort = $("#dSort").value;
+          if (sort === "az")
+            list = [...list].sort((a, b) => a.name.localeCompare(b.name));
+          if (sort === "rating")
+            list = [...list].sort((a, b) => b.rating - a.rating);
+        }
+        list = list.filter(
+          (g) => !q || (g.name + " " + g.category).toLowerCase().includes(q),
+        );
+        byScope[sc].lib.innerHTML = list.length
+          ? list
+              .map((g, i) =>
+                sc === "desktop" ? chartRowHTML(g, i + 1) : mRowHTML(g),
+              )
+              .join("")
+          : emptyHTML("Ubah filter atau kata kunci.");
+      }
+      function renderDiscover(sc) {
+        const q = byScope[sc].search.value.trim().toLowerCase();
+        const list = filterGames(state[sc].cat, q);
+        byScope[sc].disc.innerHTML = list.length
+          ? list
+              .map((g, i) =>
+                sc === "desktop" ? chartRowHTML(g, i + 1) : mRowHTML(g, i + 1),
+              )
+              .join("")
+          : emptyHTML("Coba kategori lain.");
+      }
+      function renderPage(sc) {
+        const p = state[sc].page;
+        if (p === "home") renderSuggested(sc);
+        if (p === "library") renderLibrary(sc);
+        if (p === "discover") renderDiscover(sc);
+      }
+      function go(sc, page) {
+        state[sc].page = page;
+        byScope[sc].pages.forEach((el) =>
+          el.classList.toggle("on", el.dataset.pageid === page),
+        );
+        byScope[sc].nav.forEach((el) =>
+          el.classList.toggle("active", el.dataset.page === page),
+        );
+        byScope[sc].scroll.scrollTo({ top: 0, behavior: "smooth" });
+        renderPage(sc);
+      }
+      function bindChips(sc) {
+        const root = byScope[sc].root;
+        $$("[data-lib]", root).forEach((b) =>
+          b.addEventListener("click", () => {
+            state[sc].lib = b.dataset.lib;
+            $$("[data-lib]", root).forEach((x) =>
+              x.classList.toggle("active", x === b),
+            );
+            renderLibrary(sc);
+          }),
+        );
+        $$("[data-cat]", root).forEach((b) =>
+          b.addEventListener("click", () => {
+            state[sc].cat = b.dataset.cat;
+            $$("[data-cat]", root).forEach((x) =>
+              x.classList.toggle("active", x === b),
+            );
+            renderDiscover(sc);
+          }),
+        );
+        $$("[data-hcat]", root).forEach((b) =>
+          b.addEventListener("click", () => {
+            state[sc].hcat = b.dataset.hcat;
+            $$("[data-hcat]", root).forEach((x) =>
+              x.classList.toggle("active", x === b),
+            );
+            renderSuggested(sc);
+          }),
+        );
+      }
+
+      /* ---- install / play logic ---- */
+      function syncButtons(name) {
+        $$(`[data-inst="${CSS.escape(name)}"]`).forEach((b) => {
+          b.className = b.classList.contains("big")
+            ? `pill ${inst[name] === "play" ? "play" : "install"} big`
+            : `pill ${inst[name]}`;
+          b.textContent = inst[name] === "play" ? "Mainkan" : "Instal";
+        });
+      }
+      document.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-inst]");
+        if (!btn || btn.classList.contains("loading")) return;
+        e.stopPropagation();
+        const name = btn.dataset.inst;
+        if (inst[name] === "play") {
+          const sc = btn.closest(".scope").dataset.scope;
+          showToast(sc, `Membuka ${name}… · Demo UI`);
+          return;
+        }
+        btn.classList.add("loading");
+        btn.innerHTML = "<i></i>";
+        setTimeout(() => {
+          inst[name] = "play";
+          games.find((g) => g.name === name).installed = true;
+          syncButtons(name);
+          showToast(
+            btn.closest(".scope").dataset.scope,
+            `${name} berhasil dipasang ✓`,
+          );
+        }, 1650);
+      });
+      document.addEventListener("click", (e) => {
+        const pb = e.target.closest("[data-play]");
+        if (!pb) return;
+        e.stopPropagation();
+        showToast(
+          pb.closest(".scope").dataset.scope,
+          `Melanjutkan ${pb.dataset.play}… · Demo UI`,
+        );
+      });
+
+      /* ---- open game detail ---- */
+      function fillDetail(pre, g) {
+        const cover = $(pre + "Cover");
+        cover.className = `dlg-cover c-art art-${g.cls}`;
+        cover.innerHTML = artHTML(g);
+        const icon = $(pre + "Icon");
+        icon.className = `g-icon ic-${g.cls}`;
+        icon.textContent = g.icon;
+        $(pre + "Title").textContent = g.name;
+        $(pre + "Meta").textContent = `${g.category} · ${g.dl} unduhan`;
+        $(pre + "Stats").innerHTML =
+          `<div><b>${fmtR(g.rating)} <i class="star">★</i></b><span>rating</span></div>` +
+          `<div><b>${g.dl}</b><span>unduhan</span></div>` +
+          `<div><b>${g.size}</b><span>ukuran</span></div>`;
+        $(pre + "Desc").textContent = descriptions[g.name];
+        const act = $(pre + "Action");
+        act.dataset.inst = g.name;
+        act.textContent = inst[g.name] === "play" ? "Mainkan" : "Instal";
+        act.className = act.classList.contains("big")
+          ? `pill big ${inst[g.name]}`
+          : `pill ${inst[g.name]}`;
+      }
+      function openGame(name, sc) {
+        const g = games.find((x) => x.name === name);
+        if (!g) return;
+        if (sc === "desktop") {
+          fillDetail("#d", g);
+          $("#dOverlay").classList.add("show");
+        } else {
+          fillDetail("#s", g);
+          $("#sBackdrop").classList.add("show");
+          $("#mSheet").classList.add("show");
+        }
+      }
+      function closeDetail(sc) {
+        if (sc === "desktop") $("#dOverlay").classList.remove("show");
+        else {
+          $("#sBackdrop").classList.remove("show");
+          $("#mSheet").classList.remove("show");
+        }
+      }
+      document.addEventListener("click", (e) => {
+        const card = e.target.closest("[data-open]");
+        if (!card) return;
+        if (e.target.closest("[data-inst],[data-play]")) return;
+        openGame(card.dataset.open, card.closest(".scope").dataset.scope);
+      });
+      document.addEventListener("click", (e) => {
+        if (e.target.closest("[data-close]")) {
+          closeDetail(e.target.closest(".scope").dataset.scope);
+        }
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          closeDetail("desktop");
+          closeDetail("mobile");
+        }
+      });
+
+      /* ---- nav / goto / search ---- */
+      document.addEventListener("click", (e) => {
+        const nav = e.target.closest("[data-page]");
+        if (nav) go(nav.closest(".scope").dataset.scope, nav.dataset.page);
+        const goto = e.target.closest("[data-goto]");
+        if (goto) {
+          e.preventDefault();
+          go(goto.closest(".scope").dataset.scope, goto.dataset.goto);
+        }
+      });
+      ["desktop", "mobile"].forEach((sc) => {
+        byScope[sc].search.addEventListener("input", () => renderPage(sc));
+        bindChips(sc);
+      });
+      $("#dSort").addEventListener("change", () => renderLibrary("desktop"));
+
+      /* ---- desktop misc ---- */
+      $$(".window [data-win]").forEach((b) =>
+        b.addEventListener("click", () =>
+          showToast("desktop", "Kontrol jendela · Demo UI"),
+        ),
+      );
+      $("#dSettings").addEventListener("click", () =>
+        showToast("desktop", "Setelan belum terhubung · Demo UI"),
+      );
+      $("#dHelp").addEventListener("click", () =>
+        showToast("desktop", "Prototype frontend Google Play Games."),
+      );
+      $("#dNotif").addEventListener("click", () =>
+        showToast("desktop", "Tidak ada notifikasi baru"),
+      );
+      $("#dEdit").addEventListener("click", () =>
+        showToast("desktop", "Edit profil · Demo UI"),
+      );
+      $("#dAchAll").addEventListener("click", () =>
+        showToast("desktop", "Semua pencapaian · Demo UI"),
+      );
+      $("#mCast").addEventListener("click", () =>
+        showToast("mobile", "Cast ke perangkat · Demo UI"),
+      );
+      $("#mMore").addEventListener("click", () =>
+        showToast("mobile", "Menu lainnya · Demo UI"),
+      );
+      $("#mEdit").addEventListener("click", () =>
+        showToast("mobile", "Edit profil · Demo UI"),
+      );
+
+      /* ---- banner carousel (desktop) ---- */
+      const slides = $$(".b-slide", $("#dBanner"));
+      const dotsWrap = $("#dDots");
+      slides.forEach((_, i) => {
+        const d = document.createElement("button");
+        d.className = "b-dot" + (i === 0 ? " on" : "");
+        d.setAttribute("aria-label", "Banner " + (i + 1));
+        d.addEventListener("click", () => {
+          setSlide(i);
+          resetTimer();
+        });
+        dotsWrap.appendChild(d);
+      });
+      const dots = $$(".b-dot", dotsWrap);
+      let cur = 0,
+        timer;
+      function setSlide(i) {
+        cur = i;
+        slides.forEach((s, k) => s.classList.toggle("on", k === i));
+        dots.forEach((d, k) => d.classList.toggle("on", k === i));
+      }
+      function resetTimer() {
+        clearInterval(timer);
+        timer = setInterval(() => {
+          if ($("#stageDesktop").classList.contains("on"))
+            setSlide((cur + 1) % slides.length);
+        }, 5200);
+      }
+      $("#dBanner").addEventListener("mouseenter", () => clearInterval(timer));
+      $("#dBanner").addEventListener("mouseleave", resetTimer);
+
+      /* ---- phone: clock + auto scale ---- */
+      function tick() {
+        const d = new Date();
+        $("#mTime").textContent =
+          String(d.getHours()).padStart(2, "0") +
+          "." +
+          String(d.getMinutes()).padStart(2, "0");
+      }
+      tick();
+      setInterval(tick, 15000);
+
+      const FRAME_W = 392,
+        FRAME_H = 850;
+      function fitPhone() {
+        const bar = 64;
+        const capH = 46;
+        const availH = window.innerHeight - bar - capH - 56;
+        const availW = window.innerWidth - 32;
+        const s = Math.max(
+          0.42,
+          Math.min(1, availH / FRAME_H, availW / FRAME_W),
+        );
+        $(".phone").style.transform = `scale(${s})`;
+        const wrap = $("#phoneWrap");
+        wrap.style.width = FRAME_W * s + "px";
+        wrap.style.height = FRAME_H * s + "px";
+      }
+      window.addEventListener("resize", fitPhone);
+
+      /* ---- stage switcher ---- */
+      const stages = { desktop: $("#stageDesktop"), mobile: $("#stageMobile") };
+      const segs = { desktop: $("#segDesktop"), mobile: $("#segMobile") };
+      function setMode(m) {
+        document.body.dataset.mode = m;
+        for (const k of ["desktop", "mobile"]) {
+          stages[k].classList.toggle("on", k === m);
+          segs[k].classList.toggle("active", k === m);
+          segs[k].setAttribute("aria-selected", k === m);
+        }
+        if (m === "mobile") fitPhone();
+      }
+      segs.desktop.addEventListener("click", () => setMode("desktop"));
+      segs.mobile.addEventListener("click", () => setMode("mobile"));
+      document.addEventListener("keydown", (e) => {
+        if (e.target.matches("input,select,textarea")) return;
+        if (e.key === "d" || e.key === "D") setMode("desktop");
+        if (e.key === "m" || e.key === "M") setMode("mobile");
+      });
+
+      /* ---- init ---- */
+      ["desktop", "mobile"].forEach((sc) => {
+        renderContinue(sc);
+        renderLibrary(sc);
+        renderDiscover(sc);
+        renderSuggested(sc);
+      });
+      renderTopChart();
+      fitPhone();
+      resetTimer();
+    </script>
+  </body>
+</html>

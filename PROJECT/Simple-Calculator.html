@@ -1,0 +1,1040 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f7f5" />
+    <title>Simple Kalkulator</title>
+    <meta
+      name="description"
+      content="A clean, practical calculator for everyday arithmetic."
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f7f5;
+        --panel: #ffffff;
+        --ink: #1a1b19;
+        --muted: #858780;
+        --line: #e7e8e3;
+        --key: #f2f3ef;
+        --key-hover: #e8eae3;
+        --utility: #e9ebe5;
+        --accent: #c8f169;
+        --accent-hover: #b9e653;
+        --focus: #647d35;
+        --radius: 14px;
+      }
+
+      /* ===== DARK THEME ===== */
+      [data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #141513;
+        --panel: #1d1f1b;
+        --ink: #f2f3ef;
+        --muted: #8a8d84;
+        --line: #2a2c27;
+        --key: #262823;
+        --key-hover: #31342d;
+        --utility: #2f3229;
+        --accent: #c8f169;
+        --accent-hover: #d4f785;
+        --focus: #c8f169;
+      }
+      [data-theme="dark"] .brand-mark {
+        background: var(--accent);
+        color: #141513;
+      }
+      [data-theme="dark"] .calculator {
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+      }
+      [data-theme="dark"] .key.operator {
+        background: #2a2d26;
+      }
+      [data-theme="dark"] .key.operator.active {
+        background: #3a4528;
+        border-color: #4d5a35;
+      }
+      [data-theme="dark"] kbd {
+        background: #262823;
+        color: #b8bbb1;
+        border-color: #2a2c27;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        display: flex;
+        flex-direction: column;
+        transition:
+          background 0.25s ease,
+          color 0.25s ease;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+      button:focus-visible,
+      summary:focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 3px;
+      }
+      .app {
+        width: min(100% - 40px, 440px);
+        margin: 0 auto;
+        padding: 30px 0 36px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 2px 24px;
+        border-bottom: 1px solid var(--line);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 15px;
+        font-weight: 650;
+        letter-spacing: -0.45px;
+      }
+      .brand-mark {
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 9px;
+        background: var(--ink);
+        color: white;
+        font-size: 17px;
+        font-weight: 500;
+      }
+      .topbar-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .status::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #8ba94c;
+      }
+
+      /* ===== THEME TOGGLE ===== */
+      .theme-toggle {
+        width: 34px;
+        height: 34px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+        display: grid;
+        place-items: center;
+        transition:
+          background 0.2s ease,
+          border-color 0.2s ease;
+      }
+      .theme-toggle:hover {
+        background: var(--key-hover);
+      }
+      .theme-toggle svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      main {
+        padding-top: 40px;
+        flex: 1;
+      }
+      .calculator {
+        padding: 24px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        box-shadow: 0 12px 32px rgba(28, 32, 20, 0.035);
+        transition:
+          background 0.25s ease,
+          border-color 0.25s ease;
+      }
+      .display {
+        min-height: 140px;
+        padding: 16px 4px 28px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: stretch;
+      }
+      .expression {
+        min-height: 22px;
+        margin-bottom: 8px;
+        color: var(--muted);
+        font-size: 13px;
+        text-align: right;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      .result {
+        display: block;
+        width: 100%;
+        color: var(--ink);
+        font-size: clamp(40px, 10vw, 52px);
+        font-weight: 450;
+        line-height: 1.2;
+        letter-spacing: -2px;
+        text-align: right;
+        white-space: nowrap;
+        overflow-x: auto;
+        scrollbar-width: thin;
+        font-variant-numeric: tabular-nums;
+        cursor: copy;
+        border-radius: 8px;
+        padding: 4px 2px;
+        transition:
+          color 0.18s ease,
+          transform 0.18s ease;
+        position: relative;
+      }
+      .result:hover {
+        color: var(--focus);
+      }
+      .result.copied {
+        color: var(--focus);
+      }
+      .copy-hint {
+        display: block;
+        text-align: right;
+        font-size: 10px;
+        color: var(--muted);
+        margin-top: 4px;
+        min-height: 14px;
+        opacity: 0;
+        transform: translateY(-2px);
+        transition:
+          opacity 0.2s ease,
+          transform 0.2s ease;
+      }
+      .copy-hint.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .keys {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .key {
+        min-width: 0;
+        height: 60px;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        background: var(--key);
+        font-size: 19px;
+        font-weight: 500;
+        transition:
+          background 0.14s ease,
+          transform 0.14s ease;
+      }
+      .key:hover {
+        background: var(--key-hover);
+      }
+      .key:active {
+        transform: scale(0.97);
+      }
+      .key.utility {
+        background: var(--utility);
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .key.operator {
+        background: #f0f2e9;
+        font-size: 23px;
+      }
+      [data-theme="dark"] .key.operator {
+        background: #2a2d26;
+      }
+      .key.operator.active {
+        background: #e3edce;
+        border-color: #d5e5b8;
+      }
+      [data-theme="dark"] .key.operator.active {
+        background: #3a4528;
+        border-color: #4d5a35;
+      }
+      .key.zero {
+        grid-column: span 2;
+      }
+      .key.equal {
+        background: var(--accent);
+        color: #1a1b19;
+        font-size: 23px;
+      }
+      .key.equal:hover {
+        background: var(--accent-hover);
+      }
+      .key svg {
+        width: 19px;
+        height: 19px;
+        vertical-align: middle;
+      }
+      .keyboard-hint {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        margin: 18px 0 0;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      kbd {
+        padding: 2px 5px;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        background: #fafaf8;
+        color: #686b64;
+        font: inherit;
+        font-size: 10px;
+      }
+      .history {
+        margin-top: 24px;
+        border-top: 1px solid var(--line);
+      }
+      .history summary {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 18px 1px 4px;
+        list-style: none;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .history summary::-webkit-details-marker {
+        display: none;
+      }
+      .history summary::after {
+        content: "+";
+        color: var(--muted);
+        font-size: 18px;
+        font-weight: 400;
+      }
+      .history[open] summary::after {
+        content: "−";
+      }
+      .history-content {
+        padding: 12px 0 0;
+      }
+      .history-empty {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.7;
+      }
+      .history-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .history-list li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--line);
+        font-size: 12px;
+      }
+      .history-list .formula {
+        color: var(--muted);
+        overflow-wrap: anywhere;
+      }
+      .history-list strong {
+        font-size: 13px;
+        font-weight: 650;
+        overflow-wrap: anywhere;
+        text-align: right;
+      }
+      .history-actions {
+        display: flex;
+        justify-content: flex-end;
+        padding-top: 14px;
+      }
+      .text-button {
+        padding: 3px 0;
+        border: 0;
+        border-bottom: 1px solid #b8bbb1;
+        background: transparent;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 32px;
+        color: #999b94;
+        font-size: 10px;
+      }
+      .footer span:last-child {
+        text-align: right;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      @media (max-width: 380px) {
+        .app {
+          width: min(100% - 24px, 440px);
+          padding-top: 24px;
+        }
+        .calculator {
+          padding: 16px;
+          border-radius: 16px;
+        }
+        .keys {
+          gap: 8px;
+        }
+        .key {
+          height: 56px;
+          border-radius: 10px;
+        }
+        .display {
+          min-height: 128px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand" aria-label="Simple Calculator">
+          <span class="brand-mark" aria-hidden="true">÷</span>
+          <span>Simple Calculator</span>
+        </div>
+        <div class="topbar-right">
+          <span class="status">Ready to calculate</span>
+          <button
+            class="theme-toggle"
+            id="theme-toggle"
+            type="button"
+            aria-label="Toggle dark mode"
+            aria-pressed="false"
+            title="Toggle theme"
+          >
+            <!-- Sun icon (shown in dark mode) -->
+            <svg
+              class="icon-sun"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              style="display: none"
+            >
+              <circle cx="12" cy="12" r="4" />
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+              />
+            </svg>
+            <!-- Moon icon (shown in light mode) -->
+            <svg
+              class="icon-moon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <main>
+        <section class="calculator" aria-label="Calculator">
+          <div class="display">
+            <div class="expression" id="expression" aria-hidden="true"></div>
+            <output
+              class="result"
+              id="result"
+              aria-label="Calculator display. Tap to copy."
+              aria-live="polite"
+              aria-atomic="true"
+              role="button"
+              tabindex="0"
+              title="Tap to copy"
+              >0</output
+            >
+            <span class="copy-hint" id="copy-hint" aria-live="polite"
+              >Copied to clipboard</span
+            >
+          </div>
+          <div class="keys" id="keys">
+            <button
+              class="key utility"
+              data-action="clear"
+              aria-label="All clear"
+            >
+              AC
+            </button>
+            <button
+              class="key utility"
+              data-action="sign"
+              aria-label="Change sign"
+            >
+              +/−
+            </button>
+            <button
+              class="key utility"
+              data-action="percent"
+              aria-label="Percent"
+            >
+              %
+            </button>
+            <button class="key operator" data-op="/" aria-label="Divide">
+              ÷
+            </button>
+
+            <button class="key" data-digit="7">7</button>
+            <button class="key" data-digit="8">8</button>
+            <button class="key" data-digit="9">9</button>
+            <button class="key operator" data-op="*" aria-label="Multiply">
+              ×
+            </button>
+
+            <button class="key" data-digit="4">4</button>
+            <button class="key" data-digit="5">5</button>
+            <button class="key" data-digit="6">6</button>
+            <button class="key operator" data-op="-" aria-label="Subtract">
+              −
+            </button>
+
+            <button class="key" data-digit="1">1</button>
+            <button class="key" data-digit="2">2</button>
+            <button class="key" data-digit="3">3</button>
+            <button class="key operator" data-op="+" aria-label="Add">+</button>
+
+            <button
+              class="key utility"
+              data-action="backspace"
+              aria-label="Delete last digit"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                aria-hidden="true"
+              >
+                <path d="M9 5H21V19H9L2 12L9 5Z" />
+                <path d="m12 9 6 6m0-6-6 6" />
+              </svg>
+            </button>
+            <button class="key zero" data-digit="0">0</button>
+            <button
+              class="key"
+              data-action="decimal"
+              aria-label="Decimal point"
+            >
+              .
+            </button>
+            <button class="key equal" data-action="equals" aria-label="Equals">
+              =
+            </button>
+          </div>
+
+          <p class="keyboard-hint">
+            Keyboard: <kbd>Enter</kbd> calculate · <kbd>Esc</kbd> clear ·
+            <kbd>C</kbd> copy result
+          </p>
+
+          <details class="history">
+            <summary>
+              Recent calculations <span id="history-count">(0)</span>
+            </summary>
+            <div class="history-content">
+              <p class="history-empty" id="empty">
+                Your recent calculations will appear here.
+              </p>
+              <ul class="history-list" id="history"></ul>
+              <div class="history-actions">
+                <button class="text-button" id="clear-history" hidden>
+                  Clear history
+                </button>
+              </div>
+            </div>
+          </details>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <span>Simple Calculator</span>
+        <span>Private by design · Runs in your browser</span>
+      </footer>
+    </div>
+
+    <script>
+      (() => {
+        let value = "0";
+        let first = null;
+        let op = null;
+        let fresh = false;
+        let done = false;
+        let lastOp = null;
+        let lastNum = null;
+        let error = false;
+
+        const result = document.getElementById("result");
+        const expression = document.getElementById("expression");
+        const keys = document.getElementById("keys");
+        const history = document.getElementById("history");
+        const empty = document.getElementById("empty");
+        const clearHistory = document.getElementById("clear-history");
+        const historyCount = document.getElementById("history-count");
+        const copyHint = document.getElementById("copy-hint");
+        const themeToggle = document.getElementById("theme-toggle");
+        const symbols = { "+": "+", "-": "−", "*": "×", "/": "÷" };
+
+        // ===== DISPLAY FORMATTING (thousand separators) =====
+        // Formats for visual display only; underlying `value` stays raw for calculations.
+        function formatForDisplay(str) {
+          if (error || /[a-zA-Z]/.test(str)) return str;
+          const isNeg = str.startsWith("-");
+          const abs = isNeg ? str.slice(1) : str;
+          if (abs === "" || abs === ".") return (isNeg ? "-" : "") + abs;
+          const dotIndex = abs.indexOf(".");
+          const intPart = dotIndex === -1 ? abs : abs.slice(0, dotIndex);
+          const decPart = dotIndex === -1 ? "" : abs.slice(dotIndex + 1);
+          const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+          let out = (isNeg ? "-" : "") + formattedInt;
+          if (dotIndex !== -1) out += "." + decPart;
+          return out;
+        }
+
+        function number(n) {
+          if (!Number.isFinite(n)) return String(n);
+          return Number(n.toPrecision(12)).toString();
+        }
+
+        function paint() {
+          const display = formatForDisplay(value);
+          result.textContent = display;
+          result.style.fontSize =
+            value.length > 13 ? "clamp(26px, 7vw, 36px)" : "";
+          keys.querySelectorAll("[data-op]").forEach((button) => {
+            button.classList.toggle("active", button.dataset.op === op);
+          });
+          keys.querySelector('[data-action="clear"]').textContent =
+            value === "0" && !op && first === null ? "AC" : "C";
+        }
+
+        function reset() {
+          value = "0";
+          first = null;
+          op = null;
+          fresh = false;
+          done = false;
+          lastOp = null;
+          lastNum = null;
+          error = false;
+          expression.textContent = "";
+        }
+
+        function compute(a, b, operator) {
+          if (operator === "+") return a + b;
+          if (operator === "-") return a - b;
+          if (operator === "*") return a * b;
+          return a / b;
+        }
+
+        // ===== PERSISTENT HISTORY =====
+        const HISTORY_KEY = "calc-history-v1";
+
+        function safeLoadHistory() {
+          try {
+            const raw = localStorage.getItem(HISTORY_KEY);
+            if (!raw) return [];
+            const parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed)) return [];
+            return parsed
+              .filter(
+                (item) =>
+                  item &&
+                  typeof item.label === "string" &&
+                  typeof item.answer === "string" &&
+                  item.label.length < 200 &&
+                  item.answer.length < 100,
+              )
+              .slice(0, 8);
+          } catch (e) {
+            // Malformed or unavailable storage — fail soft.
+            return [];
+          }
+        }
+
+        function safeSaveHistory() {
+          try {
+            const items = Array.from(history.children).map((li) => ({
+              label: li.querySelector(".formula").textContent,
+              answer: li.querySelector("strong").textContent,
+            }));
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(items));
+          } catch (e) {
+            // Storage full / disabled — continue without persistence.
+          }
+        }
+
+        function renderHistoryItem(label, answer) {
+          const li = document.createElement("li");
+          const formula = document.createElement("span");
+          const output = document.createElement("strong");
+          formula.className = "formula";
+          formula.textContent = label;
+          output.textContent = answer;
+          li.append(formula, output);
+          return li;
+        }
+
+        function hydrateHistory() {
+          const items = safeLoadHistory();
+          if (items.length === 0) return;
+          // Render oldest → newest so `prepend` keeps order.
+          for (let i = items.length - 1; i >= 0; i--) {
+            history.prepend(renderHistoryItem(items[i].label, items[i].answer));
+          }
+          empty.hidden = true;
+          clearHistory.hidden = false;
+          historyCount.textContent = `(${history.children.length})`;
+        }
+
+        function save(label, answer) {
+          history.prepend(renderHistoryItem(label, answer));
+          while (history.children.length > 8) history.lastElementChild.remove();
+          empty.hidden = true;
+          clearHistory.hidden = false;
+          historyCount.textContent = `(${history.children.length})`;
+          safeSaveHistory();
+        }
+
+        function calculate(a, b, operator) {
+          const n = compute(a, b, operator);
+          if (!Number.isFinite(n)) {
+            value = "Cannot divide by zero";
+            error = true;
+            first = null;
+            op = null;
+            expression.textContent = "Press AC to start again";
+            return false;
+          }
+          value = number(n);
+          return true;
+        }
+
+        function act(kind, arg) {
+          if (error) {
+            reset();
+            if (kind !== "digit" && kind !== "decimal") {
+              paint();
+              return;
+            }
+          }
+
+          if (kind === "digit") {
+            if (fresh || done) {
+              value = "0";
+              fresh = false;
+              if (done) {
+                expression.textContent = "";
+                done = false;
+                lastOp = null;
+              }
+            }
+            if (value.replace(/[-.]/g, "").length < 15) {
+              value =
+                value === "0" ? arg : value === "-0" ? "-" + arg : value + arg;
+            }
+          } else if (kind === "clear") {
+            if (value !== "0" || op || first !== null) {
+              value = "0";
+              first = null;
+              op = null;
+              fresh = false;
+              done = false;
+              lastOp = null;
+              lastNum = null;
+              expression.textContent = "";
+            } else reset();
+          } else if (kind === "decimal") {
+            if (fresh || done) {
+              value = "0";
+              fresh = false;
+              if (done) {
+                done = false;
+                expression.textContent = "";
+              }
+            }
+            if (!value.includes(".")) value += ".";
+          } else if (kind === "sign") {
+            if (Number(value) !== 0)
+              value = value.startsWith("-") ? value.slice(1) : "-" + value;
+          } else if (kind === "percent") {
+            value = number(Number(value) / 100);
+            fresh = false;
+          } else if (kind === "backspace") {
+            if (!fresh && !done)
+              value = value.length > 1 ? value.slice(0, -1) : "0";
+            if (value === "-" || value === "") value = "0";
+          } else if (kind === "op") {
+            if (op && !fresh) {
+              if (!calculate(first, Number(value), op)) {
+                paint();
+                return;
+              }
+            }
+            first = Number(value);
+            op = arg;
+            fresh = true;
+            done = false;
+            expression.textContent = `${formatForDisplay(value)} ${symbols[op]}`;
+          } else if (kind === "equals") {
+            const operator = op || (done ? lastOp : null);
+            if (operator) {
+              const a = op ? first : Number(value);
+              const b = op ? Number(value) : lastNum;
+              const label = `${number(a)} ${symbols[operator]} ${number(b)} =`;
+              if (calculate(a, b, operator)) {
+                expression.textContent = label;
+                save(label, value);
+                lastOp = operator;
+                lastNum = b;
+                op = null;
+                first = null;
+                fresh = false;
+                done = true;
+              }
+            }
+          } else if (kind === "copy") {
+            copyResult();
+            return; // paint not needed
+          }
+          paint();
+        }
+
+        // ===== COPY TO CLIPBOARD =====
+        let copyHintTimer = null;
+        function showCopyHint(text) {
+          copyHint.textContent = text;
+          copyHint.classList.add("visible");
+          result.classList.add("copied");
+          clearTimeout(copyHintTimer);
+          copyHintTimer = setTimeout(() => {
+            copyHint.classList.remove("visible");
+            result.classList.remove("copied");
+          }, 1400);
+        }
+
+        async function copyResult() {
+          if (error) {
+            showCopyHint("Nothing to copy");
+            return;
+          }
+          try {
+            if (navigator.clipboard && window.isSecureContext) {
+              await navigator.clipboard.writeText(value);
+            } else {
+              // Fallback for non-secure contexts (e.g., some local dev setups)
+              const ta = document.createElement("textarea");
+              ta.value = value;
+              ta.style.position = "fixed";
+              ta.style.top = "-100px";
+              ta.style.opacity = "0";
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand("copy");
+              document.body.removeChild(ta);
+            }
+            showCopyHint("Copied to clipboard");
+          } catch (e) {
+            showCopyHint("Copy failed");
+          }
+        }
+
+        result.addEventListener("click", copyResult);
+        result.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            copyResult();
+          }
+        });
+
+        keys.addEventListener("click", (event) => {
+          const button = event.target.closest("button");
+          if (!button) return;
+          if (button.dataset.digit !== undefined)
+            act("digit", button.dataset.digit);
+          else if (button.dataset.op) act("op", button.dataset.op);
+          else act(button.dataset.action);
+        });
+
+        document.addEventListener("keydown", (event) => {
+          if (
+            event.ctrlKey ||
+            event.metaKey ||
+            event.altKey ||
+            /INPUT|TEXTAREA|SELECT/.test(event.target.tagName)
+          )
+            return;
+          if (event.key === "Enter" && event.target.closest("button,a,summary"))
+            return;
+
+          let kind, arg;
+          if (/^[0-9]$/.test(event.key)) {
+            kind = "digit";
+            arg = event.key;
+          } else if (["+", "-", "*", "/"].includes(event.key)) {
+            kind = "op";
+            arg = event.key;
+          } else {
+            kind = {
+              ".": "decimal",
+              ",": "decimal",
+              Enter: "equals",
+              "=": "equals",
+              Escape: "clear",
+              Backspace: "backspace",
+              "%": "percent",
+              c: "copy",
+              C: "copy",
+            }[event.key];
+          }
+          if (kind) {
+            event.preventDefault();
+            act(kind, arg);
+          }
+        });
+
+        clearHistory.addEventListener("click", () => {
+          history.replaceChildren();
+          empty.hidden = false;
+          clearHistory.hidden = true;
+          historyCount.textContent = "(0)";
+          try {
+            localStorage.removeItem(HISTORY_KEY);
+          } catch (e) {}
+        });
+
+        // ===== THEME TOGGLE =====
+        const THEME_KEY = "calc-theme-v1";
+        const metaTheme = document.querySelector('meta[name="theme-color"]');
+
+        function applyTheme(theme) {
+          document.documentElement.dataset.theme = theme;
+          if (metaTheme) {
+            metaTheme.setAttribute(
+              "content",
+              theme === "dark" ? "#141513" : "#f7f7f5",
+            );
+          }
+          themeToggle.setAttribute("aria-pressed", String(theme === "dark"));
+          const sun = themeToggle.querySelector(".icon-sun");
+          const moon = themeToggle.querySelector(".icon-moon");
+          if (sun) sun.style.display = theme === "dark" ? "" : "none";
+          if (moon) moon.style.display = theme === "dark" ? "none" : "";
+        }
+
+        function initTheme() {
+          let saved = null;
+          try {
+            saved = localStorage.getItem(THEME_KEY);
+          } catch (e) {}
+          if (saved === "dark" || saved === "light") {
+            applyTheme(saved);
+            return;
+          }
+          if (
+            window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches
+          ) {
+            applyTheme("dark");
+          } else {
+            applyTheme("light");
+          }
+        }
+
+        themeToggle.addEventListener("click", () => {
+          const current = document.documentElement.dataset.theme || "light";
+          const next = current === "dark" ? "light" : "dark";
+          try {
+            localStorage.setItem(THEME_KEY, next);
+          } catch (e) {}
+          applyTheme(next);
+        });
+
+        // Listen to OS-level theme changes when user hasn't overridden.
+        if (window.matchMedia) {
+          window
+            .matchMedia("(prefers-color-scheme: dark)")
+            .addEventListener("change", (e) => {
+              let saved = null;
+              try {
+                saved = localStorage.getItem(THEME_KEY);
+              } catch (err) {}
+              if (!saved) applyTheme(e.matches ? "dark" : "light");
+            });
+        }
+
+        // ===== BOOT =====
+        initTheme();
+        hydrateHistory();
+        paint();
+      })();
+    </script>
+  </body>
+</html>

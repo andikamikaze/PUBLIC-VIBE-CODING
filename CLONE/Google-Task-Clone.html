@@ -1,0 +1,2420 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f8fafd" />
+    <title>Tasks — Google Tasks Clone</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f8fafd;
+        --surface: #fff;
+        --surface-2: #f1f3f4;
+        --surface-hover: #f5f7fa;
+        --text: #202124;
+        --muted: #5f6368;
+        --subtle: #80868b;
+        --border: #e8eaed;
+        --border-strong: #dadce0;
+        --blue: #1a73e8;
+        --blue-dark: #185abc;
+        --blue-soft: #d3e3fd;
+        --green: #188038;
+        --red: #d93025;
+        --shadow:
+          0 1px 2px rgba(60, 64, 67, 0.12), 0 1px 3px 1px rgba(60, 64, 67, 0.08);
+        --shadow-pop:
+          0 8px 24px rgba(60, 64, 67, 0.18), 0 2px 6px rgba(60, 64, 67, 0.1);
+        --radius: 16px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Google Sans", "Roboto", Arial, sans-serif;
+        font-size: 14px;
+        letter-spacing: 0.01em;
+      }
+      button,
+      input,
+      textarea,
+      select {
+        font: inherit;
+      }
+      button {
+        color: inherit;
+      }
+
+      /* View Switcher */
+      .view-switcher {
+        position: fixed;
+        top: 12px;
+        right: 12px;
+        z-index: 1000;
+        display: flex;
+        gap: 8px;
+        background: var(--surface);
+        padding: 8px 12px;
+        border-radius: 12px;
+        box-shadow: var(--shadow-pop);
+      }
+      .view-btn {
+        padding: 8px 16px;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .view-btn.active {
+        background: var(--blue);
+        color: white;
+      }
+      .view-btn:hover:not(.active) {
+        background: var(--surface-hover);
+      }
+
+      /* App Container */
+      .app-container {
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        transition: all 0.3s;
+      }
+
+      /* Desktop View */
+      .app-container.desktop-view .app {
+        width: 100%;
+        max-width: 1400px;
+        background: var(--bg);
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      /* Mobile View - Pixel Phone Frame */
+      .app-container.mobile-view .app {
+        width: 390px;
+        height: 844px;
+        max-width: 100%;
+        background: var(--bg);
+        border-radius: 48px;
+        box-shadow:
+          0 20px 60px rgba(0, 0, 0, 0.3),
+          inset 0 0 0 12px #1a1a1a;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .app-container.mobile-view .app::before {
+        content: "";
+        position: absolute;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 28px;
+        background: #1a1a1a;
+        border-radius: 16px;
+        z-index: 100;
+      }
+
+      .app-container.mobile-view .app::after {
+        content: "";
+        position: absolute;
+        bottom: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 140px;
+        height: 5px;
+        background: #1a1a1a;
+        border-radius: 3px;
+        z-index: 100;
+      }
+
+      .app-container.mobile-view .topbar {
+        padding-top: 40px;
+      }
+
+      .app {
+        min-height: 100vh;
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        background: var(--bg);
+      }
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        height: 64px;
+        padding: 0 22px 0 18px;
+        background: var(--bg);
+        border-bottom: 1px solid rgba(218, 220, 224, 0.55);
+      }
+      .brand-area {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        width: 238px;
+        flex: 0 0 238px;
+      }
+      .icon-btn {
+        width: 40px;
+        height: 40px;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .icon-btn:hover {
+        background: rgba(60, 64, 67, 0.08);
+      }
+      .icon-btn svg {
+        width: 20px;
+        height: 20px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        white-space: nowrap;
+      }
+      .brand-mark {
+        width: 30px;
+        height: 30px;
+        display: block;
+      }
+      .brand-name {
+        font-size: 20px;
+        color: #5f6368;
+        font-weight: 500;
+        letter-spacing: -0.45px;
+      }
+      .search-wrap {
+        flex: 1;
+        max-width: 720px;
+        position: relative;
+      }
+      .search-box {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        height: 46px;
+        padding: 0 16px;
+        border-radius: 24px;
+        background: #edf2fa;
+        color: var(--muted);
+        transition:
+          background 0.18s,
+          box-shadow 0.18s;
+      }
+      .search-box:focus-within {
+        background: var(--surface);
+        box-shadow:
+          0 1px 2px rgba(60, 64, 67, 0.22),
+          0 1px 3px 1px rgba(60, 64, 67, 0.12);
+      }
+      .search-box svg {
+        width: 20px;
+        height: 20px;
+        flex: 0 0 auto;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+      }
+      .search-box input {
+        border: 0;
+        outline: 0;
+        background: transparent;
+        width: 100%;
+        color: var(--text);
+        font-size: 15px;
+      }
+      .search-box input::placeholder {
+        color: #5f6368;
+        opacity: 1;
+      }
+      .top-actions {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .avatar {
+        width: 31px;
+        height: 31px;
+        border-radius: 50%;
+        margin-left: 8px;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 600;
+        background: linear-gradient(145deg, #4285f4, #34a853);
+        border: 2px solid #e8f0fe;
+      }
+      .workspace {
+        display: grid;
+        grid-template-columns: 256px minmax(0, 1fr);
+        min-height: 0;
+        transition: grid-template-columns 0.2s ease;
+      }
+      .workspace.sidebar-collapsed {
+        grid-template-columns: 76px minmax(0, 1fr);
+      }
+      .sidebar {
+        border-right: 1px solid var(--border);
+        padding: 17px 12px 20px 12px;
+        min-height: calc(100vh - 64px);
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        overflow: hidden;
+      }
+      .create-btn {
+        align-self: flex-start;
+        height: 48px;
+        min-width: 128px;
+        padding: 0 20px 0 15px;
+        border: 0;
+        border-radius: 14px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        color: #3c4043;
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition:
+          box-shadow 0.15s,
+          background 0.15s;
+      }
+      .create-btn:hover {
+        background: #fff;
+        box-shadow:
+          0 2px 5px rgba(60, 64, 67, 0.22),
+          0 1px 3px 1px rgba(60, 64, 67, 0.12);
+      }
+      .create-btn svg {
+        width: 21px;
+        height: 21px;
+        stroke: var(--text);
+        fill: none;
+        stroke-width: 1.9;
+        stroke-linecap: round;
+      }
+      .nav-section {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .nav-item {
+        border: 0;
+        height: 42px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 0 13px;
+        border-radius: 0 24px 24px 0;
+        background: transparent;
+        color: #3c4043;
+        cursor: pointer;
+        text-align: left;
+        white-space: nowrap;
+      }
+      .nav-item:hover {
+        background: #edf2fa;
+      }
+      .nav-item.active {
+        background: var(--blue-soft);
+        color: #174ea6;
+        font-weight: 600;
+      }
+      .nav-item svg {
+        width: 20px;
+        height: 20px;
+        flex: 0 0 auto;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .nav-label {
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .list-heading {
+        margin: 15px 8px 5px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .mini-icon {
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        width: 28px;
+        height: 28px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        cursor: pointer;
+      }
+      .mini-icon:hover {
+        background: rgba(60, 64, 67, 0.08);
+      }
+      .mini-icon svg {
+        width: 17px;
+        height: 17px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .list-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .list-nav .nav-item {
+        height: 39px;
+      }
+      .list-nav .nav-item .list-dot {
+        width: 19px;
+        height: 19px;
+        border-radius: 6px;
+        border: 1.7px solid #73777b;
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+        color: #fff;
+      }
+      .list-nav .nav-item.active .list-dot {
+        border-color: var(--blue);
+        background: var(--blue);
+      }
+      .list-nav .nav-item .list-dot svg {
+        width: 13px;
+        height: 13px;
+        stroke: currentColor;
+        stroke-width: 2.5;
+      }
+      .list-count {
+        margin-left: auto;
+        font-size: 12px;
+        color: var(--subtle);
+        padding-right: 6px;
+      }
+      .add-list-btn {
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        height: 40px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 0 12px;
+        cursor: pointer;
+        text-align: left;
+        border-radius: 0 22px 22px 0;
+        white-space: nowrap;
+      }
+      .add-list-btn:hover {
+        background: #edf2fa;
+        color: var(--text);
+      }
+      .add-list-btn svg {
+        width: 20px;
+        height: 20px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+      }
+      .sidebar-foot {
+        margin-top: auto;
+        padding: 12px 12px 0;
+        color: var(--subtle);
+        font-size: 11px;
+        line-height: 1.5;
+      }
+      .main {
+        min-width: 0;
+        padding: 28px 30px 40px;
+        overflow: hidden;
+      }
+      .page-head {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 23px;
+      }
+      .page-title {
+        font-size: 22px;
+        line-height: 1.3;
+        letter-spacing: -0.35px;
+        font-weight: 500;
+        margin: 0;
+      }
+      .page-subtitle {
+        color: var(--muted);
+        margin: 5px 0 0;
+        font-size: 13px;
+      }
+      .page-head-spacer {
+        flex: 1;
+      }
+      .sort-btn {
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        border-radius: 20px;
+        height: 38px;
+        padding: 0 12px;
+        display: flex;
+        gap: 9px;
+        align-items: center;
+        cursor: pointer;
+      }
+      .sort-btn:hover {
+        background: rgba(60, 64, 67, 0.08);
+      }
+      .sort-btn svg {
+        width: 18px;
+        height: 18px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+      }
+      .board {
+        display: flex;
+        align-items: flex-start;
+        gap: 18px;
+        overflow-x: auto;
+        overflow-y: visible;
+        padding: 1px 2px 22px;
+        min-height: 360px;
+        scrollbar-width: thin;
+        scrollbar-color: #c6c9cd transparent;
+      }
+      .list-card {
+        flex: 0 0 342px;
+        width: 342px;
+        max-width: calc(100vw - 90px);
+        min-height: 270px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: 0 1px 2px rgba(60, 64, 67, 0.06);
+        padding: 17px 16px 14px;
+        transition:
+          box-shadow 0.18s,
+          border-color 0.18s;
+      }
+      .list-card:hover {
+        box-shadow: var(--shadow);
+        border-color: #dfe2e6;
+      }
+      .card-head {
+        display: flex;
+        align-items: center;
+        min-height: 30px;
+        gap: 8px;
+        margin-bottom: 7px;
+      }
+      .card-title {
+        flex: 1;
+        min-width: 0;
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: -0.15px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .card-menu-btn {
+        width: 32px;
+        height: 32px;
+      }
+      .add-task-link {
+        width: 100%;
+        border: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: 38px;
+        padding: 0 3px;
+        margin: 1px 0 5px;
+        background: transparent;
+        color: var(--blue);
+        font-weight: 500;
+        text-align: left;
+        cursor: pointer;
+        border-radius: 6px;
+      }
+      .add-task-link:hover {
+        background: #f5f8ff;
+      }
+      .add-task-link svg {
+        width: 18px;
+        height: 18px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+      }
+      .task-list {
+        display: flex;
+        flex-direction: column;
+      }
+      .task-row {
+        position: relative;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        min-height: 49px;
+        margin: 0 -7px;
+        padding: 10px 7px 9px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      .task-row:hover {
+        background: var(--surface-hover);
+      }
+      .task-check {
+        width: 20px;
+        height: 20px;
+        flex: 0 0 20px;
+        margin-top: 1px;
+        border: 1.8px solid #80868b;
+        border-radius: 50%;
+        background: transparent;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        padding: 0;
+        color: white;
+      }
+      .task-check:hover {
+        border-color: var(--blue);
+        background: #e8f0fe;
+      }
+      .task-check svg {
+        display: none;
+        width: 13px;
+        height: 13px;
+        stroke: currentColor;
+        stroke-width: 2.6;
+        fill: none;
+      }
+      .task-row.completed .task-check {
+        background: var(--blue);
+        border-color: var(--blue);
+      }
+      .task-row.completed .task-check svg {
+        display: block;
+      }
+      .task-content {
+        flex: 1;
+        min-width: 0;
+      }
+      .task-title {
+        font-size: 14px;
+        line-height: 1.45;
+        word-break: break-word;
+        color: var(--text);
+      }
+      .task-row.completed .task-title {
+        color: var(--subtle);
+        text-decoration: line-through;
+      }
+      .task-notes-preview {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 3px;
+        line-height: 1.35;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .task-meta {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 6px;
+      }
+      .date-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        border-radius: 5px;
+        padding: 3px 6px;
+        color: var(--muted);
+        background: #f1f3f4;
+        font-size: 11px;
+      }
+      .date-chip.today {
+        color: #b06000;
+        background: #fef7e0;
+      }
+      .date-chip.overdue {
+        color: #c5221f;
+        background: #fce8e6;
+      }
+      .date-chip svg {
+        width: 12px;
+        height: 12px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+      }
+      .subtask-count {
+        color: var(--subtle);
+        font-size: 11px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .subtask-count svg {
+        width: 12px;
+        height: 12px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+      }
+      .task-actions {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        margin: -5px -3px 0 0;
+        opacity: 0;
+        transition: opacity 0.12s;
+      }
+      .task-row:hover .task-actions,
+      .task-row:focus-within .task-actions {
+        opacity: 1;
+      }
+      .task-actions .mini-icon {
+        width: 28px;
+        height: 28px;
+      }
+      .task-actions .mini-icon svg {
+        width: 16px;
+        height: 16px;
+      }
+      .starred-icon {
+        color: #f9ab00 !important;
+      }
+      .completed-toggle {
+        margin-top: 13px;
+        width: 100%;
+        padding: 9px 4px 3px;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+      .completed-toggle:hover {
+        color: var(--text);
+      }
+      .completed-toggle svg {
+        width: 15px;
+        height: 15px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        transition: transform 0.15s;
+      }
+      .completed-toggle.open svg {
+        transform: rotate(90deg);
+      }
+      .completed-items {
+        margin-top: 5px;
+        border-top: 1px solid var(--border);
+        padding-top: 4px;
+      }
+      .completed-items .task-row {
+        min-height: 42px;
+        opacity: 0.82;
+      }
+      .quick-add {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 3px 0 8px;
+        padding: 7px 8px;
+        border: 1px solid var(--blue);
+        border-radius: 8px;
+        box-shadow: 0 0 0 1px rgba(26, 115, 232, 0.08);
+      }
+      .quick-add input {
+        width: 100%;
+        min-width: 0;
+        outline: 0;
+        border: 0;
+        color: var(--text);
+        background: transparent;
+      }
+      .quick-add button {
+        border: 0;
+        background: transparent;
+        color: var(--blue);
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .empty-state {
+        padding: 38px 14px 28px;
+        text-align: center;
+        color: var(--muted);
+      }
+      .empty-state-art {
+        width: 90px;
+        height: 72px;
+        margin: 0 auto 14px;
+        position: relative;
+      }
+      .empty-state-art .sheet {
+        position: absolute;
+        left: 26px;
+        top: 8px;
+        width: 43px;
+        height: 53px;
+        border-radius: 8px;
+        background: #e8f0fe;
+        transform: rotate(7deg);
+      }
+      .empty-state-art .sheet:before,
+      .empty-state-art .sheet:after {
+        content: "";
+        position: absolute;
+        left: 10px;
+        width: 23px;
+        height: 4px;
+        border-radius: 5px;
+        background: #aecbfa;
+      }
+      .empty-state-art .sheet:before {
+        top: 16px;
+        box-shadow: 0 10px 0 #aecbfa;
+      }
+      .empty-state-art .sheet:after {
+        top: 36px;
+        width: 15px;
+      }
+      .empty-state-art .check {
+        position: absolute;
+        right: 7px;
+        top: 2px;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #34a853;
+        color: #fff;
+        border: 3px solid #fff;
+      }
+      .empty-state-art .check svg {
+        width: 13px;
+        height: 13px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2.5;
+      }
+      .empty-state strong {
+        display: block;
+        color: #3c4043;
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 6px;
+      }
+      .empty-state span {
+        font-size: 12px;
+        line-height: 1.5;
+      }
+      .starred-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px;
+        align-items: flex-start;
+      }
+      .starred-grid .list-card {
+        flex-basis: 342px;
+      }
+      .menu-popover {
+        position: fixed;
+        z-index: 50;
+        width: 196px;
+        padding: 7px 0;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        box-shadow: var(--shadow-pop);
+        display: none;
+      }
+      .menu-popover.open {
+        display: block;
+      }
+      .menu-item {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        min-height: 39px;
+        width: 100%;
+        padding: 0 14px;
+        background: transparent;
+        border: 0;
+        text-align: left;
+        cursor: pointer;
+        color: var(--text);
+        font-size: 13px;
+      }
+      .menu-item:hover {
+        background: var(--surface-hover);
+      }
+      .menu-item svg {
+        width: 17px;
+        height: 17px;
+        stroke: var(--muted);
+        fill: none;
+        stroke-width: 1.7;
+      }
+      .menu-divider {
+        height: 1px;
+        background: var(--border);
+        margin: 6px 0;
+      }
+      .detail-backdrop {
+        position: fixed;
+        inset: 64px 0 0;
+        z-index: 29;
+        background: rgba(32, 33, 36, 0.12);
+        display: none;
+      }
+      .detail-backdrop.open {
+        display: block;
+      }
+      .detail-panel {
+        position: fixed;
+        z-index: 30;
+        top: 64px;
+        right: 0;
+        bottom: 0;
+        width: 400px;
+        max-width: 100vw;
+        background: var(--surface);
+        border-left: 1px solid var(--border);
+        box-shadow: -5px 0 18px rgba(60, 64, 67, 0.12);
+        padding: 17px 20px 22px;
+        display: none;
+        overflow-y: auto;
+      }
+      .detail-panel.open {
+        display: flex;
+        flex-direction: column;
+      }
+      .detail-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+      .detail-list-name {
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .detail-list-name:before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+        background: var(--blue);
+      }
+      .detail-title {
+        border: 0;
+        border-bottom: 1px solid transparent;
+        width: 100%;
+        resize: none;
+        outline: 0;
+        background: transparent;
+        padding: 4px 0 12px;
+        font-size: 20px;
+        line-height: 1.4;
+        font-weight: 500;
+        color: var(--text);
+      }
+      .detail-title:focus {
+        border-color: var(--blue);
+      }
+      .detail-field-label {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 500;
+        margin: 19px 0 8px;
+      }
+      .detail-notes {
+        resize: vertical;
+        min-height: 88px;
+        border: 0;
+        border-bottom: 1px solid var(--border);
+        padding: 8px 0;
+        outline: 0;
+        color: var(--text);
+        background: transparent;
+        line-height: 1.5;
+      }
+      .detail-notes:focus {
+        border-color: var(--blue);
+      }
+      .date-input-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .date-input-row svg {
+        width: 19px;
+        height: 19px;
+        stroke: var(--muted);
+        fill: none;
+        stroke-width: 1.8;
+      }
+      .date-input-row input {
+        border: 0;
+        outline: 0;
+        color: var(--text);
+        background: transparent;
+        flex: 1;
+        min-width: 0;
+      }
+      .detail-subtasks {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .subtask-row {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 5px 0;
+      }
+      .subtask-row input[type="checkbox"] {
+        accent-color: var(--blue);
+        width: 16px;
+        height: 16px;
+      }
+      .subtask-row input[type="text"] {
+        border: 0;
+        border-bottom: 1px solid transparent;
+        outline: 0;
+        flex: 1;
+        min-width: 0;
+        padding: 5px 0;
+        color: var(--text);
+        background: transparent;
+      }
+      .subtask-row input[type="text"]:focus {
+        border-color: var(--blue);
+      }
+      .add-subtask {
+        border: 0;
+        background: transparent;
+        color: var(--blue);
+        padding: 8px 0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+      }
+      .add-subtask svg {
+        width: 17px;
+        height: 17px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+      }
+      .detail-footer {
+        margin-top: auto;
+        padding-top: 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .delete-btn {
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        cursor: pointer;
+        padding: 9px;
+        border-radius: 7px;
+      }
+      .delete-btn:hover {
+        background: #fce8e6;
+        color: var(--red);
+      }
+      .delete-btn svg {
+        width: 17px;
+        height: 17px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.7;
+      }
+      .save-btn {
+        border: 0;
+        border-radius: 20px;
+        background: var(--blue);
+        color: white;
+        padding: 9px 22px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .save-btn:hover {
+        background: var(--blue-dark);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+      }
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translate(-50%, 20px);
+        opacity: 0;
+        pointer-events: none;
+        z-index: 90;
+        background: #323232;
+        color: white;
+        padding: 11px 17px;
+        border-radius: 7px;
+        box-shadow: var(--shadow-pop);
+        font-size: 13px;
+        transition: all 0.2s;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 70;
+        background: rgba(32, 33, 36, 0.32);
+        padding: 20px;
+      }
+      .modal-backdrop.open {
+        display: flex;
+      }
+      .modal {
+        width: 380px;
+        max-width: 100%;
+        background: var(--surface);
+        border-radius: 18px;
+        padding: 24px;
+        box-shadow: var(--shadow-pop);
+      }
+      .modal h2 {
+        font-size: 18px;
+        font-weight: 500;
+        margin: 0 0 17px;
+      }
+      .modal input {
+        width: 100%;
+        border: 0;
+        border-bottom: 1px solid var(--border-strong);
+        outline: 0;
+        padding: 10px 1px;
+        font-size: 15px;
+        color: var(--text);
+        background: transparent;
+      }
+      .modal input:focus {
+        border-color: var(--blue);
+        border-bottom-width: 2px;
+      }
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 22px;
+      }
+      .text-btn {
+        border: 0;
+        background: transparent;
+        color: var(--blue);
+        padding: 9px 14px;
+        border-radius: 18px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .text-btn:hover {
+        background: #f1f5fe;
+      }
+      .primary-btn {
+        border: 0;
+        border-radius: 18px;
+        background: var(--blue);
+        color: white;
+        padding: 9px 18px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .primary-btn:hover {
+        background: var(--blue-dark);
+      }
+      .no-results {
+        color: var(--muted);
+        text-align: center;
+        padding: 70px 10px;
+      }
+      .no-results svg {
+        width: 35px;
+        height: 35px;
+        margin-bottom: 10px;
+        stroke: #9aa0a6;
+        fill: none;
+        stroke-width: 1.5;
+      }
+      .sidebar-collapsed .sidebar {
+        padding-left: 8px;
+        padding-right: 8px;
+      }
+      .sidebar-collapsed .create-btn {
+        min-width: 48px;
+        width: 48px;
+        padding: 0;
+        justify-content: center;
+      }
+      .sidebar-collapsed .create-btn span,
+      .sidebar-collapsed .nav-label,
+      .sidebar-collapsed .list-heading span,
+      .sidebar-collapsed .list-heading .mini-icon,
+      .sidebar-collapsed .list-count,
+      .sidebar-collapsed .add-list-btn span,
+      .sidebar-collapsed .sidebar-foot {
+        display: none;
+      }
+      .sidebar-collapsed .nav-item,
+      .sidebar-collapsed .add-list-btn {
+        justify-content: center;
+        padding: 0;
+        border-radius: 22px;
+      }
+      .sidebar-collapsed .nav-item {
+        gap: 0;
+      }
+      .sidebar-collapsed .list-nav .nav-item .list-dot {
+        border: 0;
+        background: transparent !important;
+        color: var(--muted) !important;
+      }
+      .sidebar-collapsed .list-nav .nav-item.active .list-dot {
+        color: var(--blue) !important;
+      }
+      body.dark {
+        color-scheme: dark;
+        --bg: #202124;
+        --surface: #292a2d;
+        --surface-2: #303134;
+        --surface-hover: #35363a;
+        --text: #e8eaed;
+        --muted: #bdc1c6;
+        --subtle: #9aa0a6;
+        --border: #3c4043;
+        --border-strong: #5f6368;
+        --blue: #8ab4f8;
+        --blue-dark: #aecbfa;
+        --blue-soft: #394b63;
+        --shadow:
+          0 1px 2px rgba(0, 0, 0, 0.35), 0 1px 3px 1px rgba(0, 0, 0, 0.2);
+        --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.5);
+      }
+      body.dark .topbar,
+      body.dark .sidebar {
+        border-color: var(--border);
+      }
+      body.dark .search-box {
+        background: #303134;
+      }
+      body.dark .search-box:focus-within {
+        background: var(--surface);
+      }
+      body.dark .nav-item {
+        color: var(--text);
+      }
+      body.dark .nav-item:hover,
+      body.dark .add-list-btn:hover {
+        background: #303134;
+      }
+      body.dark .create-btn {
+        color: var(--text);
+      }
+      body.dark .add-task-link:hover,
+      body.dark .text-btn:hover {
+        background: #303b4b;
+      }
+      body.dark .date-chip {
+        background: #3c4043;
+      }
+      body.dark .date-chip.today {
+        background: #4a3b1e;
+        color: #fdd663;
+      }
+      body.dark .date-chip.overdue {
+        background: #512f2d;
+        color: #f28b82;
+      }
+      body.dark .empty-state strong {
+        color: var(--text);
+      }
+      body.dark .modal input {
+        color: var(--text);
+      }
+      body.dark .task-check:hover {
+        background: #303b4b;
+      }
+      body.dark .detail-panel,
+      body.dark .menu-popover {
+        background: var(--surface);
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 900px) {
+        .brand-area {
+          width: 205px;
+          flex-basis: 205px;
+        }
+        .workspace {
+          grid-template-columns: 220px minmax(0, 1fr);
+        }
+        .main {
+          padding: 24px 20px 32px;
+        }
+        .list-card {
+          flex-basis: 320px;
+          width: 320px;
+        }
+      }
+
+      @media (max-width: 650px) {
+        .app-container.mobile-view .topbar {
+          height: 58px;
+          padding: 40px 10px 0;
+          gap: 8px;
+        }
+        .app-container.mobile-view .brand-area {
+          width: auto;
+          flex: 0 0 auto;
+          gap: 7px;
+        }
+        .app-container.mobile-view .brand-name {
+          display: none;
+        }
+        .app-container.mobile-view .brand-mark {
+          width: 28px;
+          height: 28px;
+        }
+        .app-container.mobile-view .search-box {
+          height: 40px;
+          padding: 0 12px;
+        }
+        .app-container.mobile-view .search-box input {
+          font-size: 13px;
+        }
+        .app-container.mobile-view .top-actions {
+          gap: 0;
+        }
+        .app-container.mobile-view .top-actions .icon-btn:nth-child(1),
+        .app-container.mobile-view .top-actions .icon-btn:nth-child(2) {
+          display: none;
+        }
+        .app-container.mobile-view .top-actions .avatar {
+          width: 29px;
+          height: 29px;
+          margin-left: 2px;
+        }
+        .app-container.mobile-view .workspace,
+        .app-container.mobile-view .workspace.sidebar-collapsed {
+          grid-template-columns: 1fr;
+        }
+        .app-container.mobile-view .sidebar {
+          position: fixed;
+          z-index: 25;
+          left: 0;
+          top: 58px;
+          bottom: 0;
+          width: 260px;
+          background: var(--bg);
+          box-shadow: 6px 0 20px rgba(60, 64, 67, 0.12);
+          transform: translateX(-105%);
+          transition: transform 0.2s;
+        }
+        .app-container.mobile-view .workspace.mobile-sidebar-open .sidebar {
+          transform: translateX(0);
+        }
+        .app-container.mobile-view .sidebar-collapsed .sidebar {
+          transform: translateX(-105%);
+        }
+        .app-container.mobile-view .main {
+          padding: 22px 14px 30px;
+        }
+        .app-container.mobile-view .page-title {
+          font-size: 20px;
+        }
+        .app-container.mobile-view .page-head {
+          margin-bottom: 17px;
+        }
+        .app-container.mobile-view .list-card {
+          flex-basis: min(342px, calc(390px - 28px));
+          width: min(342px, calc(390px - 28px));
+        }
+        .app-container.mobile-view .detail-panel {
+          top: 58px;
+          width: 100%;
+        }
+        .app-container.mobile-view .detail-backdrop {
+          inset: 58px 0 0;
+        }
+        .app-container.mobile-view .board {
+          gap: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="view-switcher">
+      <button class="view-btn active" id="desktopViewBtn">Desktop</button>
+      <button class="view-btn" id="mobileViewBtn">Mobile</button>
+    </div>
+
+    <div class="app-container desktop-view" id="appContainer">
+      <div class="app">
+        <header class="topbar">
+          <div class="brand-area">
+            <button
+              class="icon-btn"
+              id="sidebarToggle"
+              aria-label="Toggle navigation"
+              title="Menu"
+            >
+              <svg viewBox="0 0 24 24">
+                <path d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <div class="brand" aria-label="Tasks">
+              <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true">
+                <circle cx="20" cy="20" r="17" fill="#4285f4" />
+                <circle
+                  cx="20"
+                  cy="20"
+                  r="11.8"
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="3.1"
+                />
+                <path
+                  d="m13.9 20.2 4.1 4.1 8.5-9"
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="3.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M30.5 7.5a17 17 0 0 1 4 5.5"
+                  fill="none"
+                  stroke="#34a853"
+                  stroke-width="3.4"
+                  stroke-linecap="round"
+                />
+              </svg>
+              <span class="brand-name">Tasks</span>
+            </div>
+          </div>
+          <div class="search-wrap">
+            <label class="search-box" aria-label="Search tasks">
+              <svg viewBox="0 0 24 24">
+                <circle cx="10.8" cy="10.8" r="6.8" />
+                <path d="m16 16 4.5 4.5" />
+              </svg>
+              <input
+                id="searchInput"
+                type="search"
+                placeholder="Search tasks"
+                autocomplete="off"
+              />
+            </label>
+          </div>
+          <div class="top-actions">
+            <button
+              class="icon-btn"
+              id="helpBtn"
+              aria-label="Help"
+              title="Help"
+            >
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9" />
+                <path
+                  d="M9.6 9a2.5 2.5 0 1 1 4.1 1.9c-1.1.8-1.7 1.3-1.7 2.8M12 17.2h.01"
+                />
+              </svg>
+            </button>
+            <button
+              class="icon-btn"
+              id="themeToggle"
+              aria-label="Toggle theme"
+              title="Toggle theme"
+            >
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M20.2 15.2A8.5 8.5 0 0 1 8.8 3.8 8.8 8.8 0 1 0 20.2 15.2Z"
+                />
+              </svg>
+            </button>
+            <button
+              class="icon-btn"
+              id="calendarBtn"
+              aria-label="Calendar"
+              title="Calendar"
+            >
+              <svg viewBox="0 0 24 24">
+                <rect x="3.5" y="5" width="17" height="16" rx="2" />
+                <path d="M7.5 3v4M16.5 3v4M3.5 9.5h17M8 13h2M14 13h2M8 17h2" />
+              </svg>
+            </button>
+            <button
+              class="icon-btn"
+              id="appsBtn"
+              aria-label="Google apps"
+              title="Google apps"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <circle cx="5" cy="5" r="1.7" />
+                <circle cx="12" cy="5" r="1.7" />
+                <circle cx="19" cy="5" r="1.7" />
+                <circle cx="5" cy="12" r="1.7" />
+                <circle cx="12" cy="12" r="1.7" />
+                <circle cx="19" cy="12" r="1.7" />
+                <circle cx="5" cy="19" r="1.7" />
+                <circle cx="12" cy="19" r="1.7" />
+                <circle cx="19" cy="19" r="1.7" />
+              </svg>
+            </button>
+            <div class="avatar" title="Account">A</div>
+          </div>
+        </header>
+
+        <div class="workspace" id="workspace">
+          <aside class="sidebar" aria-label="Main navigation">
+            <button class="create-btn" id="createTaskBtn">
+              <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg
+              ><span>Create</span>
+            </button>
+            <nav class="nav-section">
+              <button class="nav-item active" data-view="all" id="allNav">
+                <svg viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="m7.5 12.2 3 3 6.2-6.4" /></svg
+                ><span class="nav-label">All tasks</span>
+              </button>
+              <button class="nav-item" data-view="starred" id="starredNav">
+                <svg viewBox="0 0 24 24">
+                  <path
+                    d="m12 3 2.8 5.8 6.4.9-4.6 4.5 1.1 6.4-5.7-3-5.7 3 1.1-6.4-4.6-4.5 6.4-.9L12 3Z"
+                  /></svg
+                ><span class="nav-label">Starred</span>
+              </button>
+            </nav>
+            <div>
+              <div class="list-heading">
+                <span>Lists</span
+                ><button
+                  class="mini-icon"
+                  id="collapseListsBtn"
+                  aria-label="Collapse lists"
+                  title="Collapse lists"
+                >
+                  <svg viewBox="0 0 24 24"><path d="m6 14 6-6 6 6" /></svg>
+                </button>
+              </div>
+              <nav class="list-nav" id="listNav"></nav>
+              <button class="add-list-btn" id="addListBtn">
+                <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg
+                ><span>Create new list</span>
+              </button>
+            </div>
+            <div class="sidebar-foot">
+              Google Tasks Clone<br />Demo frontend · Data tersimpan di browser
+            </div>
+          </aside>
+
+          <main class="main">
+            <div class="page-head">
+              <div>
+                <h1 class="page-title" id="pageTitle">All tasks</h1>
+                <p class="page-subtitle" id="pageSubtitle">
+                  Keep track of everything you need to do.
+                </p>
+              </div>
+              <div class="page-head-spacer"></div>
+              <button class="sort-btn" id="sortBtn" title="Sort tasks">
+                <svg viewBox="0 0 24 24">
+                  <path d="M4 7h16M7 12h10M10 17h4" /></svg
+                ><span>Sort by</span>
+              </button>
+              <button
+                class="icon-btn"
+                id="refreshBtn"
+                title="Refresh"
+                aria-label="Refresh"
+              >
+                <svg viewBox="0 0 24 24">
+                  <path
+                    d="M20 11a8 8 0 0 0-14.7-3L3 11M3 5v6h6M4 13a8 8 0 0 0 14.7 3L21 13m0 6v-6h-6"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div class="board" id="board" aria-live="polite"></div>
+          </main>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-backdrop" id="detailBackdrop"></div>
+    <aside
+      class="detail-panel"
+      id="detailPanel"
+      aria-label="Task details"
+    ></aside>
+    <div class="menu-popover" id="menuPopover"></div>
+    <div class="modal-backdrop" id="modalBackdrop">
+      <form class="modal" id="listModal">
+        <h2 id="modalTitle">Create new list</h2>
+        <input
+          id="listNameInput"
+          type="text"
+          placeholder="Enter list name"
+          maxlength="40"
+          required
+        />
+        <div class="modal-actions">
+          <button class="text-btn" type="button" id="modalCancel">Cancel</button
+          ><button class="primary-btn" type="submit">Create</button>
+        </div>
+      </form>
+    </div>
+    <div class="toast" id="toast" role="status"></div>
+
+    <script>
+      (() => {
+        const STORAGE_KEY = "google-tasks-clone-v1";
+        const $ = (selector, root = document) => root.querySelector(selector);
+        const $$ = (selector, root = document) => [
+          ...root.querySelectorAll(selector),
+        ];
+        const uid = () => Math.random().toString(36).slice(2, 10);
+        const dayOffset = (offset) => {
+          const date = new Date();
+          date.setHours(12, 0, 0, 0);
+          date.setDate(date.getDate() + offset);
+          return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+        };
+        const initialData = () => ({
+          lists: [
+            { id: "my-tasks", name: "My Tasks" },
+            { id: "work", name: "Work" },
+            { id: "personal", name: "Personal" },
+          ],
+          tasks: [
+            {
+              id: uid(),
+              listId: "my-tasks",
+              title: "Review project proposal",
+              notes: "Final check before sending it to the team.",
+              date: dayOffset(0),
+              time: "16:30",
+              starred: true,
+              completed: false,
+              subtasks: [],
+            },
+            {
+              id: uid(),
+              listId: "my-tasks",
+              title: "Buy groceries",
+              notes: "",
+              date: dayOffset(1),
+              time: "",
+              starred: false,
+              completed: false,
+              subtasks: [],
+            },
+            {
+              id: uid(),
+              listId: "my-tasks",
+              title: "Plan weekend trip",
+              notes: "Compare a few places and book accommodation.",
+              date: dayOffset(4),
+              time: "",
+              starred: false,
+              completed: false,
+              subtasks: [
+                { id: uid(), title: "Choose destination", completed: true },
+                {
+                  id: uid(),
+                  title: "Check transport options",
+                  completed: false,
+                },
+              ],
+            },
+            {
+              id: uid(),
+              listId: "my-tasks",
+              title: "Book dentist appointment",
+              notes: "",
+              date: "",
+              time: "",
+              starred: false,
+              completed: true,
+              subtasks: [],
+            },
+            {
+              id: uid(),
+              listId: "work",
+              title: "Prepare weekly report",
+              notes: "Include project status and key metrics.",
+              date: dayOffset(0),
+              time: "15:00",
+              starred: true,
+              completed: false,
+              subtasks: [],
+            },
+            {
+              id: uid(),
+              listId: "work",
+              title: "Send design review",
+              notes: "",
+              date: dayOffset(2),
+              time: "",
+              starred: false,
+              completed: false,
+              subtasks: [],
+            },
+            {
+              id: uid(),
+              listId: "work",
+              title: "Update team documentation",
+              notes: "",
+              date: "",
+              time: "",
+              starred: false,
+              completed: false,
+              subtasks: [],
+            },
+            {
+              id: uid(),
+              listId: "work",
+              title: "Discuss sprint planning",
+              notes: "",
+              date: dayOffset(-1),
+              time: "",
+              starred: false,
+              completed: true,
+              subtasks: [],
+            },
+            {
+              id: uid(),
+              listId: "personal",
+              title: "Morning workout",
+              notes: "30 minutes of light exercise.",
+              date: dayOffset(1),
+              time: "07:00",
+              starred: false,
+              completed: false,
+              subtasks: [],
+            },
+            {
+              id: uid(),
+              listId: "personal",
+              title: "Read 20 pages",
+              notes: "",
+              date: "",
+              time: "",
+              starred: true,
+              completed: false,
+              subtasks: [],
+            },
+          ],
+        });
+        let state;
+        try {
+          state =
+            JSON.parse(localStorage.getItem(STORAGE_KEY)) || initialData();
+        } catch {
+          state = initialData();
+        }
+        if (!Array.isArray(state.lists) || !Array.isArray(state.tasks))
+          state = initialData();
+        let activeView = "all";
+        let activeListId = null;
+        let activeTaskId = null;
+        let searchTerm = "";
+        let showCompleted = {};
+        let listsCollapsed = false;
+        let sortMode = "custom";
+        let toastTimer;
+        let currentView = "desktop";
+
+        const icon = {
+          check:
+            '<svg viewBox="0 0 24 24"><path d="m5 12.5 4.2 4.2L19 7"/></svg>',
+          calendar:
+            '<svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M7.5 3v4M16.5 3v4M3.5 9.5h17"/></svg>',
+          star: '<svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.8 6.4.9-4.6 4.5 1.1 6.4-5.7-3-5.7 3 1.1-6.4-4.6-4.5 6.4-.9L12 3Z"/></svg>',
+          more: '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>',
+          subtask:
+            '<svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>',
+          plus: '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+          chevron: '<svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>',
+          trash:
+            '<svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
+        };
+        function save() {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        }
+        function escapeHtml(value = "") {
+          return String(value).replace(
+            /[&<>"']/g,
+            (ch) =>
+              ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;",
+              })[ch],
+          );
+        }
+        function getList(id) {
+          return state.lists.find((list) => list.id === id);
+        }
+        function getTask(id) {
+          return state.tasks.find((task) => task.id === id);
+        }
+        function toast(message) {
+          const el = $("#toast");
+          el.textContent = message;
+          el.classList.add("show");
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(() => el.classList.remove("show"), 2300);
+        }
+        function formatDate(dateValue) {
+          if (!dateValue) return "";
+          const [y, m, d] = dateValue.split("-").map(Number);
+          const date = new Date(y, m - 1, d, 12);
+          const today = dayOffset(0),
+            tomorrow = dayOffset(1);
+          if (dateValue === today) return "Today";
+          if (dateValue === tomorrow) return "Tomorrow";
+          return new Intl.DateTimeFormat("en-US", {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+          }).format(date);
+        }
+        function dateClass(value) {
+          if (!value) return "";
+          if (value < dayOffset(0)) return "overdue";
+          if (value === dayOffset(0)) return "today";
+          return "";
+        }
+        function visibleTasksForList(listId, starredOnly = false) {
+          let tasks = state.tasks.filter(
+            (task) => task.listId === listId && (!starredOnly || task.starred),
+          );
+          if (searchTerm)
+            tasks = tasks.filter((task) =>
+              `${task.title} ${task.notes || ""}`
+                .toLowerCase()
+                .includes(searchTerm),
+            );
+          if (sortMode === "date")
+            tasks.sort((a, b) =>
+              (a.date || "9999").localeCompare(b.date || "9999"),
+            );
+          else if (sortMode === "title")
+            tasks.sort((a, b) => a.title.localeCompare(b.title));
+          else if (sortMode === "starred")
+            tasks.sort((a, b) => Number(b.starred) - Number(a.starred));
+          return tasks;
+        }
+        function renderSidebar() {
+          $("#allNav").classList.toggle("active", activeView === "all");
+          $("#starredNav").classList.toggle("active", activeView === "starred");
+          $("#listNav").innerHTML = listsCollapsed
+            ? ""
+            : state.lists
+                .map((list) => {
+                  const count = state.tasks.filter(
+                    (task) => task.listId === list.id && !task.completed,
+                  ).length;
+                  const active =
+                    activeView === "list" && activeListId === list.id;
+                  return `<button class="nav-item ${active ? "active" : ""}" data-action="select-list" data-list-id="${escapeHtml(list.id)}" title="${escapeHtml(list.name)}">
+            <span class="list-dot">${active ? icon.check : ""}</span><span class="nav-label">${escapeHtml(list.name)}</span><span class="list-count">${count || ""}</span>
+          </button>`;
+                })
+                .join("");
+          $("#collapseListsBtn").innerHTML = listsCollapsed
+            ? '<svg viewBox="0 0 24 24"><path d="m6 10 6 6 6-6"/></svg>'
+            : '<svg viewBox="0 0 24 24"><path d="m6 14 6-6 6 6"/></svg>';
+        }
+        function renderTask(task) {
+          const date = task.date
+            ? `<span class="date-chip ${dateClass(task.date)}">${icon.calendar}${escapeHtml(formatDate(task.date))}${task.time ? ` · ${escapeHtml(task.time)}` : ""}</span>`
+            : "";
+          const subtaskCount = task.subtasks?.length
+            ? `<span class="subtask-count">${icon.subtask}${task.subtasks.filter((item) => item.completed).length}/${task.subtasks.length}</span>`
+            : "";
+          return `<div class="task-row ${task.completed ? "completed" : ""}" data-task-id="${escapeHtml(task.id)}" tabindex="0" role="button" aria-label="${escapeHtml(task.title)}">
+          <button class="task-check" data-action="toggle-task" data-task-id="${escapeHtml(task.id)}" aria-label="${task.completed ? "Mark not complete" : "Mark complete"}">${icon.check}</button>
+          <div class="task-content" data-action="open-task" data-task-id="${escapeHtml(task.id)}">
+            <div class="task-title">${escapeHtml(task.title || "Untitled task")}</div>
+            ${task.notes ? `<div class="task-notes-preview">${escapeHtml(task.notes)}</div>` : ""}
+            ${date || subtaskCount ? `<div class="task-meta">${date}${subtaskCount}</div>` : ""}
+          </div>
+          <div class="task-actions">
+            <button class="mini-icon ${task.starred ? "starred-icon" : ""}" data-action="star-task" data-task-id="${escapeHtml(task.id)}" title="${task.starred ? "Remove star" : "Add star"}" aria-label="Star task">${icon.star}</button>
+            <button class="mini-icon" data-action="open-task" data-task-id="${escapeHtml(task.id)}" title="Edit task" aria-label="Edit task">${icon.more}</button>
+          </div>
+        </div>`;
+        }
+        function renderCard(list, starredOnly = false) {
+          const tasks = visibleTasksForList(list.id, starredOnly);
+          const activeTasks = tasks.filter((task) => !task.completed);
+          const completedTasks = tasks.filter((task) => task.completed);
+          const showDone = !!showCompleted[list.id];
+          const body = activeTasks.length
+            ? activeTasks.map(renderTask).join("")
+            : completedTasks.length
+              ? ""
+              : `<div class="empty-state"><div class="empty-state-art"><div class="sheet"></div><div class="check">${icon.check}</div></div><strong>No tasks yet</strong><span>Add a task to keep track of what you need to do.</span></div>`;
+          return `<section class="list-card" data-list-card="${escapeHtml(list.id)}">
+          <div class="card-head"><h2 class="card-title">${escapeHtml(list.name)}</h2><button class="icon-btn card-menu-btn" data-action="list-menu" data-list-id="${escapeHtml(list.id)}" aria-label="List options" title="List options">${icon.more}</button></div>
+          <button class="add-task-link" data-action="add-task" data-list-id="${escapeHtml(list.id)}">${icon.plus}<span>Add a task</span></button>
+          <div class="task-list">${body}</div>
+          ${completedTasks.length ? `<button class="completed-toggle ${showDone ? "open" : ""}" data-action="toggle-completed" data-list-id="${escapeHtml(list.id)}">${icon.chevron}<span>Completed (${completedTasks.length})</span></button>${showDone ? `<div class="completed-items">${completedTasks.map(renderTask).join("")}</div>` : ""}` : ""}
+        </section>`;
+        }
+        function renderStarred() {
+          const tasks = state.tasks.filter(
+            (task) =>
+              task.starred &&
+              (!searchTerm ||
+                `${task.title} ${task.notes || ""}`
+                  .toLowerCase()
+                  .includes(searchTerm)),
+          );
+          const grouped = state.lists
+            .map((list) => ({
+              list,
+              tasks: tasks.filter((task) => task.listId === list.id),
+            }))
+            .filter((group) => group.tasks.length);
+          if (!grouped.length)
+            return `<div class="empty-state" style="margin:60px auto;max-width:260px"><div class="empty-state-art"><div class="sheet"></div><div class="check">${icon.star}</div></div><strong>No starred tasks</strong><span>Star important tasks and they'll show up here.</span></div>`;
+          return grouped
+            .map((group) => {
+              const active = group.tasks.filter((task) => !task.completed);
+              const completed = group.tasks.filter((task) => task.completed);
+              const showDone = !!showCompleted[group.list.id];
+              return `<section class="list-card" data-list-card="${escapeHtml(group.list.id)}">
+            <div class="card-head"><h2 class="card-title">${escapeHtml(group.list.name)}</h2></div>
+            <div class="task-list">${active.map(renderTask).join("") || (completed.length ? "" : '<div class="empty-state"><strong>No starred tasks</strong></div>')}</div>
+            ${completed.length ? `<button class="completed-toggle ${showDone ? "open" : ""}" data-action="toggle-completed" data-list-id="${escapeHtml(group.list.id)}">${icon.chevron}<span>Completed (${completed.length})</span></button>${showDone ? `<div class="completed-items">${completed.map(renderTask).join("")}</div>` : ""}` : ""}
+          </section>`;
+            })
+            .join("");
+        }
+        function render() {
+          renderSidebar();
+          const title =
+            activeView === "all"
+              ? "All tasks"
+              : activeView === "starred"
+                ? "Starred"
+                : getList(activeListId)?.name || "Tasks";
+          $("#pageTitle").textContent = title;
+          $("#pageSubtitle").textContent =
+            activeView === "all"
+              ? "Keep track of everything you need to do."
+              : activeView === "starred"
+                ? "Your important tasks, all in one place."
+                : "Tasks in this list";
+          $("#sortBtn").style.visibility =
+            activeView === "starred" ? "hidden" : "visible";
+          if (activeView === "starred") {
+            $("#board").className = "board starred-grid";
+            $("#board").innerHTML = renderStarred();
+          } else if (activeView === "list") {
+            const list = getList(activeListId);
+            $("#board").className = "board";
+            $("#board").innerHTML = list
+              ? renderCard(list)
+              : '<div class="no-results">This list is no longer available.</div>';
+          } else {
+            $("#board").className = "board";
+            $("#board").innerHTML =
+              state.lists.map((list) => renderCard(list)).join("") ||
+              '<div class="no-results">Create a list to get started.</div>';
+          }
+          if (
+            searchTerm &&
+            !$("#board").textContent.toLowerCase().includes(searchTerm)
+          ) {
+            $("#board").innerHTML =
+              `<div class="no-results">${icon.calendar}<div>No tasks found for "${escapeHtml(searchTerm)}"</div></div>`;
+          }
+        }
+        function openTask(taskId) {
+          const task = getTask(taskId);
+          if (!task) return;
+          activeTaskId = taskId;
+          const list = getList(task.listId);
+          $("#detailPanel").innerHTML = `
+          <div class="detail-head"><div class="detail-list-name">${escapeHtml(list?.name || "Tasks")}</div><div style="display:flex;gap:4px"><button class="icon-btn" data-action="star-task" data-task-id="${escapeHtml(task.id)}" title="${task.starred ? "Remove star" : "Add star"}" aria-label="Star task" style="color:${task.starred ? "#f9ab00" : "var(--muted)"}">${icon.star}</button><button class="icon-btn" data-action="close-detail" aria-label="Close details">${'<svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>'}</button></div></div>
+          <textarea class="detail-title" id="editTaskTitle" rows="2" placeholder="Task title">${escapeHtml(task.title)}</textarea>
+          <div class="detail-field-label">Details</div>
+          <textarea class="detail-notes" id="editTaskNotes" placeholder="Add details">${escapeHtml(task.notes || "")}</textarea>
+          <div class="detail-field-label">Date and time</div>
+          <div class="date-input-row">${icon.calendar}<input id="editTaskDate" type="date" value="${escapeHtml(task.date || "")}" /><input id="editTaskTime" aria-label="Time" type="time" value="${escapeHtml(task.time || "")}" style="max-width:106px" /></div>
+          <div class="detail-field-label">Subtasks</div>
+          <div class="detail-subtasks" id="detailSubtasks">${(task.subtasks || []).map((subtask) => `<div class="subtask-row" data-subtask-id="${escapeHtml(subtask.id)}"><input type="checkbox" ${subtask.completed ? "checked" : ""} data-action="toggle-subtask" data-subtask-id="${escapeHtml(subtask.id)}" /><input type="text" value="${escapeHtml(subtask.title)}" data-action="edit-subtask" data-subtask-id="${escapeHtml(subtask.id)}" aria-label="Subtask title" /></div>`).join("")}</div>
+          <button class="add-subtask" data-action="add-subtask">${icon.plus}<span>Add a subtask</span></button>
+          <div class="detail-footer"><button class="delete-btn" data-action="delete-task" data-task-id="${escapeHtml(task.id)}">${icon.trash}<span>Delete</span></button><button class="save-btn" data-action="save-task">Save</button></div>`;
+          $("#detailPanel").classList.add("open");
+          $("#detailBackdrop").classList.add("open");
+          $("#editTaskTitle").focus();
+        }
+        function closeDetail() {
+          $("#detailPanel").classList.remove("open");
+          $("#detailBackdrop").classList.remove("open");
+          activeTaskId = null;
+        }
+        function saveTask() {
+          const task = getTask(activeTaskId);
+          if (!task) return;
+          task.title = $("#editTaskTitle").value.trim() || "Untitled task";
+          task.notes = $("#editTaskNotes").value.trim();
+          task.date = $("#editTaskDate").value;
+          task.time = $("#editTaskTime").value;
+          task.subtasks = $$("#detailSubtasks .subtask-row")
+            .map((row) => ({
+              id: row.dataset.subtaskId,
+              title: $('input[type="text"]', row).value.trim(),
+              completed: $('input[type="checkbox"]', row).checked,
+            }))
+            .filter((subtask) => subtask.title);
+          save();
+          render();
+          openTask(task.id);
+          toast("Task saved");
+        }
+        function addTask(listId) {
+          const task = {
+            id: uid(),
+            listId,
+            title: "",
+            notes: "",
+            date: "",
+            time: "",
+            starred: false,
+            completed: false,
+            subtasks: [],
+          };
+          state.tasks.unshift(task);
+          save();
+          render();
+          openTask(task.id);
+        }
+        function openListModal() {
+          $("#listModal").dataset.editId = "";
+          $("#modalTitle").textContent = "Create new list";
+          $("#listNameInput").value = "";
+          $("#modalBackdrop").classList.add("open");
+          setTimeout(() => $("#listNameInput").focus(), 30);
+        }
+        function editListName(listId) {
+          const list = getList(listId);
+          if (!list) return;
+          $("#listModal").dataset.editId = listId;
+          $("#modalTitle").textContent = "Rename list";
+          $("#listNameInput").value = list.name;
+          $("#modalBackdrop").classList.add("open");
+          setTimeout(() => $("#listNameInput").focus(), 30);
+        }
+        function closeListModal() {
+          $("#modalBackdrop").classList.remove("open");
+        }
+        function showMenu(anchor, type, id) {
+          const pop = $("#menuPopover");
+          const items =
+            type === "list"
+              ? [
+                  [
+                    "rename-list",
+                    "Rename list",
+                    '<svg viewBox="0 0 24 24"><path d="m4 16.5-.8 4.3 4.3-.8L19 8.5 15.5 5 4 16.5Z"/><path d="m13.8 6.7 3.5 3.5"/></svg>',
+                  ],
+                  ["sort-date", "Sort by date", icon.calendar],
+                  ["sort-title", "Sort by title", icon.subtask],
+                  ["delete-list", "Delete list", icon.trash],
+                ]
+              : [
+                  ["sort-custom", "My order", icon.subtask],
+                  ["sort-date", "Date", icon.calendar],
+                  ["sort-title", "Title", icon.subtask],
+                  ["sort-starred", "Starred first", icon.star],
+                ];
+          pop.innerHTML = items
+            .map(
+              (item) =>
+                `<button class="menu-item" data-action="${item[0]}" data-list-id="${escapeHtml(id || "")}">${item[2]}<span>${item[1]}</span></button>`,
+            )
+            .join("");
+          const rect = anchor.getBoundingClientRect();
+          pop.style.left = `${Math.min(rect.right - 195, window.innerWidth - 205)}px`;
+          pop.style.top = `${Math.min(rect.bottom + 3, window.innerHeight - 190)}px`;
+          pop.classList.add("open");
+        }
+        function hideMenu() {
+          $("#menuPopover").classList.remove("open");
+        }
+        function deleteTask(taskId) {
+          const task = getTask(taskId);
+          if (!task) return;
+          state.tasks = state.tasks.filter((item) => item.id !== taskId);
+          save();
+          closeDetail();
+          render();
+          toast("Task deleted");
+        }
+        function deleteList(listId) {
+          const list = getList(listId);
+          if (!list) return;
+          if (state.lists.length < 2) {
+            toast("Keep at least one list");
+            return;
+          }
+          if (!confirm(`Delete "${list.name}" and its tasks?`)) return;
+          state.lists = state.lists.filter((item) => item.id !== listId);
+          state.tasks = state.tasks.filter((task) => task.listId !== listId);
+          if (activeListId === listId) {
+            activeView = "all";
+            activeListId = null;
+          }
+          save();
+          render();
+          toast("List deleted");
+        }
+
+        // View switcher
+        function switchView(view) {
+          currentView = view;
+          const container = $("#appContainer");
+          const desktopBtn = $("#desktopViewBtn");
+          const mobileBtn = $("#mobileViewBtn");
+
+          if (view === "desktop") {
+            container.classList.remove("mobile-view");
+            container.classList.add("desktop-view");
+            desktopBtn.classList.add("active");
+            mobileBtn.classList.remove("active");
+          } else {
+            container.classList.remove("desktop-view");
+            container.classList.add("mobile-view");
+            desktopBtn.classList.remove("active");
+            mobileBtn.classList.add("active");
+          }
+
+          localStorage.setItem("google-tasks-view", view);
+        }
+
+        document.addEventListener("click", (event) => {
+          const actionEl = event.target.closest("[data-action]");
+          if (!actionEl) {
+            if (!event.target.closest("#menuPopover")) hideMenu();
+            return;
+          }
+          const { action, taskId, listId, subtaskId } = actionEl.dataset;
+          if (
+            action !== "list-menu" &&
+            !action.startsWith("sort-") &&
+            action !== "rename-list" &&
+            action !== "delete-list"
+          )
+            hideMenu();
+          switch (action) {
+            case "select-list":
+              activeView = "list";
+              activeListId = listId;
+              render();
+              break;
+            case "open-task":
+              openTask(taskId);
+              break;
+            case "toggle-task": {
+              const task = getTask(taskId);
+              if (task) {
+                task.completed = !task.completed;
+                save();
+                render();
+              }
+              event.stopPropagation();
+              break;
+            }
+            case "star-task": {
+              const task = getTask(taskId);
+              if (task) {
+                task.starred = !task.starred;
+                save();
+                render();
+                if (activeTaskId === taskId) openTask(taskId);
+              }
+              event.stopPropagation();
+              break;
+            }
+            case "add-task":
+              addTask(listId);
+              break;
+            case "toggle-completed":
+              showCompleted[listId] = !showCompleted[listId];
+              render();
+              break;
+            case "list-menu":
+              showMenu(actionEl, "list", listId);
+              break;
+            case "rename-list":
+              hideMenu();
+              editListName(listId);
+              break;
+            case "delete-list":
+              hideMenu();
+              deleteList(listId);
+              break;
+            case "sort-custom":
+              sortMode = "custom";
+              hideMenu();
+              render();
+              break;
+            case "sort-date":
+              sortMode = "date";
+              hideMenu();
+              render();
+              toast("Sorted by date");
+              break;
+            case "sort-title":
+              sortMode = "title";
+              hideMenu();
+              render();
+              toast("Sorted by title");
+              break;
+            case "sort-starred":
+              sortMode = "starred";
+              hideMenu();
+              render();
+              toast("Starred tasks first");
+              break;
+            case "close-detail":
+              closeDetail();
+              break;
+            case "save-task":
+              saveTask();
+              break;
+            case "delete-task":
+              deleteTask(taskId);
+              break;
+            case "add-subtask": {
+              const container = $("#detailSubtasks");
+              const id = uid();
+              const row = document.createElement("div");
+              row.className = "subtask-row";
+              row.dataset.subtaskId = id;
+              row.innerHTML = `<input type="checkbox" data-action="toggle-subtask" data-subtask-id="${id}" /><input type="text" data-action="edit-subtask" data-subtask-id="${id}" placeholder="Subtask" aria-label="Subtask title" />`;
+              container.append(row);
+              $('input[type="text"]', row).focus();
+              break;
+            }
+            case "toggle-subtask": {
+              break;
+            }
+            case "edit-subtask":
+              break;
+          }
+        });
+        $("#allNav").addEventListener("click", () => {
+          activeView = "all";
+          activeListId = null;
+          render();
+        });
+        $("#starredNav").addEventListener("click", () => {
+          activeView = "starred";
+          activeListId = null;
+          render();
+        });
+        $("#createTaskBtn").addEventListener("click", () =>
+          addTask(state.lists[0]?.id || "my-tasks"),
+        );
+        $("#addListBtn").addEventListener("click", openListModal);
+        $("#collapseListsBtn").addEventListener("click", () => {
+          listsCollapsed = !listsCollapsed;
+          renderSidebar();
+        });
+        $("#sidebarToggle").addEventListener("click", () => {
+          const workspace = $("#workspace");
+          if (
+            currentView === "mobile" ||
+            window.matchMedia("(max-width: 650px)").matches
+          )
+            workspace.classList.toggle("mobile-sidebar-open");
+          else workspace.classList.toggle("sidebar-collapsed");
+        });
+        $("#detailBackdrop").addEventListener("click", closeDetail);
+        $("#modalCancel").addEventListener("click", closeListModal);
+        $("#modalBackdrop").addEventListener("click", (event) => {
+          if (event.target === $("#modalBackdrop")) closeListModal();
+        });
+        $("#listModal").addEventListener("submit", (event) => {
+          event.preventDefault();
+          const name = $("#listNameInput").value.trim();
+          if (!name) return;
+          const editId = $("#listModal").dataset.editId;
+          if (editId) {
+            const list = getList(editId);
+            if (list) list.name = name;
+            toast("List renamed");
+          } else {
+            const list = { id: uid(), name };
+            state.lists.push(list);
+            activeView = "list";
+            activeListId = list.id;
+            toast("List created");
+          }
+          save();
+          closeListModal();
+          render();
+        });
+        $("#searchInput").addEventListener("input", (event) => {
+          searchTerm = event.target.value.trim().toLowerCase();
+          render();
+        });
+        $("#sortBtn").addEventListener("click", (event) =>
+          showMenu(event.currentTarget, "sort"),
+        );
+        $("#refreshBtn").addEventListener("click", () => {
+          render();
+          toast("Up to date");
+        });
+        $("#themeToggle").addEventListener("click", () => {
+          document.body.classList.toggle("dark");
+          localStorage.setItem(
+            "google-tasks-theme",
+            document.body.classList.contains("dark") ? "dark" : "light",
+          );
+        });
+        $("#helpBtn").addEventListener("click", () =>
+          toast("Google Tasks Clone · Frontend demo"),
+        );
+        $("#calendarBtn").addEventListener("click", () =>
+          toast("Calendar integration is not connected in this demo"),
+        );
+        $("#appsBtn").addEventListener("click", () =>
+          toast("Google apps menu is a visual placeholder"),
+        );
+
+        // View switcher buttons
+        $("#desktopViewBtn").addEventListener("click", () =>
+          switchView("desktop"),
+        );
+        $("#mobileViewBtn").addEventListener("click", () =>
+          switchView("mobile"),
+        );
+
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") {
+            hideMenu();
+            closeListModal();
+            closeDetail();
+            $("#workspace").classList.remove("mobile-sidebar-open");
+          }
+          if (
+            event.key === "Enter" &&
+            event.target.classList.contains("task-row")
+          ) {
+            const id = event.target.dataset.taskId;
+            if (id) openTask(id);
+          }
+        });
+
+        // Load saved preferences
+        if (localStorage.getItem("google-tasks-theme") === "dark")
+          document.body.classList.add("dark");
+        const savedView = localStorage.getItem("google-tasks-view");
+        if (savedView === "mobile") {
+          switchView("mobile");
+        }
+
+        render();
+      })();
+    </script>
+  </body>
+</html>

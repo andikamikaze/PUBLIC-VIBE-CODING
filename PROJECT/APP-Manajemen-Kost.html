@@ -1,0 +1,4395 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aplikasi Manajemen Kost</title>
+    <style>
+      /* ============ RESET & TOKENS ============ */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --ink: #111111;
+        --ink-2: #3d3d3d;
+        --muted: #6b6b6b;
+        --faint: #9a9a9a;
+        --line: #e4e4e4;
+        --line-2: #d6d6d6;
+        --paper: #ffffff;
+        --bg: #fafafa;
+        --field: #ffffff;
+        --ok: #1a7f37;
+        --warn: #9a6700;
+        --bad: #c9380c;
+        --focus: #111111;
+        --sans: "Helvetica Neue", Helvetica, "Segoe UI", Arial, sans-serif;
+        --mono:
+          "SF Mono", "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        font-family: var(--sans);
+        color: var(--ink);
+        background: var(--bg);
+        font-size: 15px;
+        line-height: 1.55;
+      }
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+        color: inherit;
+      }
+      button {
+        cursor: pointer;
+        background: none;
+        border: none;
+      }
+      a {
+        color: inherit;
+      }
+
+      /* ============ LAYOUT ============ */
+      .app {
+        display: grid;
+        grid-template-columns: 228px 1fr;
+        min-height: 100vh;
+      }
+
+      /* ---- Sidebar ---- */
+      .sidebar {
+        background: var(--paper);
+        border-right: 1px solid var(--line);
+        display: flex;
+        flex-direction: column;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+      }
+      .brand {
+        padding: 22px 20px 18px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .brand .logo {
+        flex: none;
+        width: 34px;
+        height: 34px;
+      }
+      .brand-name {
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+      }
+      .brand-sub {
+        font-size: 10.5px;
+        color: var(--muted);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .nav {
+        padding: 14px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        flex: 1;
+      }
+      .nav-label {
+        font-size: 10.5px;
+        color: var(--faint);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        padding: 12px 10px 6px;
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px;
+        border-radius: 7px;
+        color: var(--ink-2);
+        text-decoration: none;
+        font-size: 13.5px;
+        font-weight: 500;
+        border: 1px solid transparent;
+        width: 100%;
+        text-align: left;
+      }
+      .nav-item svg {
+        flex: none;
+        width: 17px;
+        height: 17px;
+      }
+      .nav-item:hover {
+        background: var(--bg);
+        color: var(--ink);
+      }
+      .nav-item.active {
+        background: var(--ink);
+        color: #fff;
+      }
+      .nav-item .count {
+        margin-left: auto;
+        font-size: 10.5px;
+        font-weight: 700;
+        background: var(--bg);
+        color: var(--muted);
+        border: 1px solid var(--line);
+        border-radius: 99px;
+        padding: 0 7px;
+        line-height: 17px;
+        min-width: 20px;
+        text-align: center;
+      }
+      .nav-item.active .count {
+        background: rgba(255, 255, 255, 0.14);
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.25);
+      }
+      .sidebar-foot {
+        border-top: 1px solid var(--line);
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .foot-btn {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 12.5px;
+        font-weight: 500;
+        color: var(--ink-2);
+        padding: 7px 10px;
+        border-radius: 7px;
+        border: 1px solid transparent;
+        width: 100%;
+      }
+      .foot-btn svg {
+        width: 15px;
+        height: 15px;
+        flex: none;
+      }
+      .foot-btn:hover {
+        background: var(--bg);
+        border-color: var(--line);
+      }
+      .foot-note {
+        font-size: 10.5px;
+        color: var(--faint);
+        padding: 2px 10px 4px;
+      }
+
+      /* ---- Main ---- */
+      .main {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .topbar {
+        background: var(--paper);
+        border-bottom: 1px solid var(--line);
+        padding: 0 28px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        height: 60px;
+        position: sticky;
+        top: 0;
+        z-index: 30;
+      }
+      .topbar h1 {
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        margin-right: auto;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .topbar .crumb {
+        font-size: 11px;
+        color: var(--faint);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-right: auto;
+        display: none;
+      }
+
+      /* Search */
+      .searchbox {
+        position: relative;
+      }
+      .searchbox svg {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 14px;
+        height: 14px;
+        color: var(--faint);
+        pointer-events: none;
+      }
+      .searchbox input {
+        width: 250px;
+        max-width: 34vw;
+        border: 1px solid var(--line-2);
+        border-radius: 8px;
+        padding: 7px 10px 7px 32px;
+        font-size: 13px;
+        background: var(--bg);
+        outline: none;
+      }
+      .searchbox input:focus {
+        border-color: var(--ink);
+        background: var(--paper);
+      }
+
+      .content {
+        padding: 26px 28px 70px;
+        max-width: 1180px;
+        width: 100%;
+      }
+
+      /* ============ GENERIC UI ============ */
+      .page-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+      .page-head h2 {
+        font-size: 21px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .page-head .sub {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 2px;
+      }
+      .head-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      /* Buttons */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        border: 1px solid var(--line-2);
+        background: var(--paper);
+        padding: 7px 13px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+      .btn svg {
+        width: 14px;
+        height: 14px;
+        flex: none;
+      }
+      .btn:hover {
+        border-color: var(--ink);
+      }
+      .btn.primary {
+        background: var(--ink);
+        border-color: var(--ink);
+        color: #fff;
+      }
+      .btn.primary:hover {
+        background: #000;
+      }
+      .btn.sm {
+        padding: 4px 9px;
+        font-size: 12px;
+        border-radius: 6px;
+      }
+      .btn.sm svg {
+        width: 12px;
+        height: 12px;
+      }
+      .btn.ghost {
+        border-color: transparent;
+      }
+      .btn.ghost:hover {
+        border-color: var(--line-2);
+      }
+      .btn.danger {
+        color: var(--bad);
+      }
+      .btn.danger:hover {
+        border-color: var(--bad);
+      }
+      .btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      /* Cards & stats */
+      .card {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+      }
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 22px;
+      }
+      .stat {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 16px 18px;
+      }
+      .stat .lbl {
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .stat .lbl svg {
+        width: 13px;
+        height: 13px;
+      }
+      .stat .val {
+        font-size: 25px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        margin-top: 6px;
+        font-variant-numeric: tabular-nums;
+      }
+      .stat .hint {
+        font-size: 11.5px;
+        color: var(--faint);
+        margin-top: 3px;
+      }
+      .stat .hint b {
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      /* Tables */
+      .table-wrap {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .table-scroll {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13.5px;
+      }
+      thead th {
+        text-align: left;
+        font-size: 10.5px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 600;
+        padding: 11px 14px;
+        border-bottom: 1px solid var(--line);
+        background: var(--paper);
+        white-space: nowrap;
+      }
+      tbody td {
+        padding: 11px 14px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: middle;
+      }
+      tbody tr:last-child td {
+        border-bottom: none;
+      }
+      tbody tr:hover {
+        background: #f6f6f6;
+      }
+      td.num,
+      th.num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      td .sub {
+        display: block;
+        font-size: 11.5px;
+        color: var(--faint);
+        margin-top: 1px;
+      }
+      .row-actions {
+        display: flex;
+        gap: 4px;
+        justify-content: flex-end;
+      }
+      .icon-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        border: 1px solid transparent;
+      }
+      .icon-btn svg {
+        width: 14px;
+        height: 14px;
+      }
+      .icon-btn:hover {
+        color: var(--ink);
+        border-color: var(--line-2);
+        background: var(--paper);
+      }
+      .icon-btn.danger:hover {
+        color: var(--bad);
+        border-color: var(--bad);
+      }
+      .empty {
+        padding: 42px 20px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .empty svg {
+        width: 30px;
+        height: 30px;
+        color: var(--line-2);
+        margin-bottom: 8px;
+      }
+
+      /* Badges & chips */
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        border: 1px solid;
+        border-radius: 99px;
+        padding: 2px 9px;
+        white-space: nowrap;
+      }
+      .badge::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      .badge svg {
+        width: 11px;
+        height: 11px;
+        flex: none;
+      }
+      .badge.b-occupied {
+        color: #1a4fa0;
+        border-color: #c4d4ee;
+        background: #eef3fb;
+      }
+      .badge.b-vacant {
+        color: var(--muted);
+        border-color: var(--line-2);
+        background: var(--bg);
+      }
+      .badge.b-paid {
+        color: var(--ok);
+        border-color: #bfe0c8;
+        background: #eff7f1;
+      }
+      .badge.b-due {
+        color: var(--warn);
+        border-color: #ecd9a9;
+        background: #faf4e3;
+      }
+      .badge.b-late {
+        color: var(--bad);
+        border-color: #eec5b5;
+        background: #fdf0ea;
+      }
+      .badge.b-open {
+        color: var(--warn);
+        border-color: #ecd9a9;
+        background: #faf4e3;
+      }
+      .badge.b-progress {
+        color: #1a4fa0;
+        border-color: #c4d4ee;
+        background: #eef3fb;
+      }
+      .badge.b-done {
+        color: var(--ok);
+        border-color: #bfe0c8;
+        background: #eff7f1;
+      }
+      .badge.b-util {
+        color: #6b4fa0;
+        border-color: #d7ccec;
+        background: #f3effa;
+      }
+      .badge.plain::before {
+        display: none;
+      }
+
+      /* Filters */
+      .filters {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .seg {
+        display: inline-flex;
+        border: 1px solid var(--line-2);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--paper);
+      }
+      .seg button {
+        padding: 6px 12px;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--muted);
+        border-right: 1px solid var(--line);
+      }
+      .seg button:last-child {
+        border-right: none;
+      }
+      .seg button:hover {
+        color: var(--ink);
+      }
+      .seg button.on {
+        background: var(--ink);
+        color: #fff;
+      }
+      .select {
+        border: 1px solid var(--line-2);
+        border-radius: 8px;
+        background: var(--paper);
+        padding: 6px 10px;
+        font-size: 12.5px;
+        font-weight: 500;
+        outline: none;
+      }
+
+      /* Forms */
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        margin-bottom: 14px;
+      }
+      .field label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ink-2);
+      }
+      .field .req {
+        color: var(--bad);
+      }
+      .input,
+      .field input,
+      .field select,
+      .field textarea {
+        border: 1px solid var(--line-2);
+        border-radius: 8px;
+        padding: 8px 11px;
+        font-size: 13.5px;
+        background: var(--field);
+        outline: none;
+        width: 100%;
+      }
+      .field textarea {
+        resize: vertical;
+        min-height: 74px;
+      }
+      .field input:focus,
+      .field select:focus,
+      .field textarea:focus {
+        border-color: var(--ink);
+      }
+      .field .help {
+        font-size: 11px;
+        color: var(--faint);
+      }
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 16px;
+      }
+      .form-grid .full {
+        grid-column: 1 / -1;
+      }
+      .check {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+        font-size: 13px;
+        color: var(--ink-2);
+        cursor: pointer;
+      }
+      .check input {
+        margin-top: 2px;
+        accent-color: var(--ink);
+      }
+
+      /* Modal */
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(17, 17, 17, 0.42);
+        display: none;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 6vh 16px 16px;
+        z-index: 100;
+        overflow-y: auto;
+      }
+      .overlay.open {
+        display: flex;
+      }
+      .modal {
+        background: var(--paper);
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        width: 100%;
+        max-width: 560px;
+        box-shadow: 0 18px 50px rgba(17, 17, 17, 0.18);
+        animation: rise 0.16s ease-out;
+      }
+      @keyframes rise {
+        from {
+          transform: translateY(10px);
+          opacity: 0;
+        }
+        to {
+          transform: none;
+          opacity: 1;
+        }
+      }
+      .modal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px 0;
+      }
+      .modal-head h3 {
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      .modal-body {
+        padding: 16px 20px 4px;
+      }
+      .modal-foot {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        padding: 14px 20px 18px;
+        border-top: 1px solid var(--line);
+        margin-top: 12px;
+      }
+      .modal.wide {
+        max-width: 720px;
+      }
+
+      /* Toast */
+      .toast {
+        position: fixed;
+        bottom: 22px;
+        left: 50%;
+        transform: translateX(-50%) translateY(8px);
+        background: var(--ink);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 500;
+        border-radius: 9px;
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.2s ease;
+        z-index: 200;
+        box-shadow: 0 8px 24px rgba(17, 17, 17, 0.25);
+        max-width: 90vw;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+      .toast svg {
+        width: 14px;
+        height: 14px;
+        flex: none;
+      }
+
+      /* Dashboard layout */
+      .dash-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      .card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line);
+      }
+      .card-head h3 {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+      .card-head a,
+      .card-head .link {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+        text-decoration: none;
+      }
+      .card-head a:hover,
+      .card-head .link:hover {
+        color: var(--ink);
+      }
+      .card-body {
+        padding: 8px 6px;
+      }
+      .card-body.tight {
+        padding: 14px 16px;
+      }
+
+      /* Due list */
+      .due-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--line);
+      }
+      .due-item:last-child {
+        border-bottom: none;
+      }
+      .due-item .who {
+        flex: 1;
+        min-width: 0;
+      }
+      .due-item .who .n {
+        font-size: 13.5px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .due-item .who .m {
+        font-size: 11.5px;
+        color: var(--faint);
+      }
+      .due-item .amt {
+        font-size: 13.5px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Room grid */
+      .room-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
+        gap: 12px;
+      }
+      .room-cell {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        padding: 13px 14px;
+        cursor: pointer;
+        position: relative;
+        transition: border-color 0.12s;
+      }
+      .room-cell:hover {
+        border-color: var(--ink);
+      }
+      .room-cell .rn {
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .room-cell .rn .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+      .room-cell .rt {
+        font-size: 11.5px;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+      .room-cell .rp {
+        font-size: 12.5px;
+        font-weight: 600;
+        margin-top: 8px;
+        font-variant-numeric: tabular-nums;
+      }
+      .room-cell .rc {
+        font-size: 11px;
+        color: var(--faint);
+        margin-top: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* SVG chart bits */
+      .chart-wrap {
+        padding: 16px;
+      }
+      .legend {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        font-size: 11.5px;
+        color: var(--muted);
+      }
+      .legend .item {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .legend .sw {
+        width: 9px;
+        height: 9px;
+        border-radius: 2px;
+      }
+      .bar-label {
+        font-size: 10px;
+        fill: var(--muted);
+        font-family: var(--sans);
+      }
+      .bar-val {
+        font-size: 10px;
+        font-weight: 700;
+        fill: var(--ink);
+        font-family: var(--sans);
+      }
+
+      /* Receipt */
+      .receipt {
+        font-family: var(--sans);
+      }
+      .receipt .rc-head {
+        text-align: center;
+        border-bottom: 2px solid var(--ink);
+        padding-bottom: 12px;
+        margin-bottom: 14px;
+      }
+      .receipt .rc-head .t {
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      .receipt .rc-head .s {
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-top: 3px;
+      }
+      .receipt .rc-meta {
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 14px;
+      }
+      .receipt .rc-rows {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .receipt .rc-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--line);
+        font-size: 13px;
+      }
+      .receipt .rc-row:last-child {
+        border-bottom: none;
+        background: var(--bg);
+        font-weight: 700;
+      }
+      .receipt .rc-total {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 12px;
+        font-weight: 700;
+        font-size: 14.5px;
+      }
+      .receipt .rc-note {
+        font-size: 11px;
+        color: var(--faint);
+        margin-top: 12px;
+        line-height: 1.5;
+      }
+      .receipt .rc-foot {
+        margin-top: 18px;
+        text-align: center;
+        font-size: 11px;
+        color: var(--faint);
+      }
+
+      /* Kwitansi print */
+      @media print {
+        body.printing .app {
+          display: none;
+        }
+        body.printing .print-area {
+          display: block !important;
+        }
+        .print-area {
+          display: none;
+        }
+        @page {
+          margin: 18mm 16mm;
+        }
+      }
+      .print-area {
+        display: none;
+      }
+
+      /* Responsive */
+      .menu-btn {
+        display: none;
+      }
+      .scrim {
+        display: none;
+      }
+      @media (max-width: 980px) {
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .dash-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (max-width: 760px) {
+        .app {
+          grid-template-columns: 1fr;
+        }
+        .sidebar {
+          position: fixed;
+          left: 0;
+          top: 0;
+          bottom: 0;
+          width: 250px;
+          z-index: 60;
+          transform: translateX(-102%);
+          transition: transform 0.2s ease;
+          box-shadow: 0 0 0 100vmax rgba(17, 17, 17, 0);
+        }
+        .sidebar.open {
+          transform: none;
+          box-shadow: 24px 0 60px rgba(17, 17, 17, 0.16);
+        }
+        .menu-btn {
+          display: inline-flex;
+        }
+        .topbar {
+          padding: 0 16px;
+        }
+        .topbar h1 {
+          font-size: 15px;
+        }
+        .content {
+          padding: 18px 16px 60px;
+        }
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+        .searchbox input {
+          width: 100%;
+          max-width: none;
+        }
+        .searchbox {
+          flex: 1;
+        }
+        .scrim {
+          position: fixed;
+          inset: 0;
+          background: rgba(17, 17, 17, 0.38);
+          z-index: 55;
+          display: none;
+        }
+        .scrim.show {
+          display: block;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar" id="sidebar">
+        <div class="brand">
+          <svg
+            class="logo"
+            viewBox="0 0 34 34"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <rect
+              x="1.5"
+              y="1.5"
+              width="31"
+              height="31"
+              rx="6"
+              stroke="#111"
+              stroke-width="2"
+            />
+            <path
+              d="M8 25V15.5L17 9l9 6.5V25"
+              stroke="#111"
+              stroke-width="2"
+              stroke-linejoin="round"
+            />
+            <path d="M13.5 25v-6h7v6" stroke="#111" stroke-width="2" />
+          </svg>
+          <div>
+            <div class="brand-name">Kelola Kost</div>
+            <div class="brand-sub">Manajemen Kos</div>
+          </div>
+        </div>
+        <nav class="nav" id="nav"></nav>
+        <div class="sidebar-foot">
+          <button class="foot-btn" id="btn-export"></button>
+          <button class="foot-btn" id="btn-import"></button>
+          <button class="foot-btn" id="btn-reset"></button>
+          <div class="foot-note">
+            Data tersimpan lokal di peramban (localStorage).
+          </div>
+        </div>
+      </aside>
+      <div class="scrim" id="scrim"></div>
+      <main class="main">
+        <header class="topbar">
+          <button
+            class="icon-btn menu-btn"
+            id="menu-btn"
+            aria-label="Buka menu"
+          ></button>
+          <h1 id="page-title">Dasbor</h1>
+          <div class="searchbox" id="searchbox"></div>
+        </header>
+        <div class="content" id="view"></div>
+      </main>
+    </div>
+
+    <div class="overlay" id="overlay">
+      <div class="modal" id="modal" role="dialog" aria-modal="true"></div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <div class="print-area" id="print-area"></div>
+    <input type="file" id="import-file" accept="application/json" hidden />
+
+    <script>
+      "use strict";
+
+      /* ===== Kelola Kost — aplikasi manajemen kost satu berkas ===== */
+      /* ===================== ICONS (stroke SVG, 24x24 viewBox) ===================== */
+      const I = {
+        dash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7.5" height="9.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="5.5" rx="1.5"/><rect x="13.5" y="11.5" width="7.5" height="9.5" rx="1.5"/><rect x="3" y="15" width="7.5" height="6" rx="1.5"/></svg>',
+        door: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21h16"/><path d="M6 21V4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21"/><path d="M14.5 12h.01"/></svg>',
+        users:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c.5-3.4 2.8-5.2 5.5-5.2s5 1.8 5.5 5.2"/><circle cx="16.5" cy="9" r="2.6"/><path d="M16.2 14.6c2.4.2 4 1.8 4.4 4.4"/></svg>',
+        pay: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/></svg>',
+        bolt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13l0-8z"/></svg>',
+        wrench:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4.5 4.5 0 0 0-6.01 5.06L3.5 16.55a2 2 0 1 0 2.83 2.83l4.99-4.99A4.5 4.5 0 0 0 17.19 9.9l-2.7 1.1-2.05-2.05 1.06-2.45z"/></svg>',
+        chart:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16h16"/><path d="M8 16v-5"/><path d="M12.5 16V7"/><path d="M17 16v-3"/></svg>',
+        search:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.4-4.4"/></svg>',
+        plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+        edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>',
+        trash:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>',
+        x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+        check:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 12.5 5 5L19.5 7"/></svg>',
+        print:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3.5h12V9"/><rect x="3" y="9" width="18" height="8" rx="1.5"/><path d="M6 14.5h12V21H6z"/><path d="M17.5 12h.01"/></svg>',
+        down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12m0 0 5-5m-5 5-5-5"/><path d="M4 20h16"/></svg>',
+        up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V8m0 0-5 5m5-5 5 5"/><path d="M4 4h16"/></svg>',
+        reset:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6L3.5 8.5"/><path d="M3.5 3.5v5h5"/></svg>',
+        clock:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/></svg>',
+        wallet:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M16 12.5h2"/><path d="M3 9.5h18"/></svg>',
+        home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11 12 4l8 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-6h4v6"/></svg>',
+        menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
+        inbox:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 13.5 6 5h12l2.5 8.5V19a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 19v-5.5z"/><path d="M3.5 13.5H9a3 3 0 0 0 6 0h5.5"/></svg>',
+        drop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5S5.5 10 5.5 14.5a6.5 6.5 0 0 0 13 0C18.5 10 12 3.5 12 3.5z"/></svg>',
+        cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M3.5 10h17M8 2.8V7M16 2.8V7"/></svg>',
+        phone:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l1.5 4.5-2.2 1.6a12.5 12.5 0 0 0 5.6 5.6l1.6-2.2L20 15v4a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 3 6.2 2 2 0 0 1 5 4z"/></svg>',
+        doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4.5 4.5V21H6z"/><path d="M14 3v4.5h4.5"/><path d="M9 13h6M9 16.5h6"/></svg>',
+        info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/></svg>',
+      };
+
+      /* ===================== UTIL ===================== */
+      const $ = (s, el) => (el || document).querySelector(s);
+      const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
+      const MONTHS = [
+        "Januari",
+        "Februari",
+        "Maret",
+        "April",
+        "Mei",
+        "Juni",
+        "Juli",
+        "Agustus",
+        "September",
+        "Oktober",
+        "November",
+        "Desember",
+      ];
+      const MONTHS_S = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "Mei",
+        "Jun",
+        "Jul",
+        "Agu",
+        "Sep",
+        "Okt",
+        "Nov",
+        "Des",
+      ];
+
+      function esc(s) {
+        return String(s == null ? "" : s).replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      }
+      function rp(n) {
+        n = Number(n) || 0;
+        return "Rp " + n.toLocaleString("id-ID");
+      }
+      function pad2(n) {
+        return String(n).padStart(2, "0");
+      }
+      function ymLabel(ym) {
+        const [y, m] = String(ym).split("-");
+        return MONTHS[Number(m) - 1] + " " + y;
+      }
+      function ymShort(ym) {
+        const [y, m] = String(ym).split("-");
+        return MONTHS_S[Number(m) - 1] + " " + String(y).slice(2);
+      }
+      function dLabel(iso) {
+        if (!iso) return "—";
+        const [y, m, d] = iso.split("-");
+        return Number(d) + " " + MONTHS_S[Number(m) - 1] + " " + y;
+      }
+      function todayISO() {
+        const t = new Date();
+        return (
+          t.getFullYear() +
+          "-" +
+          pad2(t.getMonth() + 1) +
+          "-" +
+          pad2(t.getDate())
+        );
+      }
+      function curYM() {
+        return todayISO().slice(0, 7);
+      }
+      function addMonthsYM(ym, k) {
+        let [y, m] = ym.split("-").map(Number);
+        m += k;
+        y += Math.floor((m - 1) / 12);
+        m = ((((m - 1) % 12) + 12) % 12) + 1;
+        return y + "-" + pad2(m);
+      }
+      function daysBetween(a, b) {
+        return Math.round((new Date(b) - new Date(a)) / 86400000);
+      }
+      function uid(prefix) {
+        return (
+          (prefix || "id") +
+          "_" +
+          Date.now().toString(36) +
+          Math.random().toString(36).slice(2, 7)
+        );
+      }
+      function firstStartYM(k) {
+        // k months back including current
+        return addMonthsYM(curYM(), -(k - 1));
+      }
+      function monthList(k) {
+        const out = [];
+        for (let i = k - 1; i >= 0; i--) out.push(addMonthsYM(curYM(), -i));
+        return out;
+      }
+      function debounce(fn, ms) {
+        let t;
+        return function () {
+          clearTimeout(t);
+          t = setTimeout(() => fn.apply(this, arguments), ms);
+        };
+      }
+
+      /* ===================== STORE ===================== */
+      const LS_KEY = "kelola-kost-v1";
+      let DB = null;
+
+      const SEED = {
+        rooms: [
+          {
+            id: "r01",
+            no: "A1",
+            type: "Standar",
+            price: 850000,
+            status: "occupied",
+            note: "Kamar depan, dekat pintu masuk",
+          },
+          {
+            id: "r02",
+            no: "A2",
+            type: "Standar",
+            price: 850000,
+            status: "vacant",
+            note: "",
+          },
+          {
+            id: "r03",
+            no: "A3",
+            type: "Standar",
+            price: 850000,
+            status: "occupied",
+            note: "",
+          },
+          {
+            id: "r04",
+            no: "A4",
+            type: "Kamar Dalam",
+            price: 950000,
+            status: "occupied",
+            note: "Jendela menghadap taman",
+          },
+          {
+            id: "r05",
+            no: "B1",
+            type: "Standar",
+            price: 850000,
+            status: "occupied",
+            note: "",
+          },
+          {
+            id: "r06",
+            no: "B2",
+            type: "Standar",
+            price: 850000,
+            status: "vacant",
+            note: "Renovasi kamar mandi selesai",
+          },
+          {
+            id: "r07",
+            no: "B3",
+            type: "Kamar Dalam",
+            price: 950000,
+            status: "occupied",
+            note: "",
+          },
+          {
+            id: "r08",
+            no: "B4",
+            type: "Kamar Dalam",
+            price: 950000,
+            status: "occupied",
+            note: "",
+          },
+          {
+            id: "r09",
+            no: "C1",
+            type: "Luas + AC",
+            price: 1250000,
+            status: "occupied",
+            note: "AC 1 PK, listrik token",
+          },
+          {
+            id: "r10",
+            no: "C2",
+            type: "Luas + AC",
+            price: 1250000,
+            status: "occupied",
+            note: "AC 1 PK, listrik token",
+          },
+          {
+            id: "r11",
+            no: "C3",
+            type: "Luas + AC",
+            price: 1250000,
+            status: "vacant",
+            note: "",
+          },
+          {
+            id: "r12",
+            no: "C4",
+            type: "Attic",
+            price: 700000,
+            status: "occupied",
+            note: "Lantai atas, langit rendah",
+          },
+        ],
+        tenants: [
+          {
+            id: "t01",
+            roomId: "r01",
+            name: "Budi Santoso",
+            phone: "0812-1111-2201",
+            emergency: "0812-9000-0011",
+            origin: "Klaten",
+            job: "Karyawan swasta",
+            start: "2025-02-01",
+            note: "Bayar rutin tepat waktu",
+          },
+          {
+            id: "t02",
+            roomId: "r03",
+            name: "Siti Rahmawati",
+            phone: "0813-2222-3302",
+            emergency: "",
+            origin: "Boyolali",
+            job: "Mahasiswa",
+            start: "2025-07-01",
+            note: "",
+          },
+          {
+            id: "t03",
+            roomId: "r04",
+            name: "Agus Prasetyo",
+            phone: "0857-3333-4403",
+            emergency: "0857-9000-0044",
+            origin: "Sragen",
+            job: "Driver ojol",
+            start: "2024-11-01",
+            note: "Sering pulang malam",
+          },
+          {
+            id: "t04",
+            roomId: "r05",
+            name: "Dewi Lestari",
+            phone: "0821-4444-5504",
+            emergency: "",
+            origin: "Solo",
+            job: "Guru honorer",
+            start: "2025-04-01",
+            note: "",
+          },
+          {
+            id: "t05",
+            roomId: "r07",
+            name: "Rian Hidayat",
+            phone: "0896-5555-6605",
+            emergency: "0896-9000-0077",
+            origin: "Karanganyar",
+            job: "Teknisi",
+            start: "2025-01-15",
+            note: "Langganan token listrik 100rb",
+          },
+          {
+            id: "t06",
+            roomId: "r08",
+            name: "Putri Amelia",
+            phone: "0812-6666-7706",
+            emergency: "",
+            origin: "Wonogiri",
+            job: "Mahasiswa",
+            start: "2025-08-01",
+            note: "",
+          },
+          {
+            id: "t07",
+            roomId: "r09",
+            name: "Hendra Wijaya",
+            phone: "0838-7777-8807",
+            emergency: "0838-9000-0088",
+            origin: "Semarang",
+            job: "Wirausaha",
+            start: "2024-08-01",
+            note: "Langganan token 200rb",
+          },
+          {
+            id: "t08",
+            roomId: "r10",
+            name: "Maya Kirana",
+            phone: "0819-8888-9908",
+            emergency: "",
+            origin: "Kudus",
+            job: "Karyawan bank",
+            start: "2025-06-01",
+            note: "",
+          },
+          {
+            id: "t09",
+            roomId: "r12",
+            name: "Fajar Nugroho",
+            phone: "0852-1234-5609",
+            emergency: "",
+            origin: "Magelang",
+            job: "Mahasiswa",
+            start: "2025-09-01",
+            note: "Kamar attic, tarif khusus",
+          },
+          {
+            id: "t10",
+            roomId: "r02",
+            name: "Eko Saputro",
+            phone: "0813-5566-7710",
+            emergency: "",
+            origin: "Delanggu",
+            job: "Karyawan pabrik",
+            start: "2025-03-01",
+            end: "2025-10-31",
+            note: "Keluar Oktober, kamar dikosongkan",
+          },
+        ],
+        payments: [], // filled below
+        utils: [
+          {
+            id: "u01",
+            roomId: "r09",
+            ym: "2026-10",
+            kind: "listrik",
+            meter: 2140,
+            amount: 200000,
+            date: "2026-10-08",
+            note: "Token 200rb",
+          },
+          {
+            id: "u02",
+            roomId: "r09",
+            ym: "2026-11",
+            kind: "listrik",
+            meter: 2310,
+            amount: 200000,
+            date: "2026-11-05",
+            note: "Token 200rb",
+          },
+          {
+            id: "u03",
+            roomId: "r10",
+            ym: "2026-11",
+            kind: "listrik",
+            meter: 1780,
+            amount: 150000,
+            date: "2026-11-06",
+            note: "Token 150rb",
+          },
+          {
+            id: "u04",
+            roomId: "r01",
+            ym: "2026-11",
+            kind: "listrik",
+            meter: 962,
+            amount: 100000,
+            date: "2026-11-07",
+            note: "Token 100rb",
+          },
+          {
+            id: "u05",
+            roomId: "r07",
+            ym: "2026-11",
+            kind: "listrik",
+            meter: 1350,
+            amount: 100000,
+            date: "2026-11-07",
+            note: "Token 100rb",
+          },
+          {
+            id: "u06",
+            roomId: "r04",
+            ym: "2026-11",
+            kind: "air",
+            meter: null,
+            amount: 45000,
+            date: "2026-11-10",
+            note: "PDAM bagian 4 orang",
+          },
+          {
+            id: "u07",
+            roomId: "r05",
+            ym: "2026-10",
+            kind: "air",
+            meter: null,
+            amount: 45000,
+            date: "2026-10-12",
+            note: "",
+          },
+          {
+            id: "u08",
+            roomId: "r03",
+            ym: "2026-11",
+            kind: "air",
+            meter: null,
+            amount: 45000,
+            date: "2026-11-09",
+            note: "",
+          },
+        ],
+        complaints: [
+          {
+            id: "c01",
+            roomId: "r03",
+            tenantId: "t02",
+            title: "Keran kamar mandi bocor",
+            desc: "Keran air panas menetes terus sejak kemarin malam, lantai jadi becek.",
+            date: "2026-11-05",
+            status: "open",
+            cost: 0,
+            resolution: "",
+          },
+          {
+            id: "c02",
+            roomId: "r08",
+            tenantId: "t06",
+            title: "Lampu kamar mati",
+            desc: "Lampu plafon berkedip lalu mati total. Sementara pakai lampu belajar.",
+            date: "2026-11-08",
+            status: "progress",
+            cost: 0,
+            resolution: "",
+          },
+          {
+            id: "c03",
+            roomId: "r12",
+            tenantId: "t09",
+            title: "Jendela sulit ditutup",
+            desc: "Engsel jendela berkarat, harus didorong keras sekali.",
+            date: "2026-10-28",
+            status: "done",
+            cost: 85000,
+            resolution: "Engsel diganti baru oleh tukang (Pak Darto).",
+          },
+          {
+            id: "c04",
+            roomId: "r05",
+            tenantId: "t04",
+            title: "Gorden sobek",
+            desc: "Gorden ruangan robek bagian bawah.",
+            date: "2026-10-15",
+            status: "done",
+            cost: 60000,
+            resolution: "Gorden baru dijahit, dipasang 17 Okt.",
+          },
+          {
+            id: "c05",
+            roomId: "r01",
+            tenantId: "t01",
+            title: "Kunci pintu macet",
+            desc: "Kunci pintu depan susah diputar, kadang harus diangkat.",
+            date: "2026-11-12",
+            status: "open",
+            cost: 0,
+            resolution: "",
+          },
+        ],
+        settings: {
+          name: "Kost Putri Melati",
+          address: "Jl. Melati No. 12, Ketandan, Klaten",
+          owner: "Ibu Sri Wahyuni",
+          phone: "0812-3456-7890",
+          dueDay: 10,
+        },
+      };
+
+      // Seed payments: Jun..Nov 2026, current month partially paid
+      (function seedPayments() {
+        const yms = monthList(6); // last 6 months incl current
+        const paidFlag = {
+          t01: 1,
+          t03: 1,
+          t04: 1,
+          t05: 1,
+          t07: 1,
+          t08: 1,
+          t02: 0,
+          t06: 0,
+          t09: 0,
+        };
+        let n = 0;
+        yms.forEach((ym) => {
+          SEED.tenants.forEach((t) => {
+            if (t.end && t.end < ym + "-01") return;
+            if (t.start > ym + "-28") return;
+            const room = SEED.rooms.find((r) => r.id === t.roomId);
+            if (!room) return;
+            const isCur = ym === curYM();
+            let paid = true,
+              payDate = ym + "-" + pad2(Math.min(5 + (n % 6), 28));
+            if (isCur) {
+              paid = !!paidFlag[t.id];
+              payDate = paid ? ym + "-" + pad2(3 + (n % 5)) : null;
+            } else if (ym === yms[4] && t.id === "t03") {
+              // Agus paid late in Oct
+              payDate = ym + "-19";
+            } else if (ym === yms[3] && t.id === "t02") {
+              paid = false;
+              payDate = null; // Siti missed Sep, then left debt (paid next month)
+            }
+            if (!paid) return;
+            SEED.payments.push({
+              id: "p" + ++n,
+              tenantId: t.id,
+              roomId: room.id,
+              ym,
+              amount: room.price,
+              date: payDate,
+              method: ["tunai", "transfer", "tunai", "transfer", "tunai"][
+                n % 5
+              ],
+              note: "",
+            });
+          });
+        });
+        // Siti paid Sep arrears in Oct (separate record)
+        const sRoom = SEED.rooms.find((r) => r.id === "r03");
+        SEED.payments.push({
+          id: "p" + ++n,
+          tenantId: "t02",
+          roomId: "r03",
+          ym: yms[3],
+          amount: 850000,
+          date: yms[4] + "-04",
+          method: "transfer",
+          note: "Pelunasan tunggakan Sep",
+        });
+      })();
+
+      function saveDB() {
+        try {
+          localStorage.setItem(LS_KEY, JSON.stringify(DB));
+        } catch (e) {
+          /* storage penuh / diblokir: lanjutkan dengan data di memori */
+        }
+      }
+      function normalizeDB(d) {
+        // Pastikan semua koleksi & pengaturan ada, apa pun sumbernya (lama, impor, rusak)
+        const base = JSON.parse(JSON.stringify(SEED));
+        if (!d || typeof d !== "object") return base;
+        const arr = (v) => (Array.isArray(v) ? v : []);
+        const out = {
+          rooms: arr(d.rooms),
+          tenants: arr(d.tenants),
+          payments: arr(d.payments),
+          utils: arr(d.utils),
+          complaints: arr(d.complaints),
+          settings: Object.assign(
+            {},
+            base.settings,
+            d.settings && typeof d.settings === "object" ? d.settings : {},
+          ),
+        };
+        if (!out.rooms.length && !out.tenants.length) return base; // data kosong tak berguna -> seed
+        return out;
+      }
+      function loadDB() {
+        try {
+          const raw = localStorage.getItem(LS_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            const data =
+              parsed && parsed.data && typeof parsed.data === "object"
+                ? parsed.data
+                : parsed; // dukung format ekspor {app,data}
+            DB = normalizeDB(data);
+            return;
+          }
+        } catch (e) {
+          /* JSON rusak / storage diblokir: jatuh ke seed */
+        }
+        DB = JSON.parse(JSON.stringify(SEED));
+        saveDB();
+      }
+
+      /* ===================== LOOKUPS ===================== */
+      const roomById = (id) => DB.rooms.find((r) => r.id === id);
+      const tenantById = (id) => DB.tenants.find((t) => t.id === id);
+      const tenantByRoom = (rid) =>
+        DB.tenants.find((t) => t.roomId === rid && !t.end);
+      function roomNo(rid) {
+        const r = roomById(rid);
+        return r ? r.no : "—";
+      }
+      function activeTenants() {
+        return DB.tenants.filter((t) => !t.end);
+      }
+
+      /* Occupancy: current month payment status per active tenant */
+      function payStatus(tenantId, ym) {
+        const t = tenantById(tenantId);
+        if (!t) return "none";
+        if (t.start > ym + "-28") return "none";
+        if (t.end && t.end < ym + "-01") return "none";
+        const rec = DB.payments.find(
+          (p) => p.tenantId === tenantId && p.ym === ym,
+        );
+        if (rec) return "paid";
+        const due = DB.settings.dueDay || 10;
+        const now = todayISO();
+        if (ym < curYM()) return "late";
+        if (now > ym + "-" + pad2(due)) return "late";
+        return "due";
+      }
+      function payStatusBadge(st) {
+        if (st === "paid") return '<span class="badge b-paid">Lunas</span>';
+        if (st === "late") return '<span class="badge b-late">Terlambat</span>';
+        if (st === "due") return '<span class="badge b-due">Belum bayar</span>';
+        return '<span class="badge b-vacant plain">—</span>';
+      }
+      function activeTenantCount() {
+        return activeTenants().length;
+      }
+      function occupiedCount() {
+        return DB.rooms.filter((r) => r.status === "occupied").length;
+      }
+
+      /* Month income: rent payments whose "month" == ym (regardless of pay date) */
+      function rentIncome(ym) {
+        return DB.payments
+          .filter((p) => p.ym === ym)
+          .reduce((s, p) => s + (Number(p.amount) || 0), 0);
+      }
+      function utilIncome(ym) {
+        return DB.utils
+          .filter((u) => u.ym === ym)
+          .reduce((s, u) => s + (Number(u.amount) || 0), 0);
+      }
+      function monthIncome(ym) {
+        return rentIncome(ym) + utilIncome(ym);
+      }
+      function expectedRent(ym) {
+        return activeTenants()
+          .filter((t) => t.start <= ym + "-28")
+          .reduce((s, t) => {
+            const r = roomById(t.roomId);
+            return s + ((r && r.price) || 0);
+          }, 0);
+      }
+      /* Complaint cost spent in a given ym (by resolution presence & status done) */
+      function complaintCost(ym) {
+        return DB.complaints
+          .filter(
+            (c) => c.status === "done" && (c.date || "").slice(0, 7) === ym,
+          )
+          .reduce((s, c) => s + (Number(c.cost) || 0), 0);
+      }
+
+      /* ===================== TOAST & MODAL ===================== */
+      let toastTimer;
+      function toast(msg, icon) {
+        const el = $("#toast");
+        el.innerHTML = (I[icon] || I.check) + "<span>" + esc(msg) + "</span>";
+        el.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
+      }
+      function openModal(html) {
+        $("#modal").innerHTML = html;
+        $("#overlay").classList.add("open");
+        const f = $("#modal input, #modal select, #modal textarea");
+        if (f) setTimeout(() => f.focus(), 40);
+      }
+      function closeModal() {
+        $("#overlay").classList.remove("open");
+        $("#modal").innerHTML = "";
+      }
+      function modalShell(title, bodyHtml, footHtml, wide) {
+        return (
+          '<div class="modal-head"><h3>' +
+          esc(title) +
+          '</h3><button class="icon-btn" data-close="1" aria-label="Tutup">' +
+          I.x +
+          "</button></div>" +
+          '<div class="modal-body">' +
+          bodyHtml +
+          "</div>" +
+          '<div class="modal-foot">' +
+          (footHtml || '<button class="btn" data-close="1">Tutup</button>') +
+          "</div>"
+        );
+      }
+      document.addEventListener("click", (e) => {
+        const c = e.target.closest("[data-close]");
+        if (c) {
+          closeModal();
+          return;
+        }
+        if (e.target === $("#overlay")) closeModal();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeModal();
+      });
+
+      /* ===================== NAV & ROUTER ===================== */
+      const PAGES = [
+        { id: "dash", label: "Dasbor", icon: "dash", title: "Dasbor" },
+        { id: "rooms", label: "Kamar", icon: "door", title: "Database Kamar" },
+        {
+          id: "tenants",
+          label: "Penyewa",
+          icon: "users",
+          title: "Data Penyewa",
+        },
+        {
+          id: "payments",
+          label: "Pembayaran",
+          icon: "pay",
+          title: "Pembayaran Bulanan",
+        },
+        {
+          id: "utils",
+          label: "Listrik & Air",
+          icon: "bolt",
+          title: "Token Listrik & Tagihan Air",
+        },
+        {
+          id: "complaints",
+          label: "Pengaduan",
+          icon: "wrench",
+          title: "Pengaduan Fasilitas",
+        },
+        {
+          id: "reports",
+          label: "Laporan",
+          icon: "chart",
+          title: "Rekapitulasi Pendapatan",
+        },
+      ];
+      let route = { page: "dash" };
+      let searchTerm = "";
+
+      function renderNav() {
+        const counts = {
+          rooms: DB.rooms.length,
+          tenants: activeTenantCount(),
+          payments: DB.payments.filter((p) => p.ym === curYM()).length,
+          utils: DB.utils.filter((u) => u.ym === curYM()).length,
+          complaints: DB.complaints.filter((c) => c.status !== "done").length,
+        };
+        const html = ['<div class="nav-label">Menu Utama</div>'];
+        PAGES.slice(0, 3).forEach((p) => {
+          html.push(
+            '<button class="nav-item' +
+              (route.page === p.id ? " active" : "") +
+              '" data-nav="' +
+              p.id +
+              '">' +
+              I[p.icon] +
+              "<span>" +
+              p.label +
+              "</span>" +
+              (counts[p.id] != null
+                ? '<span class="count">' + counts[p.id] + "</span>"
+                : "") +
+              "</button>",
+          );
+        });
+        html.push('<div class="nav-label">Operasional</div>');
+        PAGES.slice(3).forEach((p) => {
+          html.push(
+            '<button class="nav-item' +
+              (route.page === p.id ? " active" : "") +
+              '" data-nav="' +
+              p.id +
+              '">' +
+              I[p.icon] +
+              "<span>" +
+              p.label +
+              "</span>" +
+              (counts[p.id] != null
+                ? '<span class="count">' + counts[p.id] + "</span>"
+                : "") +
+              "</button>",
+          );
+        });
+        $("#nav").innerHTML = html.join("");
+      }
+      function go(page, params) {
+        route = Object.assign({ page: page }, params || {});
+        renderNav();
+        render();
+        $("#sidebar").classList.remove("open");
+        $("#scrim").classList.remove("show");
+        window.scrollTo(0, 0);
+      }
+      function renderSearch() {
+        if (!$("#searchbox")) return;
+        const hadFocus =
+          document.activeElement &&
+          document.activeElement.id === "global-search";
+        const selS = hadFocus ? document.activeElement.selectionStart : null;
+        const selE = hadFocus ? document.activeElement.selectionEnd : null;
+        $("#searchbox").innerHTML =
+          I.search +
+          '<input type="search" id="global-search" placeholder="Cari kamar, penyewa, pengaduan..." value="' +
+          esc(searchTerm) +
+          '" aria-label="Cari">';
+        const inp = $("#global-search");
+        inp.addEventListener(
+          "input",
+          debounce(() => {
+            searchTerm = inp.value.trim();
+            if (route.page !== "search") {
+              go("search");
+            } else {
+              render();
+            }
+          }, 180),
+        );
+        if (hadFocus) {
+          inp.focus();
+          try {
+            inp.setSelectionRange(selS, selE);
+          } catch (e) {}
+        }
+      }
+      function render() {
+        try {
+          const page = PAGES.find((p) => p.id === route.page);
+          $("#page-title").textContent = page ? page.title : "Pencarian";
+          const v = $("#view");
+          if (route.page === "dash") v.innerHTML = viewDash();
+          else if (route.page === "rooms") v.innerHTML = viewRooms();
+          else if (route.page === "tenants") v.innerHTML = viewTenants();
+          else if (route.page === "payments") v.innerHTML = viewPayments();
+          else if (route.page === "utils") v.innerHTML = viewUtils();
+          else if (route.page === "complaints") v.innerHTML = viewComplaints();
+          else if (route.page === "reports") v.innerHTML = viewReports();
+          else if (route.page === "search") v.innerHTML = viewSearch();
+          else v.innerHTML = viewDash();
+          bindView();
+          renderSearch();
+        } catch (err) {
+          if (typeof showFatal === "function") showFatal(err);
+          throw err;
+        }
+      }
+
+      /* ===================== DASHBOARD VIEW ===================== */
+      function incomeChartSVG(data, w, h, padB) {
+        // data: [{label, value}]
+        w = w || 620;
+        h = h || 190;
+        padB = padB || 26;
+        const n = data.length;
+        const max = Math.max(1, ...data.map((d) => d.value));
+        // pick a "nice" step so we get at most ~5 grid rows
+        const rawStep = max / 4.2;
+        const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+        const norm = rawStep / mag;
+        const mult =
+          norm <= 1
+            ? 1
+            : norm <= 2
+              ? 2
+              : norm <= 2.5
+                ? 2.5
+                : norm <= 5
+                  ? 5
+                  : 10;
+        const step = mult * mag;
+        const top = Math.ceil(max / step) * step;
+        const rows = Math.round(top / step);
+        const iw = w - 46,
+          ih = h - padB - 12;
+        const bw = Math.min(52, (iw / n) * 0.56);
+        let bars = "",
+          labels = "",
+          vals = "";
+        data.forEach((d, i) => {
+          const x = 46 + (iw / n) * (i + 0.5) - bw / 2;
+          const bh = Math.max(d.value > 0 ? 3 : 0, (d.value / top) * ih);
+          const y = 12 + ih - bh;
+          bars +=
+            '<rect x="' +
+            x.toFixed(1) +
+            '" y="' +
+            y.toFixed(1) +
+            '" width="' +
+            bw.toFixed(1) +
+            '" height="' +
+            bh.toFixed(1) +
+            '" rx="3" fill="' +
+            (i === n - 1 ? "#111" : "#c9c9c9") +
+            '"/>';
+          labels +=
+            '<text class="bar-label" x="' +
+            (46 + (iw / n) * (i + 0.5)).toFixed(1) +
+            '" y="' +
+            (h - 8) +
+            '" text-anchor="middle">' +
+            esc(d.label) +
+            "</text>";
+          vals +=
+            '<text class="bar-val" x="' +
+            (46 + (iw / n) * (i + 0.5)).toFixed(1) +
+            '" y="' +
+            (y - 5).toFixed(1) +
+            '" text-anchor="middle">' +
+            (d.value >= 1000000
+              ? (d.value / 1000000).toFixed(1).replace(".", ",") + " jt"
+              : Math.round(d.value / 1000) + " rb") +
+            "</text>";
+        });
+        let grid = "";
+        for (let g = 0; g <= rows; g++) {
+          const gy = 12 + ih - (ih * g) / rows;
+          const gv = (step * g) / 1000;
+          grid +=
+            '<line x1="46" y1="' +
+            gy.toFixed(1) +
+            '" x2="' +
+            (w - 4) +
+            '" y2="' +
+            gy.toFixed(1) +
+            '" stroke="#ececec"/><text class="bar-label" x="40" y="' +
+            (gy + 3).toFixed(1) +
+            '" text-anchor="end">' +
+            (gv >= 1000
+              ? (gv / 1000).toFixed(1).replace(".", ",") + "jt"
+              : Math.round(gv) + "rb") +
+            "</text>";
+        }
+        return (
+          '<svg viewBox="0 0 ' +
+          w +
+          " " +
+          h +
+          '" width="100%" style="display:block" role="img" aria-label="Grafik pendapatan">' +
+          grid +
+          bars +
+          labels +
+          vals +
+          "</svg>"
+        );
+      }
+
+      function viewDash() {
+        const ym = curYM();
+        const occ = occupiedCount(),
+          total = DB.rooms.length;
+        const inc = monthIncome(ym);
+        const unpaid = activeTenants().filter(
+          (t) =>
+            payStatus(t.id, ym) !== "paid" && payStatus(t.id, ym) !== "none",
+        );
+        const unpaidTotal = unpaid.reduce((s, t) => {
+          const r = roomById(t.roomId);
+          return s + ((r && r.price) || 0);
+        }, 0);
+        const openC = DB.complaints.filter((c) => c.status !== "done");
+        const chartData = monthList(6).map((m) => ({
+          label: ymShort(m),
+          value: monthIncome(m),
+        }));
+
+        let dueHtml = unpaid.length
+          ? unpaid
+              .map((t) => {
+                const st = payStatus(t.id, ym);
+                const room = roomById(t.roomId);
+                return (
+                  '<div class="due-item"><div class="who"><div class="n">' +
+                  esc(t.name) +
+                  ' <span style="color:var(--faint);font-weight:500">· Kamar ' +
+                  esc(room ? room.no : "?") +
+                  '</span></div><div class="m">Jatuh tempo tgl ' +
+                  (DB.settings.dueDay || 10) +
+                  " " +
+                  ymLabel(ym) +
+                  "</div></div>" +
+                  payStatusBadge(st) +
+                  '<div class="amt">' +
+                  rp(room ? room.price : 0) +
+                  "</div></div>"
+                );
+              })
+              .join("")
+          : '<div class="empty">' +
+            I.check +
+            "<div>Semua penyewa telah membayar bulan ini. Hebat.</div></div>";
+
+        let compHtml = openC.length
+          ? openC
+              .map((c) => {
+                const t = tenantById(c.tenantId);
+                return (
+                  '<div class="due-item"><div class="who"><div class="n">' +
+                  esc(c.title) +
+                  '</div><div class="m">Kamar ' +
+                  roomNo(c.roomId) +
+                  (t ? " · " + esc(t.name) : "") +
+                  " · " +
+                  dLabel(c.date) +
+                  "</div></div>" +
+                  complaintBadge(c.status) +
+                  "</div>"
+                );
+              })
+              .join("")
+          : '<div class="empty">' +
+            I.check +
+            "<div>Tidak ada pengaduan tertunda.</div></div>";
+
+        return (
+          "" +
+          '<div class="page-head"><div><h2>Dasbor</h2><div class="sub">' +
+          esc(DB.settings.name) +
+          " — " +
+          ymLabel(ym) +
+          "</div></div>" +
+          '<div class="head-actions"><button class="btn primary" data-act="pay-new">' +
+          I.plus +
+          " Catat Pembayaran</button></div></div>" +
+          '<div class="stat-grid">' +
+          '<div class="stat"><div class="lbl">' +
+          I.home +
+          ' Okupansi</div><div class="val">' +
+          occ +
+          "/" +
+          total +
+          '</div><div class="hint">kamar terisi · <b>' +
+          Math.round((occ / total) * 100) +
+          "%</b></div></div>" +
+          '<div class="stat"><div class="lbl">' +
+          I.wallet +
+          " Pendapatan " +
+          MONTHS_S[Number(ym.slice(5)) - 1] +
+          '</div><div class="val">' +
+          rp(inc) +
+          '</div><div class="hint">sewa <b>' +
+          rp(rentIncome(ym)) +
+          "</b> + utilitas <b>" +
+          rp(utilIncome(ym)) +
+          "</b></div></div>" +
+          '<div class="stat"><div class="lbl">' +
+          I.clock +
+          ' Belum dibayar</div><div class="val">' +
+          rp(unpaidTotal) +
+          '</div><div class="hint">' +
+          unpaid.length +
+          " penyewa menunggak / belum bayar</div></div>" +
+          '<div class="stat"><div class="lbl">' +
+          I.wrench +
+          ' Pengaduan aktif</div><div class="val">' +
+          openC.length +
+          '</div><div class="hint">' +
+          DB.complaints.filter((c) => c.status === "open").length +
+          " baru · " +
+          DB.complaints.filter((c) => c.status === "progress").length +
+          " dikerjakan</div></div>" +
+          "</div>" +
+          '<div class="card" style="margin-bottom:14px"><div class="card-head"><h3>Pendapatan 6 Bulan Terakhir</h3><a href="#" data-nav="reports">Lihat laporan</a></div><div class="chart-wrap">' +
+          incomeChartSVG(chartData) +
+          '<div class="legend" style="margin-top:10px"><span class="item"><span class="sw" style="background:#111"></span> Bulan berjalan</span><span class="item"><span class="sw" style="background:#c9c9c9"></span> Bulan sebelumnya</span></div></div></div>' +
+          '<div class="dash-grid">' +
+          '<div class="card"><div class="card-head"><h3>Tagihan Jatuh Tempo — ' +
+          ymLabel(ym) +
+          '</h3><a href="#" data-nav="payments">Semua pembayaran</a></div><div class="card-body">' +
+          dueHtml +
+          "</div></div>" +
+          '<div class="card"><div class="card-head"><h3>Pengaduan Terbaru</h3><a href="#" data-nav="complaints">Semua pengaduan</a></div><div class="card-body">' +
+          compHtml +
+          "</div></div>" +
+          "</div>"
+        );
+      }
+      function complaintBadge(st) {
+        if (st === "open") return '<span class="badge b-open">Baru</span>';
+        if (st === "progress")
+          return '<span class="badge b-progress">Dikerjakan</span>';
+        return '<span class="badge b-done">Selesai</span>';
+      }
+      function utilKindBadge(k) {
+        if (k === "air")
+          return '<span class="badge b-util">' + I.drop + " Air</span>";
+        return '<span class="badge b-util">' + I.bolt + " Listrik</span>";
+      }
+
+      /* ===================== ROOMS VIEW ===================== */
+      function viewRooms() {
+        const ym = curYM();
+        const occ = occupiedCount(),
+          vacant = DB.rooms.length - occ;
+        let cells = DB.rooms
+          .map((r) => {
+            const t = tenantByRoom(r.id);
+            const st = t ? payStatus(t.id, ym) : null;
+            const dot =
+              r.status === "occupied"
+                ? st === "late"
+                  ? "var(--bad)"
+                  : st === "due"
+                    ? "var(--warn)"
+                    : "var(--ok)"
+                : "var(--line-2)";
+            return (
+              '<div class="room-cell" data-act="room-open" data-id="' +
+              r.id +
+              '">' +
+              '<div class="rn">' +
+              esc(r.no) +
+              '<span class="dot" style="background:' +
+              dot +
+              '"></span></div>' +
+              '<div class="rt">' +
+              esc(r.type) +
+              "</div>" +
+              '<div class="rp">' +
+              rp(r.price) +
+              '<span style="color:var(--faint);font-weight:500">/bln</span></div>' +
+              '<div class="rc">' +
+              (t ? esc(t.name) : "Kosong") +
+              (t && st && st !== "none"
+                ? " · " +
+                  (st === "paid" ? "lunas" : st === "late" ? "telat" : "belum")
+                : "") +
+              "</div>" +
+              "</div>"
+            );
+          })
+          .join("");
+        return (
+          "" +
+          '<div class="page-head"><div><h2>Database Kamar</h2><div class="sub">' +
+          DB.rooms.length +
+          " kamar · " +
+          occ +
+          " terisi · " +
+          vacant +
+          " kosong</div></div>" +
+          '<div class="head-actions"><button class="btn primary" data-act="room-new">' +
+          I.plus +
+          " Tambah Kamar</button></div></div>" +
+          '<div class="filters"><div class="seg" id="room-seg">' +
+          '<button data-f="all" class="on">Semua</button><button data-f="occupied">Terisi</button><button data-f="vacant">Kosong</button>' +
+          "</div></div>" +
+          '<div class="room-grid" id="room-grid">' +
+          cells +
+          "</div>"
+        );
+      }
+
+      function roomDetailModal(id) {
+        const r = roomById(id);
+        if (!r) return;
+        const ym = curYM();
+        const t = tenantByRoom(id);
+        const pays = DB.payments
+          .filter((p) => p.roomId === id)
+          .sort((a, b) => b.ym.localeCompare(a.ym))
+          .slice(0, 4);
+        const utils = DB.utils
+          .filter((u) => u.roomId === id)
+          .sort((a, b) => b.ym.localeCompare(a.ym))
+          .slice(0, 4);
+        const comps = DB.complaints.filter(
+          (c) => c.roomId === id && c.status !== "done",
+        );
+        const st = t ? payStatus(t.id, ym) : null;
+        const body =
+          '<div class="form-grid">' +
+          '<div class="field"><label>Nomor Kamar</label><input value="' +
+          esc(r.no) +
+          '" readonly></div>' +
+          '<div class="field"><label>Tipe</label><input value="' +
+          esc(r.type) +
+          '" readonly></div>' +
+          '<div class="field"><label>Tarif per bulan</label><input value="' +
+          rp(r.price) +
+          '" readonly></div>' +
+          '<div class="field"><label>Status</label><input value="' +
+          (r.status === "occupied" ? "Terisi" : "Kosong") +
+          '" readonly></div>' +
+          '<div class="field full"><label>Catatan</label><input value="' +
+          esc(r.note || "—") +
+          '" readonly></div>' +
+          "</div>" +
+          (t
+            ? '<div style="border:1px solid var(--line);border-radius:9px;padding:12px 14px;margin:4px 0 10px"><div style="font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">Penghuni saat ini</div><div style="font-weight:700;font-size:14.5px">' +
+              esc(t.name) +
+              '</div><div style="font-size:12px;color:var(--muted)">' +
+              esc(t.phone || "—") +
+              " · sejak " +
+              dLabel(t.start) +
+              '</div><div style="margin-top:8px">' +
+              payStatusBadge(st) +
+              "</div></div>"
+            : '<div style="border:1px dashed var(--line-2);border-radius:9px;padding:12px 14px;margin:4px 0 10px;color:var(--muted);font-size:13px">Belum ada penghuni. Tambahkan penyewa dari menu Penyewa.</div>') +
+          '<div style="font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin:10px 0 6px">Riwayat pembayaran terakhir</div>' +
+          (pays.length
+            ? '<div class="rc-rows" style="border:1px solid var(--line);border-radius:8px;overflow:hidden">' +
+              pays
+                .map(
+                  (p) =>
+                    '<div class="rc-row"><span>' +
+                    ymLabel(p.ym) +
+                    (p.note
+                      ? ' <span style="color:var(--faint)">· ' +
+                        esc(p.note) +
+                        "</span>"
+                      : "") +
+                    '</span><span style="font-weight:600">' +
+                    rp(p.amount) +
+                    "</span></div>",
+                )
+                .join("") +
+              "</div>"
+            : '<div style="color:var(--faint);font-size:12.5px">Belum ada pembayaran tercatat.</div>') +
+          (utils.length
+            ? '<div style="font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin:12px 0 6px">Utilitas terakhir</div><div class="rc-rows" style="border:1px solid var(--line);border-radius:8px;overflow:hidden">' +
+              utils
+                .map(
+                  (u) =>
+                    '<div class="rc-row"><span>' +
+                    (u.kind === "air" ? "Tagihan air" : "Token listrik") +
+                    " · " +
+                    ymLabel(u.ym) +
+                    '</span><span style="font-weight:600">' +
+                    rp(u.amount) +
+                    "</span></div>",
+                )
+                .join("") +
+              "</div>"
+            : "") +
+          (comps.length
+            ? '<div style="font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin:12px 0 6px">Pengaduan aktif</div>' +
+              comps
+                .map(
+                  (c) =>
+                    '<div style="font-size:13px;padding:6px 0;border-bottom:1px solid var(--line)">' +
+                    esc(c.title) +
+                    " " +
+                    complaintBadge(c.status) +
+                    "</div>",
+                )
+                .join("")
+            : "");
+        const foot =
+          '<button class="btn danger" data-act="room-del" data-id="' +
+          r.id +
+          '">' +
+          I.trash +
+          ' Hapus</button><button class="btn" data-act="room-edit" data-id="' +
+          r.id +
+          '">' +
+          I.edit +
+          ' Edit</button><button class="btn primary" data-act="close">Tutup</button>';
+        openModal(modalShell("Kamar " + r.no, body, foot, true));
+      }
+
+      function roomFormModal(id) {
+        const r = id ? roomById(id) : null;
+        const body =
+          '<div class="form-grid">' +
+          '<div class="field"><label>Nomor kamar <span class="req">*</span></label><input id="f-no" maxlength="10" placeholder="mis. A5" value="' +
+          esc(r ? r.no : "") +
+          '"></div>' +
+          '<div class="field"><label>Tipe kamar</label><input id="f-type" maxlength="30" placeholder="Standar / Luas + AC" value="' +
+          esc(r ? r.type : "Standar") +
+          '"></div>' +
+          '<div class="field"><label>Tarif per bulan (Rp) <span class="req">*</span></label><input id="f-price" type="number" min="0" step="50000" placeholder="850000" value="' +
+          (r ? r.price : 850000) +
+          '"></div>' +
+          '<div class="field"><label>Status kamar</label><select id="f-status"><option value="vacant"' +
+          (!r || r.status === "vacant" ? " selected" : "") +
+          '>Kosong</option><option value="occupied"' +
+          (r && r.status === "occupied" ? " selected" : "") +
+          ">Terisi</option></select></div>" +
+          '<div class="field full"><label>Catatan</label><input id="f-note" maxlength="120" placeholder="opsional" value="' +
+          esc(r ? r.note || "" : "") +
+          '"></div>' +
+          "</div>";
+        const foot =
+          '<button class="btn" data-close="1">Batal</button><button class="btn primary" data-act="room-save" data-id="' +
+          (r ? r.id : "") +
+          '">' +
+          I.check +
+          " Simpan</button>";
+        openModal(
+          modalShell(r ? "Edit Kamar " + r.no : "Tambah Kamar", body, foot),
+        );
+      }
+
+      /* ===================== TENANTS VIEW ===================== */
+      function viewTenants() {
+        const ym = curYM();
+        const list = activeTenants()
+          .slice()
+          .sort((a, b) => roomNo(a.roomId).localeCompare(roomNo(b.roomId)));
+        const rows = list
+          .map((t) => {
+            const r = roomById(t.roomId);
+            const st = payStatus(t.id, ym);
+            return (
+              "<tr><td><b>" +
+              esc(t.name) +
+              '</b><span class="sub">' +
+              esc(t.job || "—") +
+              (t.origin ? " · " + esc(t.origin) : "") +
+              "</span></td>" +
+              "<td><b>Kamar " +
+              esc(r ? r.no : "?") +
+              '</b><span class="sub">' +
+              esc(r ? r.type : "") +
+              "</span></td>" +
+              "<td>" +
+              esc(t.phone || "—") +
+              "</td>" +
+              "<td>" +
+              dLabel(t.start) +
+              "</td>" +
+              "<td>" +
+              payStatusBadge(st) +
+              "</td>" +
+              '<td><div class="row-actions"><button class="icon-btn" title="Kuitansi" data-act="tenant-receipt" data-id="' +
+              t.id +
+              '">' +
+              I.print +
+              '</button><button class="icon-btn" title="Edit" data-act="tenant-edit" data-id="' +
+              t.id +
+              '">' +
+              I.edit +
+              '</button><button class="icon-btn danger" title="Keluarkan / akhiri sewa" data-act="tenant-end" data-id="' +
+              t.id +
+              '">' +
+              I.x +
+              "</button></div></td></tr>"
+            );
+          })
+          .join("");
+        const past = DB.tenants
+          .filter((t) => t.end)
+          .sort((a, b) => (b.end || "").localeCompare(a.end || ""));
+        const pastRows = past
+          .map(
+            (t) =>
+              "<tr><td><b>" +
+              esc(t.name) +
+              '</b><span class="sub">' +
+              esc(t.job || "") +
+              "</span></td><td>Kamar " +
+              roomNo(t.roomId) +
+              "</td><td>" +
+              dLabel(t.start) +
+              "</td><td>" +
+              dLabel(t.end) +
+              '</td><td class="num">' +
+              rp(tenantTotalPaid(t.id)) +
+              '</td><td><div class="row-actions"><button class="icon-btn danger" title="Hapus permanen" data-act="tenant-del" data-id="' +
+              t.id +
+              '">' +
+              I.trash +
+              "</button></div></td></tr>",
+          )
+          .join("");
+        return (
+          "" +
+          '<div class="page-head"><div><h2>Data Penyewa</h2><div class="sub">' +
+          list.length +
+          " penyewa aktif" +
+          (past.length ? " · " + past.length + " riwayat" : "") +
+          "</div></div>" +
+          '<div class="head-actions"><button class="btn primary" data-act="tenant-new">' +
+          I.plus +
+          " Tambah Penyewa</button></div></div>" +
+          '<div class="table-wrap"><div class="table-scroll"><table><thead><tr><th>Penyewa</th><th>Kamar</th><th>Telepon</th><th>Masuk</th><th>Status ' +
+          MONTHS_S[Number(ym.slice(5)) - 1] +
+          '</th><th class="num">Aksi</th></tr></thead><tbody>' +
+          (rows ||
+            '<tr><td colspan="6"><div class="empty">' +
+              I.inbox +
+              "<div>Belum ada penyewa aktif.</div></div></td></tr>") +
+          "</tbody></table></div></div>" +
+          (past.length
+            ? '<div style="font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin:22px 0 8px">Riwayat penyewa (sudah keluar)</div><div class="table-wrap"><div class="table-scroll"><table><thead><tr><th>Nama</th><th>Kamar</th><th>Masuk</th><th>Keluar</th><th class="num">Total dibayar</th><th class="num">Aksi</th></tr></thead><tbody>' +
+              pastRows +
+              "</tbody></table></div></div>"
+            : "")
+        );
+      }
+      function tenantTotalPaid(tid) {
+        return DB.payments
+          .filter((p) => p.tenantId === tid)
+          .reduce((s, p) => s + p.amount, 0);
+      }
+
+      function tenantFormModal(id) {
+        const t = id ? tenantById(id) : null;
+        const free = DB.rooms
+          .filter((r) => r.status === "vacant")
+          .map(
+            (r) =>
+              '<option value="' +
+              r.id +
+              '">Kamar ' +
+              esc(r.no) +
+              " — " +
+              rp(r.price) +
+              "/bln</option>",
+          )
+          .join("");
+        const curOpt =
+          t && roomById(t.roomId)
+            ? '<option value="' +
+              t.roomId +
+              '" selected>Kamar ' +
+              esc(roomById(t.roomId).no) +
+              " (saat ini)</option>"
+            : "";
+        const body =
+          '<div class="form-grid">' +
+          '<div class="field full"><label>Nama lengkap <span class="req">*</span></label><input id="f-name" maxlength="60" placeholder="mis. Budi Santoso" value="' +
+          esc(t ? t.name : "") +
+          '"></div>' +
+          '<div class="field"><label>Nomor telepon</label><input id="f-phone" maxlength="20" placeholder="08xx-xxxx-xxxx" value="' +
+          esc(t ? t.phone || "" : "") +
+          '"></div>' +
+          '<div class="field"><label>Kontak darurat</label><input id="f-emergency" maxlength="20" placeholder="opsional" value="' +
+          esc(t ? t.emergency || "" : "") +
+          '"></div>' +
+          '<div class="field"><label>Kamar <span class="req">*</span></label><select id="f-room"><option value="">— pilih kamar —</option>' +
+          curOpt +
+          free +
+          '</select><span class="help">Hanya kamar kosong yang bisa dipilih.</span></div>' +
+          '<div class="field"><label>Tanggal mulai sewa <span class="req">*</span></label><input id="f-start" type="date" value="' +
+          esc(t ? t.start : todayISO()) +
+          '"></div>' +
+          '<div class="field"><label>Pekerjaan</label><input id="f-job" maxlength="40" placeholder="Mahasiswa / karyawan" value="' +
+          esc(t ? t.job || "" : "") +
+          '"></div>' +
+          '<div class="field"><label>Asal daerah</label><input id="f-origin" maxlength="40" placeholder="opsional" value="' +
+          esc(t ? t.origin || "" : "") +
+          '"></div>' +
+          '<div class="field full"><label>Catatan</label><input id="f-note" maxlength="120" placeholder="opsional" value="' +
+          esc(t ? t.note || "" : "") +
+          '"></div>' +
+          "</div>";
+        const foot =
+          '<button class="btn" data-close="1">Batal</button><button class="btn primary" data-act="tenant-save" data-id="' +
+          (t ? t.id : "") +
+          '">' +
+          I.check +
+          " Simpan</button>";
+        openModal(
+          modalShell(t ? "Edit Penyewa" : "Tambah Penyewa", body, foot),
+        );
+      }
+
+      /* ===================== PAYMENTS VIEW ===================== */
+      let payFilter = { ym: null, status: "all" };
+      function viewPayments() {
+        if (!payFilter.ym) payFilter.ym = curYM();
+        const ym = payFilter.ym;
+        const monthSel = monthList(8)
+          .reverse()
+          .map(
+            (m) =>
+              '<option value="' +
+              m +
+              '"' +
+              (m === ym ? " selected" : "") +
+              ">" +
+              ymLabel(m) +
+              "</option>",
+          )
+          .join("");
+        const tenants = activeTenants()
+          .filter((t) => t.start <= ym + "-28")
+          .map((t) => {
+            const r = roomById(t.roomId);
+            const st = payStatus(t.id, ym);
+            const rec = DB.payments.find(
+              (p) => p.tenantId === t.id && p.ym === ym,
+            );
+            return { t, r, st, rec };
+          });
+        const filtered = tenants.filter(
+          (x) => payFilter.status === "all" || x.st === payFilter.status,
+        );
+        const totalPaid = tenants
+          .filter((x) => x.st === "paid")
+          .reduce((s, x) => s + x.r.price, 0);
+        const totalAll = tenants.reduce((s, x) => s + x.r.price, 0);
+        const dueDay = DB.settings.dueDay || 10;
+        const rows = filtered
+          .map(
+            (x) =>
+              "<tr>" +
+              "<td><b>" +
+              esc(x.t.name) +
+              '</b><span class="sub">Kamar ' +
+              esc(x.r.no) +
+              " · " +
+              esc(x.r.type) +
+              "</span></td>" +
+              "<td>" +
+              ymLabel(ym) +
+              '<span class="sub">jatuh tempo tgl ' +
+              dueDay +
+              "</span></td>" +
+              '<td class="num">' +
+              rp(x.r.price) +
+              "</td>" +
+              "<td>" +
+              payStatusBadge(x.st) +
+              (x.rec
+                ? '<span class="sub">' +
+                  dLabel(x.rec.date) +
+                  " · " +
+                  esc(x.rec.method) +
+                  "</span>"
+                : x.st === "late"
+                  ? '<span class="sub">lewat ' +
+                    Math.max(
+                      0,
+                      daysBetween(ym + "-" + pad2(dueDay), todayISO()),
+                    ) +
+                    " hari</span>"
+                  : "") +
+              "</td>" +
+              '<td><div class="row-actions">' +
+              (x.rec
+                ? '<button class="icon-btn" title="Cetak kuitansi" data-act="pay-receipt" data-id="' +
+                  x.rec.id +
+                  '">' +
+                  I.print +
+                  '</button><button class="icon-btn" title="Edit" data-act="pay-edit" data-id="' +
+                  x.rec.id +
+                  '">' +
+                  I.edit +
+                  '</button><button class="icon-btn danger" title="Hapus" data-act="pay-del" data-id="' +
+                  x.rec.id +
+                  '">' +
+                  I.trash +
+                  "</button>"
+                : '<button class="btn sm primary" data-act="pay-quick" data-id="' +
+                  x.t.id +
+                  '" data-ym="' +
+                  ym +
+                  '">' +
+                  I.check +
+                  " Bayar</button>") +
+              "</div></td></tr>",
+          )
+          .join("");
+        return (
+          "" +
+          '<div class="page-head"><div><h2>Pembayaran Bulanan</h2><div class="sub">Periode ' +
+          ymLabel(ym) +
+          " · tercatat " +
+          rp(totalPaid) +
+          " dari " +
+          rp(totalAll) +
+          "</div></div>" +
+          '<div class="head-actions"><button class="btn primary" data-act="pay-new">' +
+          I.plus +
+          " Catat Pembayaran</button></div></div>" +
+          '<div class="filters">' +
+          '<div class="seg" id="pay-seg">' +
+          '<button data-f="all"' +
+          (payFilter.status === "all" ? ' class="on"' : "") +
+          ">Semua (" +
+          tenants.length +
+          ")</button>" +
+          '<button data-f="paid"' +
+          (payFilter.status === "paid" ? ' class="on"' : "") +
+          ">Lunas (" +
+          tenants.filter((x) => x.st === "paid").length +
+          ")</button>" +
+          '<button data-f="due"' +
+          (payFilter.status === "due" ? ' class="on"' : "") +
+          ">Belum (" +
+          tenants.filter((x) => x.st === "due").length +
+          ")</button>" +
+          '<button data-f="late"' +
+          (payFilter.status === "late" ? ' class="on"' : "") +
+          ">Terlambat (" +
+          tenants.filter((x) => x.st === "late").length +
+          ")</button>" +
+          "</div>" +
+          '<select class="select" id="pay-month">' +
+          monthSel +
+          "</select>" +
+          "</div>" +
+          '<div class="table-wrap"><div class="table-scroll"><table><thead><tr><th>Penyewa</th><th>Periode</th><th class="num">Jumlah</th><th>Status</th><th class="num">Aksi</th></tr></thead><tbody>' +
+          (rows ||
+            '<tr><td colspan="5"><div class="empty">' +
+              I.inbox +
+              "<div>Tidak ada data untuk filter ini.</div></div></td></tr>") +
+          "</tbody></table></div></div>"
+        );
+      }
+
+      function paymentFormModal(presetTenantId, presetYM, editId) {
+        const rec = editId ? DB.payments.find((p) => p.id === editId) : null;
+        const opts = activeTenants()
+          .map((t) => {
+            const r = roomById(t.roomId);
+            return (
+              '<option value="' +
+              t.id +
+              '"' +
+              ((rec && rec.tenantId === t.id) ||
+              (!rec && presetTenantId === t.id)
+                ? " selected"
+                : "") +
+              ">Kamar " +
+              esc(r ? r.no : "?") +
+              " — " +
+              esc(t.name) +
+              " (" +
+              rp(r ? r.price : 0) +
+              ")</option>"
+            );
+          })
+          .join("");
+        const yms = monthList(8)
+          .reverse()
+          .map(
+            (m) =>
+              '<option value="' +
+              m +
+              '"' +
+              ((rec && rec.ym === m) || (!rec && presetYM === m)
+                ? " selected"
+                : "") +
+              ">" +
+              ymLabel(m) +
+              "</option>",
+          )
+          .join("");
+        const methods = ["tunai", "transfer", "QRIS", "lainnya"];
+        const body =
+          '<div class="form-grid">' +
+          '<div class="field full"><label>Penyewa <span class="req">*</span></label><select id="f-tenant"><option value="">— pilih penyewa —</option>' +
+          opts +
+          "</select></div>" +
+          '<div class="field"><label>Untuk bulan <span class="req">*</span></label><select id="f-ym">' +
+          yms +
+          "</select></div>" +
+          '<div class="field"><label>Jumlah (Rp) <span class="req">*</span></label><input id="f-amount" type="number" min="0" step="50000" value="' +
+          (rec ? rec.amount : "") +
+          '" placeholder="otomatis dari tarif kamar"></div>' +
+          '<div class="field"><label>Tanggal bayar</label><input id="f-date" type="date" value="' +
+          esc(rec ? rec.date : todayISO()) +
+          '"></div>' +
+          '<div class="field"><label>Metode</label><select id="f-method">' +
+          methods
+            .map(
+              (m) =>
+                "<option" +
+                (rec && rec.method === m ? " selected" : "") +
+                ">" +
+                m +
+                "</option>",
+            )
+            .join("") +
+          "</select></div>" +
+          '<div class="field"><label>Catatan</label><input id="f-note" maxlength="100" placeholder="opsional" value="' +
+          esc(rec ? rec.note || "" : "") +
+          '"></div>' +
+          "</div>";
+        const foot =
+          '<button class="btn" data-close="1">Batal</button><button class="btn primary" data-act="pay-save" data-id="' +
+          (rec ? rec.id : "") +
+          '">' +
+          I.check +
+          " Simpan Pembayaran</button>";
+        openModal(
+          modalShell(rec ? "Edit Pembayaran" : "Catat Pembayaran", body, foot),
+        );
+        if (!rec) {
+          const auto = () => {
+            const t = tenantById($("#f-tenant").value);
+            const r = t ? roomById(t.roomId) : null;
+            if (t && !$("#f-amount").value)
+              $("#f-amount").value = (r && r.price) || "";
+          };
+          $("#f-tenant").addEventListener("change", auto);
+          auto();
+        }
+      }
+
+      /* ===================== UTILITIES VIEW ===================== */
+      let utilFilter = { ym: null, kind: "all" };
+      function viewUtils() {
+        if (!utilFilter.ym) utilFilter.ym = curYM();
+        const ym = utilFilter.ym;
+        const monthSel = monthList(8)
+          .reverse()
+          .map(
+            (m) =>
+              '<option value="' +
+              m +
+              '"' +
+              (m === ym ? " selected" : "") +
+              ">" +
+              ymLabel(m) +
+              "</option>",
+          )
+          .join("");
+        let list = DB.utils
+          .slice()
+          .filter((u) => u.ym === ym)
+          .sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+        if (utilFilter.kind !== "all")
+          list = list.filter((u) => u.kind === utilFilter.kind);
+        const totL = DB.utils
+          .filter((u) => u.ym === ym && u.kind === "listrik")
+          .reduce((s, u) => s + u.amount, 0);
+        const totA = DB.utils
+          .filter((u) => u.ym === ym && u.kind === "air")
+          .reduce((s, u) => s + u.amount, 0);
+        const rows = list
+          .map(
+            (u) =>
+              "<tr>" +
+              "<td><b>Kamar " +
+              roomNo(u.roomId) +
+              '</b><span class="sub">' +
+              esc(
+                tenantByRoom(u.roomId)
+                  ? tenantByRoom(u.roomId).name
+                  : "tidak dihuni",
+              ) +
+              "</span></td>" +
+              "<td>" +
+              utilKindBadge(u.kind) +
+              (u.meter != null && u.meter !== ""
+                ? '<span class="sub">meteran ' + esc(u.meter) + "</span>"
+                : "") +
+              "</td>" +
+              "<td>" +
+              ymLabel(u.ym) +
+              '<span class="sub">dibayar ' +
+              dLabel(u.date) +
+              "</span></td>" +
+              '<td class="num">' +
+              rp(u.amount) +
+              "</td>" +
+              "<td>" +
+              esc(u.note || "—") +
+              "</td>" +
+              '<td><div class="row-actions"><button class="icon-btn" title="Kuitansi" data-act="util-receipt" data-id="' +
+              u.id +
+              '">' +
+              I.print +
+              '</button><button class="icon-btn" title="Edit" data-act="util-edit" data-id="' +
+              u.id +
+              '">' +
+              I.edit +
+              '</button><button class="icon-btn danger" title="Hapus" data-act="util-del" data-id="' +
+              u.id +
+              '">' +
+              I.trash +
+              "</button></div></td></tr>",
+          )
+          .join("");
+        return (
+          "" +
+          '<div class="page-head"><div><h2>Token Listrik & Tagihan Air</h2><div class="sub">Periode ' +
+          ymLabel(ym) +
+          " · listrik " +
+          rp(totL) +
+          " · air " +
+          rp(totA) +
+          "</div></div>" +
+          '<div class="head-actions"><button class="btn primary" data-act="util-new">' +
+          I.plus +
+          " Catat Utilitas</button></div></div>" +
+          '<div class="filters">' +
+          '<div class="seg" id="util-seg"><button data-f="all"' +
+          (utilFilter.kind === "all" ? ' class="on"' : "") +
+          '>Semua</button><button data-f="listrik"' +
+          (utilFilter.kind === "listrik" ? ' class="on"' : "") +
+          '>Listrik</button><button data-f="air"' +
+          (utilFilter.kind === "air" ? ' class="on"' : "") +
+          ">Air</button></div>" +
+          '<select class="select" id="util-month">' +
+          monthSel +
+          "</select>" +
+          "</div>" +
+          '<div class="table-wrap"><div class="table-scroll"><table><thead><tr><th>Kamar</th><th>Jenis</th><th>Periode</th><th class="num">Jumlah</th><th>Catatan</th><th class="num">Aksi</th></tr></thead><tbody>' +
+          (rows ||
+            '<tr><td colspan="6"><div class="empty">' +
+              I.inbox +
+              "<div>Belum ada catatan utilitas untuk periode ini.</div></div></td></tr>") +
+          "</tbody></table></div></div>"
+        );
+      }
+
+      function utilFormModal(editId) {
+        const u = editId ? DB.utils.find((x) => x.id === editId) : null;
+        const roomOpts = DB.rooms
+          .slice()
+          .sort((a, b) => a.no.localeCompare(b.no))
+          .map(
+            (r) =>
+              '<option value="' +
+              r.id +
+              '"' +
+              (u && u.roomId === r.id ? " selected" : "") +
+              ">Kamar " +
+              esc(r.no) +
+              (tenantByRoom(r.id)
+                ? " — " + esc(tenantByRoom(r.id).name)
+                : " — kosong") +
+              "</option>",
+          )
+          .join("");
+        const yms = monthList(8)
+          .reverse()
+          .map(
+            (m) =>
+              '<option value="' +
+              m +
+              '"' +
+              ((u && u.ym === m) || (!u && m === curYM()) ? " selected" : "") +
+              ">" +
+              ymLabel(m) +
+              "</option>",
+          )
+          .join("");
+        const body =
+          '<div class="form-grid">' +
+          '<div class="field"><label>Kamar <span class="req">*</span></label><select id="f-room"><option value="">— pilih kamar —</option>' +
+          roomOpts +
+          "</select></div>" +
+          '<div class="field"><label>Jenis <span class="req">*</span></label><select id="f-kind"><option value="listrik"' +
+          (!u || u.kind === "listrik" ? " selected" : "") +
+          '>Token listrik / pulsa</option><option value="air"' +
+          (u && u.kind === "air" ? " selected" : "") +
+          ">Tagihan air</option></select></div>" +
+          '<div class="field"><label>Untuk bulan</label><select id="f-ym">' +
+          yms +
+          "</select></div>" +
+          '<div class="field"><label>Jumlah (Rp) <span class="req">*</span></label><input id="f-amount" type="number" min="0" step="5000" value="' +
+          (u ? u.amount : "") +
+          '" placeholder="mis. 100000"></div>' +
+          '<div class="field"><label>Posisi meteran (kWh / m³)</label><input id="f-meter" type="number" min="0" step="1" value="' +
+          (u && u.meter != null ? u.meter : "") +
+          '" placeholder="opsional"></div>' +
+          '<div class="field"><label>Tanggal catat</label><input id="f-date" type="date" value="' +
+          esc(u ? u.date : todayISO()) +
+          '"></div>' +
+          '<div class="field full"><label>Catatan</label><input id="f-note" maxlength="100" placeholder="mis. Token 100rb" value="' +
+          esc(u ? u.note || "" : "") +
+          '"></div>' +
+          "</div>";
+        const foot =
+          '<button class="btn" data-close="1">Batal</button><button class="btn primary" data-act="util-save" data-id="' +
+          (u ? u.id : "") +
+          '">' +
+          I.check +
+          " Simpan</button>";
+        openModal(
+          modalShell(
+            u ? "Edit Catatan Utilitas" : "Catat Token / Tagihan",
+            body,
+            foot,
+          ),
+        );
+      }
+
+      /* ===================== COMPLAINTS VIEW ===================== */
+      let compFilter = "all";
+      function viewComplaints() {
+        let list = DB.complaints
+          .slice()
+          .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+        if (compFilter !== "all")
+          list = list.filter((c) => c.status === compFilter);
+        const rows = list
+          .map((c) => {
+            const t = tenantById(c.tenantId);
+            return (
+              "<tr>" +
+              '<td style="max-width:340px"><b>' +
+              esc(c.title) +
+              '</b><span class="sub">' +
+              esc(c.desc || "") +
+              "</span></td>" +
+              "<td>Kamar " +
+              roomNo(c.roomId) +
+              '<span class="sub">' +
+              esc(t ? t.name : "—") +
+              "</span></td>" +
+              "<td>" +
+              dLabel(c.date) +
+              "</td>" +
+              "<td>" +
+              complaintBadge(c.status) +
+              "</td>" +
+              '<td class="num">' +
+              (c.status === "done" && c.cost ? rp(c.cost) : "—") +
+              "</td>" +
+              '<td><div class="row-actions">' +
+              '<button class="icon-btn" title="Detail / ubah status" data-act="comp-open" data-id="' +
+              c.id +
+              '">' +
+              I.info +
+              "</button>" +
+              '<button class="icon-btn danger" title="Hapus" data-act="comp-del" data-id="' +
+              c.id +
+              '">' +
+              I.trash +
+              "</button>" +
+              "</div></td></tr>"
+            );
+          })
+          .join("");
+        const cnt = (s) => DB.complaints.filter((c) => c.status === s).length;
+        return (
+          "" +
+          '<div class="page-head"><div><h2>Pengaduan Fasilitas</h2><div class="sub">' +
+          DB.complaints.filter((c) => c.status !== "done").length +
+          " belum selesai dari " +
+          DB.complaints.length +
+          " total pengaduan</div></div>" +
+          '<div class="head-actions"><button class="btn primary" data-act="comp-new">' +
+          I.plus +
+          " Catat Pengaduan</button></div></div>" +
+          '<div class="filters"><div class="seg" id="comp-seg">' +
+          '<button data-f="all"' +
+          (compFilter === "all" ? ' class="on"' : "") +
+          ">Semua (" +
+          DB.complaints.length +
+          ")</button>" +
+          '<button data-f="open"' +
+          (compFilter === "open" ? ' class="on"' : "") +
+          ">Baru (" +
+          cnt("open") +
+          ")</button>" +
+          '<button data-f="progress"' +
+          (compFilter === "progress" ? ' class="on"' : "") +
+          ">Dikerjakan (" +
+          cnt("progress") +
+          ")</button>" +
+          '<button data-f="done"' +
+          (compFilter === "done" ? ' class="on"' : "") +
+          ">Selesai (" +
+          cnt("done") +
+          ")</button>" +
+          "</div></div>" +
+          '<div class="table-wrap"><div class="table-scroll"><table><thead><tr><th>Pengaduan</th><th>Lokasi</th><th>Tanggal</th><th>Status</th><th class="num">Biaya</th><th class="num">Aksi</th></tr></thead><tbody>' +
+          (rows ||
+            '<tr><td colspan="6"><div class="empty">' +
+              I.inbox +
+              "<div>Tidak ada pengaduan pada filter ini.</div></div></td></tr>") +
+          "</tbody></table></div></div>"
+        );
+      }
+
+      function complaintFormModal(editId) {
+        const c = editId ? DB.complaints.find((x) => x.id === editId) : null;
+        const roomOpts = DB.rooms
+          .slice()
+          .sort((a, b) => a.no.localeCompare(b.no))
+          .map((r) => {
+            const t = tenantByRoom(r.id);
+            return (
+              '<option value="' +
+              r.id +
+              '"' +
+              (c && c.roomId === r.id ? " selected" : "") +
+              ">Kamar " +
+              esc(r.no) +
+              (t ? " — " + esc(t.name) : " — kosong") +
+              "</option>"
+            );
+          })
+          .join("");
+        const tenantOpts = (rid) => {
+          const t = rid ? tenantByRoom(rid) : null;
+          if (t)
+            return (
+              '<option value="' +
+              t.id +
+              '" selected>' +
+              esc(t.name) +
+              "</option>"
+            );
+          return "";
+        };
+        const body =
+          '<div class="form-grid">' +
+          '<div class="field full"><label>Judul pengaduan <span class="req">*</span></label><input id="f-title" maxlength="80" placeholder="mis. Keran kamar mandi bocor" value="' +
+          esc(c ? c.title : "") +
+          '"></div>' +
+          '<div class="field"><label>Kamar <span class="req">*</span></label><select id="f-room">' +
+          roomOpts +
+          "</select></div>" +
+          '<div class="field"><label> Pelapor</label><select id="f-tenant"><option value="">— otomatis dari kamar —</option>' +
+          tenantOpts(c ? c.roomId : null) +
+          '</select><span class="help">Diisi otomatis sesuai penghuni kamar.</span></div>' +
+          '<div class="field"><label>Tanggal lapor</label><input id="f-date" type="date" value="' +
+          esc(c ? c.date : todayISO()) +
+          '"></div>' +
+          '<div class="field"><label>Status</label><select id="f-status"><option value="open"' +
+          (!c || c.status === "open" ? " selected" : "") +
+          '>Baru</option><option value="progress"' +
+          (c && c.status === "progress" ? " selected" : "") +
+          '>Dikerjakan</option><option value="done"' +
+          (c && c.status === "done" ? " selected" : "") +
+          ">Selesai</option></select></div>" +
+          '<div class="field full"><label>Deskripsi kerusakan</label><textarea id="f-desc" maxlength="400" placeholder="Jelaskan kerusakan sedetail mungkin">' +
+          esc(c ? c.desc || "" : "") +
+          "</textarea></div>" +
+          '<div class="field"><label>Biaya perbaikan (Rp)</label><input id="f-cost" type="number" min="0" step="5000" value="' +
+          (c && c.cost ? c.cost : "") +
+          '" placeholder="isi jika sudah tahu"><span class="help">Biaya muncul di laporan saat status Selesai.</span></div>' +
+          '<div class="field"><label>Penanganan / hasil</label><input id="f-resolution" maxlength="160" placeholder="mis. Ganti engsel oleh tukang" value="' +
+          esc(c ? c.resolution || "" : "") +
+          '"></div>' +
+          "</div>";
+        const foot =
+          '<button class="btn" data-close="1">Batal</button><button class="btn primary" data-act="comp-save" data-id="' +
+          (c ? c.id : "") +
+          '">' +
+          I.check +
+          " Simpan</button>";
+        openModal(
+          modalShell(c ? "Edit Pengaduan" : "Catat Pengaduan Baru", body, foot),
+        );
+        $("#f-room").addEventListener("change", () => {
+          const t = tenantByRoom($("#f-room").value);
+          $("#f-tenant").innerHTML =
+            '<option value="">— otomatis dari kamar —</option>' +
+            (t
+              ? '<option value="' +
+                t.id +
+                '" selected>' +
+                esc(t.name) +
+                "</option>"
+              : "");
+        });
+      }
+
+      /* ===================== REPORTS VIEW ===================== */
+      function viewReports() {
+        const ym = curYM();
+        const months = monthList(6);
+        const chartData = months.map((m) => ({
+          label: ymShort(m),
+          value: monthIncome(m),
+        }));
+        const rows = months
+          .slice()
+          .reverse()
+          .map((m) => {
+            const rent = rentIncome(m),
+              util = utilIncome(m),
+              total = rent + util;
+            const exp = expectedRent(m);
+            const collect = exp > 0 ? Math.round((rent / exp) * 100) : 100;
+            return (
+              "<tr>" +
+              "<td><b>" +
+              ymLabel(m) +
+              "</b>" +
+              (m === ym ? '<span class="sub">berjalan</span>' : "") +
+              "</td>" +
+              '<td class="num">' +
+              rp(rent) +
+              "</td>" +
+              '<td class="num">' +
+              rp(util) +
+              "</td>" +
+              '<td class="num"><b>' +
+              rp(total) +
+              "</b></td>" +
+              '<td class="num">' +
+              rp(complaintCost(m)) +
+              "</td>" +
+              '<td class="num">' +
+              collect +
+              "%</td>" +
+              '<td><div class="row-actions"><button class="icon-btn" title="Cetak laporan bulanan" data-act="report-print" data-ym="' +
+              m +
+              '">' +
+              I.print +
+              "</button></div></td>" +
+              "</tr>"
+            );
+          })
+          .join("");
+        const tot6 = months.reduce((s, m) => s + monthIncome(m), 0);
+        const avg6 = Math.round(tot6 / months.length);
+        const best = months
+          .slice()
+          .sort((a, b) => monthIncome(b) - monthIncome(a))[0];
+        const topRooms = DB.rooms
+          .map((r) => {
+            const inc = DB.payments
+              .filter((p) => p.roomId === r.id)
+              .filter((p) => months.includes(p.ym))
+              .reduce((s, p) => s + p.amount, 0);
+            return { r, inc };
+          })
+          .sort((a, b) => b.inc - a.inc)
+          .slice(0, 5);
+        const maxTop = Math.max(1, ...topRooms.map((x) => x.inc));
+        const barsHtml = topRooms
+          .map(
+            (x) =>
+              '<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px"><span style="font-weight:600">Kamar ' +
+              esc(x.r.no) +
+              ' <span style="color:var(--faint);font-weight:500">· ' +
+              esc(x.r.type) +
+              '</span></span><span style="font-weight:700;font-variant-numeric:tabular-nums">' +
+              rp(x.inc) +
+              "</span></div>" +
+              '<div style="height:7px;background:var(--bg);border:1px solid var(--line);border-radius:99px;overflow:hidden"><div style="height:100%;width:' +
+              Math.round((x.inc / maxTop) * 100) +
+              '%;background:#111;border-radius:99px"></div></div></div>',
+          )
+          .join("");
+        return (
+          "" +
+          '<div class="page-head"><div><h2>Rekapitulasi Pendapatan</h2><div class="sub">Enam bulan terakhir · dihitung otomatis dari pembayaran & utilitas tercatat</div></div>' +
+          '<div class="head-actions"><button class="btn" data-act="report-print" data-ym="' +
+          ym +
+          '">' +
+          I.print +
+          " Cetak Laporan " +
+          MONTHS_S[Number(ym.slice(5)) - 1] +
+          "</button></div></div>" +
+          '<div class="stat-grid">' +
+          '<div class="stat"><div class="lbl">' +
+          I.wallet +
+          ' Total 6 bulan</div><div class="val">' +
+          rp(tot6) +
+          '</div><div class="hint">sewa + listrik + air</div></div>' +
+          '<div class="stat"><div class="lbl">' +
+          I.chart +
+          ' Rata-rata / bulan</div><div class="val">' +
+          rp(avg6) +
+          '</div><div class="hint">periode ' +
+          ymShort(months[0]) +
+          "–" +
+          ymShort(months[5]) +
+          "</div></div>" +
+          '<div class="stat"><div class="lbl">' +
+          I.up +
+          ' Bulan terbaik</div><div class="val" style="font-size:19px;margin-top:9px">' +
+          ymLabel(best) +
+          '</div><div class="hint">' +
+          rp(monthIncome(best)) +
+          "</div></div>" +
+          '<div class="stat"><div class="lbl">' +
+          I.wrench +
+          ' Biaya perbaikan</div><div class="val">' +
+          rp(months.reduce((s, m) => s + complaintCost(m), 0)) +
+          '</div><div class="hint">dari pengaduan selesai 6 bulan terakhir</div></div>' +
+          "</div>" +
+          '<div class="card" style="margin-bottom:14px"><div class="card-head"><h3>Pendapatan Bulanan (Sewa + Utilitas)</h3></div><div class="chart-wrap">' +
+          incomeChartSVG(chartData, 620, 200) +
+          "</div></div>" +
+          '<div class="dash-grid" style="margin-bottom:14px">' +
+          '<div class="card"><div class="card-head"><h3>Kontribusi Kamar (6 bulan)</h3></div><div class="card-body tight">' +
+          barsHtml +
+          "</div></div>" +
+          '<div class="card"><div class="card-head"><h3>Rincian per Bulan</h3></div><div class="card-body tight" style="font-size:12.5px;color:var(--muted);line-height:1.7">' +
+          '<p style="margin-bottom:8px"><b style="color:var(--ink)">Sewa</b> dihitung dari pembayaran yang tercatat untuk bulan berjalan, termasuk pelunasan tunggakan. <b style="color:var(--ink)">Utilitas</b> mencakup token listrik dan tagihan air yang dibayar per kamar.</p>' +
+          '<p style="margin-bottom:8px"><b style="color:var(--ink)">Tingkat penagihan</b> membandingkan sewa tercatat dengan estimasi tagihan seluruh penyewa aktif. Nilai di bawah 100% berarti masih ada penyewa yang belum membayar.</p>' +
+          '<p><b style="color:var(--ink)">Biaya perbaikan</b> dijumlahkan dari pengaduan berstatus selesai pada bulan tersebut, sebagai gambaran biaya operasional fasilitas.</p>' +
+          "</div></div>" +
+          "</div>" +
+          '<div class="table-wrap"><div class="table-scroll"><table><thead><tr><th>Bulan</th><th class="num">Sewa</th><th class="num">Utilitas</th><th class="num">Total</th><th class="num">Biaya Perbaikan</th><th class="num">Penagihan</th><th class="num">Aksi</th></tr></thead><tbody>' +
+          rows +
+          "</tbody></table></div></div>"
+        );
+      }
+
+      /* ===================== SEARCH VIEW ===================== */
+      function viewSearch() {
+        const q = searchTerm.toLowerCase();
+        const rooms = DB.rooms.filter((r) =>
+          ("kamar " + r.no + " " + r.type + " " + (r.note || ""))
+            .toLowerCase()
+            .includes(q),
+        );
+        const tenants = DB.tenants.filter((t) =>
+          (
+            t.name +
+            " " +
+            (t.phone || "") +
+            " " +
+            (t.job || "") +
+            " " +
+            (t.origin || "") +
+            " " +
+            roomNo(t.roomId)
+          )
+            .toLowerCase()
+            .includes(q),
+        );
+        const comps = DB.complaints.filter((c) =>
+          (c.title + " " + (c.desc || "") + " " + roomNo(c.roomId))
+            .toLowerCase()
+            .includes(q),
+        );
+        const pays = DB.payments.filter(
+          (p) =>
+            ymLabel(p.ym).toLowerCase().includes(q) ||
+            (tenantById(p.tenantId) || { name: "" }).name
+              .toLowerCase()
+              .includes(q),
+        );
+        let html =
+          '<div class="page-head"><div><h2>Hasil Pencarian</h2><div class="sub">"' +
+          esc(searchTerm) +
+          '" — ' +
+          (rooms.length + tenants.length + comps.length + pays.length) +
+          " hasil</div></div></div>";
+        if (!rooms.length && !tenants.length && !comps.length && !pays.length) {
+          return (
+            html +
+            '<div class="table-wrap"><div class="empty" style="padding:60px 20px">' +
+            I.search +
+            '<div>Tidak ditemukan hasil untuk "' +
+            esc(searchTerm) +
+            '".</div></div></div>'
+          );
+        }
+        if (rooms.length) {
+          html +=
+            '<div style="font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin:14px 0 8px">Kamar (' +
+            rooms.length +
+            ')</div><div class="table-wrap"><div class="table-scroll"><table><tbody>' +
+            rooms
+              .map(
+                (r) =>
+                  "<tr><td><b>Kamar " +
+                  esc(r.no) +
+                  '</b><span class="sub">' +
+                  esc(r.type) +
+                  " · " +
+                  rp(r.price) +
+                  "/bln</span></td><td>" +
+                  (r.status === "occupied"
+                    ? '<span class="badge b-occupied">Terisi</span>'
+                    : '<span class="badge b-vacant">Kosong</span>') +
+                  '</td><td><div class="row-actions"><button class="icon-btn" data-act="room-open" data-id="' +
+                  r.id +
+                  '" title="Detail">' +
+                  I.info +
+                  "</button></div></td></tr>",
+              )
+              .join("") +
+            "</tbody></table></div></div>";
+        }
+        if (tenants.length) {
+          html +=
+            '<div style="font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin:18px 0 8px">Penyewa (' +
+            tenants.length +
+            ')</div><div class="table-wrap"><div class="table-scroll"><table><tbody>' +
+            tenants
+              .map(
+                (t) =>
+                  "<tr><td><b>" +
+                  esc(t.name) +
+                  '</b><span class="sub">Kamar ' +
+                  roomNo(t.roomId) +
+                  (t.end ? " · sudah keluar " + dLabel(t.end) : "") +
+                  "</span></td><td>" +
+                  esc(t.phone || "—") +
+                  '</td><td><div class="row-actions"><button class="icon-btn" data-act="tenant-edit" data-id="' +
+                  t.id +
+                  '" title="Edit">' +
+                  I.edit +
+                  "</button></div></td></tr>",
+              )
+              .join("") +
+            "</tbody></table></div></div>";
+        }
+        if (comps.length) {
+          html +=
+            '<div style="font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin:18px 0 8px">Pengaduan (' +
+            comps.length +
+            ')</div><div class="table-wrap"><div class="table-scroll"><table><tbody>' +
+            comps
+              .map(
+                (c) =>
+                  "<tr><td><b>" +
+                  esc(c.title) +
+                  '</b><span class="sub">Kamar ' +
+                  roomNo(c.roomId) +
+                  " · " +
+                  dLabel(c.date) +
+                  "</span></td><td>" +
+                  complaintBadge(c.status) +
+                  '</td><td><div class="row-actions"><button class="icon-btn" data-act="comp-open" data-id="' +
+                  c.id +
+                  '" title="Detail">' +
+                  I.info +
+                  "</button></div></td></tr>",
+              )
+              .join("") +
+            "</tbody></table></div></div>";
+        }
+        if (pays.length) {
+          html +=
+            '<div style="font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin:18px 0 8px">Pembayaran (' +
+            pays.length +
+            ')</div><div class="table-wrap"><div class="table-scroll"><table><tbody>' +
+            pays
+              .slice(0, 10)
+              .map(
+                (p) =>
+                  "<tr><td><b>" +
+                  esc((tenantById(p.tenantId) || { name: "?" }).name) +
+                  '</b><span class="sub">Kamar ' +
+                  roomNo(p.roomId) +
+                  "</span></td><td>" +
+                  ymLabel(p.ym) +
+                  '</td><td class="num">' +
+                  rp(p.amount) +
+                  "</td><td>" +
+                  payStatusBadge("paid") +
+                  "</td></tr>",
+              )
+              .join("") +
+            "</tbody></table></div></div>";
+        }
+        return html;
+      }
+
+      /* ===================== RECEIPTS (print) ===================== */
+      function receiptHtml(kind, data) {
+        const s = DB.settings;
+        const no = data.no;
+        let rows = "",
+          total = 0,
+          heading = "KUITANSI",
+          sub = "BUKTI PEMBAYARAN";
+        if (kind === "rent") {
+          heading = "KUITANSI SEWA";
+          rows =
+            '<div class="rc-row"><span>Sewa kamar ' +
+            esc(data.roomNo) +
+            " — " +
+            esc(data.tenant) +
+            "</span><span>" +
+            rp(data.amount) +
+            "</span></div>" +
+            '<div class="rc-row"><span>Periode ' +
+            ymLabel(data.ym) +
+            "</span><span></span></div>" +
+            '<div class="rc-row"><span>Metode</span><span>' +
+            esc(data.method) +
+            "</span></div>";
+          total = data.amount;
+        } else if (kind === "util") {
+          heading = "KUITANSI UTILITAS";
+          const kindLabel =
+            data.utilKind === "air" ? "Tagihan air" : "Token listrik";
+          rows =
+            '<div class="rc-row"><span>' +
+            kindLabel +
+            " — kamar " +
+            esc(data.roomNo) +
+            "</span><span>" +
+            rp(data.amount) +
+            "</span></div>" +
+            '<div class="rc-row"><span>Periode ' +
+            ymLabel(data.ym) +
+            (data.meter ? " · meteran " + esc(data.meter) : "") +
+            "</span><span></span></div>";
+          total = data.amount;
+        } else {
+          heading = "KUITANSI BULANAN";
+          rows = data.items
+            .map(
+              (it) =>
+                '<div class="rc-row"><span>' +
+                esc(it.label) +
+                "</span><span>" +
+                rp(it.amount) +
+                "</span></div>",
+            )
+            .join("");
+          total = data.items.reduce((s2, it) => s2 + it.amount, 0);
+        }
+        return (
+          '<div class="receipt">' +
+          '<div class="rc-head"><div class="t">' +
+          heading +
+          '</div><div class="s">' +
+          sub +
+          "</div></div>" +
+          '<div style="text-align:center;margin-bottom:14px"><div style="font-weight:700;font-size:14px">' +
+          esc(s.name) +
+          '</div><div style="font-size:11.5px;color:var(--muted)">' +
+          esc(s.address) +
+          '</div><div style="font-size:11.5px;color:var(--muted)">' +
+          esc(s.owner) +
+          " · " +
+          esc(s.phone) +
+          "</div></div>" +
+          '<div class="rc-meta"><span>No. ' +
+          esc(no) +
+          "</span><span>Tanggal: " +
+          dLabel(data.date) +
+          "</span></div>" +
+          '<div class="rc-rows">' +
+          rows +
+          '<div class="rc-row"><span style="font-weight:700">TOTAL</span><span style="font-weight:700">' +
+          rp(total) +
+          "</span></div></div>" +
+          '<div class="rc-total"><span>Diterima dari</span><span>' +
+          esc(data.payer) +
+          "</span></div>" +
+          '<div class="rc-note">Kuitansi ini sah tanpa tanda tangan basah. Simpan sebagai bukti pembayaran. Hubungi pengelola bila terdapat ketidaksesuaian.</div>' +
+          '<div class="rc-foot">Dicetak dari Kelola Kost · ' +
+          dLabel(todayISO()) +
+          "</div>" +
+          "</div>"
+        );
+      }
+      function printReceipt(html) {
+        $("#print-area").innerHTML = html;
+        document.body.classList.add("printing");
+        window.print();
+        setTimeout(() => {
+          document.body.classList.remove("printing");
+          $("#print-area").innerHTML = "";
+        }, 400);
+      }
+      function receiptNo(prefix) {
+        return (
+          prefix.toUpperCase() +
+          "-" +
+          todayISO().replace(/-/g, "") +
+          "-" +
+          String(DB.payments.length + DB.utils.length + 1).padStart(4, "0")
+        );
+      }
+
+      function printRentReceipt(payId) {
+        const p = DB.payments.find((x) => x.id === payId);
+        if (!p) return;
+        const t = tenantById(p.tenantId);
+        printReceipt(
+          receiptHtml("rent", {
+            no: receiptNo("KV"),
+            date: p.date || todayISO(),
+            tenant: t ? t.name : "—",
+            roomNo: roomNo(p.roomId),
+            ym: p.ym,
+            amount: p.amount,
+            method: p.method || "tunai",
+            payer: t ? t.name : "—",
+          }),
+        );
+      }
+      function printUtilReceipt(utilId) {
+        const u = DB.utils.find((x) => x.id === utilId);
+        if (!u) return;
+        printReceipt(
+          receiptHtml("util", {
+            no: receiptNo("UT"),
+            date: u.date || todayISO(),
+            roomNo: roomNo(u.roomId),
+            ym: u.ym,
+            amount: u.amount,
+            utilKind: u.kind,
+            meter: u.meter,
+            payer: (
+              tenantByRoom(u.roomId) || {
+                name: "Penghuni kamar " + roomNo(u.roomId),
+              }
+            ).name,
+          }),
+        );
+      }
+      function printTenantMonthReceipt(tenantId) {
+        const t = tenantById(tenantId);
+        if (!t) return;
+        const ym = curYM();
+        const r = roomById(t.roomId);
+        if (!r) {
+          toast("Penyewa tidak punya kamar aktif", "info");
+          return;
+        }
+        const p = DB.payments.find(
+          (x) => x.tenantId === tenantId && x.ym === ym,
+        );
+        const us = DB.utils.filter((u) => u.roomId === t.roomId && u.ym === ym);
+        if (!p && !us.length) {
+          toast(
+            "Belum ada pembayaran/utilitas bulan ini untuk kuitansi",
+            "info",
+          );
+          return;
+        }
+        const items = [];
+        if (p)
+          items.push({
+            label: "Sewa kamar " + r.no + " — periode " + ymLabel(ym),
+            amount: p.amount,
+          });
+        us.forEach((u) =>
+          items.push({
+            label:
+              (u.kind === "air" ? "Tagihan air" : "Token listrik") +
+              " — " +
+              ymLabel(u.ym),
+            amount: u.amount,
+          }),
+        );
+        printReceipt(
+          receiptHtml("bundle", {
+            no: receiptNo("BL"),
+            date: todayISO(),
+            payer: t.name,
+            items,
+          }),
+        );
+      }
+      function printMonthlyReport(ym) {
+        const s = DB.settings;
+        const rent = rentIncome(ym),
+          util = utilIncome(ym),
+          total = rent + util;
+        const cost = complaintCost(ym);
+        const pays = DB.payments
+          .filter((p) => p.ym === ym)
+          .sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+        const utils = DB.utils.filter((u) => u.ym === ym);
+        const unpaid = activeTenants().filter(
+          (t) =>
+            payStatus(t.id, ym) !== "paid" && payStatus(t.id, ym) !== "none",
+        );
+        const html =
+          '<div class="receipt">' +
+          '<div class="rc-head"><div class="t">LAPORAN BULANAN</div><div class="s">' +
+          esc(s.name).toUpperCase() +
+          "</div></div>" +
+          '<div class="rc-meta"><span>Periode: ' +
+          ymLabel(ym) +
+          "</span><span>Dicetak: " +
+          dLabel(todayISO()) +
+          "</span></div>" +
+          '<div class="rc-rows">' +
+          '<div class="rc-row"><span>Pendapatan sewa (' +
+          pays.length +
+          " pembayaran)</span><span>" +
+          rp(rent) +
+          "</span></div>" +
+          '<div class="rc-row"><span>Pendapatan utilitas (' +
+          utils.length +
+          " catatan)</span><span>" +
+          rp(util) +
+          "</span></div>" +
+          '<div class="rc-row"><span>Total pendapatan</span><span>' +
+          rp(total) +
+          "</span></div>" +
+          '<div class="rc-row"><span>Biaya perbaikan fasilitas</span><span>' +
+          rp(cost) +
+          "</span></div>" +
+          '<div class="rc-row"><span>Saldo bersih bulan ini</span><span>' +
+          rp(total - cost) +
+          "</span></div>" +
+          "</div>" +
+          (unpaid.length
+            ? '<div style="font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin:14px 0 6px">Belum membayar (' +
+              unpaid.length +
+              ')</div><div class="rc-rows">' +
+              unpaid
+                .map(
+                  (t) =>
+                    '<div class="rc-row"><span>' +
+                    esc(t.name) +
+                    " — kamar " +
+                    roomNo(t.roomId) +
+                    "</span><span>" +
+                    rp(roomById(t.roomId).price) +
+                    "</span></div>",
+                )
+                .join("") +
+              "</div>"
+            : "") +
+          '<div class="rc-foot">' +
+          esc(s.address) +
+          " · " +
+          esc(s.owner) +
+          "</div>" +
+          "</div>";
+        $("#print-area").innerHTML = html;
+        document.body.classList.add("printing");
+        window.print();
+        setTimeout(() => {
+          document.body.classList.remove("printing");
+          $("#print-area").innerHTML = "";
+        }, 400);
+      }
+
+      /* ===================== ACTION HANDLERS ===================== */
+      function bindView() {
+        // seg filters
+        $$(".seg").forEach((seg) => {
+          seg.addEventListener("click", (e) => {
+            const b = e.target.closest("button[data-f]");
+            if (!b) return;
+            if (seg.id === "pay-seg") payFilter.status = b.dataset.f;
+            else if (seg.id === "util-seg") utilFilter.kind = b.dataset.f;
+            else if (seg.id === "comp-seg") compFilter = b.dataset.f;
+            else if (seg.id === "room-seg") roomFilter = b.dataset.f;
+            render();
+          });
+        });
+        const pm = $("#pay-month");
+        if (pm)
+          pm.addEventListener("change", () => {
+            payFilter.ym = pm.value;
+            render();
+          });
+        const um = $("#util-month");
+        if (um)
+          um.addEventListener("change", () => {
+            utilFilter.ym = um.value;
+            render();
+          });
+      }
+
+      let roomFilter = "all";
+      const origRender = render;
+      render = function () {
+        origRender();
+        if (route.page === "rooms") {
+          $$("#room-grid .room-cell").forEach((cell) => {
+            const r = roomById(cell.dataset.id);
+            if (!r) return;
+            const t = tenantByRoom(r.id);
+            let show = roomFilter === "all" || r.status === roomFilter;
+            if (roomFilter === "occupied" && !t) show = false;
+            cell.style.display = show ? "" : "none";
+          });
+        }
+      };
+
+      document.addEventListener("click", (e) => {
+        const nav = e.target.closest("[data-nav]");
+        if (nav && nav.dataset.nav) {
+          e.preventDefault();
+          go(nav.dataset.nav);
+          return;
+        }
+        const el = e.target.closest("[data-act]");
+        if (!el) return;
+        const act = el.dataset.act;
+        const id = el.dataset.id;
+        const ym = el.dataset.ym;
+        switch (act) {
+          case "close":
+            closeModal();
+            break;
+          case "room-new":
+            roomFormModal();
+            break;
+          case "room-edit":
+            roomFormModal(id);
+            break;
+          case "room-open":
+            roomDetailModal(id);
+            break;
+          case "room-del":
+            confirmModal(
+              "Hapus kamar?",
+              "Kamar yang dihapus beserta seluruh riwayatnya tidak dapat dikembalikan. Lanjutkan?",
+              () => deleteRoom(id),
+            );
+            break;
+          case "room-save":
+            saveRoom(id);
+            break;
+          case "tenant-new":
+            tenantFormModal();
+            break;
+          case "tenant-edit":
+            tenantFormModal(id);
+            break;
+          case "tenant-end":
+            endTenantModal(id);
+            break;
+          case "tenant-del":
+            confirmModal(
+              "Hapus penyewa?",
+              "Riwayat pembayaran penyewa ini juga akan dihapus permanen.",
+              () => deleteTenant(id),
+            );
+            break;
+          case "tenant-save":
+            saveTenant(id);
+            break;
+          case "tenant-receipt":
+            printTenantMonthReceipt(id);
+            break;
+          case "pay-new":
+            paymentFormModal();
+            break;
+          case "pay-quick":
+            paymentFormModal(id, ym);
+            break;
+          case "pay-edit":
+            paymentFormModal(null, null, id);
+            break;
+          case "pay-del":
+            confirmModal(
+              "Hapus pembayaran?",
+              "Data pembayaran ini akan dihapus permanen.",
+              () => deletePayment(id),
+            );
+            break;
+          case "pay-save":
+            savePayment(id);
+            break;
+          case "pay-receipt":
+            printRentReceipt(id);
+            break;
+          case "util-new":
+            utilFormModal();
+            break;
+          case "util-edit":
+            utilFormModal(id);
+            break;
+          case "util-del":
+            confirmModal(
+              "Hapus catatan utilitas?",
+              "Catatan token/tagihan ini akan dihapus permanen.",
+              () => deleteUtil(id),
+            );
+            break;
+          case "util-save":
+            saveUtil(id);
+            break;
+          case "util-receipt":
+            printUtilReceipt(id);
+            break;
+          case "comp-new":
+            complaintFormModal();
+            break;
+          case "comp-open":
+            complaintFormModal(id);
+            break;
+          case "comp-del":
+            confirmModal(
+              "Hapus pengaduan?",
+              "Pengaduan ini akan dihapus permanen.",
+              () => deleteComplaint(id),
+            );
+            break;
+          case "comp-save":
+            saveComplaint(id);
+            break;
+          case "report-print":
+            printMonthlyReport(ym);
+            break;
+        }
+      });
+      // Jangan biarkan error handler menggagalkan seluruh halaman secara diam-diam
+      window.addEventListener("error", (e) => {
+        if (typeof showFatal === "function" && e && e.error) showFatal(e.error);
+      });
+
+      function confirmModal(title, msg, onYes) {
+        const body =
+          '<p style="font-size:13.5px;color:var(--ink-2);line-height:1.6">' +
+          esc(msg) +
+          "</p>";
+        const foot =
+          '<button class="btn" data-close="1">Batal</button><button class="btn danger" id="confirm-yes" style="border-color:var(--bad)">Ya, lanjutkan</button>';
+        openModal(modalShell(title, body, foot));
+        $("#confirm-yes").addEventListener("click", () => {
+          closeModal();
+          onYes();
+        });
+      }
+
+      /* ---- CRUD: rooms ---- */
+      function saveRoom(id) {
+        const no = $("#f-no").value.trim();
+        const price = Number($("#f-price").value);
+        if (!no) {
+          toast("Nomor kamar wajib diisi", "info");
+          return;
+        }
+        if (!price || price <= 0) {
+          toast("Tarif harus lebih dari nol", "info");
+          return;
+        }
+        const dup = DB.rooms.find(
+          (r) => r.no.toLowerCase() === no.toLowerCase() && r.id !== id,
+        );
+        if (dup) {
+          toast("Nomor kamar sudah dipakai", "info");
+          return;
+        }
+        if (id) {
+          const r = roomById(id);
+          r.no = no;
+          r.type = $("#f-type").value.trim() || "Standar";
+          r.price = price;
+          r.status = $("#f-status").value;
+          r.note = $("#f-note").value.trim();
+          toast("Kamar " + no + " diperbarui");
+        } else {
+          DB.rooms.push({
+            id: uid("r"),
+            no,
+            type: $("#f-type").value.trim() || "Standar",
+            price,
+            status: $("#f-status").value,
+            note: $("#f-note").value.trim(),
+          });
+          toast("Kamar " + no + " ditambahkan");
+        }
+        saveDB();
+        closeModal();
+        render();
+      }
+      function deleteRoom(id) {
+        const r = roomById(id);
+        if (r && tenantByRoom(id)) {
+          toast("Kamar masih dihuni, keluarkan penyewa dulu", "info");
+          return;
+        }
+        DB.rooms = DB.rooms.filter((x) => x.id !== id);
+        DB.payments = DB.payments.filter((p) => p.roomId !== id);
+        DB.utils = DB.utils.filter((u) => u.roomId !== id);
+        DB.complaints = DB.complaints.filter((c) => c.roomId !== id);
+        DB.tenants.forEach((t) => {
+          if (t.roomId === id) t.roomId = "";
+        });
+        saveDB();
+        render();
+        toast("Kamar dihapus");
+      }
+
+      /* ---- CRUD: tenants ---- */
+      function saveTenant(id) {
+        const name = $("#f-name").value.trim();
+        const roomId = $("#f-room").value;
+        const start = $("#f-start").value;
+        if (!name) {
+          toast("Nama wajib diisi", "info");
+          return;
+        }
+        if (!roomId) {
+          toast("Pilih kamar terlebih dahulu", "info");
+          return;
+        }
+        if (!start) {
+          toast("Tanggal mulai sewa wajib diisi", "info");
+          return;
+        }
+        if (id) {
+          const t = tenantById(id);
+          const oldRoom = t.roomId;
+          t.name = name;
+          t.phone = $("#f-phone").value.trim();
+          t.emergency = $("#f-emergency").value.trim();
+          t.job = $("#f-job").value.trim();
+          t.origin = $("#f-origin").value.trim();
+          t.start = start;
+          t.note = $("#f-note").value.trim();
+          if (roomId !== oldRoom) {
+            if (oldRoom && roomById(oldRoom))
+              roomById(oldRoom).status = "vacant";
+            t.roomId = roomId;
+            if (roomById(roomId)) roomById(roomId).status = "occupied";
+          }
+          toast("Data " + name + " diperbarui");
+        } else {
+          DB.tenants.push({
+            id: uid("t"),
+            roomId,
+            name,
+            phone: $("#f-phone").value.trim(),
+            emergency: $("#f-emergency").value.trim(),
+            origin: $("#f-origin").value.trim(),
+            job: $("#f-job").value.trim(),
+            start,
+            note: $("#f-note").value.trim(),
+          });
+          if (roomById(roomId)) roomById(roomId).status = "occupied";
+          toast(name + " terdaftar di kamar " + roomNo(roomId));
+        }
+        saveDB();
+        closeModal();
+        render();
+      }
+      function endTenantModal(id) {
+        const t = tenantById(id);
+        if (!t) return;
+        const unpaid =
+          DB.payments.filter((p) => p.tenantId === id).length === 0 &&
+          activeTenants().includes(t);
+        const body =
+          '<div class="field"><label>Tanggal selesai sewa <span class="req">*</span></label><input type="date" id="f-end" value="' +
+          todayISO() +
+          '"></div>' +
+          '<p style="font-size:12.5px;color:var(--muted);line-height:1.6">' +
+          esc(t.name) +
+          " akan dipindahkan ke riwayat penyewa. Kamar " +
+          esc(roomNo(t.roomId)) +
+          " menjadi kosong dan bisa diisi penyewa baru. Riwayat pembayarannya tetap tersimpan.</p>";
+        const foot =
+          '<button class="btn" data-close="1">Batal</button><button class="btn primary" data-act="tenant-end-save" data-id="' +
+          id +
+          '">' +
+          I.check +
+          " Akhiri Sewa</button>";
+        openModal(modalShell("Akhiri Sewa — " + t.name, body, foot));
+      }
+      document.addEventListener("click", (e) => {
+        const el = e.target.closest('[data-act="tenant-end-save"]');
+        if (!el) return;
+        const t = tenantById(el.dataset.id);
+        if (!t) return;
+        const end = $("#f-end").value;
+        if (!end) {
+          toast("Tanggal selesai wajib diisi", "info");
+          return;
+        }
+        t.end = end;
+        const r = roomById(t.roomId);
+        if (r) r.status = "vacant";
+        saveDB();
+        closeModal();
+        render();
+        toast(
+          "Sewa " + t.name + " diakhiri, kamar " + (r ? r.no : "") + " kosong",
+        );
+      });
+      function deleteTenant(id) {
+        DB.tenants = DB.tenants.filter((t) => t.id !== id);
+        DB.payments = DB.payments.filter((p) => p.tenantId !== id);
+        DB.complaints.forEach((c) => {
+          if (c.tenantId === id) c.tenantId = null;
+        });
+        saveDB();
+        render();
+        toast("Penyewa dihapus");
+      }
+
+      /* ---- CRUD: payments ---- */
+      function savePayment(id) {
+        const tenantId = $("#f-tenant").value;
+        const ym = $("#f-ym").value;
+        const amount = Number($("#f-amount").value);
+        const date = $("#f-date").value || todayISO();
+        if (!tenantId) {
+          toast("Pilih penyewa terlebih dahulu", "info");
+          return;
+        }
+        if (!amount || amount <= 0) {
+          toast("Jumlah harus lebih dari nol", "info");
+          return;
+        }
+        const dup = DB.payments.find(
+          (p) => p.tenantId === tenantId && p.ym === ym && p.id !== id,
+        );
+        if (dup) {
+          toast("Pembayaran bulan ini sudah tercatat", "info");
+          return;
+        }
+        if (id) {
+          const p = DB.payments.find((x) => x.id === id);
+          p.tenantId = tenantId;
+          p.roomId = tenantById(tenantId).roomId;
+          p.ym = ym;
+          p.amount = amount;
+          p.date = date;
+          p.method = $("#f-method").value;
+          p.note = $("#f-note").value.trim();
+          toast("Pembayaran diperbarui");
+        } else {
+          DB.payments.push({
+            id: uid("p"),
+            tenantId,
+            roomId: tenantById(tenantId).roomId,
+            ym,
+            amount,
+            date,
+            method: $("#f-method").value,
+            note: $("#f-note").value.trim(),
+          });
+          toast("Pembayaran " + rp(amount) + " tercatat");
+        }
+        saveDB();
+        closeModal();
+        render();
+      }
+      function deletePayment(id) {
+        DB.payments = DB.payments.filter((p) => p.id !== id);
+        saveDB();
+        render();
+        toast("Pembayaran dihapus");
+      }
+
+      /* ---- CRUD: utils ---- */
+      function saveUtil(id) {
+        const roomId = $("#f-room").value;
+        const amount = Number($("#f-amount").value);
+        if (!roomId) {
+          toast("Pilih kamar terlebih dahulu", "info");
+          return;
+        }
+        if (!amount || amount <= 0) {
+          toast("Jumlah harus lebih dari nol", "info");
+          return;
+        }
+        const meterRaw = $("#f-meter").value;
+        const data = {
+          roomId,
+          kind: $("#f-kind").value,
+          ym: $("#f-ym").value,
+          amount,
+          meter: meterRaw === "" ? null : Number(meterRaw),
+          date: $("#f-date").value || todayISO(),
+          note: $("#f-note").value.trim(),
+        };
+        if (id) {
+          Object.assign(
+            DB.utils.find((x) => x.id === id),
+            data,
+          );
+          toast("Catatan utilitas diperbarui");
+        } else {
+          DB.utils.push(Object.assign({ id: uid("u") }, data));
+          toast("Catatan utilitas tersimpan");
+        }
+        saveDB();
+        closeModal();
+        render();
+      }
+      function deleteUtil(id) {
+        DB.utils = DB.utils.filter((u) => u.id !== id);
+        saveDB();
+        render();
+        toast("Catatan utilitas dihapus");
+      }
+
+      /* ---- CRUD: complaints ---- */
+      function saveComplaint(id) {
+        const title = $("#f-title").value.trim();
+        const roomId = $("#f-room").value;
+        if (!title) {
+          toast("Judul pengaduan wajib diisi", "info");
+          return;
+        }
+        if (!roomId) {
+          toast("Pilih kamar lokasi kerusakan", "info");
+          return;
+        }
+        const tenantId =
+          $("#f-tenant").value || (tenantByRoom(roomId) || {}).id || null;
+        const cost = Number($("#f-cost").value) || 0;
+        const data = {
+          roomId,
+          tenantId,
+          title,
+          desc: $("#f-desc").value.trim(),
+          date: $("#f-date").value || todayISO(),
+          status: $("#f-status").value,
+          cost,
+          resolution: $("#f-resolution").value.trim(),
+        };
+        if (id) {
+          Object.assign(
+            DB.complaints.find((c) => c.id === id),
+            data,
+          );
+          toast("Pengaduan diperbarui");
+        } else {
+          DB.complaints.push(Object.assign({ id: uid("c") }, data));
+          toast("Pengaduan dicatat");
+        }
+        saveDB();
+        closeModal();
+        render();
+      }
+      function deleteComplaint(id) {
+        DB.complaints = DB.complaints.filter((c) => c.id !== id);
+        saveDB();
+        render();
+        toast("Pengaduan dihapus");
+      }
+
+      /* ===================== BACKUP / RESTORE / RESET ===================== */
+      function exportJSON() {
+        const blob = new Blob(
+          [
+            JSON.stringify(
+              {
+                app: "kelola-kost",
+                version: 1,
+                exported: new Date().toISOString(),
+                data: DB,
+              },
+              null,
+              2,
+            ),
+          ],
+          { type: "application/json" },
+        );
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "kelola-kost-backup-" + todayISO() + ".json";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+        toast("Backup JSON diunduh");
+      }
+      function importJSON(file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const obj = JSON.parse(reader.result);
+            const data =
+              obj && obj.data && typeof obj.data === "object" ? obj.data : obj;
+            if (
+              !data ||
+              typeof data !== "object" ||
+              !Array.isArray(data.rooms) ||
+              !Array.isArray(data.tenants) ||
+              !data.rooms.length
+            ) {
+              throw new Error("struktur tidak cocok");
+            }
+            DB = normalizeDB(data);
+            saveDB();
+            render();
+            renderNav();
+            toast("Data berhasil dipulihkan dari backup");
+          } catch (err) {
+            toast("Gagal impor: file tidak valid", "info");
+          }
+        };
+        reader.readAsText(file);
+      }
+      function resetData() {
+        confirmModal(
+          "Kembalikan ke data contoh?",
+          "Seluruh data yang Anda masukkan akan diganti dengan data contoh awal. Tindakan ini tidak bisa dibatalkan.",
+          () => {
+            DB = JSON.parse(JSON.stringify(SEED));
+            saveDB();
+            render();
+            renderNav();
+            toast("Data dikembalikan ke contoh awal");
+          },
+        );
+      }
+
+      /* ===================== INIT ===================== */
+      function showFatal(err) {
+        // Jangan biarkan halaman putih diam: tampilkan apa yang salah & cara pulih
+        const view = $("#view");
+        if (!view) return;
+        view.innerHTML =
+          '<div class="card" style="padding:22px;margin-bottom:16px">' +
+          '<h2 style="font-size:17px;margin-bottom:8px">Terjadi kesalahan saat menampilkan halaman</h2>' +
+          '<p style="font-size:13px;color:var(--muted);margin-bottom:6px">' +
+          esc(String((err && err.message) || err)) +
+          "</p>" +
+          '<p style="font-size:12.5px;color:var(--muted)">Coba muat ulang halaman. Jika masalah berlanjut, gunakan tombol "Reset ke data contoh" di menu samping (data saat ini tetap aman bila bisa diekspor).</p></div>';
+      }
+      function init() {
+        loadDB();
+        // sidebar buttons
+        $("#btn-export").innerHTML =
+          I.down + "<span>Ekspor backup (JSON)</span>";
+        $("#btn-import").innerHTML = I.up + "<span>Impor backup</span>";
+        $("#btn-reset").innerHTML =
+          I.reset + "<span>Reset ke data contoh</span>";
+        $("#menu-btn").innerHTML = I.menu;
+        $("#btn-export").addEventListener("click", exportJSON);
+        $("#btn-import").addEventListener("click", () =>
+          $("#import-file").click(),
+        );
+        $("#btn-reset").addEventListener("click", resetData);
+        $("#import-file").addEventListener("change", (e) => {
+          if (e.target.files && e.target.files[0])
+            importJSON(e.target.files[0]);
+          e.target.value = "";
+        });
+        $("#menu-btn").addEventListener("click", () => {
+          $("#sidebar").classList.add("open");
+          $("#scrim").classList.add("show");
+        });
+        $("#scrim").addEventListener("click", () => {
+          $("#sidebar").classList.remove("open");
+          $("#scrim").classList.remove("show");
+        });
+        try {
+          renderNav();
+          render();
+        } catch (err) {
+          showFatal(err);
+        }
+      }
+      document.addEventListener("DOMContentLoaded", init);
+    </script>
+  </body>
+</html>

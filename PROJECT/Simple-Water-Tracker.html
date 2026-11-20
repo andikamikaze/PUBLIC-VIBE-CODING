@@ -1,0 +1,2259 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <meta name="theme-color" content="#FAFAFA" id="theme-color-meta" />
+    <title>Simple Water Tracker</title>
+    <style>
+      :root {
+        --bg: #fafafa;
+        --surface: #ffffff;
+        --text-primary: #0f172a;
+        --text-secondary: #64748b;
+        --accent: #0284c7;
+        --accent-bg: #e0f2fe;
+        --border: #e2e8f0;
+        --danger: #ef4444;
+        --radius: 20px;
+        --shadow:
+          0 4px 6px -1px rgb(0 0 0 / 0.02), 0 2px 4px -2px rgb(0 0 0 / 0.02);
+      }
+
+      /* ===== NEW: Dark mode variables ===== */
+      [data-theme="dark"] {
+        --bg: #0b1220;
+        --surface: #151d2e;
+        --text-primary: #f1f5f9;
+        --text-secondary: #94a3b8;
+        --accent: #38bdf8;
+        --accent-bg: #0c4a6e;
+        --border: #1e293b;
+        --danger: #f87171;
+        --shadow:
+          0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+      }
+
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text-primary);
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+        font-size: 16px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        transition:
+          background 0.3s ease,
+          color 0.3s ease;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+        border: none;
+        background: none;
+      }
+
+      button:focus-visible,
+      input:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .app {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 0 24px 60px;
+      }
+
+      /* Topbar */
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 32px 0 24px;
+        margin-bottom: 16px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        color: var(--text-primary);
+      }
+
+      .brand-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--accent-bg);
+        color: var(--accent);
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+      }
+
+      .brand-icon svg {
+        width: 22px;
+        height: 22px;
+      }
+
+      .nav {
+        display: flex;
+        gap: 6px;
+        background: var(--surface);
+        padding: 6px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+      }
+
+      .nav button {
+        color: var(--text-secondary);
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+
+      .nav button.active {
+        background: var(--text-primary);
+        color: #fff;
+      }
+
+      [data-theme="dark"] .nav button.active {
+        background: var(--accent);
+        color: #0b1220;
+      }
+
+      .nav button:hover:not(.active) {
+        background: var(--bg);
+        color: var(--text-primary);
+      }
+
+      /* ===== NEW: Theme toggle button ===== */
+      .theme-toggle {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--text-primary);
+        display: grid;
+        place-items: center;
+        transition: all 0.2s ease;
+        margin-left: 8px;
+        flex-shrink: 0;
+      }
+
+      .theme-toggle:hover {
+        background: var(--bg);
+        transform: rotate(15deg);
+      }
+
+      .theme-toggle svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      .theme-toggle .icon-sun {
+        display: none;
+      }
+      .theme-toggle .icon-moon {
+        display: block;
+      }
+      [data-theme="dark"] .theme-toggle .icon-sun {
+        display: block;
+      }
+      [data-theme="dark"] .theme-toggle .icon-moon {
+        display: none;
+      }
+
+      .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* Headings */
+      .heading {
+        margin-bottom: 40px;
+      }
+
+      .eyebrow {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-secondary);
+        margin: 0 0 8px;
+      }
+
+      .heading h1 {
+        font-size: clamp(32px, 5vw, 42px);
+        font-weight: 700;
+        letter-spacing: -1.5px;
+        margin: 8px 0 12px;
+        line-height: 1.1;
+      }
+
+      .heading .sub {
+        color: var(--text-secondary);
+        font-size: 18px;
+        margin: 0;
+        font-weight: 400;
+      }
+
+      .today-date {
+        font-size: 15px;
+        color: var(--text-secondary);
+        font-weight: 500;
+        text-align: right;
+      }
+
+      /* Layout */
+      .grid {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 32px;
+      }
+
+      .lower {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 32px;
+        margin-top: 32px;
+      }
+
+      .page-panel {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      /* Cards */
+      .card {
+        background: var(--surface);
+        border-radius: var(--radius);
+        padding: 40px;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease,
+          background 0.3s ease,
+          border-color 0.3s ease;
+      }
+
+      .card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 32px;
+      }
+
+      .card-head h2 {
+        font-size: 20px;
+        font-weight: 600;
+        margin: 0;
+        letter-spacing: -0.3px;
+      }
+
+      .link-btn {
+        color: var(--accent);
+        font-size: 14px;
+        font-weight: 600;
+        padding: 4px 0;
+        transition: opacity 0.2s;
+      }
+
+      .link-btn:hover {
+        opacity: 0.8;
+      }
+
+      /* Progress */
+      .big-number {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .big-number strong {
+        font-size: clamp(56px, 8vw, 72px);
+        font-weight: 700;
+        letter-spacing: -3px;
+        line-height: 1;
+        color: var(--text-primary);
+      }
+
+      .big-number span {
+        color: var(--text-secondary);
+        font-size: 20px;
+        font-weight: 500;
+      }
+
+      .goal-caption {
+        color: var(--text-secondary);
+        font-size: 15px;
+        margin-bottom: 32px;
+      }
+
+      .bar {
+        height: 12px;
+        background: var(--bg);
+        border-radius: 99px;
+        overflow: hidden;
+        margin-bottom: 16px;
+      }
+
+      .bar-fill {
+        height: 100%;
+        background: var(--accent);
+        border-radius: 99px;
+        transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .progress-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 14px;
+        color: var(--text-secondary);
+        font-weight: 500;
+        margin-bottom: 40px;
+      }
+
+      /* ===== UPDATED: 4-column stats grid ===== */
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 24px;
+        padding-top: 32px;
+        border-top: 1px solid var(--border);
+      }
+
+      .stat span {
+        display: block;
+        color: var(--text-secondary);
+        font-size: 13px;
+        font-weight: 500;
+        margin-bottom: 8px;
+      }
+
+      .stat strong {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.5px;
+      }
+
+      /* ===== NEW: Streak stat highlight ===== */
+      .stat.streak strong {
+        color: var(--accent);
+      }
+
+      .stat.streak .streak-fire {
+        display: inline-block;
+        margin-right: 4px;
+      }
+
+      /* Quick Add */
+      .servings {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin: 24px 0 32px;
+      }
+
+      .serving {
+        background: var(--bg);
+        border: 2px solid transparent;
+        border-radius: 16px;
+        padding: 24px 16px;
+        color: var(--text-primary);
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .serving:hover {
+        background: var(--accent-bg);
+        border-color: var(--accent);
+      }
+
+      .serving.selected {
+        background: var(--accent-bg);
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .serving svg {
+        width: 28px;
+        height: 28px;
+      }
+
+      .serving strong {
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .serving small {
+        font-size: 13px;
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+
+      .serving.selected small {
+        color: var(--accent);
+        opacity: 0.8;
+      }
+
+      .custom-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--text-secondary);
+        font-size: 14px;
+        font-weight: 500;
+        margin: 16px 0 10px;
+      }
+
+      .field {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 0 16px;
+        background: var(--surface);
+        transition: all 0.2s;
+      }
+
+      .field:focus-within {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-bg);
+      }
+
+      .field input {
+        width: 100%;
+        border: 0;
+        outline: none;
+        padding: 16px 0;
+        background: transparent;
+        color: var(--text-primary);
+        font-size: 16px;
+        font-weight: 500;
+      }
+
+      .field span {
+        font-size: 15px;
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+
+      .primary {
+        width: 100%;
+        margin-top: 24px;
+        border: 0;
+        border-radius: 14px;
+        background: var(--text-primary);
+        color: #fff;
+        font-weight: 600;
+        font-size: 16px;
+        padding: 18px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.2s;
+      }
+
+      [data-theme="dark"] .primary {
+        background: var(--accent);
+        color: #0b1220;
+      }
+
+      .primary:hover {
+        background: #000;
+        transform: translateY(-1px);
+      }
+
+      [data-theme="dark"] .primary:hover {
+        background: #0ea5e9;
+      }
+
+      /* Log List */
+      .section-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 8px;
+      }
+
+      .section-title h2 {
+        font-size: 20px;
+        font-weight: 600;
+        margin: 0;
+      }
+
+      .count {
+        font-size: 14px;
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+
+      .log {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .log li {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 20px 0;
+        border-bottom: 1px solid var(--border);
+        animation: fadeIn 0.3s ease;
+      }
+
+      .log li:last-child {
+        border-bottom: 0;
+      }
+
+      .log-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: var(--accent-bg);
+        color: var(--accent);
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+      }
+
+      .log-icon svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      .log-detail {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .log-time {
+        font-size: 14px;
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+
+      .log-amount {
+        font-weight: 600;
+        font-size: 16px;
+        color: var(--text-primary);
+        white-space: nowrap;
+      }
+
+      /* ===== NEW: Log action buttons container ===== */
+      .log-actions {
+        display: flex;
+        gap: 4px;
+        flex-shrink: 0;
+      }
+
+      .remove,
+      .edit-btn {
+        color: var(--text-secondary);
+        font-size: 13px;
+        font-weight: 500;
+        padding: 8px 10px;
+        border-radius: 8px;
+        transition: all 0.2s;
+        min-width: 44px;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .remove:hover {
+        background: #fee2e2;
+        color: var(--danger);
+      }
+
+      [data-theme="dark"] .remove:hover {
+        background: rgba(248, 113, 113, 0.15);
+      }
+
+      .edit-btn:hover {
+        background: var(--accent-bg);
+        color: var(--accent);
+      }
+
+      .empty {
+        padding: 40px 0;
+        color: var(--text-secondary);
+        font-size: 15px;
+        text-align: center;
+      }
+
+      /* Note Card */
+      .note-card {
+        background: var(--accent-bg);
+        border-color: transparent;
+      }
+
+      .note-card .eyebrow {
+        color: var(--accent);
+      }
+
+      .note-card h2 {
+        font-size: 20px;
+        margin: 8px 0 12px;
+      }
+
+      .note-card p {
+        font-size: 15px;
+        color: var(--text-primary);
+        opacity: 0.8;
+        margin: 0;
+        line-height: 1.6;
+      }
+
+      /* History & Insights */
+      .week-bars {
+        height: 200px;
+        display: flex;
+        align-items: flex-end;
+        gap: 16px;
+        padding-top: 24px;
+      }
+
+      .day-bar {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 12px;
+        height: 100%;
+      }
+
+      .day-bar .column {
+        width: 100%;
+        max-width: 48px;
+        height: 100%;
+        display: flex;
+        align-items: flex-end;
+        background: var(--bg);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .day-bar .column i {
+        display: block;
+        width: 100%;
+        background: var(--accent);
+        border-radius: 12px;
+        min-height: 4px;
+        transition: height 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .day-bar small {
+        color: var(--text-secondary);
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .history-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 18px 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .history-row:last-child {
+        border-bottom: 0;
+      }
+
+      .history-row .date-label strong {
+        display: block;
+        font-size: 15px;
+        font-weight: 600;
+      }
+
+      .history-row .date-label span {
+        font-size: 13px;
+        color: var(--text-secondary);
+      }
+
+      .history-row .amount {
+        font-size: 16px;
+        font-weight: 600;
+      }
+
+      /* Settings */
+      .setting-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 24px;
+        padding: 24px 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .setting-row:last-child {
+        border-bottom: 0;
+      }
+
+      .setting-row p {
+        margin: 6px 0 0;
+        font-size: 14px;
+        color: var(--text-secondary);
+      }
+
+      .secondary {
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: 12px;
+        padding: 12px 20px;
+        color: var(--text-primary);
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
+
+      .secondary:hover {
+        background: var(--bg);
+        border-color: var(--text-secondary);
+      }
+
+      /* Footer */
+      .footer {
+        border-top: 1px solid var(--border);
+        margin-top: 60px;
+        padding: 32px 0;
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        color: var(--text-secondary);
+        font-size: 13px;
+      }
+
+      /* ===== UPDATED: Toast with action button ===== */
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 32px;
+        transform: translateX(-50%) translateY(20px);
+        background: var(--text-primary);
+        color: var(--bg);
+        padding: 12px 12px 12px 20px;
+        border-radius: 14px;
+        font-size: 14px;
+        font-weight: 500;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.15);
+        max-width: 90vw;
+        z-index: 100;
+        opacity: 0;
+        transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      [data-theme="dark"] .toast {
+        background: #f1f5f9;
+        color: #0b1220;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+        pointer-events: auto;
+      }
+
+      .toast-message {
+        flex: 1;
+      }
+
+      .toast-action {
+        background: transparent;
+        color: var(--accent);
+        font-weight: 700;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 14px;
+        min-width: 44px;
+        min-height: 36px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: background 0.2s;
+      }
+
+      [data-theme="dark"] .toast-action {
+        color: #0284c7;
+      }
+
+      .toast-action:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      [data-theme="dark"] .toast-action:hover {
+        background: rgba(0, 0, 0, 0.08);
+      }
+
+      /* Modal */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        z-index: 50;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+
+      [data-theme="dark"] .modal-backdrop {
+        background: rgba(0, 0, 0, 0.6);
+      }
+
+      .modal-backdrop.open {
+        display: flex;
+        opacity: 1;
+      }
+
+      .modal {
+        width: min(100%, 440px);
+        background: var(--surface);
+        border-radius: 24px;
+        padding: 32px;
+        box-shadow:
+          0 20px 25px -5px rgb(0 0 0 / 0.1),
+          0 8px 10px -6px rgb(0 0 0 / 0.1);
+        transform: scale(0.95);
+        transition: transform 0.2s;
+      }
+
+      .modal-backdrop.open .modal {
+        transform: scale(1);
+      }
+
+      .modal h2 {
+        font-size: 24px;
+        margin: 8px 0 12px;
+        letter-spacing: -0.5px;
+      }
+
+      .modal p {
+        font-size: 15px;
+        color: var(--text-secondary);
+        margin-bottom: 24px;
+      }
+
+      .modal-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 8px;
+      }
+
+      .modal-actions button {
+        flex: 1;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      /* ===== NEW: Confetti celebration ===== */
+      .confetti-container {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 200;
+        overflow: hidden;
+      }
+
+      .confetti {
+        position: absolute;
+        top: -20px;
+        width: 8px;
+        height: 14px;
+        border-radius: 2px;
+        animation: confetti-fall 3s cubic-bezier(0.25, 0.46, 0.45, 0.94)
+          forwards;
+      }
+
+      @keyframes confetti-fall {
+        0% {
+          transform: translateY(0) rotate(0deg);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(100vh) rotate(720deg);
+          opacity: 0;
+        }
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .app {
+          padding: 0 20px 40px;
+        }
+        .topbar {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 16px;
+          padding: 24px 0 16px;
+        }
+        .topbar-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+        .nav {
+          flex: 1;
+          overflow-x: auto;
+          padding: 4px;
+          -webkit-overflow-scrolling: touch;
+        }
+        .nav button {
+          flex: 1;
+          text-align: center;
+          white-space: nowrap;
+        }
+        .grid,
+        .lower {
+          grid-template-columns: 1fr;
+          gap: 24px;
+        }
+        .card {
+          padding: 28px;
+        }
+        .heading {
+          margin-bottom: 28px;
+        }
+        .heading h1 {
+          font-size: 32px;
+        }
+        .big-number strong {
+          font-size: 56px;
+        }
+        .servings {
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+        .serving {
+          flex-direction: row;
+          justify-content: space-between;
+          padding: 16px 20px;
+        }
+        /* ===== UPDATED: Stats responsive ===== */
+        .stats {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 20px;
+        }
+        .footer {
+          flex-direction: column;
+          gap: 8px;
+          text-align: center;
+        }
+        .today-date {
+          text-align: left;
+          margin-top: 8px;
+        }
+      }
+
+      @media (max-width: 420px) {
+        .stats {
+          grid-template-columns: 1fr 1fr;
+        }
+        .stat strong {
+          font-size: 18px;
+        }
+      }
+
+      /* ===== NEW: Respect reduced motion ===== */
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+          animation: none !important;
+        }
+        .confetti-container {
+          display: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="topbar-row">
+          <div class="brand">
+            <span class="brand-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+              </svg>
+            </span>
+            WaterTracker
+          </div>
+          <div class="topbar-actions">
+            <!-- NEW: Theme toggle -->
+            <button
+              class="theme-toggle"
+              id="theme-toggle"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              <svg
+                class="icon-moon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
+              <svg
+                class="icon-sun"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="4" />
+                <path
+                  d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <nav class="nav" aria-label="Main navigation">
+          <button class="active" data-page="today">Today</button>
+          <button data-page="history">History</button>
+          <button data-page="insights">Insights</button>
+          <button data-page="settings">Settings</button>
+        </nav>
+      </header>
+
+      <main>
+        <!-- TODAY PAGE -->
+        <section id="page-today">
+          <div class="heading">
+            <div>
+              <p class="eyebrow">Daily Check-in</p>
+              <!-- UPDATED: Dynamic greeting -->
+              <h1 id="greeting-title">A little, often.</h1>
+              <p class="sub" id="greeting-sub">
+                Build a steady habit, one glass at a time.
+              </p>
+            </div>
+            <div class="today-date" id="friendly-date"></div>
+          </div>
+
+          <div class="grid">
+            <section class="card progress-card">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Your Progress</p>
+                  <h2>Today's hydration</h2>
+                </div>
+                <button class="link-btn" id="edit-goal">Edit goal ↗</button>
+              </div>
+              <div class="big-number">
+                <strong id="total">0</strong><span>ml</span>
+              </div>
+              <p class="goal-caption">
+                of <span id="goal-text">2,000</span> ml daily goal
+              </p>
+
+              <div
+                class="bar"
+                role="progressbar"
+                id="progress-bar"
+                aria-label="Daily hydration goal"
+                aria-valuemin="0"
+                aria-valuemax="2000"
+                aria-valuenow="0"
+              >
+                <div class="bar-fill" id="bar-fill"></div>
+              </div>
+              <div class="progress-meta">
+                <span id="percent">0% complete</span>
+                <span id="remaining">2,000 ml to go</span>
+              </div>
+
+              <!-- UPDATED: 4 stats including streak -->
+              <div class="stats">
+                <div class="stat">
+                  <span>Drinks logged</span>
+                  <strong id="drink-count">0</strong>
+                </div>
+                <div class="stat">
+                  <span>Average serving</span>
+                  <strong id="average">—</strong>
+                </div>
+                <div class="stat">
+                  <span>Goal status</span>
+                  <strong id="goal-status">In progress</strong>
+                </div>
+                <div class="stat streak">
+                  <span><span class="streak-fire">🔥</span>Current streak</span>
+                  <strong id="streak-count">0 days</strong>
+                </div>
+              </div>
+            </section>
+
+            <section class="card">
+              <p class="eyebrow">Quick Add</p>
+              <h2>Log a drink</h2>
+              <p class="sub">Choose a serving or enter a custom amount.</p>
+
+              <div class="servings" role="group" aria-label="Serving size">
+                <button class="serving" data-amount="150">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
+                    <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
+                    <line x1="6" y1="2" x2="6" y2="4" />
+                    <line x1="10" y1="2" x2="10" y2="4" />
+                    <line x1="14" y1="2" x2="14" y2="4" />
+                  </svg>
+                  <strong>150 ml</strong>
+                  <small>Small glass</small>
+                </button>
+                <button class="serving selected" data-amount="250">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
+                    <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
+                    <line x1="6" y1="2" x2="6" y2="4" />
+                    <line x1="10" y1="2" x2="10" y2="4" />
+                    <line x1="14" y1="2" x2="14" y2="4" />
+                  </svg>
+                  <strong>250 ml</strong>
+                  <small>Regular glass</small>
+                </button>
+                <button class="serving" data-amount="500">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
+                    <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
+                    <line x1="6" y1="2" x2="6" y2="4" />
+                    <line x1="10" y1="2" x2="10" y2="4" />
+                    <line x1="14" y1="2" x2="14" y2="4" />
+                  </svg>
+                  <strong>500 ml</strong>
+                  <small>Water bottle</small>
+                </button>
+              </div>
+
+              <label class="custom-label" for="amount-input">
+                <span>Custom amount</span>
+                <span>1–5,000 ml</span>
+              </label>
+              <div class="field">
+                <input
+                  id="amount-input"
+                  type="number"
+                  min="1"
+                  max="5000"
+                  step="1"
+                  value="250"
+                  inputmode="numeric"
+                />
+                <span>ml</span>
+              </div>
+              <button class="primary" id="add-drink">
+                <span id="add-label">Add 250 ml</span>
+                <span aria-hidden="true">＋</span>
+              </button>
+            </section>
+          </div>
+
+          <div class="lower">
+            <section class="card">
+              <div class="section-title">
+                <h2>Today's intake</h2>
+                <span class="count" id="entry-count">0 drinks</span>
+              </div>
+              <div id="empty" class="empty">
+                No drinks logged yet. Add your first glass above to get started.
+              </div>
+              <ul class="log" id="log" aria-label="Drinks logged today"></ul>
+            </section>
+
+            <aside class="card note-card">
+              <p class="eyebrow">A Gentle Reminder</p>
+              <h2>Find your own rhythm.</h2>
+              <p>
+                Keep water within reach and sip throughout the day. Hydration
+                needs vary with activity, weather, and individual health.
+              </p>
+            </aside>
+          </div>
+        </section>
+
+        <!-- HISTORY PAGE -->
+        <section id="page-history" class="hidden page-panel">
+          <div class="heading">
+            <div>
+              <p class="eyebrow">Your Record</p>
+              <h1>History</h1>
+              <p class="sub">A simple look at your recent hydration.</p>
+            </div>
+          </div>
+          <section class="card">
+            <div class="card-head">
+              <div>
+                <p class="eyebrow">Last 7 Days</p>
+                <h2>Daily water intake</h2>
+              </div>
+              <span class="count">Goal: <b id="history-goal">2,000 ml</b></span>
+            </div>
+            <div class="week-bars" id="week-bars"></div>
+          </section>
+          <section class="card" style="margin-top: 24px">
+            <div class="section-title">
+              <h2>Daily summary</h2>
+              <span class="count">Most recent first</span>
+            </div>
+            <div id="history-list"></div>
+          </section>
+        </section>
+
+        <!-- INSIGHTS PAGE -->
+        <section id="page-insights" class="hidden page-panel">
+          <div class="heading">
+            <div>
+              <p class="eyebrow">Your Patterns</p>
+              <h1>Insights</h1>
+              <p class="sub">
+                Small observations to help build a consistent habit.
+              </p>
+            </div>
+          </div>
+          <div class="grid">
+            <section class="card">
+              <p class="eyebrow">Today</p>
+              <h2
+                id="insight-today"
+                style="font-size: 32px; margin: 12px 0; letter-spacing: -1px"
+              >
+                0 ml logged
+              </h2>
+              <p class="sub" id="insight-today-copy">
+                Your daily record will appear here as you log drinks.
+              </p>
+            </section>
+            <section class="card">
+              <p class="eyebrow">Past 7 Days</p>
+              <h2
+                id="insight-average"
+                style="font-size: 32px; margin: 12px 0; letter-spacing: -1px"
+              >
+                0 ml per day
+              </h2>
+              <p class="sub">
+                Average daily intake across the last seven calendar days.
+              </p>
+            </section>
+          </div>
+          <!-- NEW: Best streak insight card -->
+          <div class="grid" style="margin-top: 24px">
+            <section class="card">
+              <p class="eyebrow">Streak</p>
+              <h2
+                id="insight-streak"
+                style="font-size: 32px; margin: 12px 0; letter-spacing: -1px"
+              >
+                0 days
+              </h2>
+              <p class="sub">
+                Consecutive days you've met your daily goal. Keep it going!
+              </p>
+            </section>
+            <section class="card">
+              <p class="eyebrow">Best streak</p>
+              <h2
+                id="insight-best-streak"
+                style="font-size: 32px; margin: 12px 0; letter-spacing: -1px"
+              >
+                0 days
+              </h2>
+              <p class="sub">
+                Your longest run of consecutive goal-met days on record.
+              </p>
+            </section>
+          </div>
+          <section
+            class="card"
+            style="
+              margin-top: 24px;
+              background: var(--accent-bg);
+              border-color: transparent;
+            "
+          >
+            <p class="eyebrow" style="color: var(--accent)">
+              A Note on Hydration
+            </p>
+            <h2>Consistency over perfection.</h2>
+            <p class="sub" style="color: var(--text-primary); opacity: 0.8">
+              Use these records to notice your own patterns, not as a medical
+              assessment. Water needs differ from person to person; follow
+              professional guidance if you have a condition that affects fluid
+              intake.
+            </p>
+          </section>
+        </section>
+
+        <!-- SETTINGS PAGE -->
+        <section id="page-settings" class="hidden page-panel">
+          <div class="heading">
+            <div>
+              <p class="eyebrow">Personalize</p>
+              <h1>Settings</h1>
+              <p class="sub">Make WaterTracker work for your routine.</p>
+            </div>
+          </div>
+          <section class="card">
+            <p class="eyebrow">Daily Target</p>
+            <h2 style="margin-bottom: 24px">Hydration goal</h2>
+            <div class="setting-row">
+              <div>
+                <strong>Daily water goal</strong>
+                <p>Set a target in milliliters.</p>
+              </div>
+              <div class="field" style="width: 160px">
+                <input
+                  id="settings-goal"
+                  type="number"
+                  min="100"
+                  max="10000"
+                  step="50"
+                  value="2000"
+                  aria-label="Daily water goal in milliliters"
+                />
+                <span>ml</span>
+              </div>
+            </div>
+            <button class="primary" id="save-settings" style="margin-top: 24px">
+              <span>Save changes</span>
+              <span>→</span>
+            </button>
+          </section>
+          <!-- NEW: Appearance setting -->
+          <section class="card" style="margin-top: 24px">
+            <p class="eyebrow">Appearance</p>
+            <h2 style="margin-bottom: 24px">Theme</h2>
+            <div class="setting-row">
+              <div>
+                <strong>Color theme</strong>
+                <p>Choose light, dark, or follow your system preference.</p>
+              </div>
+              <div class="field" style="width: 180px; padding: 0 8px">
+                <select
+                  id="theme-select"
+                  style="
+                    width: 100%;
+                    border: 0;
+                    outline: none;
+                    padding: 16px 8px;
+                    background: transparent;
+                    color: var(--text-primary);
+                    font-size: 15px;
+                    font-weight: 500;
+                    cursor: pointer;
+                  "
+                  aria-label="Color theme"
+                >
+                  <option value="system">System</option>
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                </select>
+              </div>
+            </div>
+          </section>
+          <section class="card" style="margin-top: 24px">
+            <p class="eyebrow">Your Data</p>
+            <h2 style="margin-bottom: 24px">Local storage</h2>
+            <div class="setting-row">
+              <div>
+                <strong>Export records</strong>
+                <p>Download your drink log as a JSON file.</p>
+              </div>
+              <button class="secondary" id="export-data">Export</button>
+            </div>
+            <div class="setting-row">
+              <div>
+                <strong>Reset all records</strong>
+                <p>Remove saved drink entries and restore defaults.</p>
+              </div>
+              <button
+                class="secondary"
+                id="reset-data"
+                style="color: var(--danger); border-color: #fee2e2"
+              >
+                Reset
+              </button>
+            </div>
+          </section>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <span>WaterTracker · A little, often.</span>
+        <span>Saved on this device. Daily records follow your local date.</span>
+      </footer>
+    </div>
+
+    <!-- UPDATED: Toast with action button -->
+    <div class="toast" id="toast" role="status" aria-live="polite">
+      <span class="toast-message" id="toast-message"></span>
+      <button class="toast-action hidden" id="toast-action"></button>
+    </div>
+
+    <div
+      class="modal-backdrop"
+      id="goal-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+    >
+      <div class="modal">
+        <p class="eyebrow">Daily Target</p>
+        <h2 id="modal-title">Set your water goal</h2>
+        <p>
+          2,000 ml is only a starting point, not medical advice. Choose a target
+          that suits your lifestyle.
+        </p>
+        <label class="custom-label" for="goal-modal-input">Daily goal</label>
+        <div class="field">
+          <input
+            id="goal-modal-input"
+            type="number"
+            min="100"
+            max="10000"
+            step="50"
+            value="2000"
+          />
+          <span>ml</span>
+        </div>
+        <div class="modal-actions">
+          <button class="secondary" id="cancel-goal">Cancel</button>
+          <button class="primary" style="margin-top: 0" id="save-goal">
+            Save goal
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEW: Edit entry modal -->
+    <div
+      class="modal-backdrop"
+      id="edit-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="edit-modal-title"
+    >
+      <div class="modal">
+        <p class="eyebrow">Edit Entry</p>
+        <h2 id="edit-modal-title">Adjust amount</h2>
+        <p>Update the amount for this drink entry.</p>
+        <label class="custom-label" for="edit-modal-input">Amount</label>
+        <div class="field">
+          <input
+            id="edit-modal-input"
+            type="number"
+            min="1"
+            max="5000"
+            step="1"
+            inputmode="numeric"
+          />
+          <span>ml</span>
+        </div>
+        <div class="modal-actions">
+          <button class="secondary" id="cancel-edit">Cancel</button>
+          <button class="primary" style="margin-top: 0" id="save-edit">
+            Save changes
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (() => {
+        "use strict";
+        const $ = (id) => document.getElementById(id);
+        const fmt = (n) => Math.round(n).toLocaleString();
+        const dateKey = (d) =>
+          `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        const today = () => dateKey(new Date());
+
+        let state = { goal: 2000, entries: [] };
+        let selected = 250;
+        let toastTimer;
+        // NEW: track last removed entry for undo
+        let lastRemoved = null;
+        let undoTimer = null;
+        // NEW: track the entry being edited
+        let editingEntryId = null;
+
+        try {
+          const s = JSON.parse(
+            localStorage.getItem("watertracker-data") ||
+              localStorage.getItem("water-tracker-v2"),
+          );
+          if (
+            s &&
+            Number.isFinite(s.goal) &&
+            s.goal >= 100 &&
+            Array.isArray(s.entries)
+          ) {
+            state = {
+              goal: Math.min(10000, s.goal),
+              entries: s.entries.filter(
+                (e) =>
+                  e &&
+                  Number.isFinite(e.amount) &&
+                  e.amount > 0 &&
+                  Number.isFinite(e.time),
+              ),
+            };
+          }
+        } catch {}
+
+        function save() {
+          try {
+            localStorage.setItem("watertracker-data", JSON.stringify(state));
+          } catch {
+            notify("Could not save to this browser.");
+          }
+        }
+
+        // UPDATED: notify supports optional action button
+        function notify(t, actionText, actionFn) {
+          const toast = $("toast");
+          const msg = $("toast-message");
+          const action = $("toast-action");
+          msg.textContent = t;
+          clearTimeout(toastTimer);
+          clearTimeout(undoTimer);
+
+          if (actionText && actionFn) {
+            action.textContent = actionText;
+            action.classList.remove("hidden");
+            action.onclick = () => {
+              actionFn();
+              toast.classList.remove("show");
+              clearTimeout(toastTimer);
+            };
+            toastTimer = setTimeout(() => {
+              toast.classList.remove("show");
+              action.classList.add("hidden");
+              lastRemoved = null;
+            }, 5000);
+          } else {
+            action.classList.add("hidden");
+            action.onclick = null;
+            toastTimer = setTimeout(() => {
+              toast.classList.remove("show");
+            }, 3000);
+          }
+          toast.classList.add("show");
+        }
+
+        function entriesToday() {
+          return state.entries.filter(
+            (e) => dateKey(new Date(e.time)) === today(),
+          );
+        }
+
+        function totalFor(key) {
+          return state.entries
+            .filter((e) => dateKey(new Date(e.time)) === key)
+            .reduce((s, e) => s + e.amount, 0);
+        }
+
+        // NEW: calculate current streak
+        function calculateStreak() {
+          let streak = 0;
+          const d = new Date();
+          d.setHours(12, 0, 0, 0);
+
+          // If today's goal not yet met, start counting from yesterday
+          if (totalFor(dateKey(d)) < state.goal) {
+            d.setDate(d.getDate() - 1);
+          }
+
+          // Safety limit: 10 years
+          for (let i = 0; i < 3650; i++) {
+            if (totalFor(dateKey(d)) >= state.goal) {
+              streak++;
+              d.setDate(d.getDate() - 1);
+            } else {
+              break;
+            }
+          }
+          return streak;
+        }
+
+        // NEW: calculate best streak ever
+        function calculateBestStreak() {
+          const dayTotals = new Map();
+          state.entries.forEach((e) => {
+            const k = dateKey(new Date(e.time));
+            dayTotals.set(k, (dayTotals.get(k) || 0) + e.amount);
+          });
+
+          if (dayTotals.size === 0) return 0;
+
+          const sortedDays = Array.from(dayTotals.keys()).sort();
+          let best = 0;
+          let current = 0;
+          let prevDate = null;
+
+          for (const key of sortedDays) {
+            if (dayTotals.get(key) < state.goal) {
+              current = 0;
+              prevDate = null;
+              continue;
+            }
+            const [y, m, d] = key.split("-").map(Number);
+            const curDate = new Date(y, m - 1, d);
+            if (prevDate) {
+              const diffDays = Math.round(
+                (curDate - prevDate) / (1000 * 60 * 60 * 24),
+              );
+              if (diffDays === 1) {
+                current++;
+              } else {
+                current = 1;
+              }
+            } else {
+              current = 1;
+            }
+            if (current > best) best = current;
+            prevDate = curDate;
+          }
+          return best;
+        }
+
+        // NEW: time-based greeting
+        function updateGreeting() {
+          const h = new Date().getHours();
+          let title, sub;
+          if (h >= 5 && h < 12) {
+            title = "Good morning.";
+            sub = "Start the day hydrated.";
+          } else if (h >= 12 && h < 17) {
+            title = "Keep it going.";
+            sub = "Small sips, steady progress.";
+          } else if (h >= 17 && h < 21) {
+            title = "Good evening.";
+            sub = "Wind down with water.";
+          } else {
+            title = "Still up?";
+            sub = "A sip of water might help you rest.";
+          }
+          $("greeting-title").textContent = title;
+          $("greeting-sub").textContent = sub;
+        }
+
+        // NEW: confetti celebration
+        function celebrate() {
+          if (
+            window.matchMedia &&
+            window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ) {
+            return;
+          }
+          const container = document.createElement("div");
+          container.className = "confetti-container";
+          const colors = [
+            "#0284c7",
+            "#38bdf8",
+            "#0ea5e9",
+            "#7dd3fc",
+            "#fbbf24",
+            "#f472b6",
+            "#a78bfa",
+            "#34d399",
+          ];
+          for (let i = 0; i < 60; i++) {
+            const c = document.createElement("div");
+            c.className = "confetti";
+            c.style.left = Math.random() * 100 + "%";
+            c.style.animationDelay = Math.random() * 0.8 + "s";
+            c.style.animationDuration = 2.5 + Math.random() * 1.5 + "s";
+            c.style.background =
+              colors[Math.floor(Math.random() * colors.length)];
+            c.style.transform = `rotate(${Math.random() * 360}deg)`;
+            container.appendChild(c);
+          }
+          document.body.appendChild(container);
+          setTimeout(() => container.remove(), 4500);
+        }
+
+        // NEW: track goal-reached transitions
+        let previousTotal = 0;
+        function checkGoalCelebration(newTotal) {
+          if (
+            previousTotal < state.goal &&
+            newTotal >= state.goal &&
+            !sessionStorage.getItem("celebrated-" + today())
+          ) {
+            celebrate();
+            sessionStorage.setItem("celebrated-" + today(), "1");
+          }
+          previousTotal = newTotal;
+        }
+
+        function render() {
+          const entries = entriesToday();
+          const total = entries.reduce((s, e) => s + e.amount, 0);
+          const pct = Math.round((total / state.goal) * 100);
+          const remaining = Math.max(0, state.goal - total);
+
+          $("friendly-date").textContent = new Date().toLocaleDateString(
+            undefined,
+            {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+            },
+          );
+
+          updateGreeting();
+
+          $("total").textContent = fmt(total);
+          $("goal-text").textContent = fmt(state.goal);
+          $("percent").textContent = pct + "% complete";
+          $("remaining").textContent = remaining
+            ? fmt(remaining) + " ml to go"
+            : "Daily goal reached 🎉";
+
+          $("bar-fill").style.width = Math.min(100, pct) + "%";
+          $("progress-bar").setAttribute("aria-valuemax", state.goal);
+          $("progress-bar").setAttribute(
+            "aria-valuenow",
+            Math.min(total, state.goal),
+          );
+
+          $("drink-count").textContent = entries.length;
+          $("average").textContent = entries.length
+            ? fmt(total / entries.length) + " ml"
+            : "—";
+          $("goal-status").textContent =
+            total >= state.goal ? "Reached" : "In progress";
+          $("entry-count").textContent =
+            entries.length + " drink" + (entries.length === 1 ? "" : "s");
+
+          // NEW: streak stat
+          const streak = calculateStreak();
+          $("streak-count").textContent =
+            streak + " day" + (streak === 1 ? "" : "s");
+
+          $("empty").classList.toggle("hidden", entries.length > 0);
+          $("log").replaceChildren();
+
+          entries
+            .slice()
+            .sort((a, b) => b.time - a.time)
+            .forEach((e) => {
+              const li = document.createElement("li");
+
+              const ico = document.createElement("span");
+              ico.className = "log-icon";
+              ico.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" /></svg>`;
+
+              const detail = document.createElement("div");
+              detail.className = "log-detail";
+
+              const time = document.createElement("div");
+              time.className = "log-time";
+              time.textContent = new Date(e.time).toLocaleTimeString(
+                undefined,
+                { hour: "numeric", minute: "2-digit" },
+              );
+
+              const amount = document.createElement("div");
+              amount.className = "log-amount";
+              amount.textContent = fmt(e.amount) + " ml";
+
+              // NEW: action buttons container
+              const actions = document.createElement("div");
+              actions.className = "log-actions";
+
+              const edit = document.createElement("button");
+              edit.className = "edit-btn";
+              edit.textContent = "Edit";
+              edit.setAttribute("aria-label", "Edit " + e.amount + " ml entry");
+              edit.onclick = () => openEditModal(e.id);
+
+              const remove = document.createElement("button");
+              remove.className = "remove";
+              remove.textContent = "Remove";
+              remove.setAttribute(
+                "aria-label",
+                "Remove " + e.amount + " ml entry",
+              );
+              remove.onclick = () => removeEntry(e.id);
+
+              actions.append(edit, remove);
+              detail.append(time, amount);
+              li.append(ico, detail, actions);
+              $("log").append(li);
+            });
+
+          renderHistory();
+          renderInsights();
+          $("history-goal").textContent = fmt(state.goal) + " ml";
+          $("settings-goal").value = state.goal;
+
+          checkGoalCelebration(total);
+        }
+
+        // NEW: remove with undo
+        function removeEntry(id) {
+          const idx = state.entries.findIndex((e) => e.id === id);
+          if (idx === -1) return;
+          lastRemoved = { entry: { ...state.entries[idx] }, index: idx };
+          state.entries.splice(idx, 1);
+          save();
+          render();
+          notify("Drink entry removed.", "Undo", () => {
+            if (lastRemoved) {
+              state.entries.splice(lastRemoved.index, 0, lastRemoved.entry);
+              lastRemoved = null;
+              save();
+              render();
+              notify("Entry restored.");
+            }
+          });
+        }
+
+        // NEW: edit modal handlers
+        function openEditModal(id) {
+          const entry = state.entries.find((e) => e.id === id);
+          if (!entry) return;
+          editingEntryId = id;
+          $("edit-modal-input").value = entry.amount;
+          $("edit-modal").classList.add("open");
+          setTimeout(() => {
+            $("edit-modal-input").focus();
+            $("edit-modal-input").select();
+          }, 100);
+        }
+
+        function closeEditModal() {
+          $("edit-modal").classList.remove("open");
+          editingEntryId = null;
+        }
+
+        function saveEdit() {
+          if (editingEntryId === null) return;
+          const amount = Number($("edit-modal-input").value);
+          if (!Number.isInteger(amount) || amount < 1 || amount > 5000) {
+            notify("Amount must be between 1 and 5,000 ml.");
+            $("edit-modal-input").focus();
+            return;
+          }
+          const entry = state.entries.find((e) => e.id === editingEntryId);
+          if (entry) {
+            entry.amount = amount;
+            save();
+            render();
+            notify("Entry updated to " + fmt(amount) + " ml.");
+          }
+          closeEditModal();
+        }
+
+        $("cancel-edit").onclick = closeEditModal;
+        $("save-edit").onclick = saveEdit;
+        $("edit-modal").addEventListener("click", (e) => {
+          if (e.target === $("edit-modal")) closeEditModal();
+        });
+        $("edit-modal-input").addEventListener("keydown", (e) => {
+          if (e.key === "Enter") saveEdit();
+          if (e.key === "Escape") closeEditModal();
+        });
+
+        function renderHistory() {
+          const days = [];
+          for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setHours(12, 0, 0, 0);
+            d.setDate(d.getDate() - i);
+            days.push({
+              key: dateKey(d),
+              label: d.toLocaleDateString(undefined, { weekday: "short" }),
+              date: d.toLocaleDateString(undefined, {
+                month: "short",
+                day: "numeric",
+              }),
+              total: totalFor(dateKey(d)),
+            });
+          }
+
+          const max = Math.max(state.goal, ...days.map((d) => d.total), 1);
+          $("week-bars").replaceChildren();
+
+          days.forEach((d) => {
+            const wrap = document.createElement("div");
+            wrap.className = "day-bar";
+
+            const col = document.createElement("div");
+            col.className = "column";
+            col.title = d.date + ": " + fmt(d.total) + " ml";
+
+            const fill = document.createElement("i");
+            fill.style.height =
+              Math.max(d.total ? 4 : 0, (d.total / max) * 100) + "%";
+            col.append(fill);
+
+            const label = document.createElement("small");
+            label.textContent = d.label;
+
+            wrap.append(col, label);
+            $("week-bars").append(wrap);
+          });
+
+          $("history-list").replaceChildren();
+          days
+            .slice()
+            .reverse()
+            .forEach((d) => {
+              const row = document.createElement("div");
+              row.className = "history-row";
+
+              const dateLabel = document.createElement("div");
+              dateLabel.className = "date-label";
+
+              const name = document.createElement("strong");
+              name.textContent = d.key === today() ? "Today" : d.label;
+
+              const date = document.createElement("span");
+              date.textContent = d.date;
+
+              const amount = document.createElement("div");
+              amount.className = "amount";
+              amount.textContent = fmt(d.total) + " ml";
+
+              dateLabel.append(name, date);
+              row.append(dateLabel, amount);
+              $("history-list").append(row);
+            });
+        }
+
+        function renderInsights() {
+          let total = 0;
+          for (let i = 0; i < 7; i++) {
+            const d = new Date();
+            d.setHours(12, 0, 0, 0);
+            d.setDate(d.getDate() - i);
+            total += totalFor(dateKey(d));
+          }
+
+          const t = totalFor(today());
+          $("insight-today").textContent = fmt(t) + " ml logged";
+          $("insight-today-copy").textContent =
+            t >= state.goal
+              ? "You reached your daily goal. Keep listening to your body."
+              : fmt(Math.max(0, state.goal - t)) +
+                " ml to your current daily goal.";
+
+          $("insight-average").textContent = fmt(total / 7) + " ml per day";
+
+          // NEW: streak insights
+          $("insight-streak").textContent =
+            calculateStreak() + " day" + (calculateStreak() === 1 ? "" : "s");
+          const best = calculateBestStreak();
+          $("insight-best-streak").textContent =
+            best + " day" + (best === 1 ? "" : "s");
+        }
+
+        function chooseAmount(n) {
+          selected = n;
+          $("amount-input").value = n;
+          document
+            .querySelectorAll(".serving")
+            .forEach((b) =>
+              b.classList.toggle("selected", Number(b.dataset.amount) === n),
+            );
+          $("add-label").textContent = "Add " + fmt(n) + " ml";
+        }
+
+        document
+          .querySelectorAll(".serving")
+          .forEach((b) =>
+            b.addEventListener("click", () =>
+              chooseAmount(Number(b.dataset.amount)),
+            ),
+          );
+
+        $("amount-input").addEventListener("input", () => {
+          selected = Number($("amount-input").value);
+          document
+            .querySelectorAll(".serving")
+            .forEach((b) =>
+              b.classList.toggle(
+                "selected",
+                Number(b.dataset.amount) === selected,
+              ),
+            );
+          $("add-label").textContent =
+            selected > 0 ? "Add " + fmt(selected) + " ml" : "Add water";
+        });
+
+        $("add-drink").addEventListener("click", () => {
+          const amount = Number($("amount-input").value);
+          if (!Number.isInteger(amount) || amount < 1 || amount > 5000) {
+            notify("Enter an amount from 1 to 5,000 ml.");
+            $("amount-input").focus();
+            return;
+          }
+          state.entries.push({
+            id: Date.now() + Math.random(),
+            amount,
+            time: Date.now(),
+          });
+          save();
+          render();
+          notify(fmt(amount) + " ml added.");
+        });
+
+        function setGoal(n) {
+          if (!Number.isInteger(n) || n < 100 || n > 10000) {
+            notify("Goal must be between 100 and 10,000 ml.");
+            return false;
+          }
+          state.goal = n;
+          save();
+          render();
+          return true;
+        }
+
+        $("edit-goal").onclick = () => {
+          $("goal-modal-input").value = state.goal;
+          $("goal-modal").classList.add("open");
+          setTimeout(() => $("goal-modal-input").focus(), 100);
+        };
+
+        $("cancel-goal").onclick = () =>
+          $("goal-modal").classList.remove("open");
+
+        $("save-goal").onclick = () => {
+          if (setGoal(Number($("goal-modal-input").value))) {
+            $("goal-modal").classList.remove("open");
+            notify("Daily goal updated.");
+          }
+        };
+
+        $("goal-modal").addEventListener("click", (e) => {
+          if (e.target === $("goal-modal")) {
+            $("goal-modal").classList.remove("open");
+          }
+        });
+
+        $("save-settings").onclick = () => {
+          if (setGoal(Number($("settings-goal").value))) {
+            notify("Settings saved.");
+          }
+        };
+
+        document.querySelectorAll(".nav button").forEach((b) =>
+          b.addEventListener("click", () => {
+            document
+              .querySelectorAll(".nav button")
+              .forEach((x) => x.classList.toggle("active", x === b));
+            ["today", "history", "insights", "settings"].forEach((p) =>
+              $("page-" + p).classList.toggle("hidden", p !== b.dataset.page),
+            );
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }),
+        );
+
+        $("export-data").onclick = () => {
+          const blob = new Blob(
+            [
+              JSON.stringify(
+                {
+                  exportedAt: new Date().toISOString(),
+                  goal: state.goal,
+                  entries: state.entries,
+                },
+                null,
+                2,
+              ),
+            ],
+            { type: "application/json" },
+          );
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "watertracker-data.json";
+          a.click();
+          URL.revokeObjectURL(url);
+          notify("Your data export is ready.");
+        };
+
+        $("reset-data").onclick = () => {
+          if (
+            confirm(
+              "Delete all drink records and restore the default goal? This cannot be undone.",
+            )
+          ) {
+            state = { goal: 2000, entries: [] };
+            save();
+            render();
+            notify("WaterTracker data reset.");
+          }
+        };
+
+        // ===== NEW: Theme management =====
+        function applyTheme(mode) {
+          let effective = mode;
+          if (mode === "system") {
+            effective = window.matchMedia("(prefers-color-scheme: dark)")
+              .matches
+              ? "dark"
+              : "light";
+          }
+          document.documentElement.setAttribute("data-theme", effective);
+          const meta = $("theme-color-meta");
+          if (meta) {
+            meta.setAttribute(
+              "content",
+              effective === "dark" ? "#0b1220" : "#FAFAFA",
+            );
+          }
+        }
+
+        function initTheme() {
+          const saved = localStorage.getItem("watertracker-theme") || "system";
+          const select = $("theme-select");
+          if (select) select.value = saved;
+          applyTheme(saved);
+        }
+
+        $("theme-toggle").addEventListener("click", () => {
+          const current =
+            document.documentElement.getAttribute("data-theme") || "light";
+          const next = current === "dark" ? "light" : "dark";
+          localStorage.setItem("watertracker-theme", next);
+          const select = $("theme-select");
+          if (select) select.value = next;
+          applyTheme(next);
+        });
+
+        $("theme-select").addEventListener("change", (e) => {
+          const mode = e.target.value;
+          localStorage.setItem("watertracker-theme", mode);
+          applyTheme(mode);
+        });
+
+        // Listen for system theme changes
+        if (window.matchMedia) {
+          window
+            .matchMedia("(prefers-color-scheme: dark)")
+            .addEventListener("change", () => {
+              const saved =
+                localStorage.getItem("watertracker-theme") || "system";
+              if (saved === "system") applyTheme("system");
+            });
+        }
+
+        initTheme();
+
+        // Initialize previousTotal for celebration tracking
+        previousTotal = entriesToday().reduce((s, e) => s + e.amount, 0);
+
+        render();
+
+        setInterval(() => {
+          const currentDisplay = $("friendly-date").textContent;
+          const freshDate = new Date().toLocaleDateString(undefined, {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+          });
+          if (currentDisplay !== freshDate) {
+            render();
+          }
+        }, 60000);
+      })();
+    </script>
+  </body>
+</html>

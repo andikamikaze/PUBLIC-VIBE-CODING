@@ -1,0 +1,2068 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Discord Clone — Frontend UI</title>
+    <style>
+      :root {
+        --bg-0: #1e1f22;
+        --bg-1: #2b2d31;
+        --bg-2: #313338;
+        --bg-3: #383a40;
+        --bg-hover: #35373c;
+        --bg-active: #404249;
+        --text: #f2f3f5;
+        --muted: #949ba4;
+        --subtle: #6d737c;
+        --line: #1e1f22;
+        --brand: #5865f2;
+        --brand-hover: #4752c4;
+        --green: #23a55a;
+        --yellow: #f0b232;
+        --red: #f23f43;
+        --offline: #80848e;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+        background: var(--bg-2);
+        color: var(--text);
+        font-family: "gg sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-size: 14px;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      button,
+      input {
+        font: inherit;
+        border: 0;
+        cursor: pointer;
+        color: inherit;
+        background: transparent;
+      }
+
+      /* Scrollbar Discord Style */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #1a1b1e;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #141517;
+      }
+
+      .app {
+        height: 100vh;
+        display: flex;
+        background: var(--bg-2);
+      }
+
+      /* Server Rail */
+      .server-rail {
+        width: 72px;
+        flex: 0 0 72px;
+        background: var(--bg-0);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 12px 0;
+        gap: 8px;
+        overflow-y: auto;
+        scrollbar-width: none;
+      }
+      .server-rail::-webkit-scrollbar {
+        display: none;
+      }
+
+      .rail-item {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: var(--bg-1);
+        color: #dbdee1;
+        position: relative;
+        transition:
+          border-radius 0.2s ease,
+          background 0.2s ease,
+          color 0.2s ease;
+        flex: none;
+      }
+      .rail-item::before {
+        content: "";
+        position: absolute;
+        left: -16px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 8px;
+        height: 8px;
+        border-radius: 0 4px 4px 0;
+        background: #fff;
+        transition:
+          height 0.2s ease,
+          border-radius 0.2s ease,
+          opacity 0.2s ease;
+        opacity: 0;
+      }
+      .rail-item:hover::before {
+        height: 20px;
+        opacity: 1;
+      }
+      .rail-item.active::before {
+        height: 40px;
+        opacity: 1;
+      }
+      .rail-item:hover,
+      .rail-item.active {
+        border-radius: 16px;
+        background: var(--brand);
+        color: #fff;
+      }
+      .rail-item.home {
+        background: var(--bg-1);
+        color: var(--text);
+      }
+      .rail-item.home:hover,
+      .rail-item.home.active {
+        background: var(--brand);
+        color: #fff;
+      }
+      .rail-item svg {
+        width: 28px;
+        height: 28px;
+      }
+      .rail-separator {
+        width: 32px;
+        height: 2px;
+        background: #35363c;
+        border-radius: 2px;
+        margin: 4px 0;
+        flex: none;
+      }
+      .rail-add,
+      .rail-discover {
+        color: var(--green);
+        background: var(--bg-1);
+      }
+      .rail-add:hover,
+      .rail-discover:hover {
+        color: #fff;
+        background: var(--green);
+      }
+
+      /* Channel Sidebar */
+      .channel-sidebar {
+        width: 240px;
+        flex: 0 0 240px;
+        background: var(--bg-1);
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+      .server-head {
+        height: 48px;
+        padding: 0 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow:
+          0 1px 0 rgba(0, 0, 0, 0.2),
+          0 2px 4px rgba(0, 0, 0, 0.1);
+        font-weight: 600;
+        font-size: 15px;
+        cursor: pointer;
+        flex: none;
+        transition: background 0.1s;
+      }
+      .server-head:hover {
+        background: #34363c;
+      }
+      .server-head:hover svg {
+        color: var(--text);
+      }
+      .server-head svg {
+        width: 18px;
+        height: 18px;
+        color: var(--muted);
+        transition: color 0.1s;
+      }
+
+      .channel-scroll {
+        padding: 16px 12px 10px;
+        overflow-y: auto;
+        flex: 1;
+      }
+      .channel-category {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        padding: 18px 8px 4px 8px;
+        cursor: pointer;
+        transition: color 0.1s;
+      }
+      .channel-category:hover {
+        color: var(--text);
+      }
+      .channel-category svg {
+        width: 12px;
+        height: 12px;
+        transition: transform 0.2s ease;
+      }
+      .channel-category.collapsed svg {
+        transform: rotate(-90deg);
+      }
+
+      .channel {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        height: 28px;
+        padding: 0 8px;
+        margin: 1px 0;
+        border-radius: 4px;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 15px;
+        font-weight: 500;
+        position: relative;
+        transition:
+          background 0.1s,
+          color 0.1s;
+      }
+      .channel:hover {
+        background: var(--bg-hover);
+        color: var(--text);
+      }
+      .channel.active {
+        background: var(--bg-active);
+        color: #fff;
+      }
+      .channel.unread {
+        color: #fff;
+        font-weight: 600;
+      }
+      .channel.unread::before {
+        content: "";
+        position: absolute;
+        left: -12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: #fff;
+      }
+      .channel svg {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+        color: #80848e;
+      }
+      .channel.active svg,
+      .channel.unread svg {
+        color: var(--text);
+      }
+      .channel.voice svg {
+        width: 18px;
+        height: 18px;
+      }
+      .channel .people-mini {
+        margin-left: auto;
+        font-size: 11px;
+        color: var(--muted);
+        background: var(--bg-0);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 600;
+      }
+
+      /* User Panel */
+      .user-panel {
+        height: 52px;
+        background: #232428;
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        gap: 8px;
+        flex: none;
+        border-top: 1px solid #1f2023;
+      }
+      .avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-weight: 600;
+        color: #fff;
+        position: relative;
+        flex: none;
+        font-size: 12px;
+        overflow: hidden;
+      }
+      .avatar.large {
+        width: 40px;
+        height: 40px;
+        font-size: 15px;
+      }
+      .av-purple {
+        background: linear-gradient(135deg, #a68bfa, #59359c);
+      }
+      .av-orange {
+        background: linear-gradient(135deg, #ffbf80, #b24b2d);
+      }
+      .av-blue {
+        background: linear-gradient(135deg, #7ab9ff, #3158a6);
+      }
+      .av-green {
+        background: linear-gradient(135deg, #76d7a1, #28794e);
+      }
+      .av-pink {
+        background: linear-gradient(135deg, #ff9ac2, #9c3b70);
+      }
+
+      .status-dot {
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 3px solid #232428;
+        background: var(--green);
+      }
+      .status-dot.idle {
+        background: var(--yellow);
+      }
+      .status-dot.dnd {
+        background: var(--red);
+      }
+      .status-dot.offline {
+        background: var(--offline);
+      }
+      .user-panel .status-dot {
+        border-color: var(--bg-1);
+      }
+
+      .user-meta {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .user-meta strong {
+        font-size: 13px;
+        font-weight: 600;
+        color: #f2f3f5;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .user-meta span {
+        font-size: 11px;
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .user-actions {
+        display: flex;
+        gap: 4px;
+      }
+      .user-actions button,
+      .composer-btn,
+      .header-tools button,
+      .message-actions button {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        color: var(--muted);
+        transition:
+          color 0.1s,
+          background 0.1s;
+      }
+      .user-actions button:hover,
+      .composer-btn:hover,
+      .header-tools button:hover,
+      .message-actions button:hover {
+        background: var(--bg-hover);
+        color: var(--text);
+      }
+      .user-actions button svg,
+      .composer-btn svg,
+      .header-tools button svg,
+      .message-actions button svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      /* Main Chat Area */
+      .main {
+        flex: 1;
+        display: flex;
+        min-width: 0;
+        height: 100%;
+      }
+      .chat {
+        min-width: 0;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-2);
+      }
+
+      .chat-header {
+        height: 48px;
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        gap: 8px;
+        box-shadow:
+          0 1px 0 rgba(0, 0, 0, 0.2),
+          0 2px 4px rgba(0, 0, 0, 0.1);
+        flex: none;
+        z-index: 10;
+        background: var(--bg-2);
+      }
+      .header-hash {
+        color: var(--muted);
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+      }
+      .chat-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #f2f3f5;
+      }
+      .header-topic {
+        color: var(--muted);
+        font-size: 14px;
+        margin-left: 8px;
+        padding-left: 8px;
+        border-left: 1px solid #3f4147;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1;
+      }
+      .header-tools {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-left: auto;
+      }
+      .header-tools button svg {
+        width: 24px;
+        height: 24px;
+      }
+
+      .search-box {
+        display: flex;
+        align-items: center;
+        background: #1e1f22;
+        border-radius: 4px;
+        padding: 0 8px;
+        height: 24px;
+        width: 140px;
+        margin-left: 8px;
+        transition: width 0.2s ease;
+      }
+      .search-box:focus-within {
+        width: 240px;
+      }
+      .search-box input {
+        background: transparent;
+        border: none;
+        outline: none;
+        color: var(--text);
+        font-size: 13px;
+        width: 100%;
+        margin: 0 4px;
+      }
+      .search-box input::placeholder {
+        color: #8b9099;
+      }
+      .search-box svg {
+        width: 16px;
+        height: 16px;
+        color: var(--muted);
+        flex-shrink: 0;
+      }
+      .search-shortcut {
+        font-size: 10px;
+        color: var(--muted);
+        background: #2b2d31;
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-weight: 600;
+      }
+
+      .chat-content {
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        scroll-behavior: smooth;
+      }
+      .welcome {
+        padding: 16px;
+        margin-top: auto;
+        margin-bottom: 16px;
+      }
+      .welcome-icon {
+        width: 68px;
+        height: 68px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #41434b;
+        color: #f2f3f5;
+        margin-bottom: 16px;
+      }
+      .welcome-icon svg {
+        width: 48px;
+        height: 48px;
+      }
+      .welcome h1 {
+        font-size: 32px;
+        font-weight: 700;
+        color: #f2f3f5;
+        margin: 0 0 8px 0;
+      }
+      .welcome p {
+        font-size: 14px;
+        color: var(--muted);
+        margin: 0;
+      }
+      .welcome p strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      .date-divider {
+        display: flex;
+        align-items: center;
+        margin: 24px 16px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .date-divider::before,
+      .date-divider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: #3f4147;
+      }
+      .date-divider::before {
+        margin-right: 8px;
+      }
+      .date-divider::after {
+        margin-left: 8px;
+      }
+
+      .message {
+        display: flex;
+        gap: 16px;
+        padding: 2px 16px;
+        margin-top: 17px;
+        position: relative;
+        border-radius: 4px;
+      }
+      .message:hover {
+        background: rgba(4, 4, 5, 0.07);
+      }
+      .message .avatar {
+        margin-top: 2px;
+        flex-shrink: 0;
+      }
+      .message-body {
+        flex: 1;
+        min-width: 0;
+      }
+      .message-meta {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+      .message-meta strong {
+        font-size: 15px;
+        font-weight: 500;
+        color: #f2f3f5;
+        cursor: pointer;
+      }
+      .message-meta strong:hover {
+        text-decoration: underline;
+      }
+      .message-meta time {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 400;
+      }
+
+      .role-tag {
+        display: inline-flex;
+        align-items: center;
+        font-size: 10px;
+        font-weight: 600;
+        background: var(--brand);
+        color: #fff;
+        border-radius: 3px;
+        padding: 1px 4px;
+        margin-left: 4px;
+        vertical-align: middle;
+      }
+      .message-text {
+        font-size: 15px;
+        line-height: 1.375;
+        color: #dbdee1;
+        word-wrap: break-word;
+      }
+      .message-text .mention {
+        color: #c9cdfb;
+        background: rgba(88, 101, 242, 0.3);
+        padding: 0 2px;
+        border-radius: 3px;
+        font-weight: 500;
+        cursor: pointer;
+        transition:
+          background 0.1s,
+          color 0.1s;
+      }
+      .message-text .mention:hover {
+        background: var(--brand);
+        color: #fff;
+      }
+
+      .message-image {
+        margin-top: 8px;
+        max-width: 400px;
+        width: 100%;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: pointer;
+        background: linear-gradient(135deg, #342c52, #7b5a9e 42%, #e6a77b);
+        height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+      .image-caption {
+        color: #fff;
+        text-align: center;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+      }
+      .image-caption b {
+        display: block;
+        font-size: 23px;
+        letter-spacing: 0.12em;
+      }
+      .image-caption span {
+        font-size: 10px;
+        letter-spacing: 0.2em;
+      }
+
+      .reaction-row {
+        display: flex;
+        gap: 4px;
+        margin-top: 4px;
+        flex-wrap: wrap;
+      }
+      .reaction {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 2px 6px;
+        background: var(--bg-1);
+        border: 1px solid transparent;
+        border-radius: 8px;
+        font-size: 14px;
+        color: var(--muted);
+        cursor: pointer;
+        transition:
+          background 0.1s,
+          border-color 0.1s;
+      }
+      .reaction:hover {
+        background: var(--bg-hover);
+        border-color: var(--brand);
+      }
+      .reaction.selected {
+        background: rgba(88, 101, 242, 0.15);
+        border-color: var(--brand);
+        color: var(--brand);
+      }
+      .reaction span {
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .reaction.add-reaction {
+        font-size: 16px;
+        font-weight: 600;
+        padding: 2px 8px;
+      }
+
+      .message-actions {
+        position: absolute;
+        right: 16px;
+        top: -8px;
+        display: none;
+        background: var(--bg-1);
+        border: 1px solid var(--bg-0);
+        border-radius: 4px;
+        padding: 2px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        z-index: 10;
+      }
+      .message:hover .message-actions {
+        display: flex;
+      }
+
+      /* Input Area */
+      .input-area {
+        padding: 0 16px 24px 16px;
+        flex: none;
+      }
+      .typing {
+        height: 24px;
+        display: flex;
+        align-items: center;
+        padding-left: 16px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      .typing.visible {
+        opacity: 1;
+      }
+      .typing-dots {
+        display: inline-flex;
+        gap: 2px;
+        margin-right: 6px;
+      }
+      .typing-dots span {
+        width: 4px;
+        height: 4px;
+        background: var(--muted);
+        border-radius: 50%;
+        animation: typing 1s infinite ease-in-out;
+      }
+      .typing-dots span:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .typing-dots span:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+      @keyframes typing {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-4px);
+        }
+      }
+
+      .composer {
+        background: var(--bg-3);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        min-height: 44px;
+      }
+      .composer input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: var(--text);
+        font-size: 15px;
+        padding: 11px 8px;
+        min-width: 0;
+      }
+      .composer input::placeholder {
+        color: #6d6f78;
+      }
+      .composer-tools {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .send-btn {
+        width: 32px;
+        height: 32px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        background: var(--brand);
+        color: #fff;
+        flex-shrink: 0;
+        transition: background 0.1s;
+      }
+      .send-btn:hover {
+        background: var(--brand-hover);
+      }
+      .send-btn.visible {
+        display: flex;
+      }
+      .send-btn svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      /* Members Sidebar */
+      .members {
+        width: 240px;
+        flex: 0 0 240px;
+        background: var(--bg-2);
+        padding: 20px 8px 10px;
+        overflow-y: auto;
+      }
+      .member-heading {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        padding: 16px 8px 4px 8px;
+      }
+      .member {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        height: 42px;
+        padding: 0 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 1px 0;
+        transition: background 0.1s;
+      }
+      .member:hover {
+        background: var(--bg-hover);
+      }
+      .member .avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+        position: relative;
+      }
+      .members .status-dot {
+        border-color: var(--bg-2);
+      }
+      .member-name {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--muted);
+      }
+      .member:hover .member-name {
+        color: var(--text);
+      }
+      .member-name.mod {
+        color: #5865f2;
+      }
+      .member-name.admin {
+        color: #f23f43;
+      }
+
+      /* Tooltip */
+      [data-tooltip] {
+        position: relative;
+      }
+      [data-tooltip]::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%) translateY(-4px);
+        background: #111214;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 6px 8px;
+        border-radius: 4px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity 0.1s ease,
+          transform 0.1s ease;
+        z-index: 100;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      }
+      [data-tooltip]:hover::after {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-8px);
+      }
+
+      /* Toast */
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: #111214;
+        color: #fff;
+        padding: 10px 16px;
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        font-size: 13px;
+        font-weight: 500;
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity 0.2s ease,
+          transform 0.2s ease;
+        z-index: 1000;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* Responsive */
+      @media (max-width: 1000px) {
+        .members {
+          display: none;
+        }
+        .header-topic {
+          display: none;
+        }
+      }
+      @media (max-width: 768px) {
+        .channel-sidebar {
+          width: 200px;
+          flex-basis: 200px;
+        }
+        .search-box {
+          display: none;
+        }
+      }
+      @media (max-width: 600px) {
+        .server-rail {
+          width: 60px;
+          flex-basis: 60px;
+        }
+        .rail-item {
+          width: 42px;
+          height: 42px;
+        }
+        .rail-item::before {
+          left: -12px;
+        }
+        .channel-sidebar {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <!-- Server Rail -->
+      <aside class="server-rail" aria-label="Server">
+        <button
+          class="rail-item home active"
+          data-tooltip="Direct Messages"
+          data-toast="Direct Messages"
+        >
+          <svg viewBox="0 0 28 28" fill="currentColor">
+            <path
+              d="M23.0212 1.67671C21.3107 0.879656 19.5079 0.318797 17.6584 0C17.4062 0.461742 17.1749 0.934541 16.9708 1.4184C15.003 1.12145 12.9974 1.12145 11.0292 1.4184C10.8251 0.934541 10.5938 0.461742 10.3416 0C8.49086 0.322633 6.68704 0.884956 4.97531 1.68201C1.58386 6.7754 0.667758 11.746 1.12673 16.6468C3.00138 18.0411 5.08715 19.1183 7.30513 19.8366C7.82076 19.1401 8.27493 18.3988 8.6622 17.6213C7.90421 17.3355 7.17255 16.9859 6.47575 16.5773C6.65864 16.4429 6.83753 16.3035 7.01142 16.1641C9.11551 17.1523 11.4146 17.6755 13.745 17.6755C16.0754 17.6755 18.3745 17.1523 20.4786 16.1641C20.6549 16.3085 20.8338 16.4479 21.0142 16.5773C20.3157 16.9876 19.5823 17.3389 18.8226 17.6247C19.2099 18.4022 19.664 19.1435 20.1797 19.84C22.3994 19.1217 24.4868 18.0428 26.3615 16.6485C26.9041 10.9145 25.4279 5.98932 23.0212 1.67671ZM9.68041 14.3328C8.39722 14.3328 7.3443 13.1461 7.3443 11.6945C7.3443 10.2429 8.37222 9.05122 9.68041 9.05122C10.9886 9.05122 12.0415 10.2429 12.0165 11.6945C11.9915 13.1461 10.9886 14.3328 9.68041 14.3328ZM18.3196 14.3328C17.0364 14.3328 15.9835 13.1461 15.9835 11.6945C15.9835 10.2429 17.0114 9.05122 18.3196 9.05122C19.6278 9.05122 20.6807 10.2429 20.6557 11.6945C20.6307 13.1461 19.6278 14.3328 18.3196 14.3328Z"
+            />
+          </svg>
+        </button>
+        <div class="rail-separator"></div>
+        <button
+          class="rail-item"
+          data-tooltip="Pixel Pals"
+          data-server="Pixel Pals"
+        >
+          ✦
+        </button>
+        <button
+          class="rail-item"
+          data-tooltip="Study Space"
+          data-server="Study Space"
+        >
+          📚
+        </button>
+        <button
+          class="rail-item"
+          data-tooltip="Design Hub"
+          data-server="Design Hub"
+        >
+          ◈
+        </button>
+        <button
+          class="rail-item"
+          data-tooltip="Gaming Lounge"
+          data-server="Gaming Lounge"
+        >
+          🎮
+        </button>
+        <button
+          class="rail-item rail-add"
+          data-tooltip="Add a Server"
+          data-toast="Simulasi: buat atau gabung server"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
+        <button
+          class="rail-item rail-discover"
+          data-tooltip="Explore Discoverable Servers"
+          data-toast="Jelajahi komunitas"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <polygon
+              points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"
+            ></polygon>
+          </svg>
+        </button>
+      </aside>
+
+      <!-- Channel Sidebar -->
+      <aside class="channel-sidebar">
+        <div class="server-head" id="serverMenu">
+          <span>Pixel Pals</span>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+        <div class="channel-scroll">
+          <div class="channel-category">
+            <span>Information</span>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </div>
+          <div class="channel" data-channel="welcome">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="4" y1="9" x2="20" y2="9"></line>
+              <line x1="4" y1="15" x2="20" y2="15"></line>
+              <line x1="10" y1="3" x2="8" y2="21"></line>
+              <line x1="16" y1="3" x2="14" y2="21"></line>
+            </svg>
+            <span class="channel-name">welcome</span>
+          </div>
+          <div class="channel unread" data-channel="announcements">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="4" y1="9" x2="20" y2="9"></line>
+              <line x1="4" y1="15" x2="20" y2="15"></line>
+              <line x1="10" y1="3" x2="8" y2="21"></line>
+              <line x1="16" y1="3" x2="14" y2="21"></line>
+            </svg>
+            <span class="channel-name">announcements</span>
+          </div>
+
+          <div class="channel-category" style="margin-top: 8px">
+            <span>Text Channels</span>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </div>
+          <div class="channel active" data-channel="general">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="4" y1="9" x2="20" y2="9"></line>
+              <line x1="4" y1="15" x2="20" y2="15"></line>
+              <line x1="10" y1="3" x2="8" y2="21"></line>
+              <line x1="16" y1="3" x2="14" y2="21"></line>
+            </svg>
+            <span class="channel-name">general</span>
+          </div>
+          <div class="channel" data-channel="introductions">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="4" y1="9" x2="20" y2="9"></line>
+              <line x1="4" y1="15" x2="20" y2="15"></line>
+              <line x1="10" y1="3" x2="8" y2="21"></line>
+              <line x1="16" y1="3" x2="14" y2="21"></line>
+            </svg>
+            <span class="channel-name">introductions</span>
+          </div>
+          <div class="channel" data-channel="showcase">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="4" y1="9" x2="20" y2="9"></line>
+              <line x1="4" y1="15" x2="20" y2="15"></line>
+              <line x1="10" y1="3" x2="8" y2="21"></line>
+              <line x1="16" y1="3" x2="14" y2="21"></line>
+            </svg>
+            <span class="channel-name">showcase</span>
+          </div>
+
+          <div class="channel-category" style="margin-top: 8px">
+            <span>Voice Channels</span>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </div>
+          <div class="channel voice" data-channel="chill-room">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path
+                d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"
+              ></path>
+            </svg>
+            <span class="channel-name">chill room</span>
+            <span class="people-mini">3</span>
+          </div>
+        </div>
+
+        <div class="user-panel">
+          <div class="avatar av-purple">AR<span class="status-dot"></span></div>
+          <div class="user-meta">
+            <strong>Alex Rivera</strong>
+            <span>Online</span>
+          </div>
+          <div class="user-actions">
+            <button
+              data-tooltip="Mute"
+              data-toast="Mikrofon di-mute (simulasi)"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"
+                ></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+              </svg>
+            </button>
+            <button
+              data-tooltip="Deafen"
+              data-toast="Audio dimatikan (simulasi)"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
+                <path
+                  d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"
+                ></path>
+              </svg>
+            </button>
+            <button
+              data-tooltip="User Settings"
+              data-toast="Pengaturan pengguna"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="3"></circle>
+                <path
+                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+                ></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Chat -->
+      <main class="main">
+        <section class="chat">
+          <header class="chat-header">
+            <svg
+              class="header-hash"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="4" y1="9" x2="20" y2="9"></line>
+              <line x1="4" y1="15" x2="20" y2="15"></line>
+              <line x1="10" y1="3" x2="8" y2="21"></line>
+              <line x1="16" y1="3" x2="14" y2="21"></line>
+            </svg>
+            <span class="chat-title" id="chatTitle">general</span>
+            <span class="header-topic" id="chatTopic"
+              >A place for the community to hang out</span
+            >
+            <div class="header-tools">
+              <button data-tooltip="Threads" data-toast="Threads">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path
+                    d="M5.43309 21C5.35842 21 5.30189 20.9325 5.31494 20.859L5.99991 17H2.14274C2.06819 17 2.01168 16.9327 2.02453 16.8593L2.33853 15.0593C2.34982 14.9946 2.40582 14.9475 2.47113 14.9475H6.34991L7.40991 9H3.55274C3.47819 9 3.42168 8.93274 3.43453 8.85931L3.74853 7.05931C3.75982 6.99455 3.81582 6.94749 3.88113 6.94749H7.75991L8.45054 3.14103C8.46196 3.07615 8.51804 3.02899 8.58344 3.02899H10.6934C10.7681 3.02899 10.8246 3.09625 10.8118 3.16969L10.1268 7.04749H13.984L14.6746 3.14103C14.686 3.07615 14.7421 3.02899 14.8075 3.02899H16.9174C16.9921 3.02899 17.0486 3.09625 17.0358 3.16969L16.3508 7.04749H20.208C20.2825 7.04749 20.339 7.11475 20.3262 7.18819L20.0122 8.98819C20.0009 9.05295 19.9449 9.10001 19.8796 9.10001H16.0008L14.9408 15.1H18.798C18.8725 15.1 18.929 15.1673 18.9162 15.2407L18.6022 17.0407C18.5909 17.1055 18.5349 17.1525 18.4696 17.1525H14.5908L13.9002 20.959C13.8888 21.0238 13.8327 21.071 13.7674 21.071H11.6575C11.5828 21.071 11.5263 21.0037 11.5391 20.9303L12.2241 17.0525H8.36691L7.67628 20.959C7.66486 21.0238 7.60878 21.071 7.54338 21.071H5.43309ZM9.41691 15.1H13.2741L14.3341 9.1H10.4769L9.41691 15.1Z"
+                  />
+                </svg>
+              </button>
+              <button
+                data-tooltip="Notification Settings"
+                data-toast="Notifikasi channel"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+              </button>
+              <button
+                data-tooltip="Pinned Messages"
+                data-toast="Pesan yang disematkan"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="12" y1="17" x2="12" y2="22"></line>
+                  <path
+                    d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"
+                  ></path>
+                </svg>
+              </button>
+              <div class="search-box">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input
+                  id="searchInput"
+                  placeholder="Search"
+                  aria-label="Cari pesan"
+                />
+                <span class="search-shortcut">⌘K</span>
+              </div>
+              <button data-tooltip="Inbox" data-toast="Inbox">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline
+                    points="22 12 16 12 14 15 10 15 8 12 2 12"
+                  ></polyline>
+                  <path
+                    d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"
+                  ></path>
+                </svg>
+              </button>
+              <button data-tooltip="Help" data-toast="Pusat bantuan">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              </button>
+            </div>
+          </header>
+
+          <div class="chat-content" id="chatContent">
+            <div class="welcome">
+              <div class="welcome-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="4" y1="9" x2="20" y2="9"></line>
+                  <line x1="4" y1="15" x2="20" y2="15"></line>
+                  <line x1="10" y1="3" x2="8" y2="21"></line>
+                  <line x1="16" y1="3" x2="14" y2="21"></line>
+                </svg>
+              </div>
+              <h1>Welcome to #general!</h1>
+              <p>
+                This is the beginning of the <strong>#general</strong> channel.
+              </p>
+            </div>
+            <div class="date-divider">October 31, 2026</div>
+            <div id="messages">
+              <article class="message">
+                <div class="avatar av-orange">JM</div>
+                <div class="message-body">
+                  <div class="message-meta">
+                    <strong>Jamie Morgan</strong><time>10:14 AM</time>
+                  </div>
+                  <div class="message-text">
+                    Morning everyone! 👋 Hope you're having a great weekend.
+                    What are you all working on today?
+                  </div>
+                  <div class="reaction-row">
+                    <button class="reaction">👋 <span>4</span></button>
+                    <button class="reaction">☀️ <span>2</span></button>
+                    <button
+                      class="reaction add-reaction"
+                      data-tooltip="Add Reaction"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div class="message-actions">
+                  <button data-tooltip="Add Reaction">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                      <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                      <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                    </svg>
+                  </button>
+                  <button data-tooltip="Reply">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <polyline points="9 17 4 12 9 7"></polyline>
+                      <path d="M20 18v-2a4 4 0 0 0-4-4H4"></path>
+                    </svg>
+                  </button>
+                  <button data-tooltip="More">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="1"></circle>
+                      <circle cx="19" cy="12" r="1"></circle>
+                      <circle cx="5" cy="12" r="1"></circle>
+                    </svg>
+                  </button>
+                </div>
+              </article>
+
+              <article class="message">
+                <div class="avatar av-blue">SK</div>
+                <div class="message-body">
+                  <div class="message-meta">
+                    <strong>Sam Kim <span class="role-tag">MOD</span></strong
+                    ><time>10:18 AM</time>
+                  </div>
+                  <div class="message-text">
+                    I've been polishing a little illustration for the community.
+                    Sharing a preview here — feedback welcome!
+                  </div>
+                  <div class="message-image">
+                    <div class="image-caption">
+                      <b>MAKE IT<br />MATTER.</b>
+                      <span>PIXEL PALS · CREATIVE CLUB</span>
+                    </div>
+                  </div>
+                  <div class="reaction-row">
+                    <button class="reaction">🔥 <span>6</span></button>
+                    <button class="reaction">💜 <span>3</span></button>
+                    <button
+                      class="reaction add-reaction"
+                      data-tooltip="Add Reaction"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div class="message-actions">
+                  <button data-tooltip="Add Reaction">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                      <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                      <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                    </svg>
+                  </button>
+                  <button data-tooltip="Reply">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <polyline points="9 17 4 12 9 7"></polyline>
+                      <path d="M20 18v-2a4 4 0 0 0-4-4H4"></path>
+                    </svg>
+                  </button>
+                  <button data-tooltip="More">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="1"></circle>
+                      <circle cx="19" cy="12" r="1"></circle>
+                      <circle cx="5" cy="12" r="1"></circle>
+                    </svg>
+                  </button>
+                </div>
+              </article>
+
+              <article class="message">
+                <div class="avatar av-green">LT</div>
+                <div class="message-body">
+                  <div class="message-meta">
+                    <strong>Lee Taylor</strong><time>10:22 AM</time>
+                  </div>
+                  <div class="message-text">
+                    This looks so good! The color palette is perfect.
+                    <span class="mention">@Sam Kim</span> what did you use for
+                    the grain texture?
+                  </div>
+                  <div class="reaction-row">
+                    <button class="reaction">✨ <span>2</span></button>
+                    <button
+                      class="reaction add-reaction"
+                      data-tooltip="Add Reaction"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div class="message-actions">
+                  <button data-tooltip="Add Reaction">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                      <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                      <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                    </svg>
+                  </button>
+                  <button data-tooltip="Reply">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <polyline points="9 17 4 12 9 7"></polyline>
+                      <path d="M20 18v-2a4 4 0 0 0-4-4H4"></path>
+                    </svg>
+                  </button>
+                  <button data-tooltip="More">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="1"></circle>
+                      <circle cx="19" cy="12" r="1"></circle>
+                      <circle cx="5" cy="12" r="1"></circle>
+                    </svg>
+                  </button>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <div class="input-area">
+            <div class="typing" id="typingIndicator">
+              <div class="typing-dots">
+                <span></span><span></span><span></span>
+              </div>
+              Jamie Morgan is typing...
+            </div>
+            <form class="composer" id="messageForm">
+              <button
+                type="button"
+                class="composer-btn plus-btn"
+                data-tooltip="Upload a file"
+                data-toast="Lampiran (simulasi)"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </button>
+              <input
+                id="messageInput"
+                autocomplete="off"
+                placeholder="Message #general"
+                aria-label="Tulis pesan"
+              />
+              <div class="composer-tools">
+                <button
+                  type="button"
+                  class="composer-btn"
+                  data-tooltip="Gift Nitro"
+                  data-toast="Kirim hadiah (simulasi)"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polyline points="20 12 20 22 4 22 4 12"></polyline>
+                    <rect x="2" y="7" width="20" height="5"></rect>
+                    <line x1="12" y1="22" x2="12" y2="7"></line>
+                    <path
+                      d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"
+                    ></path>
+                    <path
+                      d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"
+                    ></path>
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="composer-btn"
+                  data-tooltip="Choose a GIF"
+                  data-toast="Pilih GIF (simulasi)"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                    <path d="M7 15h4"></path>
+                    <path d="M9 15v-4"></path>
+                    <path d="M14 15v-4h2a2 2 0 0 1 0 4h-2"></path>
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="composer-btn"
+                  data-tooltip="Choose a sticker"
+                  data-toast="Pilih stiker (simulasi)"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"
+                    ></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <path d="M8 13h2"></path>
+                    <path d="M8 17h2"></path>
+                    <path d="M14 13h2"></path>
+                    <path d="M14 17h2"></path>
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="composer-btn"
+                  id="emojiButton"
+                  data-tooltip="Choose an emoji"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                    <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                    <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                  </svg>
+                </button>
+              </div>
+              <button
+                class="send-btn"
+                id="sendButton"
+                data-tooltip="Send"
+                type="submit"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+              </button>
+            </form>
+          </div>
+        </section>
+
+        <!-- Members Sidebar -->
+        <aside class="members" id="membersPanel">
+          <div class="member-group">
+            <h3 class="member-heading">Online — 4</h3>
+            <div class="member">
+              <div class="avatar av-purple">
+                AR<span class="status-dot"></span>
+              </div>
+              <span class="member-name admin">Alex Rivera</span>
+            </div>
+            <div class="member">
+              <div class="avatar av-blue">
+                SK<span class="status-dot"></span>
+              </div>
+              <span class="member-name mod">Sam Kim</span>
+            </div>
+            <div class="member">
+              <div class="avatar av-orange">
+                JM<span class="status-dot idle"></span>
+              </div>
+              <span class="member-name">Jamie Morgan</span>
+            </div>
+            <div class="member">
+              <div class="avatar av-green">
+                LT<span class="status-dot"></span>
+              </div>
+              <span class="member-name">Lee Taylor</span>
+            </div>
+          </div>
+          <div class="member-group">
+            <h3 class="member-heading">Offline — 2</h3>
+            <div class="member">
+              <div class="avatar av-pink">
+                MP<span class="status-dot offline"></span>
+              </div>
+              <span class="member-name">Morgan Park</span>
+            </div>
+            <div class="member">
+              <div class="avatar av-orange">
+                CJ<span class="status-dot offline"></span>
+              </div>
+              <span class="member-name">Casey Jones</span>
+            </div>
+          </div>
+        </aside>
+      </main>
+    </div>
+    <div class="toast" id="toast" role="status"></div>
+
+    <script>
+      (() => {
+        const $ = (selector, root = document) => root.querySelector(selector);
+        const $$ = (selector, root = document) => [
+          ...root.querySelectorAll(selector),
+        ];
+        const toast = $("#toast");
+        let toastTimer;
+
+        function notify(message) {
+          toast.textContent = message;
+          toast.classList.add("show");
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(() => toast.classList.remove("show"), 1900);
+        }
+
+        // Toast triggers
+        $$("[data-toast]").forEach((button) =>
+          button.addEventListener("click", () => notify(button.dataset.toast)),
+        );
+
+        // Server selection
+        $$("[data-server]").forEach((button) =>
+          button.addEventListener("click", () => {
+            $$(".rail-item").forEach((item) => item.classList.remove("active"));
+            button.classList.add("active");
+            notify("Server " + button.dataset.server + " dipilih (simulasi)");
+          }),
+        );
+
+        $("#serverMenu").addEventListener("click", () =>
+          notify("Menu server (simulasi)"),
+        );
+
+        // Channel category collapse/expand
+        $$(".channel-category").forEach((cat) => {
+          cat.addEventListener("click", () => {
+            cat.classList.toggle("collapsed");
+            let next = cat.nextElementSibling;
+            while (next && !next.classList.contains("channel-category")) {
+              next.style.display = cat.classList.contains("collapsed")
+                ? "none"
+                : "flex";
+              next = next.nextElementSibling;
+            }
+          });
+        });
+
+        // Channel switching
+        const channelTopics = {
+          general: "A place for the community to hang out",
+          welcome: "Say hello and get to know the community",
+          announcements: "The latest news and updates",
+          introductions: "A little bit about you",
+          showcase: "Show everyone what you've been making",
+          "chill-room": "A cozy place to hang out together",
+        };
+        const channelNames = { "chill-room": "chill room" };
+
+        function setChannel(name) {
+          $$(".channel").forEach((el) => {
+            el.classList.toggle("active", el.dataset.channel === name);
+            el.classList.remove("unread");
+          });
+          const display = channelNames[name] || name;
+          $("#chatTitle").textContent = display;
+          $("#chatTopic").textContent =
+            channelTopics[name] || "A place for the community to hang out";
+          $("#messageInput").placeholder = "Message #" + display;
+          $(".welcome h1").textContent = "Welcome to #" + display + "!";
+          $(".welcome p").innerHTML =
+            "This is the beginning of the <strong>#" +
+            display +
+            "</strong> channel.";
+
+          const messagesContainer = $("#messages");
+          if (name === "general") {
+            messagesContainer.style.display = "";
+            $(".welcome").style.marginTop = "auto";
+          } else {
+            messagesContainer.style.display = "none";
+            $(".welcome").style.marginTop = "auto";
+            notify("Channel #" + display + " dibuka (konten contoh)");
+          }
+
+          // Scroll to bottom smoothly
+          const chatContent = $("#chatContent");
+          chatContent.scrollTop = chatContent.scrollHeight;
+        }
+
+        $$(".channel").forEach((el) =>
+          el.addEventListener("click", () => setChannel(el.dataset.channel)),
+        );
+
+        // Message input handling
+        const messageInput = $("#messageInput");
+        const sendButton = $("#sendButton");
+
+        messageInput.addEventListener("input", () =>
+          sendButton.classList.toggle(
+            "visible",
+            messageInput.value.trim().length > 0,
+          ),
+        );
+
+        function escapeHtml(value) {
+          return value.replace(
+            /[&<>"']/g,
+            (char) =>
+              ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;",
+              })[char],
+          );
+        }
+
+        function addMessage(text) {
+          const article = document.createElement("article");
+          article.className = "message";
+          const safe = escapeHtml(text).replace(
+            /@([\w ]{1,24})/g,
+            '<span class="mention">@$1</span>',
+          );
+          const now = new Date();
+          const time = now.toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+          });
+
+          article.innerHTML = `
+            <div class="avatar av-purple">AR</div>
+            <div class="message-body">
+              <div class="message-meta">
+                <strong>Alex Rivera</strong><time>Today at ${time}</time>
+              </div>
+              <div class="message-text">${safe}</div>
+            </div>
+            <div class="message-actions">
+              <button data-tooltip="Add Reaction"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg></button>
+              <button data-tooltip="Reply"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg></button>
+              <button data-tooltip="More"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg></button>
+            </div>
+          `;
+
+          const messagesContainer = $("#messages");
+          messagesContainer.appendChild(article);
+          messagesContainer.style.display = "";
+          $(".welcome").style.marginTop = "0";
+
+          const chatContent = $("#chatContent");
+          chatContent.scrollTop = chatContent.scrollHeight;
+
+          // Re-attach event listeners for new message actions
+          $$(".message-actions button", article).forEach((button) =>
+            button.addEventListener("click", () =>
+              notify(button.dataset.tooltip + " (simulasi)"),
+            ),
+          );
+        }
+
+        $("#messageForm").addEventListener("submit", (event) => {
+          event.preventDefault();
+          const value = messageInput.value.trim();
+          if (!value) return;
+          addMessage(value);
+          messageInput.value = "";
+          sendButton.classList.remove("visible");
+          $("#typingIndicator").classList.remove("visible");
+        });
+
+        messageInput.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            $("#messageForm").requestSubmit();
+          }
+        });
+
+        // Reaction toggle
+        $$(".reaction").forEach((button) =>
+          button.addEventListener("click", () => {
+            if (button.classList.contains("add-reaction")) {
+              notify("Pilih reaksi (simulasi)");
+              return;
+            }
+            button.classList.toggle("selected");
+            const count = $("span", button);
+            if (count) {
+              count.textContent = Math.max(
+                0,
+                Number(count.textContent) +
+                  (button.classList.contains("selected") ? 1 : -1),
+              );
+            }
+          }),
+        );
+
+        // Emoji button shortcut
+        $("#emojiButton").addEventListener("click", () => {
+          messageInput.value += " ✨";
+          messageInput.focus();
+          sendButton.classList.add("visible");
+        });
+
+        // Search filter
+        $("#searchInput").addEventListener("input", (event) => {
+          const query = event.target.value.trim().toLowerCase();
+          $$(".message").forEach((message) => {
+            message.style.display =
+              !query || message.textContent.toLowerCase().includes(query)
+                ? ""
+                : "none";
+          });
+        });
+
+        // Simulated typing indicator on focus
+        messageInput.addEventListener("focus", () => {
+          if (!messageInput.value) {
+            $("#typingIndicator").classList.add("visible");
+            setTimeout(
+              () => $("#typingIndicator").classList.remove("visible"),
+              1800,
+            );
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

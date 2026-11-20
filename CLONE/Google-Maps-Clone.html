@@ -1,0 +1,2174 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>Maps — Explore nearby places</title>
+    <style>
+      :root {
+        --blue: #1a73e8;
+        --blue-dark: #1558b0;
+        --ink: #202124;
+        --muted: #5f6368;
+        --line: #e8eaed;
+        --surface: #fff;
+        --canvas: #e9ece7;
+        --green: #dcebd8;
+        --shadow:
+          0 1px 2px rgba(60, 64, 67, 0.18), 0 2px 6px 2px rgba(60, 64, 67, 0.08);
+        --panel-width: 390px;
+        --radius: 12px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        color: var(--ink);
+        overflow: hidden;
+        background: #fff;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      button {
+        border: 0;
+        cursor: pointer;
+        color: inherit;
+        background: transparent;
+      }
+      .app {
+        height: 100%;
+        width: 100%;
+        display: flex;
+        position: relative;
+        overflow: hidden;
+      }
+      .sidebar {
+        width: var(--panel-width);
+        min-width: var(--panel-width);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        z-index: 5;
+        border-right: 1px solid #dadce0;
+        box-shadow: 1px 0 4px rgba(60, 64, 67, 0.08);
+      }
+      .side-head {
+        padding: 14px 16px 12px;
+        border-bottom: 1px solid var(--line);
+      }
+      .brand-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: 34px;
+        margin-bottom: 13px;
+      }
+      .hamburger {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: #5f6368;
+        margin-left: -7px;
+      }
+      .hamburger:hover,
+      .icon-btn:hover {
+        background: #f1f3f4;
+      }
+      .brand-mark {
+        width: 27px;
+        height: 27px;
+        display: grid;
+        place-items: center;
+      }
+      .brand-name {
+        font-size: 21px;
+        letter-spacing: -0.7px;
+        font-weight: 500;
+        color: #5f6368;
+      }
+      .brand-name span {
+        color: #4285f4;
+      }
+      .search-wrap {
+        height: 48px;
+        display: flex;
+        align-items: center;
+        background: #f1f3f4;
+        border-radius: 25px;
+        padding: 0 13px;
+        gap: 12px;
+        transition:
+          box-shadow 0.18s,
+          background 0.18s;
+      }
+      .search-wrap:focus-within {
+        background: #fff;
+        box-shadow: 0 1px 6px rgba(32, 33, 36, 0.28);
+      }
+      .search-wrap input {
+        border: 0;
+        outline: 0;
+        background: transparent;
+        flex: 1;
+        min-width: 0;
+        color: #202124;
+        font-size: 15px;
+      }
+      .search-wrap input::placeholder {
+        color: #70757a;
+      }
+      .search-clear {
+        display: none;
+        color: #5f6368;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        font-size: 20px;
+        line-height: 20px;
+      }
+      .search-clear.show {
+        display: block;
+      }
+      .search-divider {
+        height: 24px;
+        width: 1px;
+        background: #dadce0;
+      }
+      .round-search {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--blue);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        margin-right: -5px;
+      }
+      .quick-actions {
+        display: flex;
+        gap: 9px;
+        overflow: auto;
+        padding-top: 13px;
+        scrollbar-width: none;
+      }
+      .quick-actions::-webkit-scrollbar {
+        display: none;
+      }
+      .quick-chip {
+        height: 36px;
+        padding: 0 12px;
+        border: 1px solid #dadce0;
+        border-radius: 18px;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 13px;
+        color: #3c4043;
+        background: white;
+        transition: 0.15s;
+      }
+      .quick-chip:hover {
+        background: #f8fafd;
+        border-color: #c6dafc;
+      }
+      .quick-chip.active {
+        background: #e8f0fe;
+        border-color: #d2e3fc;
+        color: #1967d2;
+      }
+      .nav-tabs {
+        height: 52px;
+        display: flex;
+        border-bottom: 1px solid var(--line);
+        padding: 0 16px;
+        gap: 24px;
+        flex-shrink: 0;
+      }
+      .nav-tab {
+        font-size: 14px;
+        color: #5f6368;
+        position: relative;
+        padding: 0 2px;
+      }
+      .nav-tab.active {
+        color: #1a73e8;
+        font-weight: 600;
+      }
+      .nav-tab.active:after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #1a73e8;
+        border-radius: 3px 3px 0 0;
+      }
+      .results-head {
+        padding: 15px 18px 9px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .results-title {
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: -0.1px;
+      }
+      .results-sub {
+        font-size: 12px;
+        color: #70757a;
+        margin-top: 4px;
+      }
+      .sort-btn {
+        font-size: 12px;
+        color: #5f6368;
+        border: 1px solid #dadce0;
+        border-radius: 16px;
+        padding: 6px 10px;
+      }
+      .results {
+        overflow: auto;
+        flex: 1;
+        scrollbar-width: thin;
+        scrollbar-color: #dadce0 transparent;
+      }
+      .place-card {
+        padding: 14px 17px;
+        display: flex;
+        gap: 13px;
+        border-bottom: 1px solid #f0f1f2;
+        cursor: pointer;
+        transition: background 0.15s;
+        position: relative;
+      }
+      .place-card:hover {
+        background: #f8fafd;
+      }
+      .place-card.selected {
+        background: #e8f0fe;
+      }
+      .place-thumb {
+        width: 92px;
+        height: 92px;
+        flex-shrink: 0;
+        border-radius: 9px;
+        overflow: hidden;
+        background: #e7e9e7;
+        position: relative;
+      }
+      .place-thumb svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .place-info {
+        min-width: 0;
+        flex: 1;
+        padding-top: 1px;
+      }
+      .place-name {
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.3;
+        margin-bottom: 5px;
+        color: #202124;
+      }
+      .rating-row {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+        color: #5f6368;
+        margin-bottom: 5px;
+      }
+      .rating {
+        color: #202124;
+        font-weight: 600;
+      }
+      .stars {
+        color: #fbbc04;
+        letter-spacing: -1px;
+        font-size: 12px;
+      }
+      .place-meta {
+        font-size: 12px;
+        color: #5f6368;
+        line-height: 1.5;
+      }
+      .open {
+        color: #188038;
+        font-weight: 600;
+      }
+      .closed {
+        color: #d93025;
+        font-weight: 600;
+      }
+      .place-actions {
+        display: flex;
+        gap: 7px;
+        margin-top: 9px;
+      }
+      .small-action {
+        font-size: 11px;
+        color: #1967d2;
+        border: 1px solid #dadce0;
+        padding: 5px 9px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .small-action:hover {
+        background: #f1f7ff;
+        border-color: #aecbfa;
+      }
+      .empty-state {
+        padding: 38px 22px;
+        text-align: center;
+        color: #5f6368;
+        font-size: 14px;
+        line-height: 1.6;
+        display: none;
+      }
+      .side-footer {
+        padding: 12px 17px;
+        border-top: 1px solid var(--line);
+        font-size: 11px;
+        color: #70757a;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .map-shell {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        background: #e8ece7;
+        min-width: 0;
+      }
+      .map-art {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .map-art .street {
+        fill: none;
+        stroke: #fff;
+        stroke-width: 9;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .map-art .street-thin {
+        fill: none;
+        stroke: #fff;
+        stroke-width: 5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .map-art .main-road {
+        fill: none;
+        stroke: #fff;
+        stroke-width: 17;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .map-art .road-edge {
+        fill: none;
+        stroke: #dad5c9;
+        stroke-width: 19;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .map-art .road-center {
+        fill: none;
+        stroke: #fff5d6;
+        stroke-width: 13;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .map-art .minor-edge {
+        fill: none;
+        stroke: #dedbd2;
+        stroke-width: 7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .map-art .minor-center {
+        fill: none;
+        stroke: #fff;
+        stroke-width: 5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .map-art text {
+        font-family: Arial, sans-serif;
+        fill: #798078;
+        font-size: 12px;
+        letter-spacing: 0.3px;
+      }
+      .map-art .district {
+        font-size: 16px;
+        fill: #92998f;
+        letter-spacing: 2px;
+        font-weight: 600;
+      }
+      .map-art .poi-label {
+        font-size: 11px;
+        fill: #6b746b;
+      }
+      .map-art .water-label {
+        font-size: 12px;
+        fill: #75a6b8;
+        font-style: italic;
+        letter-spacing: 1px;
+      }
+      .map-topbar {
+        position: absolute;
+        left: 22px;
+        right: 22px;
+        top: 18px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        pointer-events: none;
+        z-index: 2;
+      }
+      .floating-search {
+        height: 48px;
+        max-width: 440px;
+        width: min(440px, 54%);
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        display: flex;
+        align-items: center;
+        padding: 0 14px;
+        gap: 12px;
+        pointer-events: auto;
+      }
+      .floating-search input {
+        border: 0;
+        outline: 0;
+        min-width: 0;
+        flex: 1;
+        font-size: 14px;
+        color: #3c4043;
+      }
+      .floating-search input::placeholder {
+        color: #80868b;
+      }
+      .map-top-actions {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        pointer-events: auto;
+      }
+      .map-pill {
+        height: 42px;
+        background: #fff;
+        box-shadow: var(--shadow);
+        border-radius: 22px;
+        padding: 0 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #3c4043;
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .map-pill:hover {
+        background: #f8fafd;
+      }
+      .avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #d2e3fc;
+        color: #174ea6;
+        display: grid;
+        place-items: center;
+        font-weight: 600;
+        font-size: 14px;
+        box-shadow: var(--shadow);
+        border: 2px solid #fff;
+      }
+      .map-controls {
+        position: absolute;
+        right: 20px;
+        bottom: 26px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 2;
+      }
+      .control-stack {
+        background: white;
+        box-shadow: var(--shadow);
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .map-control {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        color: #5f6368;
+        border-bottom: 1px solid #eee;
+        background: #fff;
+      }
+      .map-control:last-child {
+        border-bottom: 0;
+      }
+      .map-control:hover {
+        background: #f8fafd;
+        color: #202124;
+      }
+      .map-control:active {
+        background: #e8f0fe;
+      }
+      .scale {
+        font-size: 10px;
+        color: #5f6368;
+        text-align: center;
+        margin-top: -3px;
+        text-shadow: 0 1px white;
+      }
+      .layers-btn {
+        position: absolute;
+        right: 20px;
+        bottom: 208px;
+        width: 66px;
+        height: 66px;
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        font-size: 10px;
+        color: #3c4043;
+        z-index: 2;
+      }
+      .layers-preview {
+        height: 35px;
+        width: 49px;
+        border-radius: 4px;
+        background: linear-gradient(
+          135deg,
+          #cad9c1 0 40%,
+          #e9e4d6 40% 60%,
+          #d0e2e9 60%
+        );
+        border: 1px solid #dadce0;
+        position: relative;
+        overflow: hidden;
+      }
+      .layers-preview:after {
+        content: "";
+        position: absolute;
+        width: 55px;
+        height: 5px;
+        background: #fff;
+        transform: rotate(-30deg);
+        left: -5px;
+        top: 14px;
+        box-shadow: 0 1px #ddd;
+      }
+      .compass {
+        position: absolute;
+        right: 20px;
+        bottom: 123px;
+        width: 42px;
+        height: 42px;
+        background: #fff;
+        border-radius: 50%;
+        box-shadow: var(--shadow);
+        display: grid;
+        place-items: center;
+        z-index: 2;
+      }
+      .location-btn {
+        position: absolute;
+        right: 20px;
+        bottom: 76px;
+        width: 42px;
+        height: 42px;
+        background: #fff;
+        border-radius: 50%;
+        box-shadow: var(--shadow);
+        display: grid;
+        place-items: center;
+        color: #5f6368;
+        z-index: 2;
+      }
+      .map-attribution {
+        position: absolute;
+        bottom: 5px;
+        left: 10px;
+        font-size: 10px;
+        color: #5f6368;
+        background: rgba(255, 255, 255, 0.7);
+        padding: 3px 5px;
+        border-radius: 3px;
+        z-index: 1;
+      }
+      .map-pin {
+        position: absolute;
+        z-index: 1;
+        transform: translate(-50%, -100%);
+        cursor: pointer;
+        filter: drop-shadow(0 2px 2px rgba(60, 64, 67, 0.25));
+        transition: transform 0.15s;
+      }
+      .map-pin:hover {
+        transform: translate(-50%, -108%) scale(1.08);
+        z-index: 4;
+      }
+      .map-pin .pin-bubble {
+        width: 38px;
+        height: 38px;
+        border-radius: 50% 50% 50% 4px;
+        transform: rotate(-45deg);
+        background: #1a73e8;
+        border: 3px solid #fff;
+        display: grid;
+        place-items: center;
+        color: white;
+      }
+      .map-pin .pin-bubble svg {
+        transform: rotate(45deg);
+      }
+      .map-pin.red .pin-bubble {
+        background: #ea4335;
+      }
+      .map-pin.dark .pin-bubble {
+        background: #188038;
+      }
+      .map-pin.active .pin-bubble {
+        background: #174ea6;
+        box-shadow: 0 0 0 5px rgba(26, 115, 232, 0.16);
+      }
+      .route-line {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .map-label-card {
+        position: absolute;
+        z-index: 3;
+        left: 54%;
+        top: 42%;
+        transform: translate(-50%, -100%);
+        background: #fff;
+        padding: 9px 12px;
+        border-radius: 7px;
+        box-shadow: var(--shadow);
+        font-size: 12px;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .map-label-card strong {
+        font-size: 12px;
+      }
+      .map-label-card span {
+        color: #5f6368;
+      }
+      .map-label-card:after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: -6px;
+        width: 12px;
+        height: 12px;
+        background: white;
+        transform: translateX(-50%) rotate(45deg);
+      }
+      .selected-place {
+        position: absolute;
+        left: 24px;
+        bottom: 22px;
+        width: 318px;
+        background: #fff;
+        border-radius: 11px;
+        box-shadow: 0 2px 10px rgba(60, 64, 67, 0.25);
+        z-index: 3;
+        overflow: hidden;
+        display: none;
+      }
+      .selected-place.show {
+        display: block;
+      }
+      .selected-cover {
+        height: 116px;
+        background: #dfe8d9;
+        position: relative;
+        overflow: hidden;
+      }
+      .selected-cover svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .cover-close {
+        position: absolute;
+        right: 9px;
+        top: 9px;
+        width: 29px;
+        height: 29px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.94);
+        display: grid;
+        place-items: center;
+      }
+      .selected-body {
+        padding: 13px 15px 15px;
+      }
+      .selected-title {
+        font-size: 17px;
+        font-weight: 600;
+        margin-bottom: 5px;
+      }
+      .selected-sub {
+        font-size: 12px;
+        color: #5f6368;
+        margin-bottom: 12px;
+      }
+      .selected-buttons {
+        display: flex;
+        gap: 8px;
+      }
+      .primary-action {
+        background: #1a73e8;
+        color: #fff;
+        height: 36px;
+        padding: 0 14px;
+        border-radius: 18px;
+        font-size: 12px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .secondary-action {
+        border: 1px solid #dadce0;
+        color: #1967d2;
+        height: 36px;
+        padding: 0 13px;
+        border-radius: 18px;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .directions-panel {
+        position: absolute;
+        left: 24px;
+        top: 84px;
+        width: 350px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: var(--shadow);
+        z-index: 4;
+        display: none;
+        overflow: hidden;
+      }
+      .directions-panel.show {
+        display: block;
+      }
+      .directions-head {
+        padding: 15px 16px 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .directions-head strong {
+        font-size: 16px;
+      }
+      .directions-inputs {
+        padding: 2px 16px 14px;
+        display: flex;
+        gap: 10px;
+      }
+      .direction-dots {
+        width: 15px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 12px 0;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border: 2px solid #1a73e8;
+        border-radius: 50%;
+      }
+      .dot.dest {
+        border: 0;
+        background: #ea4335;
+        border-radius: 2px;
+        transform: rotate(45deg);
+      }
+      .dot-line {
+        height: 30px;
+        border-left: 1px dashed #9aa0a6;
+      }
+      .direction-fields {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+      }
+      .direction-fields input {
+        height: 37px;
+        border: 1px solid #dadce0;
+        border-radius: 5px;
+        padding: 0 10px;
+        font-size: 13px;
+        outline: 0;
+      }
+      .direction-fields input:focus {
+        border-color: #1a73e8;
+      }
+      .transport-tabs {
+        display: flex;
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+      .transport-tabs button {
+        flex: 1;
+        height: 43px;
+        color: #5f6368;
+        display: grid;
+        place-items: center;
+      }
+      .transport-tabs button.active {
+        color: #1a73e8;
+        border-bottom: 2px solid #1a73e8;
+      }
+      .route-summary {
+        padding: 14px 16px 16px;
+        font-size: 12px;
+        color: #5f6368;
+        line-height: 1.6;
+      }
+      .route-summary strong {
+        color: #188038;
+        font-size: 17px;
+      }
+      .mobile-top {
+        display: none;
+      }
+      .mobile-backdrop {
+        display: none;
+      }
+      .toast {
+        position: absolute;
+        bottom: 26px;
+        left: 50%;
+        transform: translate(-50%, 20px);
+        padding: 11px 16px;
+        border-radius: 7px;
+        background: #323232;
+        color: #fff;
+        font-size: 13px;
+        box-shadow: var(--shadow);
+        opacity: 0;
+        pointer-events: none;
+        transition: 0.22s;
+        z-index: 10;
+        white-space: nowrap;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      @media (max-width: 850px) {
+        :root {
+          --panel-width: 340px;
+        }
+        .map-pill span {
+          display: none;
+        }
+        .map-pill {
+          width: 42px;
+          padding: 0;
+          justify-content: center;
+        }
+        .floating-search {
+          width: min(360px, 58%);
+        }
+      }
+      @media (max-width: 650px) {
+        html,
+        body {
+          overflow: hidden;
+        }
+        .app {
+          display: block;
+        }
+        .sidebar {
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          width: 100%;
+          min-width: 0;
+          height: 55%;
+          max-height: 70%;
+          border: 0;
+          border-radius: 17px 17px 0 0;
+          box-shadow: 0 -2px 12px rgba(60, 64, 67, 0.18);
+          z-index: 5;
+          transition: height 0.25s ease;
+        }
+        .side-head {
+          padding: 10px 15px 9px;
+        }
+        .brand-row {
+          display: none;
+        }
+        .side-head:before {
+          content: "";
+          display: block;
+          width: 36px;
+          height: 4px;
+          border-radius: 4px;
+          background: #dadce0;
+          margin: 0 auto 10px;
+        }
+        .search-wrap {
+          height: 44px;
+        }
+        .quick-actions {
+          padding-top: 9px;
+        }
+        .nav-tabs {
+          height: 45px;
+        }
+        .results-head {
+          padding: 12px 16px 6px;
+        }
+        .place-card {
+          padding: 11px 15px;
+        }
+        .place-thumb {
+          width: 78px;
+          height: 78px;
+        }
+        .side-footer {
+          display: none;
+        }
+        .map-shell {
+          position: absolute;
+          inset: 0 0 0 0;
+          height: 100%;
+        }
+        .map-topbar {
+          left: 12px;
+          right: 12px;
+          top: 12px;
+          align-items: center;
+        }
+        .floating-search {
+          height: 45px;
+          max-width: none;
+          width: 100%;
+          border-radius: 24px;
+          padding: 0 13px;
+        }
+        .map-top-actions {
+          display: none;
+        }
+        .map-controls {
+          right: 12px;
+          bottom: calc(55% + 12px);
+          gap: 7px;
+        }
+        .map-control {
+          width: 38px;
+          height: 38px;
+        }
+        .layers-btn {
+          right: 12px;
+          bottom: calc(55% + 174px);
+          width: 60px;
+          height: 60px;
+        }
+        .compass {
+          right: 12px;
+          bottom: calc(55% + 115px);
+          width: 38px;
+          height: 38px;
+        }
+        .location-btn {
+          right: 12px;
+          bottom: calc(55% + 68px);
+          width: 38px;
+          height: 38px;
+        }
+        .selected-place {
+          left: 12px;
+          bottom: calc(55% + 10px);
+          width: min(300px, calc(100% - 82px));
+        }
+        .selected-cover {
+          height: 82px;
+        }
+        .selected-body {
+          padding: 10px 12px 12px;
+        }
+        .selected-title {
+          font-size: 15px;
+        }
+        .directions-panel {
+          left: 12px;
+          right: 12px;
+          top: 66px;
+          width: auto;
+        }
+        .map-attribution {
+          bottom: calc(55% + 5px);
+        }
+        .toast {
+          bottom: calc(55% + 20px);
+        }
+      }
+      @media (max-width: 380px) {
+        .place-actions {
+          display: none;
+        }
+        .quick-chip {
+          padding: 0 10px;
+        }
+        .place-thumb {
+          width: 70px;
+          height: 70px;
+        }
+        .place-card {
+          gap: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar" id="sidebar">
+        <div class="side-head">
+          <div class="brand-row">
+            <button class="hamburger" aria-label="Menu">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <div class="brand-mark">
+              <svg viewBox="0 0 32 32" width="28" height="28">
+                <path
+                  fill="#4285F4"
+                  d="M16 2.5c-5.5 0-9.9 4.4-9.9 9.9 0 7.2 9.9 17.1 9.9 17.1s9.9-9.9 9.9-17.1c0-5.5-4.4-9.9-9.9-9.9z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M16 2.5c-3.6 0-6.8 1.9-8.5 4.8l7 7 3.9-11.5c-.8-.2-1.6-.3-2.4-.3z"
+                />
+                <circle cx="16" cy="12.4" r="4.1" fill="#fff" />
+                <path
+                  fill="#FBBC04"
+                  d="M6.2 12.4c0 7.2 9.8 17.1 9.8 17.1s-3.6-9.6-2.7-15.2l-7-7c-.7 1.5-1.1 3.2-1.1 5.1z"
+                />
+              </svg>
+            </div>
+            <div class="brand-name"><span>G</span>oogle Maps</div>
+          </div>
+          <div class="search-wrap">
+            <svg
+              width="19"
+              height="19"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#5f6368"
+              stroke-width="2"
+            >
+              <circle cx="10.8" cy="10.8" r="6.8" />
+              <path d="m16 16 5 5" />
+            </svg>
+            <input
+              id="searchInput"
+              type="text"
+              placeholder="Telusuri Google Maps"
+              autocomplete="off"
+            />
+            <button
+              class="search-clear"
+              id="clearSearch"
+              aria-label="Hapus pencarian"
+            >
+              ×
+            </button>
+            <div class="search-divider"></div>
+            <button class="round-search" id="searchButton" aria-label="Cari">
+              <svg
+                width="17"
+                height="17"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                stroke-width="2.2"
+              >
+                <circle cx="10.8" cy="10.8" r="6.8" />
+                <path d="m16 16 5 5" />
+              </svg>
+            </button>
+          </div>
+          <div class="quick-actions" id="quickActions">
+            <button class="quick-chip active" data-filter="all">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <path d="M3 10.5 12 3l9 7.5V21H3z" />
+                <path d="M9 21v-7h6v7" /></svg
+              >Semua
+            </button>
+            <button class="quick-chip" data-filter="restaurant">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <path
+                  d="M6 3v7M3.5 3v4a2.5 2.5 0 0 0 5 0V3M6 9.5V21M16 3v18M16 3c3 2 4 5 4 8h-4"
+                /></svg
+              >Restoran
+            </button>
+            <button class="quick-chip" data-filter="coffee">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <path
+                  d="M4 8h13v8a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4zM17 10h2a2.5 2.5 0 0 1 0 5h-2M8 4c-1 1 1 1.5 0 2.5M13 4c-1 1 1 1.5 0 2.5"
+                /></svg
+              >Kopi
+            </button>
+            <button class="quick-chip" data-filter="attraction">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <path
+                  d="m12 3 2.4 5 5.6.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.6-.8z"
+                /></svg
+              >Tempat wisata
+            </button>
+            <button class="quick-chip" data-filter="shopping">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <path d="M4 8h16l-1 13H5L4 8zM9 8a3 3 0 0 1 6 0" /></svg
+              >Belanja
+            </button>
+          </div>
+        </div>
+        <div class="nav-tabs">
+          <button class="nav-tab active" data-tab="explore">Jelajahi</button>
+          <button class="nav-tab" data-tab="saved">Tersimpan</button>
+          <button class="nav-tab" data-tab="recent">Terbaru</button>
+        </div>
+        <div class="results-head">
+          <div>
+            <div class="results-title" id="resultsTitle">
+              Tempat menarik di sekitar
+            </div>
+            <div class="results-sub" id="resultsSub">
+              Pilihan populer di Malang
+            </div>
+          </div>
+          <button class="sort-btn" id="sortButton">Relevansi⌄</button>
+        </div>
+        <div class="results" id="results"></div>
+        <div class="empty-state" id="emptyState">
+          Tidak ada tempat yang cocok.<br />Ubah kata kunci atau pilih kategori
+          lain.
+        </div>
+        <div class="side-footer">
+          <span>© 2026 Google · Privasi · Persyaratan</span
+          ><span>Feedback</span>
+        </div>
+      </aside>
+
+      <main class="map-shell" id="mapShell">
+        <svg
+          class="map-art"
+          id="mapArt"
+          viewBox="0 0 1400 1000"
+          preserveAspectRatio="xMidYMid slice"
+          aria-label="Ilustrasi peta kota"
+        >
+          <defs>
+            <pattern
+              id="blockPattern"
+              width="190"
+              height="155"
+              patternUnits="userSpaceOnUse"
+            >
+              <rect
+                x="13"
+                y="12"
+                width="53"
+                height="39"
+                rx="3"
+                fill="#e4e4dc"
+              />
+              <rect
+                x="76"
+                y="12"
+                width="91"
+                height="39"
+                rx="3"
+                fill="#e5e5de"
+              />
+              <rect
+                x="13"
+                y="62"
+                width="79"
+                height="76"
+                rx="3"
+                fill="#e6e5dd"
+              />
+              <rect
+                x="102"
+                y="62"
+                width="65"
+                height="76"
+                rx="3"
+                fill="#e4e4dc"
+              />
+              <path
+                d="M20 21h39M20 29h26M84 20h75M84 28h55M21 73h59M111 74h47"
+                stroke="#d8d9d1"
+                stroke-width="2"
+                opacity=".7"
+              />
+            </pattern>
+            <pattern
+              id="parkDots"
+              width="26"
+              height="26"
+              patternUnits="userSpaceOnUse"
+            >
+              <circle cx="7" cy="8" r="2.7" fill="#b4cdaa" opacity=".7" />
+              <circle cx="19" cy="18" r="2" fill="#b4cdaa" opacity=".6" />
+            </pattern>
+          </defs>
+          <rect width="1400" height="1000" fill="#e9ece6" />
+          <path
+            d="M-30 80 260 0l230 65 120-70 260 90 240-40 300 80v900H-20z"
+            fill="url(#blockPattern)"
+            opacity=".88"
+          />
+          <path
+            d="M-20 0h330l-40 180-230 90L-20 215zM930 0h490v180l-230 80-160-80zM0 710l230-80 180 95-70 275H0zM1070 710l330-90v380h-420z"
+            fill="#dcebd7"
+          />
+          <path
+            d="M-20 0h330l-40 180-230 90L-20 215zM930 0h490v180l-230 80-160-80zM0 710l230-80 180 95-70 275H0zM1070 710l330-90v380h-420z"
+            fill="url(#parkDots)"
+          />
+          <path
+            d="M-30 430c170-35 240 60 400 20s245-120 400-70 250 80 400 25 180-65 260-30v100c-180-25-240 55-390 65s-255-40-390-10-250 110-420 50-190-20-260 5z"
+            fill="#d3e7ed"
+            opacity=".95"
+          />
+          <path
+            d="M-30 475c170-35 240 60 400 20s245-120 400-70 250 80 400 25 180-65 260-30"
+            fill="none"
+            stroke="#b8d9e2"
+            stroke-width="3"
+          />
+          <g opacity=".95">
+            <path
+              class="road-edge"
+              d="M-70 290C180 260 260 350 430 300S720 210 900 270s300 90 560-20"
+            />
+            <path
+              class="road-center"
+              d="M-70 290C180 260 260 350 430 300S720 210 900 270s300 90 560-20"
+            />
+            <path
+              class="road-edge"
+              d="M260 -40C300 150 380 220 370 410s-80 290-30 650"
+            />
+            <path
+              class="road-center"
+              d="M260 -40C300 150 380 220 370 410s-80 290-30 650"
+            />
+            <path
+              class="road-edge"
+              d="M870 -30C800 140 850 270 930 410s80 270 40 630"
+            />
+            <path
+              class="road-center"
+              d="M870 -30C800 140 850 270 930 410s80 270 40 630"
+            />
+            <path
+              class="road-edge"
+              d="M-50 790C200 700 300 760 480 700s330-80 510-30 280 70 470 20"
+            />
+            <path
+              class="road-center"
+              d="M-50 790C200 700 300 760 480 700s330-80 510-30 280 70 470 20"
+            />
+          </g>
+          <g opacity=".96">
+            <path
+              class="minor-edge"
+              d="M80 130 520 180 760 130 1120 170 1380 120"
+            />
+            <path
+              class="minor-center"
+              d="M80 130 520 180 760 130 1120 170 1380 120"
+            />
+            <path
+              class="minor-edge"
+              d="M40 590 250 540 540 570 760 500 1100 560 1400 500"
+            />
+            <path
+              class="minor-center"
+              d="M40 590 250 540 540 570 760 500 1100 560 1400 500"
+            />
+            <path class="minor-edge" d="M90 900 160 650 190 420 130 180" />
+            <path class="minor-center" d="M90 900 160 650 190 420 130 180" />
+            <path
+              class="minor-edge"
+              d="M560 1020 570 800 630 600 610 400 650 100"
+            />
+            <path
+              class="minor-center"
+              d="M560 1020 570 800 630 600 610 400 650 100"
+            />
+            <path
+              class="minor-edge"
+              d="M1190 950 1150 730 1190 510 1160 300 1230 60"
+            />
+            <path
+              class="minor-center"
+              d="M1190 950 1150 730 1190 510 1160 300 1230 60"
+            />
+            <path
+              class="minor-edge"
+              d="M20 360 300 390 520 350 760 390 1010 350 1380 390"
+            />
+            <path
+              class="minor-center"
+              d="M20 360 300 390 520 350 760 390 1010 350 1380 390"
+            />
+            <path
+              class="minor-edge"
+              d="M30 680 330 650 510 690 760 650 1010 700 1370 650"
+            />
+            <path
+              class="minor-center"
+              d="M30 680 330 650 510 690 760 650 1010 700 1370 650"
+            />
+            <path
+              class="minor-edge"
+              d="M460 20 480 220 450 420 490 600 460 820 500 1010"
+            />
+            <path
+              class="minor-center"
+              d="M460 20 480 220 450 420 490 600 460 820 500 1010"
+            />
+            <path
+              class="minor-edge"
+              d="M1030 10 1000 200 1030 400 1000 610 1040 850 1020 1020"
+            />
+            <path
+              class="minor-center"
+              d="M1030 10 1000 200 1030 400 1000 610 1040 850 1020 1020"
+            />
+          </g>
+          <g fill="#d5e6d0" stroke="#c4d8bd" stroke-width="2">
+            <rect x="720" y="95" width="150" height="92" rx="12" />
+            <rect x="1080" y="390" width="175" height="105" rx="12" />
+            <rect x="150" y="820" width="210" height="95" rx="12" />
+            <rect x="700" y="810" width="130" height="80" rx="12" />
+          </g>
+          <g fill="none" stroke="#c2d5bc" stroke-width="3">
+            <path
+              d="M735 140q40-40 75 0t40 20M1100 440q50-50 95 0t35 10M175 860q55-50 95 0t60 0"
+            />
+          </g>
+          <g>
+            <text class="district" x="80" y="80">KOTA MALANG</text>
+            <text class="district" x="980" y="94">KLOJEN</text>
+            <text class="district" x="108" y="760">SUKUN</text>
+            <text class="district" x="1040" y="820">LOWOKWARU</text>
+            <text x="405" y="260" transform="rotate(-4 405 260)">
+              Jl. Basuki Rahmat
+            </text>
+            <text x="710" y="245" transform="rotate(11 710 245)">
+              Jl. Semeru
+            </text>
+            <text x="380" y="530" transform="rotate(-2 380 530)">Jl. Ijen</text>
+            <text x="805" y="570" transform="rotate(8 805 570)">
+              Jl. Veteran
+            </text>
+            <text x="1050" y="330" transform="rotate(-82 1050 330)">
+              Jl. Surabaya
+            </text>
+            <text x="310" y="690" transform="rotate(-79 310 690)">
+              Jl. Dieng
+            </text>
+            <text class="poi-label" x="748" y="150">Taman Kota</text>
+            <text class="poi-label" x="1120" y="448">Area Hijau</text>
+            <text class="poi-label" x="183" y="875">Taman Rekreasi</text>
+            <text
+              class="water-label"
+              x="60"
+              y="455"
+              transform="rotate(-7 60 455)"
+            >
+              Sungai
+            </text>
+            <text class="poi-label" x="550" y="350">Pusat Kota</text>
+            <text class="poi-label" x="925" y="720">Kawasan Pendidikan</text>
+          </g>
+        </svg>
+        <svg
+          class="route-line"
+          id="routeLine"
+          viewBox="0 0 1400 1000"
+          preserveAspectRatio="none"
+        >
+          <path
+            d="M545 590 C600 550 650 520 710 470 S820 390 900 350"
+            fill="none"
+            stroke="#fff"
+            stroke-width="12"
+            stroke-linecap="round"
+          />
+          <path
+            d="M545 590 C600 550 650 520 710 470 S820 390 900 350"
+            fill="none"
+            stroke="#4285f4"
+            stroke-width="7"
+            stroke-linecap="round"
+          />
+        </svg>
+        <div class="map-topbar">
+          <div class="floating-search">
+            <svg
+              width="19"
+              height="19"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#5f6368"
+              stroke-width="2"
+            >
+              <circle cx="10.8" cy="10.8" r="6.8" />
+              <path d="m16 16 5 5" />
+            </svg>
+            <input id="mapSearch" placeholder="Telusuri di sini" />
+            <button class="icon-btn" id="mapSearchGo" aria-label="Cari di peta">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#5f6368"
+                stroke-width="2"
+              >
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </button>
+          </div>
+          <div class="map-top-actions">
+            <button class="map-pill" id="directionsButton">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#5f6368"
+                stroke-width="1.8"
+              >
+                <path
+                  d="M3 11.5 11.5 3a1.4 1.4 0 0 1 2 0l7.5 7.5a1.4 1.4 0 0 1 0 2L12.5 21a1.4 1.4 0 0 1-2 0L3 13.5a1.4 1.4 0 0 1 0-2Z"
+                />
+                <path d="M8 12h8m-3-3 3 3-3 3" /></svg
+              ><span>Rute</span>
+            </button>
+            <button class="map-pill" id="savedButton">
+              <svg
+                width="17"
+                height="17"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#5f6368"
+                stroke-width="1.8"
+              >
+                <path
+                  d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-4-6 4z"
+                /></svg
+              ><span>Tersimpan</span>
+            </button>
+            <button class="avatar" title="Akun">A</button>
+          </div>
+        </div>
+        <div
+          class="map-pin"
+          style="left: 39%; top: 44%"
+          data-id="ijen"
+          aria-label="Alun-alun Tugu"
+        >
+          <div class="pin-bubble">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              stroke-width="1.9"
+            >
+              <path d="M12 3v18M7 8l5-5 5 5M6 13h12M8 17h8" />
+            </svg>
+          </div>
+        </div>
+        <div class="map-pin red" style="left: 61%; top: 37%" data-id="heritage">
+          <div class="pin-bubble">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              stroke-width="1.9"
+            >
+              <path d="M3 10 12 3l9 7v10H3zM9 20v-6h6v6" />
+            </svg>
+          </div>
+        </div>
+        <div class="map-pin dark" style="left: 72%; top: 63%" data-id="kopi">
+          <div class="pin-bubble">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              stroke-width="1.9"
+            >
+              <path
+                d="M4 8h13v8a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4zM17 10h2a2.5 2.5 0 0 1 0 5h-2M8 4c-1 1 1 1.5 0 2.5"
+              />
+            </svg>
+          </div>
+        </div>
+        <div class="map-pin" style="left: 25%; top: 68%" data-id="museum">
+          <div class="pin-bubble">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              stroke-width="1.9"
+            >
+              <path d="M3 9 12 3l9 6M5 10v9m4-9v9m6-9v9m4-9v9M3 21h18" />
+            </svg>
+          </div>
+        </div>
+        <div class="map-label-card" id="mapLabel">
+          <strong>Malang</strong><span>Jawa Timur</span>
+        </div>
+        <button class="layers-btn" id="layersButton">
+          <div class="layers-preview"></div>
+          <span>Lapisan</span>
+        </button>
+        <button class="compass" id="compassButton" aria-label="Kompas">
+          <svg width="25" height="25" viewBox="0 0 24 24">
+            <path d="M12 2 8.5 11.2 12 9.8l3.5 1.4z" fill="#ea4335" />
+            <path d="M12 22 8.5 11.2 12 14.2l3.5-3z" fill="#4285f4" />
+            <circle cx="12" cy="12" r="1.5" fill="#fff" stroke="#9aa0a6" />
+          </svg>
+        </button>
+        <button
+          class="location-btn"
+          id="locationButton"
+          aria-label="Lokasi saya"
+        >
+          <svg
+            width="21"
+            height="21"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#5f6368"
+            stroke-width="1.8"
+          >
+            <circle cx="12" cy="12" r="7" />
+            <circle cx="12" cy="12" r="2" fill="#4285f4" stroke="#4285f4" />
+            <path d="M12 2v3m0 14v3M2 12h3m14 0h3" />
+          </svg>
+        </button>
+        <div class="map-controls">
+          <div class="control-stack">
+            <button class="map-control" id="zoomIn" aria-label="Perbesar">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M12 5v14M5 12h14" />
+              </svg></button
+            ><button class="map-control" id="zoomOut" aria-label="Perkecil">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M5 12h14" />
+              </svg>
+            </button>
+          </div>
+          <div class="scale" id="zoomLabel">500 m</div>
+        </div>
+        <div class="map-attribution">Peta ilustratif · Data lokasi contoh</div>
+        <div class="selected-place" id="selectedPlace">
+          <div class="selected-cover" id="selectedCover"></div>
+          <button class="cover-close" id="closeSelected" aria-label="Tutup">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#5f6368"
+              stroke-width="2"
+            >
+              <path d="m6 6 12 12M18 6 6 18" />
+            </svg>
+          </button>
+          <div class="selected-body">
+            <div class="selected-title" id="selectedTitle">Tempat pilihan</div>
+            <div class="selected-sub" id="selectedSub">Lokasi · Malang</div>
+            <div class="selected-buttons">
+              <button class="primary-action" id="selectedDirections">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  stroke-width="2"
+                >
+                  <path
+                    d="M3 11.5 11.5 3a1.4 1.4 0 0 1 2 0l7.5 7.5a1.4 1.4 0 0 1 0 2L12.5 21a1.4 1.4 0 0 1-2 0L3 13.5a1.4 1.4 0 0 1 0-2Z"
+                  />
+                  <path d="M8 12h8m-3-3 3 3-3 3" /></svg
+                >Petunjuk arah</button
+              ><button class="secondary-action" id="savePlace">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                >
+                  <path
+                    d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-4-6 4z"
+                  /></svg
+                >Simpan
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="directions-panel" id="directionsPanel">
+          <div class="directions-head">
+            <strong>Petunjuk arah</strong
+            ><button class="icon-btn" id="closeDirections" aria-label="Tutup">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#5f6368"
+                stroke-width="2"
+              >
+                <path d="m6 6 12 12M18 6 6 18" />
+              </svg>
+            </button>
+          </div>
+          <div class="directions-inputs">
+            <div class="direction-dots">
+              <span class="dot"></span><span class="dot-line"></span
+              ><span class="dot dest"></span>
+            </div>
+            <div class="direction-fields">
+              <input value="Lokasi Anda" aria-label="Titik awal" /><input
+                id="destinationInput"
+                value="Alun-alun Tugu Malang"
+                aria-label="Tujuan"
+              />
+            </div>
+          </div>
+          <div class="transport-tabs">
+            <button class="active" title="Mobil">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <path
+                  d="m5 11 1.5-5h11L19 11l2 2v6h-3v-2H6v2H3v-6zM5 11h14M7 14h.01M17 14h.01"
+                />
+              </svg></button
+            ><button title="Motor">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <circle cx="6" cy="17" r="3" />
+                <circle cx="18" cy="17" r="3" />
+                <path d="m6 17 4-7h4l4 7M9 13h7M13 10l-2-2" />
+              </svg></button
+            ><button title="Jalan kaki">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <circle cx="13" cy="4" r="2" />
+                <path d="m11 8 3 3 3 1M12 11l-3 4-3 1m7-4-1 5 3 4m-4-8-3 7" />
+              </svg></button
+            ><button title="Transportasi umum">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <rect x="5" y="3" width="14" height="16" rx="3" />
+                <path d="M8 7h8M8 11h.01M16 11h.01M8 19l-2 3m10-3 2 3" />
+              </svg>
+            </button>
+          </div>
+          <div class="route-summary">
+            <strong>8 mnt</strong> · 2,4 km<br />Rute tercepat saat ini, kondisi
+            lalu lintas normal.
+          </div>
+        </div>
+      </main>
+      <div class="toast" id="toast">Lokasi diperbarui</div>
+    </div>
+    <script>
+      const places = [
+        {
+          id: "ijen",
+          name: "Alun-alun Tugu Malang",
+          type: "attraction",
+          category: "Landmark",
+          rating: "4,7",
+          reviews: "8,2 rb",
+          distance: "1,2 km",
+          status: "Buka 24 jam",
+          open: true,
+          desc: "Landmark ikonik di pusat Kota Malang",
+          color: "#c9dfc2",
+        },
+        {
+          id: "heritage",
+          name: "Kampung Heritage Kajoetangan",
+          type: "attraction",
+          category: "Tempat wisata",
+          rating: "4,6",
+          reviews: "5,1 rb",
+          distance: "2,1 km",
+          status: "Buka",
+          open: true,
+          desc: "Kawasan wisata sejarah dan bangunan klasik",
+          color: "#ead8c8",
+        },
+        {
+          id: "kopi",
+          name: "Kopi Ruang Sore",
+          type: "coffee",
+          category: "Kedai kopi",
+          rating: "4,8",
+          reviews: "1,3 rb",
+          distance: "2,8 km",
+          status: "Buka",
+          open: true,
+          desc: "Kopi, pastry, dan ruang santai",
+          color: "#d8c9b7",
+        },
+        {
+          id: "museum",
+          name: "Museum Brawijaya",
+          type: "attraction",
+          category: "Museum",
+          rating: "4,5",
+          reviews: "3,4 rb",
+          distance: "3,0 km",
+          status: "Tutup · Buka 08.00",
+          open: false,
+          desc: "Museum sejarah dan koleksi militer",
+          color: "#d5dfe4",
+        },
+        {
+          id: "food",
+          name: "Dapur Kota",
+          type: "restaurant",
+          category: "Restoran Indonesia",
+          rating: "4,6",
+          reviews: "920",
+          distance: "1,7 km",
+          status: "Buka",
+          open: true,
+          desc: "Masakan rumahan dan hidangan lokal",
+          color: "#e6d7bd",
+        },
+        {
+          id: "mall",
+          name: "Pusat Belanja Kota",
+          type: "shopping",
+          category: "Pusat perbelanjaan",
+          rating: "4,4",
+          reviews: "6,8 rb",
+          distance: "3,4 km",
+          status: "Buka",
+          open: true,
+          desc: "Belanja, kuliner, dan hiburan",
+          color: "#d5dce9",
+        },
+      ];
+      let activeFilter = "all",
+        activeTab = "explore",
+        selectedId = null,
+        zoom = 1,
+        saved = new Set(["ijen"]);
+      const $ = (id) => document.getElementById(id);
+      const icons = {
+        attraction:
+          '<svg viewBox="0 0 24 24"><path d="M12 3 14.4 8l5.6.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.6-.8z"/></svg>',
+        coffee:
+          '<svg viewBox="0 0 24 24"><path d="M4 8h13v8a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4zM17 10h2a2.5 2.5 0 0 1 0 5h-2M8 4c-1 1 1 1.5 0 2.5"/></svg>',
+        restaurant:
+          '<svg viewBox="0 0 24 24"><path d="M6 3v7M3.5 3v4a2.5 2.5 0 0 0 5 0V3M6 9.5V21M16 3v18M16 3c3 2 4 5 4 8h-4"/></svg>',
+        shopping:
+          '<svg viewBox="0 0 24 24"><path d="M4 8h16l-1 13H5L4 8zM9 8a3 3 0 0 1 6 0"/></svg>',
+      };
+      function thumbnail(p) {
+        const scenes = {
+          ijen: `<rect width="120" height="100" fill="#cfe0d0"/><path d="M0 68Q30 51 56 67T120 63V100H0" fill="#a8c59e"/><circle cx="60" cy="40" r="22" fill="#e6eee1"/><path d="M60 19v48M43 40h34M48 28l24 24m0-24L48 52" stroke="#8caa82" stroke-width="3"/><path d="M0 80h120" stroke="#f8f8ed" stroke-width="6"/>`,
+          heritage: `<rect width="120" height="100" fill="#eadfd1"/><path d="M20 47 60 20l40 27v43H20z" fill="#c58d66"/><path d="M27 49h66v39H27z" fill="#f5e9da"/><path d="M51 61h18v27H51zM35 57h10v12H35zm40 0h10v12H75z" fill="#80958a"/><path d="M16 48 60 17l44 31" fill="none" stroke="#875f47" stroke-width="6"/>`,
+          kopi: `<rect width="120" height="100" fill="#ded1c1"/><rect x="16" y="17" width="88" height="70" rx="7" fill="#8a684e"/><rect x="24" y="26" width="72" height="53" rx="3" fill="#f0e6d8"/><path d="M38 60h43" stroke="#8a684e" stroke-width="5"/><path d="M45 41c0-8 9-8 9 0v13H45z" fill="#6f4c37"/><path d="M54 44h12a6 6 0 0 1 0 12H54" fill="none" stroke="#6f4c37" stroke-width="3"/>`,
+          museum: `<rect width="120" height="100" fill="#dce5e8"/><path d="M13 40 60 15l47 25" fill="#b5c5cb"/><path d="M19 42h82v45H19z" fill="#f1eee5"/><path d="M30 45v36m20-36v36m20-36v36m20-36v36" stroke="#9aaeb5" stroke-width="5"/><path d="M13 87h94" stroke="#80969d" stroke-width="5"/>`,
+          food: `<rect width="120" height="100" fill="#e8d8c1"/><rect x="14" y="20" width="92" height="68" rx="7" fill="#b77950"/><rect x="22" y="28" width="76" height="52" rx="4" fill="#f4e8d6"/><circle cx="60" cy="54" r="19" fill="#93a76c"/><circle cx="60" cy="54" r="13" fill="#e1a85a"/><path d="M49 49q11-11 22 0M51 59q9 8 18 0" fill="none" stroke="#b56d3d" stroke-width="3"/>`,
+          mall: `<rect width="120" height="100" fill="#dce2ed"/><rect x="17" y="15" width="86" height="73" rx="3" fill="#8294ac"/><rect x="25" y="23" width="70" height="57" fill="#e9edf4"/><path d="M25 42h70M25 60h70M47 23v57M71 23v57" stroke="#a3b2c5" stroke-width="3"/><path d="M12 88h96" stroke="#7c8da4" stroke-width="4"/>`,
+        };
+        return `<svg viewBox="0 0 120 100" preserveAspectRatio="xMidYMid slice">${scenes[p.id] || scenes.ijen}</svg>`;
+      }
+      function render() {
+        const q = $("searchInput").value.trim().toLowerCase();
+        let list = places.filter((p) => {
+          const tabOk =
+            activeTab === "saved"
+              ? saved.has(p.id)
+              : activeTab === "recent"
+                ? ["ijen", "kopi", "heritage"].includes(p.id)
+                : true;
+          const filterOk = activeFilter === "all" || p.type === activeFilter;
+          const queryOk =
+            !q || `${p.name} ${p.category} ${p.desc}`.toLowerCase().includes(q);
+          return tabOk && filterOk && queryOk;
+        });
+        $("resultsTitle").textContent =
+          activeTab === "saved"
+            ? "Tempat tersimpan"
+            : activeTab === "recent"
+              ? "Baru-baru ini dilihat"
+              : activeFilter === "all"
+                ? "Tempat menarik di sekitar"
+                : `${document.querySelector(".quick-chip.active")?.textContent.trim() || "Tempat"} di sekitar`;
+        $("resultsSub").textContent =
+          `${list.length} tempat · Malang, Jawa Timur`;
+        $("results").innerHTML = list
+          .map(
+            (
+              p,
+            ) => `<article class="place-card ${selectedId === p.id ? "selected" : ""}" data-id="${p.id}">
+      <div class="place-thumb">${thumbnail(p)}</div><div class="place-info"><div class="place-name">${p.name}</div>
+      <div class="rating-row"><span class="rating">${p.rating}</span><span class="stars">★★★★★</span><span>(${p.reviews})</span></div>
+      <div class="place-meta">${p.category} · ${p.distance}<br><span class="${p.open ? "open" : "closed"}">${p.status}</span></div>
+      <div class="place-actions"><button class="small-action" data-action="route" data-id="${p.id}">↗ Rute</button><button class="small-action" data-action="save" data-id="${p.id}">${saved.has(p.id) ? "✓ Tersimpan" : "+ Simpan"}</button></div></div></article>`,
+          )
+          .join("");
+        $("emptyState").style.display = list.length ? "none" : "block";
+        $("results").style.display = list.length ? "block" : "none";
+        document
+          .querySelectorAll(".map-pin")
+          .forEach(
+            (pin) =>
+              (pin.style.opacity =
+                activeFilter === "all" ||
+                places.find((p) => p.id === pin.dataset.id)?.type ===
+                  activeFilter
+                  ? "1"
+                  : ".25"),
+          );
+      }
+      function toast(message) {
+        $("toast").textContent = message;
+        $("toast").classList.add("show");
+        clearTimeout(toast.timer);
+        toast.timer = setTimeout(
+          () => $("toast").classList.remove("show"),
+          2100,
+        );
+      }
+      function selectPlace(id) {
+        const p = places.find((x) => x.id === id);
+        if (!p) return;
+        selectedId = id;
+        $("selectedPlace").classList.add("show");
+        $("selectedTitle").textContent = p.name;
+        $("selectedSub").textContent =
+          `${p.category} · ${p.distance} dari lokasi Anda`;
+        $("selectedCover").innerHTML = thumbnail(p);
+        document
+          .querySelectorAll(".map-pin")
+          .forEach((x) => x.classList.toggle("active", x.dataset.id === id));
+        render();
+      }
+      function showDirections(id) {
+        const p = places.find((x) => x.id === id) || places[0];
+        $("destinationInput").value = p.name;
+        $("directionsPanel").classList.add("show");
+        $("selectedPlace").classList.remove("show");
+        $("routeLine").style.opacity = "1";
+        toast("Rute ditampilkan · estimasi 8 menit");
+      }
+      function doSearch() {
+        const val = $("searchInput").value;
+        $("mapSearch").value = val;
+        render();
+        if (val && $("results").children.length) {
+          const first = $("results").querySelector(".place-card");
+          if (first) selectPlace(first.dataset.id);
+        } else if (val) {
+          toast("Tidak ada hasil untuk “" + val + "”");
+        }
+      }
+      $("searchInput").addEventListener("input", () => {
+        $("clearSearch").classList.toggle("show", !!$("searchInput").value);
+        render();
+      });
+      $("searchInput").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") doSearch();
+      });
+      $("searchButton").onclick = doSearch;
+      $("clearSearch").onclick = () => {
+        $("searchInput").value = "";
+        $("clearSearch").classList.remove("show");
+        render();
+        $("searchInput").focus();
+      };
+      $("mapSearch").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          $("searchInput").value = $("mapSearch").value;
+          doSearch();
+        }
+      });
+      $("mapSearchGo").onclick = () => {
+        $("searchInput").value = $("mapSearch").value;
+        doSearch();
+      };
+      $("quickActions").addEventListener("click", (e) => {
+        const b = e.target.closest(".quick-chip");
+        if (!b) return;
+        document
+          .querySelectorAll(".quick-chip")
+          .forEach((x) => x.classList.remove("active"));
+        b.classList.add("active");
+        activeFilter = b.dataset.filter;
+        render();
+      });
+      document.querySelector(".nav-tabs").addEventListener("click", (e) => {
+        const b = e.target.closest(".nav-tab");
+        if (!b) return;
+        document
+          .querySelectorAll(".nav-tab")
+          .forEach((x) => x.classList.remove("active"));
+        b.classList.add("active");
+        activeTab = b.dataset.tab;
+        render();
+      });
+      $("results").addEventListener("click", (e) => {
+        const action = e.target.closest("[data-action]");
+        if (action) {
+          e.stopPropagation();
+          const id = action.dataset.id;
+          if (action.dataset.action === "route") showDirections(id);
+          else {
+            saved.has(id) ? saved.delete(id) : saved.add(id);
+            render();
+            toast(
+              saved.has(id)
+                ? "Disimpan ke daftar tempat"
+                : "Dihapus dari tempat tersimpan",
+            );
+          }
+          return;
+        }
+        const card = e.target.closest(".place-card");
+        if (card) selectPlace(card.dataset.id);
+      });
+      document
+        .querySelectorAll(".map-pin")
+        .forEach((pin) =>
+          pin.addEventListener("click", () => selectPlace(pin.dataset.id)),
+        );
+      $("directionsButton").onclick = () => {
+        $("directionsPanel").classList.toggle("show");
+        $("selectedPlace").classList.remove("show");
+      };
+      $("selectedDirections").onclick = () => showDirections(selectedId);
+      $("closeDirections").onclick = () =>
+        $("directionsPanel").classList.remove("show");
+      $("closeSelected").onclick = () =>
+        $("selectedPlace").classList.remove("show");
+      $("savePlace").onclick = () => {
+        if (!selectedId) return;
+        saved.has(selectedId)
+          ? saved.delete(selectedId)
+          : saved.add(selectedId);
+        render();
+        toast(
+          saved.has(selectedId)
+            ? "Tempat disimpan"
+            : "Tempat dihapus dari tersimpan",
+        );
+      };
+      $("savedButton").onclick = () => {
+        activeTab = "saved";
+        document
+          .querySelectorAll(".nav-tab")
+          .forEach((x) =>
+            x.classList.toggle("active", x.dataset.tab === "saved"),
+          );
+        render();
+      };
+      $("zoomIn").onclick = () => {
+        zoom = Math.min(zoom + 0.15, 1.75);
+        $("mapArt").style.transform = `scale(${zoom})`;
+        $("mapArt").style.transformOrigin = "50% 50%";
+        $("routeLine").style.transform = `scale(${zoom})`;
+        $("routeLine").style.transformOrigin = "50% 50%";
+        $("zoomLabel").textContent =
+          zoom > 1.4 ? "100 m" : zoom > 1.15 ? "250 m" : "500 m";
+      };
+      $("zoomOut").onclick = () => {
+        zoom = Math.max(zoom - 0.15, 0.75);
+        $("mapArt").style.transform = `scale(${zoom})`;
+        $("mapArt").style.transformOrigin = "50% 50%";
+        $("routeLine").style.transform = `scale(${zoom})`;
+        $("routeLine").style.transformOrigin = "50% 50%";
+        $("zoomLabel").textContent =
+          zoom < 0.9 ? "1 km" : zoom < 1.15 ? "750 m" : "500 m";
+      };
+      $("locationButton").onclick = () => toast("Lokasi Anda diperbarui");
+      $("compassButton").onclick = () => {
+        $("mapArt").style.transform = "";
+        $("routeLine").style.transform = "";
+        zoom = 1;
+        $("zoomLabel").textContent = "500 m";
+        toast("Orientasi peta diatur ulang");
+      };
+      $("layersButton").onclick = () =>
+        toast("Lapisan peta · Tampilan default aktif");
+      $("sortButton").onclick = () =>
+        toast("Daftar diurutkan berdasarkan relevansi");
+      document.querySelectorAll(".transport-tabs button").forEach(
+        (b) =>
+          (b.onclick = () => {
+            document
+              .querySelectorAll(".transport-tabs button")
+              .forEach((x) => x.classList.remove("active"));
+            b.classList.add("active");
+            toast("Mode perjalanan diperbarui");
+          }),
+      );
+      render();
+    </script>
+  </body>
+</html>

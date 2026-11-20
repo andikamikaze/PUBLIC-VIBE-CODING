@@ -1,0 +1,4529 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#101114" />
+    <title>Google Finance — Market Overview</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #101114;
+        --surface: #17191e;
+        --surface-2: #1d2026;
+        --surface-3: #252932;
+        --border: #2c3038;
+        --border-soft: rgba(255, 255, 255, 0.075);
+        --text: #e8eaed;
+        --muted: #9aa0a6;
+        --faint: #747b85;
+        --blue: #8ab4f8;
+        --blue-2: #669df6;
+        --green: #81c995;
+        --red: #f28b82;
+        --yellow: #fdd663;
+        --shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+        --radius: 17px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        min-width: 320px;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Google Sans", "Roboto", Arial, sans-serif;
+        font-size: 14px;
+        letter-spacing: 0.01em;
+        overflow-x: hidden;
+      }
+      button,
+      input,
+      textarea {
+        font: inherit;
+      }
+      button {
+        color: inherit;
+      }
+
+      /* DEVICE SWITCHER - FLOATING */
+      .device-switcher {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 100;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 28px;
+        padding: 4px;
+        display: flex;
+        gap: 2px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(12px);
+      }
+      .device-btn {
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        padding: 8px 14px;
+        border-radius: 24px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+      }
+      .device-btn.active {
+        background: var(--blue);
+        color: #101114;
+      }
+      .device-btn:hover:not(.active) {
+        color: var(--text);
+        background: var(--surface-3);
+      }
+
+      /* ===== DESKTOP LAYOUT ===== */
+      .desktop-layout {
+        display: block;
+      }
+      .mobile-layout {
+        display: none;
+      }
+
+      [data-mode="mobile"] .desktop-layout {
+        display: none;
+      }
+      [data-mode="mobile"] .mobile-layout {
+        display: block;
+      }
+      [data-mode="mobile"] .device-switcher {
+        bottom: 20px;
+        right: 20px;
+      }
+      [data-mode="mobile"] body {
+        background: #000;
+      }
+
+      .app-shell {
+        min-height: 100vh;
+      }
+
+      /* Desktop topbar */
+      .topbar {
+        height: 68px;
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        padding: 0 28px;
+        border-bottom: 1px solid var(--border-soft);
+        background: rgba(16, 17, 20, 0.93);
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        backdrop-filter: blur(18px);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 235px;
+        white-space: nowrap;
+        font-size: 19px;
+        font-weight: 500;
+        letter-spacing: -0.55px;
+      }
+      .brand-mark {
+        width: 25px;
+        height: 25px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .brand-mark svg {
+        width: 25px;
+        height: 25px;
+      }
+      .beta {
+        color: var(--muted);
+        border: 1px solid #454a54;
+        border-radius: 5px;
+        padding: 2px 5px;
+        font-size: 10px;
+        margin-left: -3px;
+      }
+      .search-wrap {
+        position: relative;
+        max-width: 700px;
+        flex: 1;
+      }
+      .searchbox {
+        height: 44px;
+        border-radius: 26px;
+        background: var(--surface-2);
+        border: 1px solid transparent;
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        gap: 12px;
+        transition: 0.2s;
+      }
+      .searchbox:focus-within {
+        border-color: #5f8fe5;
+        background: var(--surface);
+        box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.1);
+      }
+      .searchbox svg {
+        color: var(--muted);
+        flex: 0 0 auto;
+      }
+      .searchbox input {
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: var(--text);
+        width: 100%;
+        font-size: 14px;
+      }
+      .searchbox input::placeholder {
+        color: #a3a8b0;
+      }
+      .search-hint {
+        color: var(--faint);
+        font-size: 11px;
+        border: 1px solid #3a3f48;
+        border-radius: 5px;
+        padding: 2px 6px;
+      }
+      .search-results {
+        display: none;
+        position: absolute;
+        top: 51px;
+        left: 0;
+        right: 0;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 8px;
+        box-shadow: var(--shadow);
+        z-index: 50;
+      }
+      .search-results.open {
+        display: block;
+      }
+      .search-result {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 10px;
+        border-radius: 9px;
+        cursor: pointer;
+      }
+      .search-result:hover {
+        background: var(--surface-3);
+      }
+      .result-symbol {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        background: #2b3445;
+        color: #c9dcff;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .result-copy {
+        flex: 1;
+        min-width: 0;
+      }
+      .result-copy strong {
+        display: block;
+        font-weight: 500;
+      }
+      .result-copy small {
+        color: var(--muted);
+      }
+      .result-price {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      .result-price small {
+        display: block;
+        margin-top: 3px;
+      }
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-left: auto;
+      }
+      .icon-btn {
+        width: 39px;
+        height: 39px;
+        border: 0;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+      }
+      .icon-btn:hover {
+        background: var(--surface-3);
+        color: var(--text);
+      }
+      .avatar {
+        width: 31px;
+        height: 31px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #bad1ff, #687fb8);
+        color: #182132;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        font-size: 12px;
+      }
+
+      /* Market navigation tabs - Google Finance style */
+      .market-nav {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding: 0 28px;
+        border-bottom: 1px solid var(--border-soft);
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .market-nav::-webkit-scrollbar {
+        display: none;
+      }
+      .market-nav-tab {
+        padding: 14px 16px;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        white-space: nowrap;
+        position: relative;
+        transition: color 0.15s;
+      }
+      .market-nav-tab:hover {
+        color: var(--text);
+      }
+      .market-nav-tab.active {
+        color: var(--blue);
+      }
+      .market-nav-tab.active::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 16px;
+        right: 16px;
+        height: 3px;
+        background: var(--blue);
+        border-radius: 3px 3px 0 0;
+      }
+
+      .market-strip {
+        height: 66px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 28px;
+        border-bottom: 1px solid var(--border-soft);
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .market-strip::-webkit-scrollbar {
+        display: none;
+      }
+      .market-label {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.11em;
+        margin-right: 5px;
+        white-space: nowrap;
+      }
+      .market-chip {
+        height: 39px;
+        min-width: 170px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 12px;
+        background: var(--surface);
+        white-space: nowrap;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .market-chip:hover {
+        background: var(--surface-2);
+      }
+      .market-chip .index-name {
+        color: var(--muted);
+        font-size: 10px;
+        display: block;
+        margin-bottom: 3px;
+      }
+      .market-chip strong {
+        font-size: 12px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+      .market-chip .market-change {
+        margin-left: auto;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .positive {
+        color: var(--green) !important;
+      }
+      .negative {
+        color: var(--red) !important;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 248px minmax(480px, 1fr) 316px;
+        max-width: 1800px;
+        margin: 0 auto;
+        min-height: calc(100vh - 180px);
+      }
+      .sidebar {
+        border-right: 1px solid var(--border-soft);
+        padding: 22px 14px 28px 18px;
+        min-width: 0;
+      }
+      .side-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 9px;
+        margin-bottom: 16px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.11em;
+        font-size: 10px;
+        font-weight: 700;
+      }
+      .side-heading button {
+        background: none;
+        border: 0;
+        color: var(--muted);
+        font-size: 20px;
+        cursor: pointer;
+        width: 26px;
+        height: 26px;
+        border-radius: 7px;
+      }
+      .side-heading button:hover {
+        background: var(--surface-3);
+        color: var(--text);
+      }
+      .list-nav {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 10px;
+        border-radius: 9px;
+        color: var(--muted);
+        cursor: pointer;
+        margin-bottom: 4px;
+      }
+      .list-nav:hover {
+        background: var(--surface-2);
+        color: var(--text);
+      }
+      .list-nav.active {
+        background: #273348;
+        color: #c6dcff;
+      }
+      .list-nav svg {
+        width: 17px;
+        height: 17px;
+      }
+      .list-nav span:nth-child(2) {
+        flex: 1;
+      }
+      .list-nav .count {
+        color: var(--faint);
+        font-size: 11px;
+      }
+      .side-divider {
+        height: 1px;
+        background: var(--border-soft);
+        margin: 17px 7px;
+      }
+      .watchlist-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 8px;
+        margin: 16px 0 8px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .watchlist-title button {
+        background: transparent;
+        border: 0;
+        color: var(--blue);
+        font-size: 11px;
+        cursor: pointer;
+      }
+      .asset-row {
+        display: grid;
+        grid-template-columns: 35px minmax(0, 1fr) auto;
+        gap: 9px;
+        align-items: center;
+        padding: 9px 8px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .asset-row:hover {
+        background: var(--surface-2);
+      }
+      .asset-row.selected {
+        background: #252e3d;
+      }
+      .coin-icon {
+        width: 31px;
+        height: 31px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-size: 10px;
+        font-weight: 700;
+        color: #e8edfa;
+        background: #303746;
+      }
+      .coin-icon.blue {
+        background: #243e60;
+        color: #a9cbff;
+      }
+      .coin-icon.orange {
+        background: #4b3822;
+        color: #ffd18a;
+      }
+      .coin-icon.green {
+        background: #234237;
+        color: #a9e4c2;
+      }
+      .coin-icon.purple {
+        background: #3a2b50;
+        color: #d2b9ff;
+      }
+      .coin-icon.red {
+        background: #4b2322;
+        color: #ffb4a9;
+      }
+      .asset-meta {
+        min-width: 0;
+      }
+      .asset-meta strong {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .asset-meta small {
+        display: block;
+        color: var(--muted);
+        font-size: 10px;
+        margin-top: 3px;
+      }
+      .asset-value {
+        text-align: right;
+        font-size: 11px;
+        font-variant-numeric: tabular-nums;
+      }
+      .asset-value small {
+        display: block;
+        margin-top: 4px;
+        font-size: 10px;
+      }
+      .sidebar-foot {
+        padding: 14px 9px;
+        margin-top: 22px;
+        color: var(--faint);
+        font-size: 10px;
+        line-height: 1.6;
+      }
+      .main-content {
+        min-width: 0;
+        padding: 27px 27px 50px;
+      }
+
+      /* Home view for desktop - market overview */
+      .home-view {
+        display: none;
+      }
+      .home-view.active {
+        display: block;
+      }
+      .stock-view {
+        display: none;
+      }
+      .stock-view.active {
+        display: block;
+      }
+
+      .home-hero h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
+        font-weight: 500;
+        letter-spacing: -0.8px;
+      }
+      .home-hero p {
+        margin: 0 0 24px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .home-index-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 32px;
+      }
+      .home-index-card {
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: 13px;
+        padding: 14px 16px;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .home-index-card:hover {
+        background: var(--surface-2);
+      }
+      .home-index-card .index-label {
+        color: var(--muted);
+        font-size: 11px;
+        margin-bottom: 8px;
+      }
+      .home-index-card .index-value {
+        font-size: 18px;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+        margin-bottom: 4px;
+      }
+      .home-index-card .index-change {
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .home-section-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 32px 0 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border-soft);
+      }
+      .home-section-title h2 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 500;
+      }
+      .movers-tabs {
+        display: flex;
+        gap: 2px;
+        background: var(--surface-2);
+        padding: 3px;
+        border-radius: 22px;
+        margin-left: auto;
+      }
+      .mover-tab {
+        padding: 7px 14px;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        font-size: 12px;
+        border-radius: 19px;
+        cursor: pointer;
+        font-weight: 500;
+      }
+      .mover-tab.active {
+        background: var(--surface-3);
+        color: var(--text);
+      }
+      .movers-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 10px;
+      }
+      .mover-card {
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: 12px;
+        padding: 14px;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .mover-card:hover {
+        background: var(--surface-2);
+      }
+      .mover-card-top {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .mover-card-top .coin-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 10px;
+      }
+      .mover-card-top strong {
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .mover-card-top small {
+        color: var(--muted);
+        font-size: 10px;
+        display: block;
+      }
+      .mover-card-price {
+        font-size: 16px;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+        margin-bottom: 2px;
+      }
+      .mover-card-change {
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .breadcrumbs {
+        display: flex;
+        gap: 7px;
+        align-items: center;
+        color: var(--faint);
+        font-size: 11px;
+        margin-bottom: 19px;
+      }
+      .breadcrumbs span:last-child {
+        color: var(--muted);
+      }
+      .instrument-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 18px;
+      }
+      .instrument-id {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        min-width: 0;
+      }
+      .big-coin {
+        width: 47px;
+        height: 47px;
+        border-radius: 50%;
+        background: #313b50;
+        color: #d4e3ff;
+        display: grid;
+        place-items: center;
+        font-size: 14px;
+        font-weight: 700;
+        flex: 0 0 auto;
+      }
+      .instrument-name {
+        min-width: 0;
+      }
+      .instrument-name h1 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 500;
+        letter-spacing: -0.55px;
+      }
+      .instrument-name p {
+        margin: 5px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .head-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-shrink: 0;
+      }
+      .outline-btn {
+        border: 1px solid #4a505a;
+        background: transparent;
+        border-radius: 20px;
+        padding: 8px 14px;
+        color: var(--text);
+        font-size: 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .outline-btn:hover {
+        background: var(--surface-2);
+      }
+      .outline-btn.following {
+        border-color: #4c6c9c;
+        color: #b6d0ff;
+        background: #1e2a3c;
+      }
+      .price-line {
+        display: flex;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin: 20px 0 4px 60px;
+      }
+      .current-price {
+        font-size: 34px;
+        line-height: 1;
+        font-weight: 400;
+        letter-spacing: -1.2px;
+        font-variant-numeric: tabular-nums;
+      }
+      .price-change {
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .price-date {
+        margin-left: 60px;
+        color: var(--muted);
+        font-size: 10px;
+      }
+      .chart-card {
+        margin-top: 24px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: var(--radius);
+        padding: 16px 17px 13px;
+        position: relative;
+        overflow: hidden;
+      }
+      .chart-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 17px;
+      }
+      .chart-tools {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .tool-select {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        color: var(--muted);
+        background: transparent;
+        border: 0;
+        padding: 7px 9px;
+        border-radius: 7px;
+        cursor: pointer;
+        font-size: 11px;
+      }
+      .tool-select:hover,
+      .tool-select.active {
+        background: var(--surface-3);
+        color: var(--text);
+      }
+      .tool-select svg {
+        width: 14px;
+        height: 14px;
+      }
+      .chart-mode {
+        display: flex;
+        background: var(--surface-2);
+        padding: 3px;
+        border-radius: 9px;
+        gap: 2px;
+      }
+      .mode-btn {
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        border-radius: 7px;
+        width: 30px;
+        height: 28px;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+      }
+      .mode-btn.active {
+        background: #3a414d;
+        color: var(--text);
+      }
+      .mode-btn svg {
+        width: 15px;
+        height: 15px;
+      }
+      .chart-wrap {
+        position: relative;
+        width: 100%;
+        height: 284px;
+      }
+      #priceChart {
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+        display: block;
+      }
+      .chart-tooltip {
+        position: absolute;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #252a32;
+        border: 1px solid #414752;
+        border-radius: 8px;
+        padding: 7px 10px;
+        font-size: 10px;
+        color: var(--muted);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.12s;
+        white-space: nowrap;
+      }
+      .chart-tooltip strong {
+        color: var(--text);
+        margin-right: 7px;
+      }
+      .chart-hover-line {
+        stroke: #aab2bf;
+        stroke-width: 1;
+        stroke-dasharray: 3 4;
+        opacity: 0.55;
+      }
+      .time-range {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding-top: 8px;
+        border-top: 1px solid var(--border-soft);
+        margin-top: 4px;
+      }
+      .range-btn {
+        min-width: 38px;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        border-radius: 7px;
+        padding: 7px 9px;
+        font-size: 11px;
+        cursor: pointer;
+      }
+      .range-btn:hover {
+        background: var(--surface-2);
+        color: var(--text);
+      }
+      .range-btn.active {
+        color: var(--blue);
+        background: #253247;
+        font-weight: 600;
+      }
+      .chart-legend {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        color: var(--muted);
+        font-size: 10px;
+      }
+      .legend-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+      }
+      .compare-section {
+        margin-top: 24px;
+      }
+      .section-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .section-title h2 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0;
+      }
+      .text-link {
+        color: var(--blue);
+        font-size: 11px;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .compare-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .compare-card {
+        min-width: 0;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: 12px;
+        padding: 13px 14px;
+      }
+      .compare-card-top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 10px;
+      }
+      .compare-card strong {
+        display: block;
+        font-size: 15px;
+        font-weight: 500;
+        margin-top: 11px;
+        font-variant-numeric: tabular-nums;
+      }
+      .compare-card small {
+        display: block;
+        font-size: 10px;
+        margin-top: 5px;
+      }
+      .stats-section {
+        margin-top: 25px;
+      }
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .stat {
+        border-bottom: 1px solid var(--border);
+        padding: 12px 0 13px;
+      }
+      .stat span {
+        display: block;
+        color: var(--muted);
+        font-size: 10px;
+      }
+      .stat strong {
+        display: block;
+        font-size: 13px;
+        font-weight: 500;
+        margin-top: 7px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* About company section - Google Finance style */
+      .about-section {
+        margin-top: 25px;
+        padding: 20px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 13px;
+      }
+      .about-section h3 {
+        margin: 0 0 14px;
+        font-size: 16px;
+        font-weight: 500;
+      }
+      .about-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+      .about-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .about-item span:first-child {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 500;
+      }
+      .about-item span:last-child {
+        font-size: 13px;
+      }
+
+      .right-rail {
+        border-left: 1px solid var(--border-soft);
+        padding: 26px 18px 40px;
+        min-width: 0;
+      }
+      .rail-card {
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: 15px;
+        padding: 16px;
+        margin-bottom: 14px;
+      }
+      .rail-card h3 {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .rail-subtitle {
+        color: var(--muted);
+        font-size: 10px;
+        margin-top: 5px;
+      }
+      .snapshot-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .market-status {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        color: var(--green);
+        font-size: 10px;
+      }
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--green);
+      }
+      .snapshot-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 11px 0;
+        border-bottom: 1px solid var(--border-soft);
+      }
+      .snapshot-row:last-child {
+        border-bottom: 0;
+        padding-bottom: 1px;
+      }
+      .snapshot-row span {
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .snapshot-row strong {
+        font-size: 11px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+      .ai-card {
+        background: linear-gradient(150deg, #1c2738, #191d27 75%);
+        border-color: #35445e;
+      }
+      .ai-label {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        color: #c1d7ff;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .sparkle {
+        color: #a8c7ff;
+      }
+      .ai-card p {
+        color: #b2bdcd;
+        font-size: 11px;
+        line-height: 1.55;
+        margin: 12px 0;
+      }
+      .ai-input {
+        width: 100%;
+        min-height: 75px;
+        resize: vertical;
+        color: var(--text);
+        background: #131923;
+        border: 1px solid #394b68;
+        border-radius: 10px;
+        padding: 10px;
+        outline: none;
+        font-size: 11px;
+      }
+      .ai-input:focus {
+        border-color: var(--blue);
+      }
+      .ai-input::placeholder {
+        color: #75849a;
+      }
+      .ai-submit {
+        width: 100%;
+        margin-top: 9px;
+        border: 0;
+        border-radius: 8px;
+        background: #a8c7fa;
+        color: #13223b;
+        padding: 9px 12px;
+        font-weight: 600;
+        font-size: 11px;
+        cursor: pointer;
+      }
+      .ai-submit:hover {
+        background: #c1d7ff;
+      }
+      .ai-answer {
+        display: none;
+        margin-top: 12px;
+        border-top: 1px solid #394b68;
+        padding-top: 11px;
+        color: #d4deef;
+        font-size: 11px;
+        line-height: 1.55;
+      }
+      .ai-answer.show {
+        display: block;
+      }
+      .news-item {
+        display: grid;
+        grid-template-columns: 1fr 65px;
+        gap: 10px;
+        padding: 13px 0;
+        border-bottom: 1px solid var(--border-soft);
+      }
+      .news-item:last-child {
+        border-bottom: 0;
+        padding-bottom: 0;
+      }
+      .news-source {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 9px;
+        margin-bottom: 6px;
+      }
+      .source-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: #8ab4f8;
+      }
+      .news-item h4 {
+        margin: 0;
+        font-size: 11px;
+        line-height: 1.42;
+        font-weight: 500;
+      }
+      .news-item p {
+        margin: 5px 0 0;
+        color: var(--faint);
+        font-size: 9px;
+        line-height: 1.4;
+      }
+      .news-thumb {
+        border-radius: 8px;
+        background: linear-gradient(135deg, #2b3f5b, #425c71);
+        display: grid;
+        place-items: center;
+        color: #b8d0e7;
+        font-size: 21px;
+        min-height: 57px;
+      }
+      .news-thumb.purple {
+        background: linear-gradient(135deg, #40304e, #6e526f);
+      }
+      .news-thumb.green {
+        background: linear-gradient(135deg, #21453a, #56816d);
+      }
+      .mover-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 9px 0;
+        border-bottom: 1px solid var(--border-soft);
+      }
+      .mover-row:last-child {
+        border: 0;
+        padding-bottom: 0;
+      }
+      .mover-company {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
+      .mover-company .coin-icon {
+        width: 27px;
+        height: 27px;
+        font-size: 9px;
+      }
+      .mover-company strong {
+        display: block;
+        font-size: 10px;
+        font-weight: 600;
+      }
+      .mover-company small {
+        display: block;
+        color: var(--muted);
+        font-size: 9px;
+        margin-top: 3px;
+      }
+      .mover-change {
+        text-align: right;
+        font-size: 10px;
+        font-weight: 600;
+      }
+      .mover-change small {
+        display: block;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 400;
+        margin-top: 3px;
+      }
+
+      /* ===== MOBILE LAYOUT ===== */
+      .mobile-app {
+        max-width: 430px;
+        margin: 0 auto;
+        background: var(--bg);
+        min-height: 100vh;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Mobile Status Bar */
+      .mobile-status-bar {
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text);
+        flex-shrink: 0;
+      }
+      .mobile-status-bar .status-icons {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+        font-size: 10px;
+      }
+
+      /* Mobile Header */
+      .mobile-header {
+        display: flex;
+        align-items: center;
+        padding: 10px 16px;
+        gap: 10px;
+        flex-shrink: 0;
+      }
+      .mobile-brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 20px;
+        font-weight: 500;
+      }
+      .mobile-brand .brand-mark {
+        width: 28px;
+        height: 28px;
+      }
+      .mobile-brand .brand-mark svg {
+        width: 28px;
+        height: 28px;
+      }
+      .mobile-header-actions {
+        margin-left: auto;
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .mobile-avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #bad1ff, #687fb8);
+        color: #182132;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        font-size: 11px;
+      }
+
+      /* Mobile Content Area */
+      .mobile-content {
+        flex: 1;
+        overflow-y: auto;
+        padding-bottom: 80px;
+      }
+      .mobile-screen {
+        display: none;
+      }
+      .mobile-screen.active {
+        display: block;
+      }
+
+      /* Mobile Home Screen */
+      .mobile-search-bar {
+        margin: 4px 16px 12px;
+        background: var(--surface-2);
+        border-radius: 24px;
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 14px;
+        cursor: pointer;
+      }
+      .mobile-search-bar input {
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: var(--text);
+        flex: 1;
+        font-size: 14px;
+      }
+      .mobile-search-bar input::placeholder {
+        color: var(--muted);
+      }
+
+      .mobile-section-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 16px 12px;
+      }
+      .mobile-section-title h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .mobile-section-title .chev {
+        color: var(--muted);
+        font-size: 18px;
+      }
+
+      .mobile-index-strip {
+        display: flex;
+        gap: 8px;
+        padding: 0 16px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        margin-bottom: 8px;
+      }
+      .mobile-index-strip::-webkit-scrollbar {
+        display: none;
+      }
+      .mobile-index-chip {
+        min-width: 135px;
+        padding: 10px 14px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: 12px;
+        cursor: pointer;
+      }
+      .mobile-index-chip .chip-label {
+        font-size: 11px;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+      .mobile-index-chip .chip-value {
+        font-size: 14px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        margin-bottom: 2px;
+      }
+      .mobile-index-chip .chip-change {
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .mobile-movers-list {
+        padding: 0 16px;
+      }
+      .mobile-mover-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border-soft);
+        cursor: pointer;
+      }
+      .mobile-mover-row:last-child {
+        border-bottom: 0;
+      }
+      .mobile-mover-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--surface-3);
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        font-size: 12px;
+        flex-shrink: 0;
+      }
+      .mobile-mover-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .mobile-mover-info strong {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .mobile-mover-info small {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 2px;
+      }
+      .mobile-mover-price {
+        text-align: right;
+      }
+      .mobile-mover-price .price {
+        font-size: 14px;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+      }
+      .mobile-mover-price .change {
+        display: inline-block;
+        padding: 3px 7px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        margin-top: 4px;
+      }
+      .mobile-mover-price .change.positive {
+        background: rgba(129, 201, 149, 0.15);
+        color: var(--green);
+      }
+      .mobile-mover-price .change.negative {
+        background: rgba(242, 139, 130, 0.15);
+        color: var(--red);
+      }
+
+      /* Mobile News */
+      .mobile-news-card {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border-soft);
+        display: flex;
+        gap: 12px;
+        cursor: pointer;
+      }
+      .mobile-news-content {
+        flex: 1;
+      }
+      .mobile-news-source {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+      .mobile-news-content h4 {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .mobile-news-thumb {
+        width: 80px;
+        height: 80px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #2b3f5b, #425c71);
+        display: grid;
+        place-items: center;
+        color: #b8d0e7;
+        font-size: 26px;
+        flex-shrink: 0;
+      }
+
+      /* Mobile Watchlist Screen */
+      .mobile-list-tabs {
+        display: flex;
+        padding: 0 16px;
+        gap: 6px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        margin-bottom: 8px;
+      }
+      .mobile-list-tabs::-webkit-scrollbar {
+        display: none;
+      }
+      .mobile-list-tab {
+        padding: 7px 14px;
+        border-radius: 18px;
+        background: var(--surface-2);
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 500;
+        border: 0;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .mobile-list-tab.active {
+        background: #273348;
+        color: #c6dcff;
+      }
+      .mobile-watchlist {
+        padding: 0 16px;
+      }
+
+      /* Mobile Detail Screen */
+      .mobile-detail-header {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        gap: 12px;
+        border-bottom: 1px solid var(--border-soft);
+      }
+      .mobile-back-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: transparent;
+        border: 0;
+        color: var(--blue);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+      }
+      .mobile-back-btn:hover {
+        background: var(--surface-2);
+      }
+      .mobile-detail-header h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 500;
+      }
+      .mobile-detail-content {
+        padding: 16px;
+      }
+      .mobile-detail-name {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .mobile-detail-name .big-coin {
+        width: 44px;
+        height: 44px;
+        font-size: 13px;
+      }
+      .mobile-detail-name h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 500;
+      }
+      .mobile-detail-name p {
+        margin: 2px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .mobile-price-big {
+        font-size: 32px;
+        font-weight: 400;
+        font-variant-numeric: tabular-nums;
+        margin-bottom: 4px;
+      }
+      .mobile-price-change {
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 16px;
+      }
+      .mobile-chart-wrap {
+        height: 220px;
+        margin: 8px -16px 0;
+        padding: 0 16px;
+        position: relative;
+      }
+      .mobile-chart-wrap svg {
+        width: 100%;
+        height: 100%;
+      }
+      .mobile-range-tabs {
+        display: flex;
+        gap: 4px;
+        padding: 12px 0;
+        overflow-x: auto;
+        scrollbar-width: none;
+        border-bottom: 1px solid var(--border-soft);
+      }
+      .mobile-range-tabs::-webkit-scrollbar {
+        display: none;
+      }
+      .mobile-range-tab {
+        padding: 6px 12px;
+        background: transparent;
+        border: 0;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        border-radius: 16px;
+      }
+      .mobile-range-tab.active {
+        color: var(--blue);
+        background: #253247;
+      }
+      .mobile-stats-section {
+        margin-top: 20px;
+      }
+      .mobile-stats-section h4 {
+        margin: 0 0 12px;
+        font-size: 15px;
+        font-weight: 500;
+      }
+      .mobile-stat-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border-soft);
+      }
+      .mobile-stat-row span:first-child {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .mobile-stat-row span:last-child {
+        font-size: 13px;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+      }
+      .mobile-follow-btn {
+        width: 100%;
+        padding: 12px;
+        border-radius: 24px;
+        background: var(--blue);
+        color: #101114;
+        border: 0;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 16px;
+      }
+      .mobile-follow-btn.following {
+        background: var(--surface-2);
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+
+      /* Mobile Bottom Navigation */
+      .mobile-bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        max-width: 430px;
+        height: 64px;
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        z-index: 40;
+        padding-bottom: env(safe-area-inset-bottom, 0);
+      }
+      .mobile-nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        padding: 6px 12px;
+        background: transparent;
+        border: 0;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 10px;
+        position: relative;
+      }
+      .mobile-nav-item.active {
+        color: var(--blue);
+      }
+      .mobile-nav-item.active::before {
+        content: "";
+        position: absolute;
+        top: -1px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 3px;
+        background: var(--blue);
+        border-radius: 0 0 3px 3px;
+      }
+      .mobile-nav-item svg {
+        width: 22px;
+        height: 22px;
+      }
+      .mobile-nav-item span {
+        font-weight: 500;
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 22px;
+        left: 50%;
+        transform: translate(-50%, 20px);
+        opacity: 0;
+        pointer-events: none;
+        background: #e8eaed;
+        color: #202124;
+        border-radius: 9px;
+        padding: 11px 16px;
+        font-size: 12px;
+        box-shadow: var(--shadow);
+        transition: 0.2s;
+        z-index: 80;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+
+      .modal-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.58);
+        z-index: 70;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .modal-backdrop.open {
+        display: flex;
+      }
+      .modal {
+        width: min(420px, 100%);
+        border: 1px solid var(--border);
+        background: var(--surface-2);
+        border-radius: 17px;
+        padding: 20px;
+        box-shadow: var(--shadow);
+      }
+      .modal h3 {
+        margin: 0 0 8px;
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .modal p {
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.5;
+      }
+      .modal input {
+        width: 100%;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 11px;
+        color: var(--text);
+        outline: 0;
+        margin: 7px 0 15px;
+      }
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+      .primary-btn {
+        border: 0;
+        background: #a8c7fa;
+        color: #16243a;
+        border-radius: 18px;
+        padding: 9px 15px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .secondary-btn {
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text);
+        border-radius: 18px;
+        padding: 9px 15px;
+        font-size: 11px;
+        cursor: pointer;
+      }
+
+      .light-theme {
+        color-scheme: light;
+        --bg: #f8f9fa;
+        --surface: #fff;
+        --surface-2: #f1f3f4;
+        --surface-3: #e8eaed;
+        --border: #dadce0;
+        --border-soft: rgba(60, 64, 67, 0.12);
+        --text: #202124;
+        --muted: #5f6368;
+        --faint: #80868b;
+        --blue: #1a73e8;
+        --green: #188038;
+        --red: #d93025;
+      }
+      .light-theme .topbar {
+        background: rgba(248, 249, 250, 0.93);
+      }
+      .light-theme .asset-row.selected {
+        background: #e8f0fe;
+      }
+      .light-theme .list-nav.active {
+        background: #e8f0fe;
+        color: #174ea6;
+      }
+      .light-theme .big-coin {
+        background: #e8f0fe;
+        color: #174ea6;
+      }
+      .light-theme .market-nav-tab.active {
+        color: #1a73e8;
+      }
+      .light-theme .market-nav-tab.active::after {
+        background: #1a73e8;
+      }
+      .light-theme .mover-tab.active {
+        background: #e8f0fe;
+        color: #1a73e8;
+      }
+      .light-theme .mobile-list-tab.active {
+        background: #e8f0fe;
+        color: #174ea6;
+      }
+      .light-theme .mobile-nav-item.active {
+        color: #1a73e8;
+      }
+      .light-theme .mobile-nav-item.active::before {
+        background: #1a73e8;
+      }
+      .light-theme .mobile-mover-price .change.positive {
+        background: rgba(24, 128, 56, 0.1);
+        color: #188038;
+      }
+      .light-theme .mobile-mover-price .change.negative {
+        background: rgba(217, 48, 37, 0.1);
+        color: #d93025;
+      }
+      .light-theme .mobile-range-tab.active {
+        background: #e8f0fe;
+        color: #1a73e8;
+      }
+
+      /* Responsive desktop */
+      @media (max-width: 1250px) {
+        .layout {
+          grid-template-columns: 225px minmax(400px, 1fr) 285px;
+        }
+        .home-index-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 1050px) {
+        .layout {
+          grid-template-columns: 225px minmax(0, 1fr);
+        }
+        .right-rail {
+          grid-column: 2;
+          border-left: 0;
+          border-top: 1px solid var(--border-soft);
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 12px;
+          padding: 18px 20px 30px;
+        }
+        .rail-card {
+          margin: 0;
+        }
+      }
+      @media (max-width: 720px) {
+        .topbar {
+          height: 60px;
+          padding: 0 13px;
+          gap: 11px;
+        }
+        .brand {
+          min-width: unset;
+          gap: 7px;
+          font-size: 17px;
+        }
+        .beta {
+          display: none;
+        }
+        .search-wrap {
+          max-width: none;
+        }
+        .searchbox {
+          height: 39px;
+          padding: 0 11px;
+        }
+        .search-hint,
+        .top-actions .desktop-action {
+          display: none;
+        }
+        .layout {
+          display: block;
+        }
+        .sidebar {
+          display: none;
+          position: fixed;
+          z-index: 60;
+          top: 60px;
+          bottom: 0;
+          left: 0;
+          width: 270px;
+          background: var(--bg);
+          overflow: auto;
+          border-right: 1px solid var(--border);
+        }
+        .sidebar.open {
+          display: block;
+        }
+        .mobile-menu {
+          display: grid;
+        }
+        .main-content {
+          padding: 20px 14px 28px;
+        }
+        .home-index-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .stats-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .right-rail {
+          display: block;
+          padding: 8px 14px 28px;
+        }
+        .compare-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .compare-card:last-child {
+          display: none;
+        }
+      }
+
+      /* Mobile mode body */
+      [data-mode="mobile"] body {
+        background: #000;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+      }
+      [data-mode="mobile"] .device-switcher {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 200;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Device Switcher -->
+    <div class="device-switcher">
+      <button class="device-btn active" data-device="desktop">
+        <svg
+          viewBox="0 0 24 24"
+          width="16"
+          height="16"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <rect x="3" y="4" width="18" height="12" rx="2" />
+          <path d="M8 20h8M12 16v4" />
+        </svg>
+        Desktop
+      </button>
+      <button class="device-btn" data-device="mobile">
+        <svg
+          viewBox="0 0 24 24"
+          width="16"
+          height="16"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <rect x="6" y="2" width="12" height="20" rx="2" />
+          <path d="M11 18h2" />
+        </svg>
+        Mobile
+      </button>
+    </div>
+
+    <div class="app-shell" id="appShell" data-mode="desktop">
+      <!-- ===== DESKTOP LAYOUT ===== -->
+      <div class="desktop-layout">
+        <header class="topbar">
+          <button
+            class="icon-btn mobile-menu"
+            id="mobileMenu"
+            aria-label="Open navigation"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <div class="brand">
+            <span class="brand-mark">
+              <svg viewBox="0 0 48 48">
+                <path
+                  fill="#4285F4"
+                  d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.5 9.5 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.9 6.1-15z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M24 44c5.6 0 10.3-1.9 13.7-5.2l-6.6-5.1c-1.8 1.2-4.1 1.9-7.1 1.9-5.4 0-10-3.7-11.6-8.6H5.6v5.3A20.7 20.7 0 0 0 24 44z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M12.4 27a12.4 12.4 0 0 1 0-7.9v-5.3H5.6a20.6 20.6 0 0 0 0 18.5z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M24 11.5c3.1 0 5.9 1.1 8.1 3.2l6.1-6.1C34.5 5.2 29.6 3 24 3A20.7 20.7 0 0 0 5.6 13.8l6.8 5.3c1.6-4.9 6.2-7.6 11.6-7.6z"
+                />
+              </svg>
+            </span>
+            <span class="brand-name">Google Finance</span>
+            <span class="beta">BETA</span>
+          </div>
+          <div class="search-wrap">
+            <label class="searchbox" for="globalSearch">
+              <svg
+                viewBox="0 0 24 24"
+                width="19"
+                height="19"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="10.8" cy="10.8" r="6.8" />
+                <path d="m16 16 5 5" />
+              </svg>
+              <input
+                id="globalSearch"
+                type="search"
+                placeholder="Search for stocks, ETFs & more"
+                autocomplete="off"
+              />
+              <span class="search-hint">⌘ K</span>
+            </label>
+            <div class="search-results" id="searchResults"></div>
+          </div>
+          <div class="top-actions">
+            <button
+              class="icon-btn desktop-action"
+              id="themeToggle"
+              title="Toggle theme"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="19"
+                height="19"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+              >
+                <path
+                  d="M20.2 15.2A8.5 8.5 0 0 1 8.8 3.8 8.7 8.7 0 1 0 20.2 15.2Z"
+                />
+              </svg>
+            </button>
+            <button class="icon-btn" id="helpBtn" title="Help">
+              <svg
+                viewBox="0 0 24 24"
+                width="19"
+                height="19"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+              >
+                <circle cx="12" cy="12" r="9" />
+                <path
+                  d="M9.7 9a2.4 2.4 0 1 1 4.4 1.3c-.8 1.1-2.1 1.3-2.1 3M12 17h.01"
+                />
+              </svg>
+            </button>
+            <div class="avatar">A</div>
+          </div>
+        </header>
+
+        <!-- Market Navigation Tabs (Google Finance style) -->
+        <nav class="market-nav" id="marketNav">
+          <button class="market-nav-tab active" data-view="home">
+            COMPARE MARKETS
+          </button>
+          <button class="market-nav-tab" data-view="us">US</button>
+          <button class="market-nav-tab" data-view="europe">Europe</button>
+          <button class="market-nav-tab" data-view="asia">Asia</button>
+          <button class="market-nav-tab" data-view="crypto">Crypto</button>
+          <button class="market-nav-tab" data-view="currencies">
+            Currencies
+          </button>
+          <button class="market-nav-tab" data-view="futures">Futures</button>
+        </nav>
+
+        <div class="layout">
+          <aside class="sidebar" id="sidebar">
+            <div class="side-heading">
+              <span>Your lists</span>
+              <button id="addListBtn">+</button>
+            </div>
+            <div class="list-nav active" data-list="watchlist">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+              >
+                <path d="M4 5.5h16M4 12h16M4 18.5h16" />
+                <circle cx="7" cy="5.5" r=".6" fill="currentColor" />
+                <circle cx="7" cy="12" r=".6" fill="currentColor" />
+                <circle cx="7" cy="18.5" r=".6" fill="currentColor" />
+              </svg>
+              <span>Watchlist</span>
+              <span class="count" id="watchCount">8</span>
+            </div>
+            <div class="list-nav" data-list="tech">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+              >
+                <rect x="4" y="4" width="16" height="16" rx="3" />
+                <path d="M8 15v-3m4 3V8m4 7v-5" />
+              </svg>
+              <span>Tech stocks</span>
+              <span class="count">5</span>
+            </div>
+            <div class="list-nav" data-list="crypto">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+              >
+                <circle cx="12" cy="12" r="9" />
+                <path
+                  d="M9 7.5h4.2a2.1 2.1 0 0 1 0 4.2H9m0 0h5a2.4 2.4 0 0 1 0 4.8H9m1-11v11m3-13v2m0 9v2"
+                />
+              </svg>
+              <span>Crypto</span>
+              <span class="count">6</span>
+            </div>
+            <div class="list-nav" data-list="indices">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+              >
+                <path d="M4 19V5m0 14h16M7 15l4-4 3 2 5-7" />
+              </svg>
+              <span>Market indices</span>
+              <span class="count">4</span>
+            </div>
+            <div class="side-divider"></div>
+            <div class="watchlist-title">
+              <span id="listTitle">Watchlist</span>
+              <button id="sortBtn">Sort A–Z</button>
+            </div>
+            <div id="assetList"></div>
+            <div class="sidebar-foot">
+              Market data shown is for demonstration only.<br />Quotes may be
+              delayed or simulated.
+            </div>
+          </aside>
+
+          <main class="main-content">
+            <!-- HOME VIEW -->
+            <div class="home-view active" id="homeView">
+              <div class="home-hero">
+                <h1>Market overview</h1>
+                <p>
+                  Track the world's markets, from US stocks to global indices
+                  and crypto.
+                </p>
+              </div>
+
+              <div class="home-index-grid" id="homeIndexGrid">
+                <div class="home-index-card" data-asset="SPX">
+                  <div class="index-label">S&P 500</div>
+                  <div class="index-value">5,842.47</div>
+                  <div class="index-change positive">+0.84% ↑</div>
+                </div>
+                <div class="home-index-card" data-asset="DJI">
+                  <div class="index-label">Dow Jones</div>
+                  <div class="index-value">42,618.31</div>
+                  <div class="index-change positive">+0.52% ↑</div>
+                </div>
+                <div class="home-index-card" data-asset="NDX">
+                  <div class="index-label">Nasdaq 100</div>
+                  <div class="index-value">19,246.51</div>
+                  <div class="index-change positive">+1.21% ↑</div>
+                </div>
+                <div class="home-index-card" data-asset="RUT">
+                  <div class="index-label">Russell 2000</div>
+                  <div class="index-value">2,118.64</div>
+                  <div class="index-change negative">-0.18% ↓</div>
+                </div>
+              </div>
+
+              <div class="home-section-title">
+                <h2>Top movers</h2>
+                <div class="movers-tabs" id="moversTabs">
+                  <button class="mover-tab active" data-mover="gainers">
+                    Gainers
+                  </button>
+                  <button class="mover-tab" data-mover="losers">Losers</button>
+                  <button class="mover-tab" data-mover="active">
+                    Most active
+                  </button>
+                  <button class="mover-tab" data-mover="trending">
+                    Trending
+                  </button>
+                </div>
+              </div>
+              <div class="movers-grid" id="moversGrid"></div>
+
+              <div class="home-section-title">
+                <h2>Today's news</h2>
+                <a class="text-link">More news</a>
+              </div>
+              <div
+                class="news-list"
+                id="homeNewsList"
+                style="
+                  border: 1px solid var(--border);
+                  background: var(--surface);
+                  border-radius: 13px;
+                  padding: 0 16px;
+                "
+              >
+                <article class="news-item">
+                  <div>
+                    <div class="news-source">
+                      <i class="source-dot"></i> Market Watch · 2h ago
+                    </div>
+                    <h4>
+                      Markets look toward the next phase of digital asset
+                      adoption
+                    </h4>
+                    <p>
+                      Investors assess broader market signals as crypto assets
+                      trade higher.
+                    </p>
+                  </div>
+                  <div class="news-thumb">↗</div>
+                </article>
+                <article class="news-item">
+                  <div>
+                    <div class="news-source">
+                      <i class="source-dot" style="background: #fdd663"></i>
+                      Bloomberg · 4h ago
+                    </div>
+                    <h4>
+                      What investors are watching across global markets this
+                      week
+                    </h4>
+                    <p>A closer look at rates, earnings and market momentum.</p>
+                  </div>
+                  <div class="news-thumb purple">▥</div>
+                </article>
+                <article class="news-item">
+                  <div>
+                    <div class="news-source">
+                      <i class="source-dot" style="background: #81c995"></i>
+                      CNBC · 6h ago
+                    </div>
+                    <h4>
+                      Analysts revisit their outlook as trading volume picks up
+                    </h4>
+                    <p>
+                      New developments are drawing attention to major assets.
+                    </p>
+                  </div>
+                  <div class="news-thumb green">⌁</div>
+                </article>
+              </div>
+            </div>
+
+            <!-- STOCK DETAIL VIEW -->
+            <div class="stock-view" id="stockView">
+              <div class="breadcrumbs">
+                <span id="breadcrumbHome" style="cursor: pointer">Home</span
+                ><span>›</span> <span id="breadcrumbType">Crypto</span
+                ><span>›</span>
+                <span id="breadcrumbSymbol">ETH / USD</span>
+              </div>
+              <div class="instrument-head">
+                <div class="instrument-id">
+                  <div class="big-coin" id="bigCoin">Ξ</div>
+                  <div class="instrument-name">
+                    <h1 id="instrumentTitle">
+                      Ethereum / United States Dollar
+                    </h1>
+                    <p id="instrumentSubtitle">ETH · Cryptocurrency · USD</p>
+                  </div>
+                </div>
+                <div class="head-actions">
+                  <button class="outline-btn share-btn" id="shareBtn">
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                    >
+                      <circle cx="18" cy="5" r="2.5" />
+                      <circle cx="6" cy="12" r="2.5" />
+                      <circle cx="18" cy="19" r="2.5" />
+                      <path d="m8.2 10.8 7.6-4.5m-7.6 7 7.6 4.5" />
+                    </svg>
+                    Share
+                  </button>
+                  <button class="outline-btn" id="followBtn">＋ Follow</button>
+                </div>
+              </div>
+              <div class="price-line">
+                <span class="current-price" id="currentPrice">$3,842.16</span>
+                <span class="price-change positive" id="priceChange"
+                  >↑ 2.43% (+$91.27) today</span
+                >
+              </div>
+              <div class="price-date" id="priceDate">
+                Nov 6, 7:13 PM GMT+7 · Disclaimer
+              </div>
+
+              <section class="chart-card">
+                <div class="chart-toolbar">
+                  <div class="chart-tools">
+                    <button class="tool-select active" id="areaBtn">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                      >
+                        <path d="M3 18 8 12l4 3 8-9v12H3Z" />
+                      </svg>
+                      Area <span>⌄</span>
+                    </button>
+                    <button class="tool-select" id="compareBtn">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                      >
+                        <path d="M4 18 9 11l4 4 7-9" />
+                        <path d="M4 5v14h16" />
+                      </svg>
+                      Compare
+                    </button>
+                  </div>
+                  <div class="chart-mode">
+                    <button
+                      class="mode-btn active"
+                      id="lineMode"
+                      title="Line chart"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                      >
+                        <path d="m3 17 5-6 4 3 8-9" />
+                      </svg>
+                    </button>
+                    <button
+                      class="mode-btn"
+                      id="candleMode"
+                      title="Candlestick chart"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.6"
+                      >
+                        <path d="M6 3v18m6-15v12m6-15v18" />
+                        <rect x="4" y="8" width="4" height="6" rx=".5" />
+                        <rect x="10" y="9" width="4" height="5" rx=".5" />
+                        <rect x="16" y="6" width="4" height="9" rx=".5" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="chart-wrap" id="chartWrap">
+                  <svg
+                    id="priceChart"
+                    viewBox="0 0 820 284"
+                    preserveAspectRatio="none"
+                  ></svg>
+                  <div class="chart-tooltip" id="chartTooltip">
+                    <strong>$3,842.16</strong><span>Nov 6, 2026</span>
+                  </div>
+                </div>
+                <div class="time-range" id="timeRanges">
+                  <button class="range-btn" data-range="1D">1D</button>
+                  <button class="range-btn" data-range="5D">5D</button>
+                  <button class="range-btn active" data-range="1M">1M</button>
+                  <button class="range-btn" data-range="6M">6M</button>
+                  <button class="range-btn" data-range="YTD">YTD</button>
+                  <button class="range-btn" data-range="1Y">1Y</button>
+                  <button class="range-btn" data-range="5Y">5Y</button>
+                  <button class="range-btn" data-range="MAX">MAX</button>
+                  <div class="chart-legend">
+                    <span
+                      ><i class="legend-dot" style="background: #8ab4f8"></i
+                      ><span id="legendName">ETH-USD</span></span
+                    >
+                    <span id="compareLegend" style="display: none">
+                      <i class="legend-dot" style="background: #fdd663"></i
+                      >BTC-USD
+                    </span>
+                  </div>
+                </div>
+              </section>
+
+              <section class="compare-section">
+                <div class="section-title">
+                  <h2 id="relatedTitle">Related to Ethereum</h2>
+                  <a class="text-link">See all</a>
+                </div>
+                <div class="compare-grid" id="relatedGrid"></div>
+              </section>
+
+              <section class="about-section">
+                <h3 id="aboutTitle">About Ethereum</h3>
+                <div class="about-grid" id="aboutGrid">
+                  <div class="about-item">
+                    <span>Previous close</span
+                    ><strong id="prevClose">$3,750.89</strong>
+                  </div>
+                  <div class="about-item">
+                    <span>Day range</span
+                    ><strong id="dayRange">$3,721.40 – $3,858.72</strong>
+                  </div>
+                  <div class="about-item">
+                    <span>52-week range</span
+                    ><strong id="yearRange">$2,140.18 – $4,092.55</strong>
+                  </div>
+                  <div class="about-item">
+                    <span>Market cap</span
+                    ><strong id="marketCap">$462.8B</strong>
+                  </div>
+                  <div class="about-item">
+                    <span>Primary currency</span><strong>USD</strong>
+                  </div>
+                  <div class="about-item">
+                    <span>Category</span
+                    ><strong id="aboutCategory">Cryptocurrency</strong>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </main>
+
+          <aside class="right-rail">
+            <section class="rail-card">
+              <div class="snapshot-head">
+                <h3>Market snapshot</h3>
+                <span class="market-status"
+                  ><i class="status-dot"></i> Market open</span
+                >
+              </div>
+              <div class="rail-subtitle">United States · Regular session</div>
+              <div class="snapshot-row">
+                <span>S&P 500</span
+                ><strong class="positive">5,842.47 +0.84%</strong>
+              </div>
+              <div class="snapshot-row">
+                <span>Nasdaq Composite</span
+                ><strong class="positive">19,246.51 +1.21%</strong>
+              </div>
+              <div class="snapshot-row">
+                <span>Dow Jones</span
+                ><strong class="positive">42,618.31 +0.52%</strong>
+              </div>
+              <div class="snapshot-row">
+                <span>10-year Treasury</span
+                ><strong>4.08% <span class="negative">+0.02</span></strong>
+              </div>
+              <div class="snapshot-row">
+                <span>US Dollar Index</span
+                ><strong class="negative">103.74 −0.12%</strong>
+              </div>
+            </section>
+
+            <section class="rail-card ai-card">
+              <div class="ai-label">
+                <span class="sparkle">✦</span> Research with AI
+              </div>
+              <p>
+                Explore market trends and get helpful context about the assets
+                you follow.
+              </p>
+              <textarea
+                class="ai-input"
+                id="aiQuestion"
+                placeholder="Ask anything about this asset..."
+              ></textarea>
+              <button class="ai-submit" id="askAiBtn">
+                Explore with AI&nbsp; ↗
+              </button>
+              <div class="ai-answer" id="aiAnswer"></div>
+            </section>
+
+            <section class="rail-card news-card">
+              <div class="section-title">
+                <h3>In the news</h3>
+                <a class="text-link">See all</a>
+              </div>
+              <article class="news-item">
+                <div>
+                  <div class="news-source">
+                    <i class="source-dot"></i> Market Watch · 2h ago
+                  </div>
+                  <h4>
+                    Markets look toward the next phase of digital asset adoption
+                  </h4>
+                </div>
+                <div class="news-thumb">↗</div>
+              </article>
+              <article class="news-item">
+                <div>
+                  <div class="news-source">
+                    <i class="source-dot" style="background: #fdd663"></i>
+                    Bloomberg · 4h ago
+                  </div>
+                  <h4>
+                    What investors are watching across global markets this week
+                  </h4>
+                </div>
+                <div class="news-thumb purple">▥</div>
+              </article>
+            </section>
+
+            <section class="rail-card">
+              <div class="section-title">
+                <h3>Most active</h3>
+                <a class="text-link">View market</a>
+              </div>
+              <div class="mover-row">
+                <div class="mover-company">
+                  <span class="coin-icon blue">NV</span>
+                  <div><strong>NVIDIA</strong><small>NVDA · NASDAQ</small></div>
+                </div>
+                <div class="mover-change positive">
+                  +3.42%<small>$142.86</small>
+                </div>
+              </div>
+              <div class="mover-row">
+                <div class="mover-company">
+                  <span class="coin-icon">A</span>
+                  <div><strong>Apple</strong><small>AAPL · NASDAQ</small></div>
+                </div>
+                <div class="mover-change negative">
+                  −0.82%<small>$258.14</small>
+                </div>
+              </div>
+              <div class="mover-row">
+                <div class="mover-company">
+                  <span class="coin-icon green">TS</span>
+                  <div><strong>Tesla</strong><small>TSLA · NASDAQ</small></div>
+                </div>
+                <div class="mover-change positive">
+                  +1.16%<small>$342.70</small>
+                </div>
+              </div>
+            </section>
+          </aside>
+        </div>
+      </div>
+
+      <!-- ===== MOBILE LAYOUT ===== -->
+      <div class="mobile-layout">
+        <div class="mobile-app">
+          <!-- Mobile Status Bar -->
+          <div class="mobile-status-bar">
+            <span id="mobileTime">9:41</span>
+            <div class="status-icons">
+              <span>●●●●○</span>
+              <svg
+                viewBox="0 0 16 16"
+                width="12"
+                height="12"
+                fill="currentColor"
+              >
+                <path d="M1 8h2v6H1zM5 6h2v8H5zM9 4h2v10H9zM13 2h2v12h-2z" />
+              </svg>
+              <span
+                style="
+                  border: 1px solid currentColor;
+                  padding: 1px 4px;
+                  border-radius: 3px;
+                  font-size: 9px;
+                "
+                >100%</span
+              >
+            </div>
+          </div>
+
+          <!-- Mobile Header -->
+          <div class="mobile-header">
+            <div class="mobile-brand">
+              <span class="brand-mark">
+                <svg viewBox="0 0 48 48">
+                  <path
+                    fill="#4285F4"
+                    d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.5 9.5 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.9 6.1-15z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M24 44c5.6 0 10.3-1.9 13.7-5.2l-6.6-5.1c-1.8 1.2-4.1 1.9-7.1 1.9-5.4 0-10-3.7-11.6-8.6H5.6v5.3A20.7 20.7 0 0 0 24 44z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M12.4 27a12.4 12.4 0 0 1 0-7.9v-5.3H5.6a20.6 20.6 0 0 0 0 18.5z"
+                  />
+                  <path
+                    fill="#EA4335"
+                    d="M24 11.5c3.1 0 5.9 1.1 8.1 3.2l6.1-6.1C34.5 5.2 29.6 3 24 3A20.7 20.7 0 0 0 5.6 13.8l6.8 5.3c1.6-4.9 6.2-7.6 11.6-7.6z"
+                  />
+                </svg>
+              </span>
+              <span>Finance</span>
+            </div>
+            <div class="mobile-header-actions">
+              <button
+                class="icon-btn"
+                id="mobileThemeToggle"
+                style="width: 34px; height: 34px"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                >
+                  <path
+                    d="M20.2 15.2A8.5 8.5 0 0 1 8.8 3.8 8.7 8.7 0 1 0 20.2 15.2Z"
+                  />
+                </svg>
+              </button>
+              <div class="mobile-avatar">A</div>
+            </div>
+          </div>
+
+          <!-- Mobile Content -->
+          <div class="mobile-content" id="mobileContent">
+            <!-- Home Screen -->
+            <div class="mobile-screen active" data-screen="home">
+              <div class="mobile-search-bar" id="mobileSearchBtn">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="10.8" cy="10.8" r="6.8" />
+                  <path d="m16 16 5 5" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search stocks & more"
+                  readonly
+                />
+              </div>
+
+              <div class="mobile-section-title">
+                <h3>Market trends</h3>
+                <span class="chev">›</span>
+              </div>
+              <div class="mobile-index-strip" id="mobileIndexStrip">
+                <div class="mobile-index-chip" data-asset="SPX">
+                  <div class="chip-label">S&P 500</div>
+                  <div class="chip-value">5,842.47</div>
+                  <div class="chip-change positive">+0.84%</div>
+                </div>
+                <div class="mobile-index-chip" data-asset="DJI">
+                  <div class="chip-label">Dow Jones</div>
+                  <div class="chip-value">42,618.31</div>
+                  <div class="chip-change positive">+0.52%</div>
+                </div>
+                <div class="mobile-index-chip" data-asset="NDX">
+                  <div class="chip-label">Nasdaq</div>
+                  <div class="chip-value">19,246.51</div>
+                  <div class="chip-change positive">+1.21%</div>
+                </div>
+                <div class="mobile-index-chip" data-asset="BTC">
+                  <div class="chip-label">Bitcoin</div>
+                  <div class="chip-value">$68,421</div>
+                  <div class="chip-change positive">+1.82%</div>
+                </div>
+              </div>
+
+              <div class="mobile-section-title">
+                <h3>Top movers</h3>
+                <span class="chev">›</span>
+              </div>
+              <div class="mobile-movers-list" id="mobileMoversList"></div>
+
+              <div class="mobile-section-title">
+                <h3>In the news</h3>
+                <span class="chev">›</span>
+              </div>
+              <div>
+                <div class="mobile-news-card">
+                  <div class="mobile-news-content">
+                    <div class="mobile-news-source">
+                      <i class="source-dot"></i> Market Watch · 2h ago
+                    </div>
+                    <h4>
+                      Markets look toward the next phase of digital asset
+                      adoption
+                    </h4>
+                  </div>
+                  <div class="mobile-news-thumb">↗</div>
+                </div>
+                <div class="mobile-news-card">
+                  <div class="mobile-news-content">
+                    <div class="mobile-news-source">
+                      <i class="source-dot" style="background: #fdd663"></i>
+                      Bloomberg · 4h ago
+                    </div>
+                    <h4>
+                      What investors are watching across global markets this
+                      week
+                    </h4>
+                  </div>
+                  <div
+                    class="mobile-news-thumb"
+                    style="
+                      background: linear-gradient(135deg, #40304e, #6e526f);
+                    "
+                  >
+                    ▥
+                  </div>
+                </div>
+                <div class="mobile-news-card">
+                  <div class="mobile-news-content">
+                    <div class="mobile-news-source">
+                      <i class="source-dot" style="background: #81c995"></i>
+                      CNBC · 6h ago
+                    </div>
+                    <h4>
+                      Analysts revisit their outlook as trading volume picks up
+                    </h4>
+                  </div>
+                  <div
+                    class="mobile-news-thumb"
+                    style="
+                      background: linear-gradient(135deg, #21453a, #56816d);
+                    "
+                  >
+                    ⌁
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Watchlist Screen -->
+            <div class="mobile-screen" data-screen="watchlist">
+              <div style="padding: 12px 16px 8px">
+                <h2 style="margin: 0; font-size: 22px; font-weight: 500">
+                  Watchlists
+                </h2>
+              </div>
+              <div class="mobile-list-tabs" id="mobileListTabs">
+                <button class="mobile-list-tab active" data-mlist="watchlist">
+                  Watchlist
+                </button>
+                <button class="mobile-list-tab" data-mlist="tech">
+                  Tech stocks
+                </button>
+                <button class="mobile-list-tab" data-mlist="crypto">
+                  Crypto
+                </button>
+                <button class="mobile-list-tab" data-mlist="indices">
+                  Indices
+                </button>
+              </div>
+              <div class="mobile-watchlist" id="mobileWatchlist"></div>
+            </div>
+
+            <!-- Portfolio Screen -->
+            <div class="mobile-screen" data-screen="portfolio">
+              <div style="padding: 16px; text-align: center; margin-top: 60px">
+                <div
+                  style="
+                    width: 80px;
+                    height: 80px;
+                    border-radius: 50%;
+                    background: var(--surface-2);
+                    margin: 0 auto 16px;
+                    display: grid;
+                    place-items: center;
+                    font-size: 32px;
+                  "
+                >
+                  📊
+                </div>
+                <h3 style="margin: 0 0 8px; font-size: 18px; font-weight: 500">
+                  Track your portfolio
+                </h3>
+                <p
+                  style="
+                    color: var(--muted);
+                    font-size: 13px;
+                    max-width: 280px;
+                    margin: 0 auto 20px;
+                    line-height: 1.5;
+                  "
+                >
+                  See your portfolio's performance and get insights to help you
+                  make decisions.
+                </p>
+                <button
+                  class="mobile-follow-btn"
+                  style="max-width: 200px; margin: 0 auto"
+                >
+                  Add your holdings
+                </button>
+              </div>
+            </div>
+
+            <!-- News Screen -->
+            <div class="mobile-screen" data-screen="news">
+              <div style="padding: 16px">
+                <h2 style="margin: 0 0 4px; font-size: 22px; font-weight: 500">
+                  News for you
+                </h2>
+                <p
+                  style="color: var(--muted); font-size: 13px; margin: 0 0 16px"
+                >
+                  Based on the assets you follow
+                </p>
+              </div>
+              <div>
+                <div class="mobile-news-card">
+                  <div class="mobile-news-content">
+                    <div class="mobile-news-source">
+                      <i class="source-dot"></i> Reuters · 1h ago
+                    </div>
+                    <h4>
+                      Fed signals potential rate cut as inflation shows signs of
+                      cooling
+                    </h4>
+                  </div>
+                  <div
+                    class="mobile-news-thumb"
+                    style="
+                      background: linear-gradient(135deg, #3b2f50, #6e4b8a);
+                    "
+                  >
+                    $
+                  </div>
+                </div>
+                <div class="mobile-news-card">
+                  <div class="mobile-news-content">
+                    <div class="mobile-news-source">
+                      <i class="source-dot" style="background: #81c995"></i>
+                      Wall Street Journal · 3h ago
+                    </div>
+                    <h4>
+                      Tech giants report stronger-than-expected quarterly
+                      earnings
+                    </h4>
+                  </div>
+                  <div class="mobile-news-thumb">📈</div>
+                </div>
+                <div class="mobile-news-card">
+                  <div class="mobile-news-content">
+                    <div class="mobile-news-source">
+                      <i class="source-dot" style="background: #fdd663"></i>
+                      Financial Times · 5h ago
+                    </div>
+                    <h4>
+                      European markets open higher as energy prices stabilize
+                    </h4>
+                  </div>
+                  <div
+                    class="mobile-news-thumb"
+                    style="
+                      background: linear-gradient(135deg, #2d4030, #568a6d);
+                    "
+                  >
+                    🌍
+                  </div>
+                </div>
+                <div class="mobile-news-card">
+                  <div class="mobile-news-content">
+                    <div class="mobile-news-source">
+                      <i class="source-dot" style="background: #8ab4f8"></i>
+                      CNBC · 7h ago
+                    </div>
+                    <h4>
+                      Bitcoin rally extends as institutional adoption continues
+                    </h4>
+                  </div>
+                  <div
+                    class="mobile-news-thumb"
+                    style="
+                      background: linear-gradient(135deg, #4b3822, #8a6e4f);
+                    "
+                  >
+                    ₿
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Detail Screen -->
+            <div
+              class="mobile-screen"
+              data-screen="detail"
+              id="mobileDetailScreen"
+            >
+              <div class="mobile-detail-header">
+                <button class="mobile-back-btn" id="mobileBackBtn">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="22"
+                    height="22"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="m15 18-6-6 6-6" />
+                  </svg>
+                </button>
+                <h3 id="mobileDetailSymbol">ETH</h3>
+                <button
+                  class="icon-btn"
+                  style="margin-left: auto; width: 34px; height: 34px"
+                  id="mobileShareBtn"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                  >
+                    <circle cx="18" cy="5" r="2.5" />
+                    <circle cx="6" cy="12" r="2.5" />
+                    <circle cx="18" cy="19" r="2.5" />
+                    <path d="m8.2 10.8 7.6-4.5m-7.6 7 7.6 4.5" />
+                  </svg>
+                </button>
+              </div>
+              <div class="mobile-detail-content">
+                <div class="mobile-detail-name">
+                  <div class="big-coin" id="mobileDetailIcon">Ξ</div>
+                  <div>
+                    <h2 id="mobileDetailName">Ethereum</h2>
+                    <p id="mobileDetailCategory">Cryptocurrency · USD</p>
+                  </div>
+                </div>
+                <div class="mobile-price-big" id="mobileDetailPrice">
+                  $3,842.16
+                </div>
+                <div class="mobile-price-change" id="mobileDetailChange">
+                  <span class="positive">↑ 2.43% (+$91.27)</span>
+                </div>
+                <div class="mobile-chart-wrap">
+                  <svg
+                    id="mobileChart"
+                    viewBox="0 0 400 220"
+                    preserveAspectRatio="none"
+                  ></svg>
+                </div>
+                <div class="mobile-range-tabs" id="mobileRangeTabs">
+                  <button class="mobile-range-tab" data-mrange="1D">1D</button>
+                  <button class="mobile-range-tab" data-mrange="5D">5D</button>
+                  <button class="mobile-range-tab active" data-mrange="1M">
+                    1M
+                  </button>
+                  <button class="mobile-range-tab" data-mrange="6M">6M</button>
+                  <button class="mobile-range-tab" data-mrange="1Y">1Y</button>
+                  <button class="mobile-range-tab" data-mrange="5Y">5Y</button>
+                </div>
+
+                <button class="mobile-follow-btn" id="mobileFollowBtn">
+                  ＋ Follow
+                </button>
+
+                <div class="mobile-stats-section">
+                  <h4>Key statistics</h4>
+                  <div class="mobile-stat-row">
+                    <span>Previous close</span
+                    ><span id="mobileStatPrev">$3,750.89</span>
+                  </div>
+                  <div class="mobile-stat-row">
+                    <span>Day range</span
+                    ><span id="mobileStatDay">$3,721 – $3,858</span>
+                  </div>
+                  <div class="mobile-stat-row">
+                    <span>52-week range</span
+                    ><span id="mobileStatYear">$2,140 – $4,092</span>
+                  </div>
+                  <div class="mobile-stat-row">
+                    <span>Market cap</span
+                    ><span id="mobileStatCap">$462.8B</span>
+                  </div>
+                </div>
+
+                <div class="mobile-stats-section">
+                  <h4 id="mobileRelatedTitle">Related assets</h4>
+                  <div id="mobileRelatedList" style="margin-top: 8px"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mobile Bottom Navigation -->
+          <nav class="mobile-bottom-nav" id="mobileBottomNav">
+            <button class="mobile-nav-item active" data-nav="home">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <path
+                  d="M3 12l9-8 9 8v9a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2z"
+                />
+              </svg>
+              <span>Home</span>
+            </button>
+            <button class="mobile-nav-item" data-nav="watchlist">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <path d="M4 5.5h16M4 12h16M4 18.5h16" />
+                <circle cx="7" cy="5.5" r=".6" fill="currentColor" />
+                <circle cx="7" cy="12" r=".6" fill="currentColor" />
+                <circle cx="7" cy="18.5" r=".6" fill="currentColor" />
+              </svg>
+              <span>Watchlist</span>
+            </button>
+            <button class="mobile-nav-item" data-nav="portfolio">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <path d="M4 19V5m0 14h16" />
+                <rect
+                  x="7"
+                  y="10"
+                  width="3"
+                  height="7"
+                  fill="currentColor"
+                  opacity=".3"
+                />
+                <rect
+                  x="12"
+                  y="7"
+                  width="3"
+                  height="10"
+                  fill="currentColor"
+                  opacity=".3"
+                />
+                <rect
+                  x="17"
+                  y="12"
+                  width="3"
+                  height="5"
+                  fill="currentColor"
+                  opacity=".3"
+                />
+              </svg>
+              <span>Portfolio</span>
+            </button>
+            <button class="mobile-nav-item" data-nav="news">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <rect x="4" y="4" width="16" height="16" rx="2" />
+                <path d="M8 8h8M8 12h8M8 16h5" />
+              </svg>
+              <span>News</span>
+            </button>
+            <button class="mobile-nav-item" data-nav="more">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="6" cy="12" r="2" />
+                <circle cx="12" cy="12" r="2" />
+                <circle cx="18" cy="12" r="2" />
+              </svg>
+              <span>More</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-backdrop" id="listModal" role="dialog" aria-modal="true">
+      <div class="modal">
+        <h3>Create a new list</h3>
+        <p>
+          Give your list a name to organize the markets and assets you follow.
+        </p>
+        <input
+          id="newListName"
+          placeholder="e.g. Long-term investments"
+          maxlength="32"
+        />
+        <div class="modal-actions">
+          <button class="secondary-btn" id="cancelModal">Cancel</button>
+          <button class="primary-btn" id="createList">Create list</button>
+        </div>
+      </div>
+    </div>
+    <div class="toast" id="toast" role="status"></div>
+
+    <script>
+      (() => {
+        // ===== DATA =====
+        const assets = [
+          {
+            id: "ETH",
+            symbol: "ETH-USD",
+            name: "Ethereum",
+            full: "Ethereum / United States Dollar",
+            category: "Cryptocurrency",
+            icon: "Ξ",
+            class: "blue",
+            price: 3842.16,
+            change: 2.43,
+            delta: 91.27,
+            cap: "$462.8B",
+            prev: "$3,750.89",
+            day: "$3,721.40 – $3,858.72",
+            year: "$2,140.18 – $4,092.55",
+            range: [3500, 4100],
+            seed: 7,
+          },
+          {
+            id: "BTC",
+            symbol: "BTC-USD",
+            name: "Bitcoin",
+            full: "Bitcoin / United States Dollar",
+            category: "Cryptocurrency",
+            icon: "₿",
+            class: "orange",
+            price: 68421.8,
+            change: 1.82,
+            delta: 1223.45,
+            cap: "$1.35T",
+            prev: "$67,198.35",
+            day: "$67,120.20 – $68,940.00",
+            year: "$38,505.12 – $73,750.07",
+            range: [62000, 71000],
+            seed: 3,
+          },
+          {
+            id: "SOL",
+            symbol: "SOL-USD",
+            name: "Solana",
+            full: "Solana / United States Dollar",
+            category: "Cryptocurrency",
+            icon: "S",
+            class: "purple",
+            price: 154.72,
+            change: 4.16,
+            delta: 6.18,
+            cap: "$72.4B",
+            prev: "$148.54",
+            day: "$147.80 – $156.40",
+            year: "$78.22 – $264.18",
+            range: [130, 180],
+            seed: 11,
+          },
+          {
+            id: "XRP",
+            symbol: "XRP-USD",
+            name: "XRP",
+            full: "XRP / United States Dollar",
+            category: "Cryptocurrency",
+            icon: "X",
+            class: "blue",
+            price: 0.5421,
+            change: -0.37,
+            delta: -0.002,
+            cap: "$30.7B",
+            prev: "$0.5441",
+            day: "$0.5360 – $0.5512",
+            year: "$0.3821 – $0.7420",
+            range: [0.48, 0.59],
+            seed: 19,
+          },
+          {
+            id: "AAPL",
+            symbol: "AAPL",
+            name: "Apple",
+            full: "Apple Inc.",
+            category: "NASDAQ · Equity",
+            icon: "A",
+            class: "",
+            price: 258.14,
+            change: -0.82,
+            delta: -2.13,
+            cap: "$3.91T",
+            prev: "$260.27",
+            day: "$256.40 – $261.92",
+            year: "$164.08 – $260.10",
+            range: [230, 270],
+            seed: 13,
+          },
+          {
+            id: "NVDA",
+            symbol: "NVDA",
+            name: "NVIDIA",
+            full: "NVIDIA Corporation",
+            category: "NASDAQ · Equity",
+            icon: "N",
+            class: "green",
+            price: 142.86,
+            change: 3.42,
+            delta: 4.72,
+            cap: "$3.49T",
+            prev: "$138.14",
+            day: "$137.30 – $144.22",
+            year: "$75.61 – $153.13",
+            range: [120, 160],
+            seed: 23,
+          },
+          {
+            id: "GOOGL",
+            symbol: "GOOGL",
+            name: "Alphabet",
+            full: "Alphabet Inc. Class A",
+            category: "NASDAQ · Equity",
+            icon: "G",
+            class: "blue",
+            price: 201.32,
+            change: 1.14,
+            delta: 2.27,
+            cap: "$2.44T",
+            prev: "$199.05",
+            day: "$198.80 – $202.75",
+            year: "$140.53 – $207.05",
+            range: [180, 220],
+            seed: 29,
+          },
+          {
+            id: "TSLA",
+            symbol: "TSLA",
+            name: "Tesla",
+            full: "Tesla, Inc.",
+            category: "NASDAQ · Equity",
+            icon: "T",
+            class: "red",
+            price: 342.7,
+            change: 1.16,
+            delta: 3.93,
+            cap: "$1.10T",
+            prev: "$338.77",
+            day: "$336.20 – $346.50",
+            year: "$138.80 – $488.54",
+            range: [300, 380],
+            seed: 31,
+          },
+          {
+            id: "SPX",
+            symbol: "SPX",
+            name: "S&P 500",
+            full: "S&P 500 Index",
+            category: "Index · USA",
+            icon: "500",
+            class: "green",
+            price: 5842.47,
+            change: 0.84,
+            delta: 48.55,
+            cap: "—",
+            prev: "5,793.92",
+            day: "5,786.21 – 5,856.70",
+            year: "4,835.04 – 6,147.43",
+            range: [5600, 6100],
+            seed: 37,
+          },
+          {
+            id: "NDX",
+            symbol: "NDX",
+            name: "Nasdaq 100",
+            full: "Nasdaq 100 Index",
+            category: "Index · USA",
+            icon: "NQ",
+            class: "purple",
+            price: 19246.51,
+            change: 1.21,
+            delta: 230.1,
+            cap: "—",
+            prev: "19,016.41",
+            day: "19,002.12 – 19,302.84",
+            year: "16,249.19 – 20,204.58",
+            range: [18000, 20000],
+            seed: 41,
+          },
+          {
+            id: "DJI",
+            symbol: "DJI",
+            name: "Dow Jones",
+            full: "Dow Jones Industrial Average",
+            category: "Index · USA",
+            icon: "DJ",
+            class: "blue",
+            price: 42618.31,
+            change: 0.52,
+            delta: 220.5,
+            cap: "—",
+            prev: "42,397.81",
+            day: "42,310.20 – 42,780.90",
+            year: "35,240.80 – 44,120.40",
+            range: [41000, 44000],
+            seed: 43,
+          },
+          {
+            id: "RUT",
+            symbol: "RUT",
+            name: "Russell 2000",
+            full: "Russell 2000 Index",
+            category: "Index · USA",
+            icon: "R",
+            class: "",
+            price: 2118.64,
+            change: -0.18,
+            delta: -3.82,
+            cap: "—",
+            prev: "2,122.46",
+            day: "2,105.30 – 2,130.40",
+            year: "1,840.20 – 2,340.18",
+            range: [2000, 2200],
+            seed: 47,
+          },
+        ];
+        const lists = {
+          watchlist: [
+            "ETH",
+            "BTC",
+            "SOL",
+            "XRP",
+            "AAPL",
+            "NVDA",
+            "GOOGL",
+            "TSLA",
+          ],
+          tech: ["AAPL", "NVDA", "GOOGL", "TSLA"],
+          crypto: ["ETH", "BTC", "SOL", "XRP"],
+          indices: ["SPX", "NDX", "DJI", "RUT"],
+        };
+        let activeAsset = assets[0],
+          activeRange = "1M",
+          chartMode = "line",
+          compareOn = false,
+          sortAZ = false,
+          currentList = "watchlist",
+          mobileRange = "1M",
+          followed = new Set([
+            "ETH",
+            "BTC",
+            "SOL",
+            "XRP",
+            "AAPL",
+            "NVDA",
+            "GOOGL",
+            "TSLA",
+          ]);
+
+        const $ = (id) => document.getElementById(id);
+        const fmt = (n, max = 2) =>
+          new Intl.NumberFormat("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: max,
+          }).format(n);
+
+        function showToast(msg) {
+          const t = $("toast");
+          t.textContent = msg;
+          t.classList.add("show");
+          clearTimeout(showToast.timer);
+          showToast.timer = setTimeout(() => t.classList.remove("show"), 2300);
+        }
+        function assetById(id) {
+          return assets.find((a) => a.id === id);
+        }
+
+        // ===== DEVICE SWITCHER =====
+        document.querySelectorAll(".device-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            document
+              .querySelectorAll(".device-btn")
+              .forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+            const mode = btn.dataset.device;
+            $("appShell").dataset.mode = mode;
+            if (mode === "mobile") {
+              renderMobileWatchlist();
+              renderMobileMovers();
+              updateMobileTime();
+            }
+          });
+        });
+
+        function updateMobileTime() {
+          const d = new Date();
+          const h = d.getHours();
+          const m = d.getMinutes();
+          $("mobileTime").textContent = `${h}:${m.toString().padStart(2, "0")}`;
+        }
+        updateMobileTime();
+        setInterval(updateMobileTime, 60000);
+
+        // ===== PRICE HELPERS =====
+        function priceText(a) {
+          if (a.id === "XRP") return "$" + a.price.toFixed(4);
+          if (a.price >= 1000) return "$" + fmt(a.price);
+          return "$" + fmt(a.price);
+        }
+        function formatPriceShort(n) {
+          if (Math.abs(n) >= 1e12) return "$" + (n / 1e12).toFixed(2) + "T";
+          if (Math.abs(n) >= 1e9) return "$" + (n / 1e9).toFixed(2) + "B";
+          if (Math.abs(n) >= 1e6) return "$" + (n / 1e6).toFixed(2) + "M";
+          return fmt(n);
+        }
+
+        // ===== DESKTOP SIDEBAR =====
+        function renderSidebar(list = "watchlist") {
+          const ids = [...(lists[list] || lists.watchlist)];
+          if (sortAZ)
+            ids.sort((a, b) =>
+              assetById(a).name.localeCompare(assetById(b).name),
+            );
+          $("assetList").innerHTML = ids
+            .map((id) => {
+              const a = assetById(id);
+              return `<div class="asset-row ${a.id === activeAsset.id ? "selected" : ""}" data-asset="${a.id}">
+              <div class="coin-icon ${a.class}">${a.icon}</div>
+              <div class="asset-meta">
+                <strong>${a.name}</strong>
+                <small>${a.symbol}</small>
+              </div>
+              <div class="asset-value">
+                ${priceText(a)}
+                <small class="${a.change >= 0 ? "positive" : "negative"}">${a.change >= 0 ? "↑" : "↓"} ${Math.abs(a.change).toFixed(2)}%</small>
+              </div>
+            </div>`;
+            })
+            .join("");
+          document.querySelectorAll(".asset-row").forEach((el) =>
+            el.addEventListener("click", () => {
+              showStockView(el.dataset.asset);
+            }),
+          );
+          $("watchCount").textContent = lists.watchlist.length;
+        }
+
+        // ===== DESKTOP HOME / STOCK VIEW =====
+        function showStockView(id) {
+          selectAsset(id);
+          $("homeView").classList.remove("active");
+          $("stockView").classList.add("active");
+          document
+            .querySelectorAll(".market-nav-tab")
+            .forEach((t) => t.classList.remove("active"));
+        }
+
+        function showHomeView() {
+          $("homeView").classList.add("active");
+          $("stockView").classList.remove("active");
+          const homeTab = document.querySelector(
+            '.market-nav-tab[data-view="home"]',
+          );
+          if (homeTab) homeTab.classList.add("active");
+        }
+
+        $("breadcrumbHome").addEventListener("click", showHomeView);
+
+        // Market nav tabs
+        document.querySelectorAll(".market-nav-tab").forEach((tab) => {
+          tab.addEventListener("click", () => {
+            document
+              .querySelectorAll(".market-nav-tab")
+              .forEach((t) => t.classList.remove("active"));
+            tab.classList.add("active");
+            const view = tab.dataset.view;
+            if (view === "home") {
+              showHomeView();
+            } else if (view === "crypto") {
+              currentList = "crypto";
+              document
+                .querySelectorAll(".list-nav")
+                .forEach((n) => n.classList.remove("active"));
+              document
+                .querySelector('[data-list="crypto"]')
+                .classList.add("active");
+              $("listTitle").textContent = "Crypto";
+              renderSidebar("crypto");
+              showHomeView();
+            } else {
+              showHomeView();
+            }
+          });
+        });
+
+        // Home index cards click
+        document.addEventListener("click", (e) => {
+          const card = e.target.closest(".home-index-card");
+          if (card && card.dataset.asset) {
+            showStockView(card.dataset.asset);
+          }
+        });
+
+        // Movers tabs
+        document.querySelectorAll("#moversTabs .mover-tab").forEach((tab) => {
+          tab.addEventListener("click", () => {
+            document
+              .querySelectorAll("#moversTabs .mover-tab")
+              .forEach((t) => t.classList.remove("active"));
+            tab.classList.add("active");
+            renderMovers(tab.dataset.mover);
+          });
+        });
+
+        function renderMovers(type) {
+          let items = [...assets];
+          if (type === "gainers")
+            items = items
+              .filter((a) => a.change > 0)
+              .sort((a, b) => b.change - a.change);
+          else if (type === "losers")
+            items = items
+              .filter((a) => a.change < 0)
+              .sort((a, b) => a.change - b.change);
+          else if (type === "active")
+            items = items.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+          else items = items.sort((a, b) => b.change - a.change);
+          items = items.slice(0, 8);
+          $("moversGrid").innerHTML = items
+            .map(
+              (a) => `
+            <div class="mover-card" data-asset="${a.id}">
+              <div class="mover-card-top">
+                <div class="coin-icon ${a.class}">${a.icon}</div>
+                <div><strong>${a.name}</strong><small>${a.symbol}</small></div>
+              </div>
+              <div class="mover-card-price">${priceText(a)}</div>
+              <div class="mover-card-change ${a.change >= 0 ? "positive" : "negative"}">
+                ${a.change >= 0 ? "↑" : "↓"} ${Math.abs(a.change).toFixed(2)}%
+              </div>
+            </div>
+          `,
+            )
+            .join("");
+          $("moversGrid")
+            .querySelectorAll(".mover-card")
+            .forEach((card) => {
+              card.addEventListener("click", () =>
+                showStockView(card.dataset.asset),
+              );
+            });
+        }
+
+        function selectAsset(id) {
+          const a = assetById(id);
+          if (!a) return;
+          activeAsset = a;
+          compareOn = false;
+          $("compareLegend").style.display = "none";
+          $("instrumentTitle").textContent = a.full;
+          $("instrumentSubtitle").textContent =
+            `${a.symbol} · ${a.category} · USD`;
+          $("breadcrumbType").textContent = a.category.split(" · ")[0];
+          $("breadcrumbSymbol").textContent = a.symbol.replace("-", " / ");
+          $("bigCoin").textContent = a.icon;
+          $("bigCoin").style.background =
+            a.class === "orange"
+              ? "#4b3822"
+              : a.class === "purple"
+                ? "#3a2b50"
+                : a.class === "green"
+                  ? "#234237"
+                  : a.class === "red"
+                    ? "#4b2322"
+                    : "#313b50";
+          $("currentPrice").textContent = priceText(a);
+          $("priceChange").textContent =
+            `${a.change >= 0 ? "↑" : "↓"} ${Math.abs(a.change).toFixed(2)}% (${a.change >= 0 ? "+" : "−"}$${fmt(Math.abs(a.delta))}) today`;
+          $("priceChange").className =
+            "price-change " + (a.change >= 0 ? "positive" : "negative");
+          $("aboutTitle").textContent = `About ${a.name}`;
+          $("relatedTitle").textContent = `Related to ${a.name}`;
+          $("prevClose").textContent = a.prev;
+          $("dayRange").textContent = a.day;
+          $("yearRange").textContent = a.year;
+          $("marketCap").textContent = a.cap;
+          $("aboutCategory").textContent = a.category;
+          $("legendName").textContent = a.symbol;
+          $("followBtn").classList.toggle("following", followed.has(a.id));
+          $("followBtn").textContent = followed.has(a.id)
+            ? "✓ Following"
+            : "＋ Follow";
+          renderSidebar(currentList);
+          renderChart();
+          updateRelated();
+          $("aiAnswer").classList.remove("show");
+          $("aiQuestion").value = "";
+        }
+
+        // Sidebar list nav
+        document.querySelectorAll(".list-nav").forEach((el) =>
+          el.addEventListener("click", () => {
+            document
+              .querySelectorAll(".list-nav")
+              .forEach((n) => n.classList.remove("active"));
+            el.classList.add("active");
+            currentList = el.dataset.list;
+            $("listTitle").textContent =
+              el.querySelector("span:nth-child(2)").textContent;
+            renderSidebar(currentList);
+          }),
+        );
+        $("sortBtn").addEventListener("click", () => {
+          sortAZ = !sortAZ;
+          $("sortBtn").textContent = sortAZ ? "Sort default" : "Sort A–Z";
+          renderSidebar(currentList);
+        });
+        $("followBtn").addEventListener("click", () => {
+          if (followed.has(activeAsset.id)) {
+            followed.delete(activeAsset.id);
+            lists.watchlist = lists.watchlist.filter(
+              (x) => x !== activeAsset.id,
+            );
+            showToast(`${activeAsset.name} removed from your watchlist`);
+          } else {
+            followed.add(activeAsset.id);
+            if (!lists.watchlist.includes(activeAsset.id))
+              lists.watchlist.unshift(activeAsset.id);
+            showToast(`${activeAsset.name} added to your watchlist`);
+          }
+          $("followBtn").classList.toggle(
+            "following",
+            followed.has(activeAsset.id),
+          );
+          $("followBtn").textContent = followed.has(activeAsset.id)
+            ? "✓ Following"
+            : "＋ Follow";
+          renderSidebar(currentList);
+        });
+
+        // ===== CHART =====
+        function seededValues(count, seed, base, volatility, trend) {
+          let v = seed * 9301 + 49297;
+          const rnd = () => {
+            v = (v * 233280 + 12345) % 2147483647;
+            return v / 2147483647;
+          };
+          const arr = [];
+          let p = base * (0.91 + rnd() * 0.05);
+          for (let i = 0; i < count; i++) {
+            const drift = (trend / count) * base;
+            p += (rnd() - 0.48) * volatility * base + drift;
+            arr.push(p);
+          }
+          const target = base;
+          const adjust = target - arr[arr.length - 1];
+          return arr.map((x, i) => x + adjust * (i / (arr.length - 1)));
+        }
+
+        function renderChart() {
+          const svg = $("priceChart");
+          const a = activeAsset;
+          const n =
+            activeRange === "1D"
+              ? 64
+              : activeRange === "5D"
+                ? 70
+                : activeRange === "1M"
+                  ? 76
+                  : activeRange === "6M"
+                    ? 90
+                    : activeRange === "YTD"
+                      ? 92
+                      : activeRange === "1Y"
+                        ? 100
+                        : activeRange === "5Y"
+                          ? 120
+                          : 140;
+          const base = a.price,
+            vol =
+              activeRange === "1D"
+                ? 0.008
+                : activeRange === "5D"
+                  ? 0.018
+                  : activeRange === "1M"
+                    ? 0.04
+                    : activeRange === "6M"
+                      ? 0.075
+                      : 0.12;
+          const vals = seededValues(
+            n,
+            a.seed + activeRange.length,
+            base,
+            vol,
+            (a.change / 100) * (activeRange === "1D" ? 1 : 2),
+          );
+          const min = Math.min(...vals) * 0.988,
+            max = Math.max(...vals) * 1.012,
+            left = 54,
+            right = 805,
+            top = 15,
+            bottom = 245;
+          const x = (i) => left + ((right - left) * i) / (n - 1),
+            y = (v) => bottom - ((v - min) / (max - min)) * (bottom - top);
+          const path = vals
+            .map(
+              (v, i) =>
+                (i ? "L" : "M") + x(i).toFixed(2) + " " + y(v).toFixed(2),
+            )
+            .join(" ");
+          const area = path + ` L ${right} ${bottom} L ${left} ${bottom} Z`;
+          const grid = [0, 1, 2, 3]
+            .map((i) => {
+              const yy = top + ((bottom - top) * i) / 3;
+              const val = max - ((max - min) * i) / 3;
+              return `<line x1="${left}" y1="${yy}" x2="${right}" y2="${yy}" stroke="var(--border)" stroke-width="1" stroke-dasharray="2 5"/>
+              <text x="4" y="${yy + 4}" fill="var(--faint)" font-size="10">${
+                a.id === "XRP"
+                  ? "$" + val.toFixed(3)
+                  : a.id === "BTC"
+                    ? "$" + Math.round(val / 1000) + "k"
+                    : "$" + fmt(val, 0)
+              }</text>`;
+            })
+            .join("");
+          const labels =
+            activeRange === "1D"
+              ? ["12 AM", "4 AM", "8 AM", "12 PM", "4 PM", "8 PM"]
+              : activeRange === "5D"
+                ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Today"]
+                : activeRange === "1M"
+                  ? ["Oct 1", "Oct 6", "Oct 11", "Oct 16", "Oct 21", "Oct 31"]
+                  : activeRange === "6M"
+                    ? ["May", "Jun", "Jul", "Aug", "Sep", "Oct"]
+                    : activeRange === "YTD"
+                      ? ["Jan", "Mar", "May", "Jul", "Sep", "Oct"]
+                      : activeRange === "1Y"
+                        ? ["Nov '25", "Jan '26", "Mar", "May", "Jul", "Oct"]
+                        : activeRange === "5Y"
+                          ? ["2022", "2023", "2024", "2025", "2026"]
+                          : ["2018", "2020", "2022", "2024", "2026"];
+          const xlabels = labels
+            .map(
+              (l, i) =>
+                `<text x="${left + ((right - left) * i) / (labels.length - 1)}" y="270" fill="var(--faint)" font-size="10" text-anchor="middle">${l}</text>`,
+            )
+            .join("");
+          let candles = "";
+          if (chartMode === "candle") {
+            const step = (right - left) / n;
+            candles = vals
+              .map((v, i) => {
+                const prev = vals[Math.max(0, i - 1)];
+                const open =
+                  prev + Math.sin(i * 2.7 + a.seed) * base * vol * 0.18;
+                const close = v;
+                const high =
+                  Math.max(open, close) +
+                  base * vol * (0.05 + Math.abs(Math.sin(i)) * 0.1);
+                const low =
+                  Math.min(open, close) -
+                  base * vol * (0.05 + Math.abs(Math.cos(i)) * 0.1);
+                const up = close >= open;
+                return `<line x1="${x(i)}" y1="${y(high)}" x2="${x(i)}" y2="${y(low)}" stroke="${up ? "#81c995" : "#f28b82"}" stroke-width="1"/>
+                <rect x="${x(i) - Math.max(1.3, step * 0.27)}" y="${Math.min(y(open), y(close))}"
+                  width="${Math.max(2.6, step * 0.54)}" height="${Math.max(1.3, Math.abs(y(open) - y(close)))}"
+                  fill="${up ? "#81c995" : "#f28b82"}" opacity=".9"/>`;
+              })
+              .join("");
+          }
+          const color = a.change >= 0 ? "#81c995" : "#f28b82";
+          const gradient = `<defs><linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="${color}" stop-opacity=".22"/>
+            <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+          </linearGradient></defs>`;
+          const mainChart =
+            chartMode === "line"
+              ? `${gradient}<path d="${area}" fill="url(#chartFill)"/><path d="${path}" fill="none" stroke="${color}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>`
+              : candles;
+          let compare = "";
+          if (compareOn) {
+            const vals2 = seededValues(n, 17, base * 0.96, vol * 0.82, -0.3);
+            const min2 = Math.min(...vals2) * 0.988,
+              max2 = Math.max(...vals2) * 1.012;
+            const norm = vals2.map(
+              (v) => min + ((v - min2) / (max2 - min2)) * (max - min),
+            );
+            const p2 = norm
+              .map(
+                (v, i) =>
+                  (i ? "L" : "M") + x(i).toFixed(2) + " " + y(v).toFixed(2),
+              )
+              .join(" ");
+            compare = `<path d="${p2}" fill="none" stroke="#fdd663" stroke-width="1.8" stroke-dasharray="5 4"/>`;
+          }
+          svg.innerHTML = `${grid}${mainChart}${compare}
+            <line id="hoverLine" class="chart-hover-line" x1="${right - 1}" y1="${top}" x2="${right - 1}" y2="${bottom}" opacity="0"/>
+            <circle id="hoverDot" cx="${right - 1}" cy="${y(vals[n - 1])}" r="4" fill="${color}" stroke="var(--surface)" stroke-width="2"/>
+            ${xlabels}`;
+          svg.dataset.values = JSON.stringify(vals);
+          svg.dataset.coords = JSON.stringify(
+            vals.map((v, i) => ({ x: x(i), y: y(v) })),
+          );
+          $("chartTooltip").innerHTML =
+            `<strong>${priceText(a)}</strong><span>${activeRange} · Simulated</span>`;
+          svg.onmousemove = (e) => {
+            const rect = svg.getBoundingClientRect();
+            const xx = ((e.clientX - rect.left) / rect.width) * 820;
+            let idx = Math.round(((xx - left) / (right - left)) * (n - 1));
+            idx = Math.max(0, Math.min(n - 1, idx));
+            const pt = JSON.parse(svg.dataset.coords)[idx];
+            const line = svg.querySelector("#hoverLine"),
+              dot = svg.querySelector("#hoverDot");
+            line.setAttribute("x1", pt.x);
+            line.setAttribute("x2", pt.x);
+            line.setAttribute("opacity", "1");
+            dot.setAttribute("cx", pt.x);
+            dot.setAttribute("cy", pt.y);
+            const tip = $("chartTooltip");
+            tip.style.opacity = "1";
+            tip.style.left =
+              Math.max(85, Math.min(90, (pt.x / 820) * 100)) + "%";
+            tip.querySelector("strong").textContent = "$" + fmt(vals[idx]);
+          };
+          svg.onmouseleave = () => {
+            $("chartTooltip").style.opacity = "0";
+            const l = svg.querySelector("#hoverLine");
+            if (l) l.setAttribute("opacity", "0");
+          };
+        }
+
+        document.querySelectorAll(".range-btn").forEach((btn) =>
+          btn.addEventListener("click", () => {
+            document
+              .querySelectorAll(".range-btn")
+              .forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+            activeRange = btn.dataset.range;
+            renderChart();
+          }),
+        );
+        $("lineMode").addEventListener("click", () => {
+          chartMode = "line";
+          $("lineMode").classList.add("active");
+          $("candleMode").classList.remove("active");
+          renderChart();
+        });
+        $("candleMode").addEventListener("click", () => {
+          chartMode = "candle";
+          $("candleMode").classList.add("active");
+          $("lineMode").classList.remove("active");
+          renderChart();
+        });
+        $("compareBtn").addEventListener("click", () => {
+          compareOn = !compareOn;
+          $("compareBtn").classList.toggle("active", compareOn);
+          $("compareLegend").style.display = compareOn ? "inline" : "none";
+          renderChart();
+          showToast(
+            compareOn
+              ? "BTC added to chart comparison"
+              : "Chart comparison removed",
+          );
+        });
+
+        function updateRelated() {
+          const rel =
+            activeAsset.id === "ETH"
+              ? ["BTC", "SOL", "XRP"]
+              : activeAsset.id === "BTC"
+                ? ["ETH", "SOL", "XRP"]
+                : activeAsset.category.includes("Crypto")
+                  ? ["BTC", "ETH", "SOL"]
+                  : ["AAPL", "NVDA", "GOOGL"];
+          $("relatedGrid").innerHTML = rel
+            .map((id) => {
+              const a = assetById(id);
+              return `<div class="compare-card">
+              <div class="compare-card-top">
+                <span class="coin-icon ${a.class}" style="width:21px;height:21px">${a.icon}</span>
+                ${a.name} (${a.symbol})
+              </div>
+              <strong>${priceText(a)}</strong>
+              <small class="${a.change >= 0 ? "positive" : "negative"}">
+                ${a.change >= 0 ? "↑" : "↓"} ${Math.abs(a.change).toFixed(2)}%
+              </small>
+            </div>`;
+            })
+            .join("");
+        }
+
+        // ===== DESKTOP SEARCH =====
+        const search = $("globalSearch"),
+          results = $("searchResults");
+        function renderSearch(q) {
+          const filtered = assets
+            .filter((a) =>
+              (a.name + " " + a.id + " " + a.symbol)
+                .toLowerCase()
+                .includes(q.toLowerCase()),
+            )
+            .slice(0, 6);
+          if (!q.trim()) {
+            results.classList.remove("open");
+            return;
+          }
+          results.innerHTML = filtered.length
+            ? filtered
+                .map(
+                  (a) =>
+                    `<div class="search-result" data-result="${a.id}">
+              <div class="result-symbol">${a.icon}</div>
+              <div class="result-copy">
+                <strong>${a.name}</strong>
+                <small>${a.symbol} · ${a.category}</small>
+              </div>
+              <div class="result-price">
+                ${priceText(a)}
+                <small class="${a.change >= 0 ? "positive" : "negative"}">${a.change >= 0 ? "+" : ""}${a.change.toFixed(2)}%</small>
+              </div>
+            </div>`,
+                )
+                .join("")
+            : `<div style="padding:14px;color:var(--muted);font-size:12px">No matching assets found.</div>`;
+          results.classList.add("open");
+          results.querySelectorAll("[data-result]").forEach((el) =>
+            el.addEventListener("click", () => {
+              showStockView(el.dataset.result);
+              results.classList.remove("open");
+              search.value = "";
+            }),
+          );
+        }
+        search.addEventListener("input", (e) => renderSearch(e.target.value));
+        search.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") {
+            results.classList.remove("open");
+            search.blur();
+          }
+          if (e.key === "Enter") {
+            const first = results.querySelector("[data-result]");
+            if (first) first.click();
+          }
+        });
+        document.addEventListener("click", (e) => {
+          if (!e.target.closest(".search-wrap"))
+            results.classList.remove("open");
+        });
+        document.addEventListener("keydown", (e) => {
+          if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+            e.preventDefault();
+            search.focus();
+          }
+        });
+
+        $("themeToggle").addEventListener("click", () => {
+          document.body.classList.toggle("light-theme");
+          showToast(
+            document.body.classList.contains("light-theme")
+              ? "Light theme"
+              : "Dark theme",
+          );
+        });
+        $("mobileThemeToggle").addEventListener("click", () => {
+          document.body.classList.toggle("light-theme");
+          showToast(
+            document.body.classList.contains("light-theme")
+              ? "Light theme"
+              : "Dark theme",
+          );
+        });
+
+        $("mobileMenu").addEventListener("click", () =>
+          $("sidebar").classList.toggle("open"),
+        );
+        $("shareBtn").addEventListener("click", () => {
+          const text = `${activeAsset.name} (${activeAsset.symbol}) — ${priceText(activeAsset)}`;
+          navigator.clipboard
+            ?.writeText(text)
+            .then(() => showToast("Copied to clipboard"));
+        });
+        $("helpBtn").addEventListener("click", () =>
+          showToast("Google Finance UI demo"),
+        );
+
+        $("askAiBtn").addEventListener("click", () => {
+          const q = $("aiQuestion").value.trim();
+          if (!q) {
+            showToast("Enter a question to explore");
+            return;
+          }
+          $("aiAnswer").textContent =
+            `For ${activeAsset.name}, the displayed move is ${activeAsset.change >= 0 ? "positive" : "negative"} at ${Math.abs(activeAsset.change).toFixed(2)}% today. Consider reviewing price momentum, trading volume, and recent news together.`;
+          $("aiAnswer").classList.add("show");
+        });
+        $("addListBtn").addEventListener("click", () => {
+          $("listModal").classList.add("open");
+          $("newListName").focus();
+        });
+        $("cancelModal").addEventListener("click", () =>
+          $("listModal").classList.remove("open"),
+        );
+        $("listModal").addEventListener("click", (e) => {
+          if (e.target === $("listModal"))
+            $("listModal").classList.remove("open");
+        });
+        $("createList").addEventListener("click", () => {
+          const name = $("newListName").value.trim();
+          if (!name) {
+            $("newListName").focus();
+            return;
+          }
+          const key = "custom_" + Date.now();
+          lists[key] = [];
+          const nav = document.createElement("div");
+          nav.className = "list-nav";
+          nav.dataset.list = key;
+          nav.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5.5h16M4 12h16M4 18.5h16"/></svg><span>${name}</span><span class="count">0</span>`;
+          $("sidebar").insertBefore(
+            nav,
+            $("sidebar").querySelector(".side-divider"),
+          );
+          nav.addEventListener("click", () => {
+            document
+              .querySelectorAll(".list-nav")
+              .forEach((n) => n.classList.remove("active"));
+            nav.classList.add("active");
+            currentList = key;
+            $("listTitle").textContent = name;
+            renderSidebar(key);
+          });
+          nav.click();
+          $("listModal").classList.remove("open");
+          $("newListName").value = "";
+          showToast("New list created");
+        });
+
+        // ===== MOBILE =====
+        function renderMobileWatchlist() {
+          const list = currentList;
+          const ids = lists[list] || lists.watchlist;
+          $("mobileWatchlist").innerHTML = ids
+            .map((id) => {
+              const a = assetById(id);
+              return `<div class="mobile-mover-row" data-asset="${a.id}">
+              <div class="mobile-mover-icon ${a.class}" style="background:${
+                a.class === "orange"
+                  ? "#4b3822"
+                  : a.class === "purple"
+                    ? "#3a2b50"
+                    : a.class === "green"
+                      ? "#234237"
+                      : a.class === "red"
+                        ? "#4b2322"
+                        : "#303746"
+              };color:${
+                a.class === "orange"
+                  ? "#ffd18a"
+                  : a.class === "purple"
+                    ? "#d2b9ff"
+                    : a.class === "green"
+                      ? "#a9e4c2"
+                      : a.class === "red"
+                        ? "#ffb4a9"
+                        : "#e8edfa"
+              }">${a.icon}</div>
+              <div class="mobile-mover-info">
+                <strong>${a.name}</strong>
+                <small>${a.symbol}</small>
+              </div>
+              <div class="mobile-mover-price">
+                <div class="price">${priceText(a)}</div>
+                <div class="change ${a.change >= 0 ? "positive" : "negative"}">
+                  ${a.change >= 0 ? "+" : ""}${a.change.toFixed(2)}%
+                </div>
+              </div>
+            </div>`;
+            })
+            .join("");
+          $("mobileWatchlist")
+            .querySelectorAll("[data-asset]")
+            .forEach((el) => {
+              el.addEventListener("click", () =>
+                openMobileDetail(el.dataset.asset),
+              );
+            });
+        }
+
+        function renderMobileMovers() {
+          const items = [...assets]
+            .sort((a, b) => b.change - a.change)
+            .slice(0, 6);
+          $("mobileMoversList").innerHTML = items
+            .map(
+              (a) => `
+            <div class="mobile-mover-row" data-asset="${a.id}">
+              <div class="mobile-mover-icon ${a.class}" style="background:${
+                a.class === "orange"
+                  ? "#4b3822"
+                  : a.class === "purple"
+                    ? "#3a2b50"
+                    : a.class === "green"
+                      ? "#234237"
+                      : a.class === "red"
+                        ? "#4b2322"
+                        : "#303746"
+              };color:${
+                a.class === "orange"
+                  ? "#ffd18a"
+                  : a.class === "purple"
+                    ? "#d2b9ff"
+                    : a.class === "green"
+                      ? "#a9e4c2"
+                      : a.class === "red"
+                        ? "#ffb4a9"
+                        : "#e8edfa"
+              }">${a.icon}</div>
+              <div class="mobile-mover-info">
+                <strong>${a.name}</strong>
+                <small>${a.symbol}</small>
+              </div>
+              <div class="mobile-mover-price">
+                <div class="price">${priceText(a)}</div>
+                <div class="change ${a.change >= 0 ? "positive" : "negative"}">
+                  ${a.change >= 0 ? "+" : ""}${a.change.toFixed(2)}%
+                </div>
+              </div>
+            </div>
+          `,
+            )
+            .join("");
+          $("mobileMoversList")
+            .querySelectorAll("[data-asset]")
+            .forEach((el) => {
+              el.addEventListener("click", () =>
+                openMobileDetail(el.dataset.asset),
+              );
+            });
+        }
+
+        // Mobile index chips
+        document.querySelectorAll(".mobile-index-chip").forEach((chip) => {
+          chip.addEventListener("click", () =>
+            openMobileDetail(chip.dataset.asset),
+          );
+        });
+
+        // Mobile Bottom Nav
+        document.querySelectorAll(".mobile-nav-item").forEach((item) => {
+          item.addEventListener("click", () => {
+            const nav = item.dataset.nav;
+            if (nav === "more") {
+              showToast("More: Settings, About, Help");
+              return;
+            }
+            document
+              .querySelectorAll(".mobile-nav-item")
+              .forEach((n) => n.classList.remove("active"));
+            item.classList.add("active");
+            document
+              .querySelectorAll(".mobile-screen")
+              .forEach((s) => s.classList.remove("active"));
+            const screen = document.querySelector(
+              `.mobile-screen[data-screen="${nav}"]`,
+            );
+            if (screen) screen.classList.add("active");
+            if (nav === "watchlist") renderMobileWatchlist();
+            if (nav === "home") renderMobileMovers();
+            $("mobileContent").scrollTop = 0;
+          });
+        });
+
+        // Mobile list tabs
+        document.querySelectorAll(".mobile-list-tab").forEach((tab) => {
+          tab.addEventListener("click", () => {
+            document
+              .querySelectorAll(".mobile-list-tab")
+              .forEach((t) => t.classList.remove("active"));
+            tab.classList.add("active");
+            currentList = tab.dataset.mlist;
+            renderMobileWatchlist();
+          });
+        });
+
+        // Mobile detail screen
+        function openMobileDetail(id) {
+          const a = assetById(id);
+          if (!a) return;
+          activeAsset = a;
+
+          $("mobileDetailSymbol").textContent = a.symbol.split("-")[0];
+          $("mobileDetailIcon").textContent = a.icon;
+          $("mobileDetailName").textContent = a.name;
+          $("mobileDetailCategory").textContent = `${a.category} · USD`;
+          $("mobileDetailPrice").textContent = priceText(a);
+          const changeClass = a.change >= 0 ? "positive" : "negative";
+          const changeSign = a.change >= 0 ? "↑" : "↓";
+          const deltaSign = a.change >= 0 ? "+" : "-";
+          $("mobileDetailChange").innerHTML =
+            `<span class="${changeClass}">${changeSign} ${Math.abs(a.change).toFixed(2)}% (${deltaSign}$${fmt(Math.abs(a.delta))})</span>`;
+
+          // Mobile follow button
+          const followBtn = $("mobileFollowBtn");
+          if (followed.has(a.id)) {
+            followBtn.classList.add("following");
+            followBtn.textContent = "✓ Following";
+          } else {
+            followBtn.classList.remove("following");
+            followBtn.textContent = "＋ Follow";
+          }
+
+          $("mobileStatPrev").textContent = a.prev;
+          $("mobileStatDay").textContent = a.day;
+          $("mobileStatYear").textContent = a.year;
+          $("mobileStatCap").textContent = a.cap;
+
+          // Related assets
+          const rel = a.category.includes("Crypto")
+            ? ["BTC", "ETH", "SOL", "XRP"].filter((x) => x !== a.id).slice(0, 3)
+            : ["AAPL", "NVDA", "GOOGL", "TSLA"]
+                .filter((x) => x !== a.id)
+                .slice(0, 3);
+          $("mobileRelatedTitle").textContent = `Related to ${a.name}`;
+          $("mobileRelatedList").innerHTML = rel
+            .map((id) => {
+              const ra = assetById(id);
+              return `<div class="mobile-mover-row" data-asset="${ra.id}">
+              <div class="mobile-mover-icon ${ra.class}" style="background:${
+                ra.class === "orange"
+                  ? "#4b3822"
+                  : ra.class === "purple"
+                    ? "#3a2b50"
+                    : ra.class === "green"
+                      ? "#234237"
+                      : ra.class === "red"
+                        ? "#4b2322"
+                        : "#303746"
+              };color:${
+                ra.class === "orange"
+                  ? "#ffd18a"
+                  : ra.class === "purple"
+                    ? "#d2b9ff"
+                    : ra.class === "green"
+                      ? "#a9e4c2"
+                      : ra.class === "red"
+                        ? "#ffb4a9"
+                        : "#e8edfa"
+              }">${ra.icon}</div>
+              <div class="mobile-mover-info">
+                <strong>${ra.name}</strong>
+                <small>${ra.symbol}</small>
+              </div>
+              <div class="mobile-mover-price">
+                <div class="price">${priceText(ra)}</div>
+                <div class="change ${ra.change >= 0 ? "positive" : "negative"}">
+                  ${ra.change >= 0 ? "+" : ""}${ra.change.toFixed(2)}%
+                </div>
+              </div>
+            </div>`;
+            })
+            .join("");
+          $("mobileRelatedList")
+            .querySelectorAll("[data-asset]")
+            .forEach((el) => {
+              el.addEventListener("click", () =>
+                openMobileDetail(el.dataset.asset),
+              );
+            });
+
+          renderMobileChart();
+
+          // Show detail screen
+          document
+            .querySelectorAll(".mobile-screen")
+            .forEach((s) => s.classList.remove("active"));
+          $("mobileDetailScreen").classList.add("active");
+          document
+            .querySelectorAll(".mobile-nav-item")
+            .forEach((n) => n.classList.remove("active"));
+          $("mobileContent").scrollTop = 0;
+        }
+
+        $("mobileBackBtn").addEventListener("click", () => {
+          $("mobileDetailScreen").classList.remove("active");
+          // Return to previous screen
+          const activeNav = document.querySelector(".mobile-nav-item.active");
+          if (activeNav) {
+            const nav = activeNav.dataset.nav;
+            document
+              .querySelectorAll(".mobile-screen")
+              .forEach((s) => s.classList.remove("active"));
+            document
+              .querySelector(`.mobile-screen[data-screen="${nav}"]`)
+              ?.classList.add("active");
+          } else {
+            document
+              .querySelector('.mobile-screen[data-screen="home"]')
+              .classList.add("active");
+          }
+        });
+
+        $("mobileFollowBtn").addEventListener("click", () => {
+          if (followed.has(activeAsset.id)) {
+            followed.delete(activeAsset.id);
+            lists.watchlist = lists.watchlist.filter(
+              (x) => x !== activeAsset.id,
+            );
+            $("mobileFollowBtn").classList.remove("following");
+            $("mobileFollowBtn").textContent = "＋ Follow";
+            showToast(`${activeAsset.name} removed from watchlist`);
+          } else {
+            followed.add(activeAsset.id);
+            if (!lists.watchlist.includes(activeAsset.id))
+              lists.watchlist.unshift(activeAsset.id);
+            $("mobileFollowBtn").classList.add("following");
+            $("mobileFollowBtn").textContent = "✓ Following";
+            showToast(`${activeAsset.name} added to watchlist`);
+          }
+        });
+
+        $("mobileShareBtn").addEventListener("click", () => {
+          const text = `${activeAsset.name} (${activeAsset.symbol}) — ${priceText(activeAsset)}`;
+          navigator.clipboard
+            ?.writeText(text)
+            .then(() => showToast("Copied to clipboard"));
+        });
+
+        // Mobile range tabs
+        document.querySelectorAll(".mobile-range-tab").forEach((tab) => {
+          tab.addEventListener("click", () => {
+            document
+              .querySelectorAll(".mobile-range-tab")
+              .forEach((t) => t.classList.remove("active"));
+            tab.classList.add("active");
+            mobileRange = tab.dataset.mrange;
+            renderMobileChart();
+          });
+        });
+
+        function renderMobileChart() {
+          const svg = $("mobileChart");
+          const a = activeAsset;
+          const n =
+            mobileRange === "1D"
+              ? 48
+              : mobileRange === "5D"
+                ? 50
+                : mobileRange === "1M"
+                  ? 60
+                  : mobileRange === "6M"
+                    ? 70
+                    : mobileRange === "1Y"
+                      ? 80
+                      : 100;
+          const base = a.price,
+            vol =
+              mobileRange === "1D"
+                ? 0.008
+                : mobileRange === "5D"
+                  ? 0.018
+                  : mobileRange === "1M"
+                    ? 0.04
+                    : mobileRange === "6M"
+                      ? 0.075
+                      : 0.12;
+          const vals = seededValues(
+            n,
+            a.seed + mobileRange.length,
+            base,
+            vol,
+            (a.change / 100) * (mobileRange === "1D" ? 1 : 2),
+          );
+          const min = Math.min(...vals) * 0.988,
+            max = Math.max(...vals) * 1.012,
+            left = 10,
+            right = 390,
+            top = 10,
+            bottom = 200;
+          const x = (i) => left + ((right - left) * i) / (n - 1),
+            y = (v) => bottom - ((v - min) / (max - min)) * (bottom - top);
+          const path = vals
+            .map(
+              (v, i) =>
+                (i ? "L" : "M") + x(i).toFixed(2) + " " + y(v).toFixed(2),
+            )
+            .join(" ");
+          const area = path + ` L ${right} ${bottom} L ${left} ${bottom} Z`;
+          const color = a.change >= 0 ? "#81c995" : "#f28b82";
+          const gradient = `<defs><linearGradient id="mobileChartFill" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="${color}" stop-opacity=".25"/>
+            <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+          </linearGradient></defs>`;
+          svg.innerHTML = `${gradient}
+            <path d="${area}" fill="url(#mobileChartFill)"/>
+            <path d="${path}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>`;
+        }
+
+        // ===== INIT =====
+        renderSidebar("watchlist");
+        renderChart();
+        updateRelated();
+        renderMovers("gainers");
+        renderMobileWatchlist();
+        renderMobileMovers();
+      })();
+    </script>
+  </body>
+</html>

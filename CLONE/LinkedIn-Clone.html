@@ -1,0 +1,3276 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>LinkedIn Clone — Desktop & Mobile (Pixel)</title>
+    <style>
+      :root {
+        --blue: #0a66c2;
+        --blue-dark: #004182;
+        --ink: #191919;
+        --muted: #666666;
+        --subtle: #8a8a8a;
+        --line: #e0dfdc;
+        --surface: #ffffff;
+        --canvas: #f3f2ef;
+        --gold: #f8c77e;
+        --green: #057642;
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.06);
+        --radius: 9px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--canvas);
+        color: var(--ink);
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.45;
+      }
+      button,
+      input,
+      textarea {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      /* ============================================
+       APP SHELL + MODE SWITCH
+    ============================================ */
+      .app-shell {
+        position: relative;
+        min-height: 100vh;
+      }
+      .desktop-view,
+      .mobile-view {
+        transition: opacity 0.35s ease;
+      }
+      .desktop-view.hidden {
+        display: none;
+      }
+      .mobile-view {
+        display: none;
+      }
+      .mobile-view.active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: radial-gradient(
+          ellipse at top,
+          #2a2f3a 0%,
+          #0f1115 55%,
+          #050607 100%
+        );
+        padding: 40px 20px;
+        gap: 40px;
+        flex-wrap: wrap;
+      }
+
+      /* Floating Switch Button */
+      .mode-switch {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #fff;
+        padding: 6px 14px 6px 6px;
+        border-radius: 999px;
+        box-shadow:
+          0 8px 30px rgba(0, 0, 0, 0.25),
+          0 0 0 1px rgba(0, 0, 0, 0.05);
+        font-size: 13px;
+        font-weight: 600;
+        color: #333;
+      }
+      .mode-switch button {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: none;
+        background: var(--blue);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        transition: transform 0.2s;
+      }
+      .mode-switch button:hover {
+        transform: scale(1.08);
+        background: var(--blue-dark);
+      }
+      .mode-switch button svg {
+        width: 20px;
+        height: 20px;
+      }
+      .mode-switch .label {
+        padding-right: 4px;
+      }
+
+      /* ============================================
+       DESKTOP VIEW — (asli, sedikit disempurnakan)
+    ============================================ */
+      .topbar {
+        height: 56px;
+        background: #fff;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        position: sticky;
+        top: 0;
+        z-index: 30;
+      }
+      .topbar-inner {
+        width: min(1128px, calc(100% - 32px));
+        height: 100%;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
+      .brand {
+        width: 34px;
+        height: 34px;
+        border-radius: 4px;
+        background: var(--blue);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        font-size: 25px;
+        line-height: 1;
+        letter-spacing: -2px;
+        flex: 0 0 auto;
+        padding: 0 3px 3px 0;
+      }
+      .search-wrap {
+        position: relative;
+        width: 280px;
+        flex: 0 1 280px;
+      }
+      .search-wrap svg {
+        position: absolute;
+        left: 12px;
+        top: 10px;
+        width: 17px;
+        height: 17px;
+        color: #4d4d4d;
+        pointer-events: none;
+      }
+      .search {
+        width: 100%;
+        height: 36px;
+        border: 0;
+        outline: 0;
+        border-radius: 5px;
+        background: #edf3f8;
+        padding: 0 12px 0 39px;
+        color: var(--ink);
+        transition:
+          box-shadow 0.15s,
+          background 0.15s;
+      }
+      .search:focus {
+        background: #fff;
+        box-shadow:
+          inset 0 0 0 1px var(--blue),
+          0 0 0 1px var(--blue);
+      }
+      .main-nav {
+        margin-left: auto;
+        display: flex;
+        align-items: stretch;
+        height: 100%;
+        gap: 2px;
+      }
+      .nav-item {
+        min-width: 66px;
+        padding: 5px 9px 4px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        color: #666;
+        font-size: 11px;
+        position: relative;
+        border: 0;
+        background: transparent;
+        white-space: nowrap;
+      }
+      .nav-item svg {
+        width: 22px;
+        height: 22px;
+        stroke-width: 1.7;
+      }
+      .nav-item:hover {
+        color: #191919;
+      }
+      .nav-item.active {
+        color: #191919;
+      }
+      .nav-item.active::after {
+        content: "";
+        position: absolute;
+        height: 2px;
+        bottom: 0;
+        left: 7px;
+        right: 7px;
+        background: #191919;
+      }
+      .nav-item .tiny-avatar {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+      .nav-divider {
+        height: 34px;
+        width: 1px;
+        background: #e6e6e6;
+        margin: auto 4px;
+      }
+      .premium-link {
+        color: #915907;
+        text-decoration: underline;
+        font-size: 11px;
+        line-height: 1.2;
+        text-align: center;
+        max-width: 88px;
+        padding: 0 4px;
+      }
+      .mobile-menu {
+        display: none;
+        border: 0;
+        background: transparent;
+        color: #666;
+      }
+
+      .page-shell {
+        width: min(1128px, calc(100% - 32px));
+        margin: 24px auto 40px;
+        display: grid;
+        grid-template-columns: 225px minmax(0, 1fr) 300px;
+        align-items: start;
+        gap: 24px;
+      }
+      .left-column,
+      .right-column {
+        min-width: 0;
+      }
+      .card {
+        background: var(--surface);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      .profile-card {
+        text-align: center;
+      }
+      .cover {
+        height: 58px;
+        background: linear-gradient(
+          115deg,
+          #b7d5e8 0%,
+          #e0d7c4 52%,
+          #94b8cc 100%
+        );
+        position: relative;
+        overflow: hidden;
+      }
+      .cover::before,
+      .cover::after {
+        content: "";
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.22);
+      }
+      .cover::before {
+        width: 120px;
+        height: 120px;
+        top: -63px;
+        left: 15px;
+      }
+      .cover::after {
+        width: 160px;
+        height: 160px;
+        top: 16px;
+        right: -48px;
+      }
+      .avatar {
+        display: block;
+        border-radius: 50%;
+        object-fit: cover;
+        background: #d9e2ec;
+        border: 2px solid #fff;
+      }
+      .profile-avatar {
+        width: 72px;
+        height: 72px;
+        margin: -38px auto 10px;
+        position: relative;
+      }
+      .profile-card h2 {
+        font-size: 16px;
+        margin: 0 12px 4px;
+        line-height: 1.25;
+        font-weight: 650;
+      }
+      .profile-headline {
+        color: var(--muted);
+        font-size: 12px;
+        margin: 0 13px 14px;
+      }
+      .profile-meta {
+        border-top: 1px solid #eee;
+        text-align: left;
+        padding: 12px 12px 10px;
+      }
+      .meta-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 3px 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .meta-row strong {
+        color: var(--blue);
+        font-weight: 650;
+      }
+      .meta-row strong:hover {
+        text-decoration: underline;
+      }
+      .premium-block {
+        border-top: 1px solid #eee;
+        text-align: left;
+        padding: 11px 12px 12px;
+        font-size: 12px;
+        color: var(--muted);
+        cursor: pointer;
+      }
+      .premium-block:hover {
+        background: #f7f7f7;
+      }
+      .premium-block .muted-small {
+        font-size: 11px;
+        color: #777;
+        display: block;
+      }
+      .premium-block strong {
+        display: block;
+        font-weight: 600;
+        color: #333;
+        margin-top: 3px;
+      }
+      .premium-block .gold-dot {
+        color: #b68a36;
+        margin-right: 4px;
+      }
+      .saved-link {
+        border-top: 1px solid #eee;
+        padding: 11px 12px;
+        text-align: left;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .saved-link svg {
+        width: 16px;
+        height: 16px;
+        color: #666;
+      }
+      .saved-link:hover,
+      .group-link:hover {
+        background: #f7f7f7;
+      }
+      .groups-card {
+        margin-top: 9px;
+        padding: 13px 12px 11px;
+        font-size: 12px;
+      }
+      .group-label {
+        color: var(--blue);
+        font-weight: 600;
+        margin: 0 0 12px;
+      }
+      .group-link {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 5px 0;
+        color: #666;
+        font-weight: 600;
+      }
+      .group-link span:last-child {
+        color: #777;
+        font-size: 16px;
+      }
+      .discover {
+        border-top: 1px solid #eee;
+        margin: 10px -12px -11px;
+        padding: 12px;
+        color: #666;
+        font-weight: 600;
+        text-align: center;
+        display: block;
+      }
+
+      .feed-column {
+        min-width: 0;
+      }
+      .composer {
+        padding: 12px 16px 8px;
+      }
+      .composer-top {
+        display: flex;
+        gap: 9px;
+        align-items: center;
+      }
+      .composer-avatar {
+        width: 48px;
+        height: 48px;
+      }
+      .start-post {
+        flex: 1;
+        height: 48px;
+        text-align: left;
+        padding: 0 16px;
+        border: 1px solid #a6a6a6;
+        border-radius: 28px;
+        background: #fff;
+        color: #666;
+        font-weight: 600;
+      }
+      .start-post:hover {
+        background: #f3f3f3;
+      }
+      .composer-actions {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 8px;
+      }
+      .composer-action {
+        border: 0;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 7px;
+        color: #666;
+        font-weight: 600;
+        border-radius: 5px;
+      }
+      .composer-action:hover {
+        background: #f3f3f3;
+      }
+      .composer-action svg {
+        width: 20px;
+        height: 20px;
+        stroke-width: 2;
+      }
+      .video-icon {
+        color: #5f9b78;
+      }
+      .photo-icon {
+        color: #378fe9;
+      }
+      .event-icon {
+        color: #c37d41;
+      }
+      .article-icon {
+        color: #e0a13a;
+      }
+      .sort-row {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin: 13px 0 7px;
+        color: #666;
+        font-size: 12px;
+      }
+      .sort-row::before {
+        content: "";
+        height: 1px;
+        background: #c9c9c9;
+        flex: 1;
+      }
+      .sort-row button {
+        border: 0;
+        background: transparent;
+        color: #333;
+        padding: 0;
+        font-size: 12px;
+        font-weight: 650;
+      }
+      .sort-row button svg {
+        width: 13px;
+        height: 13px;
+        vertical-align: -2px;
+        margin-left: 2px;
+      }
+      .post {
+        margin-bottom: 9px;
+      }
+      .post-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+        padding: 14px 16px 0;
+      }
+      .post-avatar {
+        width: 48px;
+        height: 48px;
+        flex: 0 0 auto;
+      }
+      .post-author {
+        min-width: 0;
+        flex: 1;
+      }
+      .author-line {
+        font-size: 14px;
+        font-weight: 650;
+        line-height: 1.25;
+      }
+      .author-line:hover {
+        color: var(--blue);
+        text-decoration: underline;
+        cursor: pointer;
+      }
+      .author-line .pronoun {
+        font-size: 12px;
+        font-weight: 400;
+        color: #777;
+      }
+      .author-meta {
+        color: #666;
+        font-size: 12px;
+        line-height: 1.35;
+        margin-top: 2px;
+      }
+      .post-menu {
+        border: 0;
+        background: transparent;
+        color: #666;
+        padding: 5px;
+        border-radius: 50%;
+      }
+      .post-menu:hover {
+        background: #eee;
+      }
+      .post-menu svg {
+        width: 21px;
+        height: 21px;
+      }
+      .post-copy {
+        padding: 10px 16px 12px;
+        font-size: 14px;
+        line-height: 1.48;
+        white-space: normal;
+      }
+      .post-copy p {
+        margin: 0 0 8px;
+      }
+      .post-copy p:last-child {
+        margin-bottom: 0;
+      }
+      .post-copy .hashtags {
+        color: var(--blue);
+        font-weight: 600;
+      }
+      .post-copy .hashtags:hover {
+        text-decoration: underline;
+        cursor: pointer;
+      }
+      .see-more {
+        border: 0;
+        background: transparent;
+        padding: 0;
+        color: #666;
+        font-weight: 600;
+      }
+      .post-image {
+        width: 100%;
+        display: block;
+        max-height: 340px;
+        object-fit: cover;
+        background: #dfe7ec;
+      }
+      .post-image.landscape {
+        aspect-ratio: 16 / 9;
+      }
+      .post-image.square {
+        aspect-ratio: 1.8 / 1;
+      }
+      .reactions-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #666;
+        font-size: 12px;
+        padding: 8px 16px 9px;
+      }
+      .reaction-stack {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .reaction-bubbles {
+        display: flex;
+        padding-left: 1px;
+      }
+      .bubble {
+        width: 17px;
+        height: 17px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-size: 10px;
+        border: 1px solid white;
+        margin-left: -2px;
+      }
+      .bubble.like {
+        background: #378fe9;
+      }
+      .bubble.heart {
+        background: #df6c76;
+      }
+      .bubble.clap {
+        background: #d7a04c;
+      }
+      .post-actions {
+        border-top: 1px solid #eee;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        padding: 3px 7px;
+      }
+      .post-action {
+        border: 0;
+        background: transparent;
+        color: #666;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        padding: 10px 3px;
+        border-radius: 4px;
+        font-weight: 650;
+        font-size: 13px;
+      }
+      .post-action svg {
+        width: 20px;
+        height: 20px;
+        stroke-width: 1.9;
+      }
+      .post-action:hover {
+        background: #f3f3f3;
+      }
+      .post-action.liked {
+        color: var(--blue);
+      }
+      .post-action.liked svg {
+        fill: var(--blue);
+        stroke: var(--blue);
+      }
+      .post-action.saved {
+        color: var(--blue);
+      }
+      .comment-box {
+        display: none;
+        padding: 0 15px 12px;
+        gap: 8px;
+        align-items: center;
+      }
+      .comment-box.open {
+        display: flex;
+      }
+      .comment-box img {
+        width: 32px;
+        height: 32px;
+      }
+      .comment-box input {
+        min-width: 0;
+        flex: 1;
+        border: 1px solid #999;
+        border-radius: 20px;
+        padding: 8px 13px;
+        outline: 0;
+      }
+      .comment-box input:focus {
+        border-color: var(--blue);
+        box-shadow: 0 0 0 1px var(--blue);
+      }
+      .comment-box button {
+        border: 0;
+        color: var(--blue);
+        background: transparent;
+        font-weight: 650;
+      }
+      .comment-preview {
+        display: none;
+        padding: 0 16px 12px 56px;
+        font-size: 12px;
+        color: #555;
+      }
+      .comment-preview.show {
+        display: block;
+      }
+
+      .right-column .card {
+        margin-bottom: 9px;
+      }
+      .news-card {
+        padding: 14px 0 7px;
+      }
+      .news-title-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 14px 9px;
+      }
+      .news-title-row h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 650;
+      }
+      .info-icon {
+        border: 0;
+        background: transparent;
+        color: #666;
+        padding: 0;
+      }
+      .info-icon svg {
+        width: 16px;
+        height: 16px;
+      }
+      .news-subtitle {
+        font-size: 12px;
+        color: #666;
+        padding: 0 14px 7px;
+      }
+      .news-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .news-list li {
+        padding: 6px 14px 7px 25px;
+        position: relative;
+      }
+      .news-list li::before {
+        content: "";
+        position: absolute;
+        left: 14px;
+        top: 13px;
+        width: 7px;
+        height: 7px;
+        border: 1.5px solid #666;
+        border-radius: 50%;
+      }
+      .news-list a {
+        font-weight: 650;
+        font-size: 13px;
+        display: block;
+        line-height: 1.25;
+      }
+      .news-list a:hover {
+        color: var(--blue);
+        text-decoration: underline;
+      }
+      .news-list span {
+        display: block;
+        color: #777;
+        font-size: 11px;
+        margin-top: 3px;
+      }
+      .show-more {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        color: #666;
+        border: 0;
+        background: transparent;
+        padding: 9px 14px;
+        font-weight: 650;
+        font-size: 12px;
+      }
+      .show-more:hover {
+        color: #222;
+      }
+      .show-more svg {
+        width: 14px;
+        height: 14px;
+      }
+      .ad-card {
+        text-align: center;
+        padding: 14px 15px 13px;
+        position: relative;
+      }
+      .ad-label {
+        position: absolute;
+        top: 9px;
+        right: 10px;
+        color: #777;
+        font-size: 10px;
+      }
+      .ad-card p {
+        color: #666;
+        font-size: 12px;
+        margin: 7px 0 11px;
+      }
+      .ad-brand {
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 8px;
+      }
+      .ad-avatars {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        margin-top: 13px;
+      }
+      .ad-avatars img {
+        width: 56px;
+        height: 56px;
+      }
+      .ad-logo {
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #e7eff7;
+        color: var(--blue);
+        font-size: 26px;
+        font-weight: 800;
+      }
+      .ad-button {
+        border: 1px solid var(--blue);
+        background: white;
+        color: var(--blue);
+        border-radius: 20px;
+        padding: 6px 18px;
+        font-weight: 650;
+      }
+      .ad-button:hover {
+        background: #edf5fc;
+        box-shadow: inset 0 0 0 1px var(--blue);
+      }
+      .footer-links {
+        padding: 5px 8px 0;
+        text-align: center;
+        color: #777;
+        font-size: 11px;
+        line-height: 1.9;
+      }
+      .footer-links a {
+        margin: 0 5px;
+      }
+      .footer-links a:hover {
+        color: var(--blue);
+        text-decoration: underline;
+      }
+      .copyright {
+        color: #666;
+        font-size: 11px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 4px;
+        margin-top: 7px;
+      }
+      .mini-brand {
+        display: inline-grid;
+        place-items: center;
+        width: 14px;
+        height: 14px;
+        background: var(--blue);
+        color: #fff;
+        font-weight: 800;
+        font-size: 11px;
+        border-radius: 2px;
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translate(-50%, 20px);
+        opacity: 0;
+        pointer-events: none;
+        z-index: 80;
+        background: #1d2226;
+        color: #fff;
+        border-radius: 6px;
+        padding: 11px 16px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        transition: all 0.2s ease;
+        font-size: 13px;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        background: rgba(0, 0, 0, 0.55);
+        display: none;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 70px 16px 24px;
+        overflow: auto;
+      }
+      .modal-backdrop.open {
+        display: flex;
+      }
+      .composer-modal {
+        width: min(560px, 100%);
+        background: #fff;
+        border-radius: 9px;
+        box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
+        overflow: hidden;
+      }
+      .modal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 17px 20px;
+        border-bottom: 1px solid #eee;
+      }
+      .modal-head h2 {
+        font-size: 20px;
+        margin: 0;
+        font-weight: 500;
+      }
+      .modal-close {
+        border: 0;
+        background: transparent;
+        color: #666;
+        border-radius: 50%;
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+      }
+      .modal-close:hover {
+        background: #eee;
+      }
+      .modal-user {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 17px 20px 10px;
+      }
+      .modal-user img {
+        width: 48px;
+        height: 48px;
+      }
+      .modal-user strong {
+        display: block;
+        font-size: 14px;
+      }
+      .audience {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        border: 1px solid #777;
+        border-radius: 14px;
+        padding: 3px 8px;
+        color: #555;
+        font-size: 11px;
+        margin-top: 4px;
+        background: #fff;
+      }
+      .audience svg {
+        width: 12px;
+        height: 12px;
+      }
+      .post-textarea {
+        display: block;
+        width: 100%;
+        min-height: 180px;
+        resize: vertical;
+        border: 0;
+        outline: 0;
+        padding: 10px 20px;
+        font-size: 17px;
+      }
+      .post-textarea::placeholder {
+        color: #777;
+      }
+      .modal-bottom {
+        border-top: 1px solid #eee;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 11px 18px;
+      }
+      .modal-tools {
+        display: flex;
+        gap: 5px;
+      }
+      .modal-tools button {
+        border: 0;
+        background: transparent;
+        color: #666;
+        padding: 7px;
+        border-radius: 50%;
+      }
+      .modal-tools button:hover {
+        background: #eee;
+      }
+      .modal-tools svg {
+        width: 20px;
+        height: 20px;
+      }
+      .publish-btn {
+        background: var(--blue);
+        color: white;
+        border: 0;
+        border-radius: 20px;
+        padding: 8px 17px;
+        font-weight: 650;
+      }
+      .publish-btn:disabled {
+        background: #e5e5e5;
+        color: #999;
+        cursor: not-allowed;
+      }
+      .empty-state {
+        display: none;
+        text-align: center;
+        color: #666;
+        padding: 35px 20px;
+      }
+      .empty-state strong {
+        color: #333;
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      @media (max-width: 1020px) {
+        .page-shell {
+          grid-template-columns: 205px minmax(0, 1fr);
+          gap: 18px;
+        }
+        .right-column {
+          display: none;
+        }
+        .topbar-inner {
+          gap: 12px;
+        }
+        .search-wrap {
+          width: 220px;
+          flex-basis: 220px;
+        }
+        .nav-item {
+          min-width: 58px;
+          padding-left: 5px;
+          padding-right: 5px;
+        }
+        .premium-link,
+        .nav-divider {
+          display: none;
+        }
+      }
+      @media (max-width: 700px) {
+        .desktop-view {
+          display: none;
+        }
+        .mode-switch {
+          bottom: 80px;
+        }
+      }
+
+      /* ============================================
+       MOBILE VIEW — Pixel Phone Frame
+    ============================================ */
+      .phone-stage {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 24px;
+      }
+      .phone-label {
+        color: #fff;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-align: center;
+      }
+      .phone-label small {
+        display: block;
+        font-size: 12px;
+        color: #9aa0ab;
+        font-weight: 400;
+        margin-top: 4px;
+      }
+
+      .pixel-phone {
+        position: relative;
+        width: 390px;
+        height: 844px;
+        background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
+        border-radius: 55px;
+        padding: 14px;
+        box-shadow:
+          0 0 0 2px #2a2a2a,
+          0 0 0 4px #0a0a0a,
+          0 30px 80px rgba(0, 0, 0, 0.6),
+          inset 0 0 2px rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+      }
+
+      /* Side Buttons */
+      .pixel-phone::before {
+        content: "";
+        position: absolute;
+        right: -3px;
+        top: 160px;
+        width: 3px;
+        height: 90px;
+        background: linear-gradient(90deg, #1a1a1a, #2a2a2a);
+        border-radius: 2px 0 0 2px;
+      }
+      .pixel-phone::after {
+        content: "";
+        position: absolute;
+        left: -3px;
+        top: 140px;
+        width: 3px;
+        height: 40px;
+        background: linear-gradient(270deg, #1a1a1a, #2a2a2a);
+        border-radius: 0 2px 2px 0;
+        box-shadow:
+          0 60px 0 #1a1a1a,
+          0 120px 0 #1a1a1a;
+      }
+
+      .pixel-screen {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background: var(--canvas);
+        border-radius: 42px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Punch-hole camera (Pixel style) */
+      .pixel-camera {
+        position: absolute;
+        top: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 14px;
+        height: 14px;
+        background: #000;
+        border-radius: 50%;
+        z-index: 100;
+        box-shadow:
+          0 0 0 2px #1a1a1a,
+          inset 0 0 2px rgba(255, 255, 255, 0.08);
+      }
+      .pixel-camera::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 4px;
+        height: 4px;
+        background: radial-gradient(circle, #234 0%, #000 70%);
+        border-radius: 50%;
+      }
+
+      /* Android Status Bar */
+      .pixel-statusbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 28px 4px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #000;
+        height: 38px;
+        flex-shrink: 0;
+      }
+      .pixel-statusbar .status-left {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .pixel-statusbar .status-right {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .pixel-statusbar svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      /* Home indicator */
+      .pixel-home-indicator {
+        position: absolute;
+        bottom: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 110px;
+        height: 4px;
+        background: #000;
+        border-radius: 2px;
+        z-index: 100;
+      }
+
+      /* Mobile App Content */
+      .mobile-app {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: var(--canvas);
+      }
+
+      .mobile-header {
+        background: #fff;
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        flex-shrink: 0;
+      }
+      .mobile-header .m-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+      .mobile-header .m-search {
+        flex: 1;
+        height: 34px;
+        background: #edf3f8;
+        border-radius: 6px;
+        border: 0;
+        padding: 0 10px 0 34px;
+        font-size: 13px;
+        color: #666;
+        position: relative;
+        outline: none;
+        cursor: pointer;
+      }
+      .m-search-wrap {
+        position: relative;
+        flex: 1;
+      }
+      .m-search-wrap svg {
+        position: absolute;
+        left: 10px;
+        top: 9px;
+        width: 16px;
+        height: 16px;
+        color: #4d4d4d;
+        pointer-events: none;
+      }
+      .mobile-header .m-msg {
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        background: transparent;
+        border: none;
+        color: #191919;
+        border-radius: 50%;
+        position: relative;
+      }
+      .mobile-header .m-msg:hover {
+        background: #f3f3f3;
+      }
+      .mobile-header .m-msg svg {
+        width: 22px;
+        height: 22px;
+        stroke-width: 1.8;
+      }
+      .msg-dot {
+        position: absolute;
+        top: 6px;
+        right: 7px;
+        width: 8px;
+        height: 8px;
+        background: #df6c76;
+        border-radius: 50%;
+        border: 1.5px solid #fff;
+      }
+
+      .mobile-feed {
+        flex: 1;
+        overflow-y: auto;
+        padding-bottom: 60px;
+        scrollbar-width: thin;
+      }
+      .mobile-feed::-webkit-scrollbar {
+        width: 4px;
+      }
+      .mobile-feed::-webkit-scrollbar-thumb {
+        background: #c8c8c8;
+        border-radius: 2px;
+      }
+
+      .m-composer {
+        background: #fff;
+        margin: 8px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: var(--shadow);
+      }
+      .m-composer .m-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+      .m-composer .m-start {
+        flex: 1;
+        border: 1px solid #a6a6a6;
+        border-radius: 24px;
+        padding: 8px 14px;
+        background: #fff;
+        text-align: left;
+        color: #666;
+        font-weight: 500;
+        font-size: 13px;
+      }
+
+      .m-post {
+        background: #fff;
+        margin-bottom: 8px;
+        padding: 0;
+      }
+      .m-post-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 10px 12px;
+      }
+      .m-post-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+      }
+      .m-post-author {
+        flex: 1;
+        min-width: 0;
+      }
+      .m-author-line {
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.25;
+      }
+      .m-author-line .pronoun {
+        font-size: 11px;
+        font-weight: 400;
+        color: #777;
+      }
+      .m-author-meta {
+        color: #666;
+        font-size: 11px;
+        margin-top: 2px;
+      }
+      .m-post-menu {
+        border: none;
+        background: transparent;
+        color: #666;
+        padding: 4px;
+        border-radius: 50%;
+      }
+      .m-post-menu svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .m-post-copy {
+        padding: 4px 12px 8px;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+      .m-post-copy p {
+        margin: 0 0 6px;
+      }
+      .m-post-copy p:last-child {
+        margin-bottom: 0;
+      }
+      .m-post-copy .hashtags {
+        color: var(--blue);
+        font-weight: 600;
+      }
+      .m-post-image {
+        width: 100%;
+        display: block;
+        max-height: 220px;
+        object-fit: cover;
+        background: #dfe7ec;
+      }
+
+      .m-reactions-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #666;
+        font-size: 11px;
+        padding: 8px 12px;
+      }
+      .m-post-actions {
+        border-top: 1px solid #eee;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        padding: 0 4px;
+      }
+      .m-post-action {
+        border: none;
+        background: transparent;
+        color: #666;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        padding: 10px 2px;
+        font-size: 11px;
+        font-weight: 600;
+        border-radius: 4px;
+      }
+      .m-post-action svg {
+        width: 18px;
+        height: 18px;
+        stroke-width: 1.8;
+      }
+      .m-post-action.liked {
+        color: var(--blue);
+      }
+      .m-post-action.liked svg {
+        fill: var(--blue);
+        stroke: var(--blue);
+      }
+
+      /* Bottom Navigation (LinkedIn mobile style) */
+      .mobile-bottom-nav {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #fff;
+        border-top: 1px solid #e0e0e0;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        padding: 4px 0 24px;
+        z-index: 50;
+      }
+      .m-nav-item {
+        border: none;
+        background: transparent;
+        color: #666;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        padding: 6px 2px;
+        font-size: 10px;
+        font-weight: 500;
+        position: relative;
+      }
+      .m-nav-item svg {
+        width: 22px;
+        height: 22px;
+        stroke-width: 1.7;
+      }
+      .m-nav-item.active {
+        color: #191919;
+      }
+      .m-nav-item.active svg {
+        stroke-width: 2.2;
+      }
+
+      /* Center Post Button */
+      .m-nav-post {
+        position: relative;
+      }
+      .m-nav-post-icon {
+        width: 44px;
+        height: 44px;
+        background: #fff;
+        border: 1px solid #c8c8c8;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        margin-top: -8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      }
+      .m-nav-post-icon svg {
+        width: 22px;
+        height: 22px;
+        color: #191919;
+        stroke-width: 2;
+      }
+      .m-nav-post span {
+        margin-top: 2px;
+        font-size: 9px;
+        color: #666;
+      }
+
+      .m-nav-badge {
+        position: absolute;
+        top: 2px;
+        right: 50%;
+        transform: translateX(14px);
+        background: #df6c76;
+        color: #fff;
+        font-size: 9px;
+        font-weight: 700;
+        min-width: 16px;
+        height: 16px;
+        padding: 0 4px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        border: 1.5px solid #fff;
+      }
+
+      /* Spec Panel (side info) */
+      .phone-specs {
+        max-width: 320px;
+        color: #d0d4db;
+      }
+      .phone-specs h3 {
+        margin: 0 0 12px;
+        font-size: 16px;
+        color: #fff;
+        font-weight: 700;
+      }
+      .phone-specs ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.9;
+      }
+      .phone-specs li::before {
+        content: "•";
+        color: var(--blue);
+        margin-right: 10px;
+        font-weight: 900;
+      }
+
+      @media (max-width: 900px) {
+        .mobile-view.active {
+          gap: 24px;
+          padding: 24px 12px;
+        }
+        .phone-specs {
+          max-width: 360px;
+        }
+        .pixel-phone {
+          width: 340px;
+          height: 736px;
+          border-radius: 48px;
+          padding: 12px;
+        }
+        .pixel-screen {
+          border-radius: 37px;
+        }
+        .pixel-home-indicator {
+          bottom: 6px;
+          width: 90px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <!-- ============ FLOATING SWITCH BUTTON ============ -->
+      <div class="mode-switch">
+        <button id="switchMode" aria-label="Switch ke tampilan mobile">
+          <!-- Icon berubah sesuai mode -->
+          <svg
+            id="switchIcon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <rect x="5" y="2" width="14" height="20" rx="2.5" />
+            <path d="M11 18h2" stroke-linecap="round" />
+          </svg>
+        </button>
+        <span class="label" id="switchLabel">Mode Mobile</span>
+      </div>
+
+      <!-- ============ DESKTOP VIEW ============ -->
+      <div class="desktop-view" id="desktopView">
+        <header class="topbar">
+          <div class="topbar-inner">
+            <a class="brand" href="#home" aria-label="LinkedIn beranda">in</a>
+            <div class="search-wrap">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="11" cy="11" r="7"></circle>
+                <path d="m16.5 16.5 4 4"></path>
+              </svg>
+              <input
+                id="searchInput"
+                class="search"
+                type="search"
+                placeholder="Cari"
+                aria-label="Cari"
+              />
+            </div>
+            <nav class="main-nav" aria-label="Navigasi utama">
+              <button
+                class="nav-item active"
+                data-nav="Beranda"
+                aria-label="Beranda"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path
+                    d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"
+                    stroke-linejoin="round"
+                  /></svg
+                ><span>Beranda</span>
+              </button>
+              <button
+                class="nav-item"
+                data-nav="Jaringan Saya"
+                aria-label="Jaringan Saya"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <circle cx="9" cy="8" r="3"></circle>
+                  <path
+                    d="M3 20c.3-3.3 2.3-5 6-5s5.7 1.7 6 5M16 5.2a3 3 0 0 1 0 5.6M17 15c2.4.4 3.7 2 4 5"
+                    stroke-linecap="round"
+                  /></svg
+                ><span>Jaringan</span>
+              </button>
+              <button
+                class="nav-item"
+                data-nav="Pekerjaan"
+                aria-label="Pekerjaan"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <rect x="3" y="7" width="18" height="14" rx="2"></rect>
+                  <path
+                    d="M8 7V4h8v3M3 12h18M10 12v2h4v-2"
+                    stroke-linejoin="round"
+                  /></svg
+                ><span>Pekerjaan</span>
+              </button>
+              <button class="nav-item" data-nav="Pesan" aria-label="Pesan">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M4 5h16v12H8l-4 3z" stroke-linejoin="round" />
+                  <path d="M8 9h8M8 13h5" stroke-linecap="round" /></svg
+                ><span>Pesan</span>
+              </button>
+              <button
+                class="nav-item"
+                data-nav="Notifikasi"
+                aria-label="Notifikasi"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path
+                    d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  /></svg
+                ><span>Notifikasi</span>
+              </button>
+              <button class="nav-item" data-nav="Saya" aria-label="Saya">
+                <img
+                  class="tiny-avatar"
+                  src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=faces"
+                  alt=""
+                /><span>Saya⌄</span>
+              </button>
+              <div class="nav-divider"></div>
+              <button
+                class="nav-item"
+                data-nav="Untuk Bisnis"
+                aria-label="Untuk Bisnis"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                  <path
+                    d="M8 8h2m4 0h2M8 12h2m4 0h2M8 16h2m4 0h2"
+                    stroke-linecap="round"
+                  /></svg
+                ><span>Bisnis⌄</span>
+              </button>
+              <a class="premium-link" href="#premium"
+                >Coba Premium<br />gratis 1 bulan</a
+              >
+            </nav>
+            <button
+              class="mobile-menu"
+              aria-label="Buka menu"
+              onclick="
+                showToast('Menu navigasi tersedia pada tampilan desktop.')
+              "
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="24"
+                height="24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <path d="M3 6h18M3 12h18M3 18h18" stroke-linecap="round" />
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <main class="page-shell" id="home">
+          <aside class="left-column">
+            <section class="card profile-card">
+              <div class="cover"></div>
+              <img
+                class="avatar profile-avatar"
+                src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=160&h=160&fit=crop&crop=faces"
+                alt="Foto profil Alex"
+              />
+              <h2>Alex Pratama</h2>
+              <p class="profile-headline">
+                Product Designer | UI/UX Enthusiast<br />Building digital
+                experiences
+              </p>
+              <div class="profile-meta">
+                <div class="meta-row">
+                  <span>Koneksi</span><strong>642</strong>
+                </div>
+                <div class="meta-row">
+                  <span>Kembangkan jaringan Anda</span><strong>+</strong>
+                </div>
+              </div>
+              <div class="premium-block" id="premium">
+                <span class="muted-small">Akses eksklusif untuk Anda</span>
+                <strong
+                  ><span class="gold-dot">▰</span> Coba Premium gratis</strong
+                >
+              </div>
+              <a href="#saved" class="saved-link"
+                ><svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                >
+                  <path
+                    d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-4-6 4z"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                Item tersimpan</a
+              >
+            </section>
+            <section class="card groups-card">
+              <p class="group-label">Terbaru</p>
+              <a class="group-link" href="#group"
+                ><span># productdesign</span><span>+</span></a
+              >
+              <a class="group-link" href="#group"
+                ><span># startupindonesia</span><span>+</span></a
+              >
+              <p class="group-label" style="margin-top: 17px">Grup</p>
+              <a class="group-link" href="#group"
+                ><span>UI/UX Indonesia</span><span>+</span></a
+              >
+              <a class="group-link" href="#group"
+                ><span>Product Management</span><span>+</span></a
+              >
+              <a class="discover" href="#discover">Temukan lebih banyak</a>
+            </section>
+          </aside>
+
+          <section class="feed-column" aria-label="Feed utama">
+            <section class="card composer">
+              <div class="composer-top">
+                <img
+                  class="avatar composer-avatar"
+                  src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=faces"
+                  alt="Foto profil Alex"
+                />
+                <button class="start-post" id="openComposer">
+                  Mulai buat postingan
+                </button>
+              </div>
+              <div class="composer-actions">
+                <button class="composer-action" data-compose="foto">
+                  <svg
+                    class="photo-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <rect x="3" y="4" width="18" height="16" rx="2" />
+                    <circle cx="8.5" cy="9" r="1.5" />
+                    <path d="m21 15-5-5L5 20" stroke-linejoin="round" /></svg
+                  >Foto
+                </button>
+                <button class="composer-action" data-compose="video">
+                  <svg
+                    class="video-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <rect x="3" y="5" width="13" height="14" rx="2" />
+                    <path
+                      d="m16 10 5-3v10l-5-3z"
+                      stroke-linejoin="round"
+                    /></svg
+                  >Video
+                </button>
+                <button class="composer-action" data-compose="event">
+                  <svg
+                    class="event-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <rect x="3" y="5" width="18" height="16" rx="2" />
+                    <path
+                      d="M7 3v4m10-4v4M3 10h18M8 14h3m-3 3h7"
+                      stroke-linecap="round"
+                    /></svg
+                  >Acara
+                </button>
+                <button class="composer-action" data-compose="artikel">
+                  <svg
+                    class="article-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M5 3h11l4 4v14H5z" stroke-linejoin="round" />
+                    <path
+                      d="M16 3v5h4M8 12h8M8 16h8"
+                      stroke-linecap="round"
+                    /></svg
+                  >Tulis artikel
+                </button>
+              </div>
+            </section>
+
+            <div class="sort-row">
+              <span>Urutkan berdasarkan:</span
+              ><button id="sortButton">
+                Teratas
+                <svg viewBox="0 0 16 16" fill="currentColor">
+                  <path d="m3 6 5 5 5-5z" />
+                </svg>
+              </button>
+            </div>
+
+            <article
+              class="card post"
+              data-search="nabila putri product designer design system konsistensi tim produk figma kolaborasi"
+            >
+              <div class="post-header">
+                <img
+                  class="avatar post-avatar"
+                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces"
+                  alt="Foto Nabila Putri"
+                />
+                <div class="post-author">
+                  <div class="author-line">
+                    Nabila Putri <span class="pronoun">• 1st</span>
+                  </div>
+                  <div class="author-meta">
+                    Senior Product Designer at Kreasi Digital
+                  </div>
+                  <div class="author-meta">
+                    2 jam •
+                    <span aria-label="Dapat dilihat siapa saja">🌐</span>
+                  </div>
+                </div>
+                <button
+                  class="post-menu"
+                  aria-label="Opsi postingan"
+                  onclick="showToast('Opsi postingan')"
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="5" cy="12" r="1.7" />
+                    <circle cx="12" cy="12" r="1.7" />
+                    <circle cx="19" cy="12" r="1.7" />
+                  </svg>
+                </button>
+              </div>
+              <div class="post-copy">
+                <p>
+                  Setelah beberapa minggu eksplorasi, akhirnya kami merilis
+                  pembaruan Design System terbaru! ✨
+                </p>
+                <p>
+                  Fokus kami kali ini bukan hanya membuat komponen terlihat
+                  konsisten, tapi juga memastikan tim bisa bekerja lebih cepat.
+                </p>
+                <p>
+                  → Dokumentasi yang baik sama pentingnya dengan komponen yang
+                  baik.<br />→ Libatkan developer sejak proses eksplorasi.
+                </p>
+                <p class="hashtags">#ProductDesign #DesignSystem #UIUX</p>
+              </div>
+              <img
+                class="post-image landscape"
+                src="https://images.unsplash.com/photo-1558655146-d09347e92766?w=1200&h=650&fit=crop"
+                alt="Kolase konsep desain antarmuka"
+              />
+              <div class="reactions-line">
+                <div class="reaction-stack">
+                  <div class="reaction-bubbles">
+                    <span class="bubble like">♥</span
+                    ><span class="bubble heart">♥</span
+                    ><span class="bubble clap">👏</span>
+                  </div>
+                  <span>Anda dan 128 lainnya</span>
+                </div>
+                <span>18 komentar • 6 kali dibagikan</span>
+              </div>
+              <div class="post-actions">
+                <button class="post-action like-button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path
+                      d="M7 10v11H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2zm0 0 5-8c2 0 3 1.5 2 4l-1 4h6a2 2 0 0 1 2 2l-1 7a2 2 0 0 1-2 2H7"
+                      stroke-linejoin="round"
+                    /></svg
+                  >Suka
+                </button>
+                <button class="post-action comment-button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path
+                      d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-9.5A7.5 7.5 0 0 1 10.5 4h2A7.5 7.5 0 0 1 20 11.5Z"
+                      stroke-linejoin="round"
+                    /></svg
+                  >Komentar
+                </button>
+                <button class="post-action repost-button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path
+                      d="m17 3 4 4-4 4M3 11V9a2 2 0 0 1 2-2h16M7 21l-4-4 4-4m14 0v2a2 2 0 0 1-2 2H3"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    /></svg
+                  >Bagikan ulang
+                </button>
+                <button class="post-action send-button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path
+                      d="m22 2-7 20-4-9-9-4zM22 2 11 13"
+                      stroke-linejoin="round"
+                      stroke-linecap="round"
+                    /></svg
+                  >Kirim
+                </button>
+              </div>
+              <div class="comment-box">
+                <img
+                  class="avatar"
+                  src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=faces"
+                  alt=""
+                /><input
+                  type="text"
+                  placeholder="Tambahkan komentar..."
+                /><button class="comment-submit">Kirim</button>
+              </div>
+              <div class="comment-preview"></div>
+            </article>
+
+            <article
+              class="card post"
+              data-search="bima santoso startup founder bisnis teknologi tim remote produktivitas kerja"
+            >
+              <div class="post-header">
+                <img
+                  class="avatar post-avatar"
+                  src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop&crop=faces"
+                  alt="Foto Bima Santoso"
+                />
+                <div class="post-author">
+                  <div class="author-line">
+                    Bima Santoso <span class="pronoun">• 2nd</span>
+                  </div>
+                  <div class="author-meta">
+                    Founder at Ruang Tumbuh | Sharing lessons
+                  </div>
+                  <div class="author-meta">
+                    5 jam •
+                    <span aria-label="Dapat dilihat siapa saja">🌐</span>
+                  </div>
+                </div>
+                <button
+                  class="post-menu"
+                  aria-label="Opsi postingan"
+                  onclick="showToast('Opsi postingan')"
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="5" cy="12" r="1.7" />
+                    <circle cx="12" cy="12" r="1.7" />
+                    <circle cx="19" cy="12" r="1.7" />
+                  </svg>
+                </button>
+              </div>
+              <div class="post-copy">
+                <p>
+                  Satu hal yang saya pelajari dari membangun startup:
+                  <strong>kecepatan bukan berarti terburu-buru.</strong>
+                </p>
+                <p>
+                  Tim yang bergerak cepat bukan tim yang selalu sibuk. Mereka
+                  adalah tim yang tahu apa yang perlu dikerjakan, berani
+                  mengatakan tidak pada distraksi, dan rutin mengevaluasi hasil.
+                </p>
+                <p class="hashtags">#Startup #Leadership #Productivity</p>
+              </div>
+              <div class="reactions-line">
+                <div class="reaction-stack">
+                  <div class="reaction-bubbles">
+                    <span class="bubble like">♥</span
+                    ><span class="bubble clap">👏</span>
+                  </div>
+                  <span>Anda dan 86 lainnya</span>
+                </div>
+                <span>24 komentar</span>
+              </div>
+              <div class="post-actions">
+                <button class="post-action like-button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path
+                      d="M7 10v11H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2zm0 0 5-8c2 0 3 1.5 2 4l-1 4h6a2 2 0 0 1 2 2l-1 7a2 2 0 0 1-2 2H7"
+                      stroke-linejoin="round"
+                    /></svg
+                  >Suka
+                </button>
+                <button class="post-action comment-button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path
+                      d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-9.5A7.5 7.5 0 0 1 10.5 4h2A7.5 7.5 0 0 1 20 11.5Z"
+                      stroke-linejoin="round"
+                    /></svg
+                  >Komentar
+                </button>
+                <button class="post-action repost-button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path
+                      d="m17 3 4 4-4 4M3 11V9a2 2 0 0 1 2-2h16M7 21l-4-4 4-4m14 0v2a2 2 0 0 1-2 2H3"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    /></svg
+                  >Bagikan ulang
+                </button>
+                <button class="post-action send-button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path
+                      d="m22 2-7 20-4-9-9-4zM22 2 11 13"
+                      stroke-linejoin="round"
+                      stroke-linecap="round"
+                    /></svg
+                  >Kirim
+                </button>
+              </div>
+              <div class="comment-box">
+                <img
+                  class="avatar"
+                  src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=faces"
+                  alt=""
+                /><input
+                  type="text"
+                  placeholder="Tambahkan komentar..."
+                /><button class="comment-submit">Kirim</button>
+              </div>
+              <div class="comment-preview"></div>
+            </article>
+
+            <article
+              class="card post"
+              data-search="sarah wijaya marketing digital storytelling content strategy brand campaign"
+            >
+              <div class="post-header">
+                <img
+                  class="avatar post-avatar"
+                  src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=faces"
+                  alt="Foto Sarah Wijaya"
+                />
+                <div class="post-author">
+                  <div class="author-line">
+                    Sarah Wijaya <span class="pronoun">• 1st</span>
+                  </div>
+                  <div class="author-meta">
+                    Marketing Lead | Brand storytelling & growth
+                  </div>
+                  <div class="author-meta">
+                    1 hari •
+                    <span aria-label="Dapat dilihat siapa saja">🌐</span>
+                  </div>
+                </div>
+                <button
+                  class="post-menu"
+                  aria-label="Opsi postingan"
+                  onclick="showToast('Opsi postingan')"
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="5" cy="12" r="1.7" />
+                    <circle cx="12" cy="12" r="1.7" />
+                    <circle cx="19" cy="12" r="1.7" />
+                  </svg>
+                </button>
+              </div>
+              <div class="post-copy">
+                <p>
+                  Brand yang kuat tidak hanya berbicara tentang produknya. Brand
+                  yang kuat tahu cerita apa yang ingin dibagikan.
+                </p>
+                <p>
+                  Mulai dari mendengarkan pelanggan. Cerita terbaik sering kali
+                  sudah ada di sana.
+                </p>
+                <p class="hashtags">
+                  #Marketing #BrandStorytelling #DigitalMarketing
+                </p>
+              </div>
+              <img
+                class="post-image landscape"
+                src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200&h=650&fit=crop"
+                alt="Ruang kerja kolaboratif"
+              />
+              <div class="reactions-line">
+                <div class="reaction-stack">
+                  <div class="reaction-bubbles">
+                    <span class="bubble like">♥</span
+                    ><span class="bubble heart">♥</span>
+                  </div>
+                  <span>64 reaksi</span>
+                </div>
+                <span>9 komentar • 3 kali dibagikan</span>
+              </div>
+              <div class="post-actions">
+                <button class="post-action like-button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path
+                      d="M7 10v11H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2zm0 0 5-8c2 0 3 1.5 2 4l-1 4h6a2 2 0 0 1 2 2l-1 7a2 2 0 0 1-2 2H7"
+                      stroke-linejoin="round"
+                    /></svg
+                  >Suka
+                </button>
+                <button class="post-action comment-button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path
+                      d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-9.5A7.5 7.5 0 0 1 10.5 4h2A7.5 7.5 0 0 1 20 11.5Z"
+                      stroke-linejoin="round"
+                    /></svg
+                  >Komentar
+                </button>
+                <button class="post-action repost-button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path
+                      d="m17 3 4 4-4 4M3 11V9a2 2 0 0 1 2-2h16M7 21l-4-4 4-4m14 0v2a2 2 0 0 1-2 2H3"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    /></svg
+                  >Bagikan ulang
+                </button>
+                <button class="post-action send-button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path
+                      d="m22 2-7 20-4-9-9-4zM22 2 11 13"
+                      stroke-linejoin="round"
+                      stroke-linecap="round"
+                    /></svg
+                  >Kirim
+                </button>
+              </div>
+              <div class="comment-box">
+                <img
+                  class="avatar"
+                  src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=faces"
+                  alt=""
+                /><input
+                  type="text"
+                  placeholder="Tambahkan komentar..."
+                /><button class="comment-submit">Kirim</button>
+              </div>
+              <div class="comment-preview"></div>
+            </article>
+
+            <div class="card empty-state" id="emptyState">
+              <strong>Tidak ada hasil yang cocok</strong>Coba kata kunci lain
+              untuk mencari postingan.
+            </div>
+          </section>
+
+          <aside class="right-column">
+            <section class="card news-card">
+              <div class="news-title-row">
+                <h3>LinkedIn News</h3>
+                <button class="info-icon" aria-label="Tentang LinkedIn News">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 11v5m0-8h.01" stroke-linecap="round" />
+                  </svg>
+                </button>
+              </div>
+              <div class="news-subtitle">Berita utama hari ini</div>
+              <ul class="news-list">
+                <li>
+                  <a href="#news">Talenta digital makin dibutuhkan</a
+                  ><span>1 jam yang lalu • 2.341 pembaca</span>
+                </li>
+                <li>
+                  <a href="#news">Tren kerja fleksibel terus berkembang</a
+                  ><span>3 jam yang lalu • 1.876 pembaca</span>
+                </li>
+                <li>
+                  <a href="#news">Startup lokal fokus pada profitabilitas</a
+                  ><span>5 jam yang lalu • 1.102 pembaca</span>
+                </li>
+                <li>
+                  <a href="#news">Skill AI jadi prioritas perusahaan</a
+                  ><span>6 jam yang lalu • 986 pembaca</span>
+                </li>
+                <li>
+                  <a href="#news">Generasi muda dorong ekonomi kreatif</a
+                  ><span>kemarin • 834 pembaca</span>
+                </li>
+              </ul>
+              <button class="show-more" id="showMoreNews">
+                Lihat lebih banyak
+                <svg viewBox="0 0 16 16" fill="currentColor">
+                  <path d="m3 6 5 5 5-5z" />
+                </svg>
+              </button>
+            </section>
+            <section class="card ad-card">
+              <span class="ad-label">Promosi ···</span>
+              <div class="ad-brand">
+                LinkedIn
+                <span style="font-weight: 800; color: var(--blue)">in</span>
+              </div>
+              <p>
+                Alex, temukan peluang karier dan insight profesional dengan
+                LinkedIn Premium.
+              </p>
+              <div class="ad-avatars">
+                <img
+                  class="avatar"
+                  src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=faces"
+                  alt=""
+                />
+                <div class="ad-logo">in</div>
+              </div>
+              <p style="margin-top: 12px">
+                Lihat siapa yang melihat profil Anda dan kirim InMail.
+              </p>
+              <button
+                class="ad-button"
+                onclick="showToast('Fitur Premium hanya berupa tampilan demo.')"
+              >
+                Coba Premium
+              </button>
+            </section>
+            <footer class="footer-links">
+              <div>
+                <a href="#about">Tentang</a><a href="#access">Aksesibilitas</a
+                ><a href="#help">Pusat Bantuan</a>
+              </div>
+              <div>
+                <a href="#privacy">Privasi & Ketentuan</a
+                ><a href="#ads">Preferensi Iklan</a>
+              </div>
+              <div>
+                <a href="#business">Solusi Bisnis</a
+                ><a href="#mobile">Dapatkan aplikasi</a>
+              </div>
+              <div><a href="#more">Lainnya</a></div>
+              <div class="copyright">
+                <span style="font-weight: 600">Linked</span
+                ><span class="mini-brand">in</span> LinkedIn Corporation © 2025
+              </div>
+            </footer>
+          </aside>
+        </main>
+      </div>
+
+      <!-- ============ MOBILE VIEW ============ -->
+      <div class="mobile-view" id="mobileView">
+        <div class="phone-stage">
+          <div class="phone-label">
+            LinkedIn Mobile
+            <small>Pixel 8 Pro — Preview</small>
+          </div>
+          <div class="pixel-phone">
+            <div class="pixel-camera"></div>
+            <div class="pixel-screen">
+              <!-- Android Status Bar -->
+              <div class="pixel-statusbar">
+                <div class="status-left">
+                  <span id="pixelClock">9:41</span>
+                </div>
+                <div class="status-right">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M2 22h20V2z" opacity=".3" />
+                    <path d="M2 22h20V2zm18-2H6.8v-2.5H20z" />
+                  </svg>
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M2 22h20V2z" opacity=".3" />
+                    <path d="M12 3C7 3 2.7 5 0 8l12 14L24 8c-2.7-3-7-5-12-5z" />
+                  </svg>
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M2 22h20V2z" opacity=".3" />
+                    <rect x="2" y="6" width="18" height="12" rx="2" />
+                    <rect x="21" y="9" width="2" height="6" />
+                  </svg>
+                  <span>100%</span>
+                </div>
+              </div>
+
+              <div class="mobile-app">
+                <!-- Mobile Header -->
+                <div class="mobile-header">
+                  <img
+                    class="m-avatar"
+                    src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=faces"
+                    alt=""
+                  />
+                  <div class="m-search-wrap">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <circle cx="11" cy="11" r="7"></circle>
+                      <path d="m16.5 16.5 4 4"></path>
+                    </svg>
+                    <input
+                      class="m-search"
+                      type="text"
+                      placeholder="Cari di LinkedIn"
+                      readonly
+                      onclick="
+                        showToast('Pencarian akan dibuka di layar baru.')
+                      "
+                    />
+                  </div>
+                  <button class="m-msg" aria-label="Pesan">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path d="M4 5h16v12H8l-4 3z" stroke-linejoin="round" />
+                      <path d="M8 9h8M8 13h5" stroke-linecap="round" />
+                    </svg>
+                    <span class="msg-dot"></span>
+                  </button>
+                </div>
+
+                <!-- Mobile Feed -->
+                <div class="mobile-feed" id="mobileFeed">
+                  <div class="m-composer">
+                    <img
+                      class="m-avatar"
+                      src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=faces"
+                      alt=""
+                    />
+                    <button class="m-start" id="mOpenComposer">
+                      Mulai postingan
+                    </button>
+                  </div>
+
+                  <article class="m-post">
+                    <div class="m-post-header">
+                      <img
+                        class="m-post-avatar"
+                        src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces"
+                        alt=""
+                      />
+                      <div class="m-post-author">
+                        <div class="m-author-line">
+                          Nabila Putri <span class="pronoun">• 1st</span>
+                        </div>
+                        <div class="m-author-meta">Senior Product Designer</div>
+                        <div class="m-author-meta">2 jam • 🌐</div>
+                      </div>
+                      <button
+                        class="m-post-menu"
+                        onclick="showToast('Opsi postingan')"
+                      >
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                          <circle cx="5" cy="12" r="1.7" />
+                          <circle cx="12" cy="12" r="1.7" />
+                          <circle cx="19" cy="12" r="1.7" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div class="m-post-copy">
+                      <p>
+                        Design System terbaru kami rilis! ✨ Fokus bukan cuma
+                        visual konsisten, tapi juga memastikan tim bekerja lebih
+                        cepat.
+                      </p>
+                      <p>
+                        → Dokumentasi = komponen<br />→ Libatkan developer sejak
+                        awal
+                      </p>
+                      <p class="hashtags">#ProductDesign #DesignSystem</p>
+                    </div>
+                    <img
+                      class="m-post-image"
+                      src="https://images.unsplash.com/photo-1558655146-d09347e92766?w=600&h=400&fit=crop"
+                      alt=""
+                    />
+                    <div class="m-reactions-line">
+                      <span>♥ 🎉 👏 129</span>
+                      <span>18 komentar • 6x</span>
+                    </div>
+                    <div class="m-post-actions">
+                      <button class="m-post-action m-like">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <path
+                            d="M7 10v11H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2zm0 0 5-8c2 0 3 1.5 2 4l-1 4h6a2 2 0 0 1 2 2l-1 7a2 2 0 0 1-2 2H7"
+                            stroke-linejoin="round"
+                          /></svg
+                        >Suka
+                      </button>
+                      <button class="m-post-action">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <path
+                            d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-9.5A7.5 7.5 0 0 1 10.5 4h2A7.5 7.5 0 0 1 20 11.5Z"
+                            stroke-linejoin="round"
+                          /></svg
+                        >Komentar
+                      </button>
+                      <button class="m-post-action">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <path
+                            d="m17 3 4 4-4 4M3 11V9a2 2 0 0 1 2-2h16M7 21l-4-4 4-4m14 0v2a2 2 0 0 1-2 2H3"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          /></svg
+                        >Bagikan
+                      </button>
+                      <button class="m-post-action">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <path
+                            d="m22 2-7 20-4-9-9-4zM22 2 11 13"
+                            stroke-linejoin="round"
+                            stroke-linecap="round"
+                          /></svg
+                        >Kirim
+                      </button>
+                    </div>
+                  </article>
+
+                  <article class="m-post">
+                    <div class="m-post-header">
+                      <img
+                        class="m-post-avatar"
+                        src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop&crop=faces"
+                        alt=""
+                      />
+                      <div class="m-post-author">
+                        <div class="m-author-line">
+                          Bima Santoso <span class="pronoun">• 2nd</span>
+                        </div>
+                        <div class="m-author-meta">Founder at Ruang Tumbuh</div>
+                        <div class="m-author-meta">5 jam • 🌐</div>
+                      </div>
+                      <button
+                        class="m-post-menu"
+                        onclick="showToast('Opsi postingan')"
+                      >
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                          <circle cx="5" cy="12" r="1.7" />
+                          <circle cx="12" cy="12" r="1.7" />
+                          <circle cx="19" cy="12" r="1.7" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div class="m-post-copy">
+                      <p>
+                        Kecepatan bukan berarti terburu-buru. Tim yang bergerak
+                        cepat bukan tim yang selalu sibuk.
+                      </p>
+                      <p class="hashtags">#Startup #Leadership</p>
+                    </div>
+                    <div class="m-reactions-line">
+                      <span>♥ 👏 87</span>
+                      <span>24 komentar</span>
+                    </div>
+                    <div class="m-post-actions">
+                      <button class="m-post-action m-like">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <path
+                            d="M7 10v11H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2zm0 0 5-8c2 0 3 1.5 2 4l-1 4h6a2 2 0 0 1 2 2l-1 7a2 2 0 0 1-2 2H7"
+                            stroke-linejoin="round"
+                          /></svg
+                        >Suka
+                      </button>
+                      <button class="m-post-action">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <path
+                            d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-9.5A7.5 7.5 0 0 1 10.5 4h2A7.5 7.5 0 0 1 20 11.5Z"
+                            stroke-linejoin="round"
+                          /></svg
+                        >Komentar
+                      </button>
+                      <button class="m-post-action">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <path
+                            d="m17 3 4 4-4 4M3 11V9a2 2 0 0 1 2-2h16M7 21l-4-4 4-4m14 0v2a2 2 0 0 1-2 2H3"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          /></svg
+                        >Bagikan
+                      </button>
+                      <button class="m-post-action">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <path
+                            d="m22 2-7 20-4-9-9-4zM22 2 11 13"
+                            stroke-linejoin="round"
+                            stroke-linecap="round"
+                          /></svg
+                        >Kirim
+                      </button>
+                    </div>
+                  </article>
+
+                  <article class="m-post">
+                    <div class="m-post-header">
+                      <img
+                        class="m-post-avatar"
+                        src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=faces"
+                        alt=""
+                      />
+                      <div class="m-post-author">
+                        <div class="m-author-line">
+                          Sarah Wijaya <span class="pronoun">• 1st</span>
+                        </div>
+                        <div class="m-author-meta">Marketing Lead</div>
+                        <div class="m-author-meta">1 hari • 🌐</div>
+                      </div>
+                      <button
+                        class="m-post-menu"
+                        onclick="showToast('Opsi postingan')"
+                      >
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                          <circle cx="5" cy="12" r="1.7" />
+                          <circle cx="12" cy="12" r="1.7" />
+                          <circle cx="19" cy="12" r="1.7" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div class="m-post-copy">
+                      <p>
+                        Brand yang kuat tidak hanya berbicara tentang produknya.
+                        Brand yang kuat tahu cerita apa yang ingin dibagikan.
+                      </p>
+                      <p class="hashtags">#Marketing #BrandStorytelling</p>
+                    </div>
+                    <img
+                      class="m-post-image"
+                      src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=600&h=400&fit=crop"
+                      alt=""
+                    />
+                    <div class="m-reactions-line">
+                      <span>♥ 💕 64</span>
+                      <span>9 komentar • 3x</span>
+                    </div>
+                    <div class="m-post-actions">
+                      <button class="m-post-action m-like">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <path
+                            d="M7 10v11H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2zm0 0 5-8c2 0 3 1.5 2 4l-1 4h6a2 2 0 0 1 2 2l-1 7a2 2 0 0 1-2 2H7"
+                            stroke-linejoin="round"
+                          /></svg
+                        >Suka
+                      </button>
+                      <button class="m-post-action">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <path
+                            d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-9.5A7.5 7.5 0 0 1 10.5 4h2A7.5 7.5 0 0 1 20 11.5Z"
+                            stroke-linejoin="round"
+                          /></svg
+                        >Komentar
+                      </button>
+                      <button class="m-post-action">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <path
+                            d="m17 3 4 4-4 4M3 11V9a2 2 0 0 1 2-2h16M7 21l-4-4 4-4m14 0v2a2 2 0 0 1-2 2H3"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          /></svg
+                        >Bagikan
+                      </button>
+                      <button class="m-post-action">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <path
+                            d="m22 2-7 20-4-9-9-4zM22 2 11 13"
+                            stroke-linejoin="round"
+                            stroke-linecap="round"
+                          /></svg
+                        >Kirim
+                      </button>
+                    </div>
+                  </article>
+                </div>
+
+                <!-- Bottom Navigation -->
+                <div class="mobile-bottom-nav">
+                  <button class="m-nav-item active" data-tab="home">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path
+                        d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"
+                        stroke-linejoin="round"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    <span>Beranda</span>
+                  </button>
+                  <button class="m-nav-item" data-tab="network">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <circle cx="9" cy="8" r="3"></circle>
+                      <path
+                        d="M3 20c.3-3.3 2.3-5 6-5s5.7 1.7 6 5M16 5.2a3 3 0 0 1 0 5.6M17 15c2.4.4 3.7 2 4 5"
+                        stroke-linecap="round"
+                      />
+                    </svg>
+                    <span>Jaringan</span>
+                  </button>
+                  <button
+                    class="m-nav-item m-nav-post"
+                    data-tab="post"
+                    id="mPostBtn"
+                  >
+                    <div class="m-nav-post-icon">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                      >
+                        <path
+                          d="M12 5v14M5 12h14"
+                          stroke-linecap="round"
+                          stroke-width="2.5"
+                        />
+                      </svg>
+                    </div>
+                    <span>Posting</span>
+                  </button>
+                  <button class="m-nav-item" data-tab="notif">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path
+                        d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                    <span>Notifikasi</span>
+                    <span class="m-nav-badge">12</span>
+                  </button>
+                  <button class="m-nav-item" data-tab="jobs">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <rect x="3" y="7" width="18" height="14" rx="2"></rect>
+                      <path
+                        d="M8 7V4h8v3M3 12h18M10 12v2h4v-2"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                    <span>Pekerjaan</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="pixel-home-indicator"></div>
+          </div>
+        </div>
+
+        <!-- Specs Panel -->
+        <div class="phone-specs">
+          <h3>📱 Preview Mobile</h3>
+          <ul>
+            <li>Frame mirip Pixel 8 Pro</li>
+            <li>Layout sesuai aplikasi LinkedIn mobile</li>
+            <li>Bottom navigation 5-tab (+) posting</li>
+            <li>Status bar Android real-time</li>
+            <li>Interaksi Like, Komentar, Share</li>
+            <li>Post composer modal</li>
+            <li>Notifikasi badge aktif</li>
+            <li>Responsive di layar kecil</li>
+          </ul>
+          <p
+            style="
+              color: #9aa0ab;
+              font-size: 12px;
+              margin-top: 16px;
+              line-height: 1.6;
+            "
+          >
+            Gunakan tombol di kanan bawah untuk switch antara mode Desktop dan
+            Mobile. Keduanya terhubung — postingan yang dibuat akan muncul di
+            kedua tampilan.
+          </p>
+        </div>
+      </div>
+
+      <!-- ============ SHARED MODALS ============ -->
+      <div
+        class="modal-backdrop"
+        id="composerModal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modalTitle"
+      >
+        <div class="composer-modal">
+          <div class="modal-head">
+            <h2 id="modalTitle">Buat postingan</h2>
+            <button class="modal-close" id="closeComposer" aria-label="Tutup">
+              <svg
+                viewBox="0 0 24 24"
+                width="21"
+                height="21"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
+              </svg>
+            </button>
+          </div>
+          <div class="modal-user">
+            <img
+              class="avatar"
+              src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=faces"
+              alt=""
+            />
+            <div>
+              <strong>Alex Pratama</strong
+              ><button class="audience" type="button">
+                <svg viewBox="0 0 16 16" fill="currentColor">
+                  <circle cx="8" cy="8" r="6" />
+                  <path
+                    d="M2 8h12M8 2c2 2 2 10 0 12M8 2c-2 2-2 10 0 12"
+                    fill="none"
+                    stroke="#fff"
+                    stroke-width=".8"
+                  /></svg
+                >Siapa saja <span>⌄</span>
+              </button>
+            </div>
+          </div>
+          <textarea
+            class="post-textarea"
+            id="postText"
+            placeholder="Apa yang ingin Anda bicarakan?"
+          ></textarea>
+          <div class="modal-bottom">
+            <div class="modal-tools">
+              <button
+                aria-label="Tambahkan foto"
+                onclick="showToast('Lampiran foto belum tersedia.')"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                >
+                  <rect x="3" y="4" width="18" height="16" rx="2" />
+                  <circle cx="8.5" cy="9" r="1.5" />
+                  <path d="m21 15-5-5L5 20" />
+                </svg></button
+              ><button
+                aria-label="Tambahkan tautan"
+                onclick="showToast('Lampiran tautan belum tersedia.')"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                >
+                  <path
+                    d="M10 13a5 5 0 0 0 7.1 0l3-3A5 5 0 0 0 13 2.9l-1.7 1.7M14 11a5 5 0 0 0-7.1 0l-3 3A5 5 0 0 0 11 21.1l1.7-1.7"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </button>
+            </div>
+            <button class="publish-btn" id="publishPost" disabled>
+              Posting
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </div>
+
+    <script>
+      /* ============================================
+       MODE SWITCH
+    ============================================ */
+      const desktopView = document.getElementById("desktopView");
+      const mobileView = document.getElementById("mobileView");
+      const switchBtn = document.getElementById("switchMode");
+      const switchLabel = document.getElementById("switchLabel");
+      const switchIcon = document.getElementById("switchIcon");
+
+      let currentMode = "desktop";
+
+      const mobileIcon =
+        '<rect x="5" y="2" width="14" height="20" rx="2.5" /><path d="M11 18h2" stroke-linecap="round"/>';
+      const desktopIcon =
+        '<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4" stroke-linecap="round"/>';
+
+      switchBtn.addEventListener("click", () => {
+        if (currentMode === "desktop") {
+          desktopView.classList.add("hidden");
+          mobileView.classList.add("active");
+          currentMode = "mobile";
+          switchLabel.textContent = "Mode Desktop";
+          switchIcon.innerHTML = desktopIcon;
+          switchBtn.setAttribute("aria-label", "Switch ke tampilan desktop");
+          document.title = "LinkedIn Clone — Mobile (Pixel)";
+        } else {
+          desktopView.classList.remove("hidden");
+          mobileView.classList.remove("active");
+          currentMode = "desktop";
+          switchLabel.textContent = "Mode Mobile";
+          switchIcon.innerHTML = mobileIcon;
+          switchBtn.setAttribute("aria-label", "Switch ke tampilan mobile");
+          document.title = "LinkedIn Clone — Desktop";
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      });
+
+      /* ============================================
+       SHARED UI LOGIC
+    ============================================ */
+      const modal = document.getElementById("composerModal");
+      const postText = document.getElementById("postText");
+      const publishButton = document.getElementById("publishPost");
+      const toast = document.getElementById("toast");
+      let toastTimer;
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 2400);
+      }
+
+      function openComposer() {
+        modal.classList.add("open");
+        document.body.style.overflow = "hidden";
+        setTimeout(() => postText.focus(), 50);
+      }
+      function closeComposer() {
+        modal.classList.remove("open");
+        document.body.style.overflow = "";
+      }
+
+      document
+        .getElementById("openComposer")
+        .addEventListener("click", openComposer);
+      document
+        .getElementById("mOpenComposer")
+        .addEventListener("click", openComposer);
+      document
+        .getElementById("mPostBtn")
+        .addEventListener("click", openComposer);
+      document
+        .getElementById("closeComposer")
+        .addEventListener("click", closeComposer);
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeComposer();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && modal.classList.contains("open"))
+          closeComposer();
+      });
+
+      postText.addEventListener("input", () => {
+        publishButton.disabled = !postText.value.trim();
+      });
+
+      publishButton.addEventListener("click", () => {
+        const value = postText.value.trim();
+        if (!value) return;
+
+        // Add to desktop feed
+        const article = document.createElement("article");
+        article.className = "card post";
+        article.dataset.search = value.toLowerCase();
+        article.innerHTML = `
+        <div class="post-header">
+          <img class="avatar post-avatar" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=faces" alt="Foto Alex Pratama" />
+          <div class="post-author"><div class="author-line">Alex Pratama <span class="pronoun">• Anda</span></div><div class="author-meta">Product Designer | UI/UX Enthusiast</div><div class="author-meta">Baru saja • 🌐</div></div>
+          <button class="post-menu" aria-label="Opsi postingan" onclick="showToast('Opsi postingan')"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>
+        </div>
+        <div class="post-copy"><p>${escapeHTML(value).replace(/\n/g, "<br>")}</p></div>
+        <div class="reactions-line"><div class="reaction-stack"><span>Jadilah yang pertama bereaksi</span></div><span>0 komentar</span></div>
+        <div class="post-actions">
+          <button class="post-action like-button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 10v11H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2zm0 0 5-8c2 0 3 1.5 2 4l-1 4h6a2 2 0 0 1 2 2l-1 7a2 2 0 0 1-2 2H7" stroke-linejoin="round"/></svg>Suka</button>
+          <button class="post-action comment-button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-9.5A7.5 7.5 0 0 1 10.5 4h2A7.5 7.5 0 0 1 20 11.5Z" stroke-linejoin="round"/></svg>Komentar</button>
+          <button class="post-action repost-button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m17 3 4 4-4 4M3 11V9a2 2 0 0 1 2-2h16M7 21l-4-4 4-4m14 0v2a2 2 0 0 1-2 2H3" stroke-linecap="round" stroke-linejoin="round"/></svg>Bagikan ulang</button>
+          <button class="post-action send-button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m22 2-7 20-4-9-9-4zM22 2 11 13" stroke-linejoin="round" stroke-linecap="round"/></svg>Kirim</button>
+        </div>
+        <div class="comment-box"><img class="avatar" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=faces" alt="" /><input type="text" placeholder="Tambahkan komentar..." /><button class="comment-submit">Kirim</button></div><div class="comment-preview"></div>`;
+        document
+          .querySelector(".feed-column")
+          .insertBefore(
+            article,
+            document.querySelector(".feed-column").children[2],
+          );
+
+        // Add to mobile feed too
+        const mArticle = document.createElement("article");
+        mArticle.className = "m-post";
+        mArticle.innerHTML = `
+        <div class="m-post-header">
+          <img class="m-post-avatar" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=faces" alt="" />
+          <div class="m-post-author">
+            <div class="m-author-line">Alex Pratama <span class="pronoun">• Anda</span></div>
+            <div class="m-author-meta">Product Designer</div>
+            <div class="m-author-meta">Baru saja • 🌐</div>
+          </div>
+          <button class="m-post-menu" onclick="showToast('Opsi postingan')"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>
+        </div>
+        <div class="m-post-copy"><p>${escapeHTML(value).replace(/\n/g, "<br>")}</p></div>
+        <div class="m-reactions-line"><span>Jadilah yang pertama</span><span>0 komentar</span></div>
+        <div class="m-post-actions">
+          <button class="m-post-action m-like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 10v11H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2zm0 0 5-8c2 0 3 1.5 2 4l-1 4h6a2 2 0 0 1 2 2l-1 7a2 2 0 0 1-2 2H7" stroke-linejoin="round"/></svg>Suka</button>
+          <button class="m-post-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-9.5A7.5 7.5 0 0 1 10.5 4h2A7.5 7.5 0 0 1 20 11.5Z" stroke-linejoin="round"/></svg>Komentar</button>
+          <button class="m-post-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m17 3 4 4-4 4M3 11V9a2 2 0 0 1 2-2h16M7 21l-4-4 4-4m14 0v2a2 2 0 0 1-2 2H3" stroke-linecap="round" stroke-linejoin="round"/></svg>Bagikan</button>
+          <button class="m-post-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m22 2-7 20-4-9-9-4zM22 2 11 13" stroke-linejoin="round" stroke-linecap="round"/></svg>Kirim</button>
+        </div>`;
+        const mobileFeed = document.getElementById("mobileFeed");
+        const composerEl = mobileFeed.querySelector(".m-composer");
+        composerEl.after(mArticle);
+        bindMobileActions(mArticle);
+
+        postText.value = "";
+        publishButton.disabled = true;
+        closeComposer();
+        bindPostActions(article);
+        showToast("Postingan berhasil dibuat. ✨");
+
+        if (currentMode === "desktop") {
+          article.scrollIntoView({ behavior: "smooth", block: "start" });
+        } else {
+          mArticle.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
+
+      function escapeHTML(text) {
+        return text.replace(
+          /[&<>"']/g,
+          (char) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[char],
+        );
+      }
+
+      /* DESKTOP BINDINGS */
+      function bindPostActions(scope = document) {
+        scope.querySelectorAll(".like-button").forEach((button) => {
+          if (button.dataset.bound) return;
+          button.dataset.bound = "1";
+          button.addEventListener("click", () => {
+            button.classList.toggle("liked");
+            showToast(
+              button.classList.contains("liked")
+                ? "Anda menyukai postingan ini."
+                : "Suka dibatalkan.",
+            );
+          });
+        });
+        scope.querySelectorAll(".comment-button").forEach((button) => {
+          if (button.dataset.bound) return;
+          button.dataset.bound = "1";
+          button.addEventListener("click", () => {
+            const post = button.closest(".post");
+            const box = post.querySelector(".comment-box");
+            box.classList.toggle("open");
+            if (box.classList.contains("open"))
+              box.querySelector("input").focus();
+          });
+        });
+        scope.querySelectorAll(".comment-submit").forEach((button) => {
+          if (button.dataset.bound) return;
+          button.dataset.bound = "1";
+          button.addEventListener("click", () => submitComment(button));
+        });
+        scope.querySelectorAll(".comment-box input").forEach((input) => {
+          if (input.dataset.bound) return;
+          input.dataset.bound = "1";
+          input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter")
+              submitComment(
+                input.parentElement.querySelector(".comment-submit"),
+              );
+          });
+        });
+        scope.querySelectorAll(".repost-button").forEach((button) => {
+          if (button.dataset.bound) return;
+          button.dataset.bound = "1";
+          button.addEventListener("click", () =>
+            showToast("Postingan siap dibagikan ulang."),
+          );
+        });
+        scope.querySelectorAll(".send-button").forEach((button) => {
+          if (button.dataset.bound) return;
+          button.dataset.bound = "1";
+          button.addEventListener("click", () =>
+            showToast("Tautan demo disiapkan untuk dibagikan."),
+          );
+        });
+      }
+
+      function submitComment(button) {
+        const box = button.closest(".comment-box");
+        const input = box.querySelector("input");
+        const value = input.value.trim();
+        if (!value) {
+          input.focus();
+          return;
+        }
+        const preview = box.parentElement.querySelector(".comment-preview");
+        preview.textContent = "Alex Pratama: " + value;
+        preview.classList.add("show");
+        input.value = "";
+        box.classList.remove("open");
+        showToast("Komentar ditambahkan.");
+      }
+      bindPostActions();
+
+      /* MOBILE BINDINGS */
+      function bindMobileActions(scope = document) {
+        scope.querySelectorAll(".m-like").forEach((button) => {
+          if (button.dataset.bound) return;
+          button.dataset.bound = "1";
+          button.addEventListener("click", () => {
+            button.classList.toggle("liked");
+            showToast(
+              button.classList.contains("liked")
+                ? "Anda menyukai postingan ini."
+                : "Suka dibatalkan.",
+            );
+          });
+        });
+      }
+      bindMobileActions();
+
+      /* Mobile bottom nav */
+      document.querySelectorAll(".m-nav-item").forEach((item) => {
+        item.addEventListener("click", () => {
+          if (item.classList.contains("m-nav-post")) return;
+          document
+            .querySelectorAll(".m-nav-item")
+            .forEach((n) => n.classList.remove("active"));
+          item.classList.add("active");
+          const tab = item.dataset.tab;
+          const names = {
+            home: "Beranda",
+            network: "Jaringan",
+            notif: "Notifikasi",
+            jobs: "Pekerjaan",
+          };
+          showToast(`${names[tab] || tab}: tampilan demo aktif.`);
+        });
+      });
+
+      /* DESKTOP OTHER LOGIC */
+      document.getElementById("searchInput").addEventListener("input", (e) => {
+        const term = e.target.value.trim().toLowerCase();
+        let visible = 0;
+        document.querySelectorAll(".post").forEach((post) => {
+          const text = (
+            post.innerText +
+            " " +
+            (post.dataset.search || "")
+          ).toLowerCase();
+          const match = !term || text.includes(term);
+          post.style.display = match ? "" : "none";
+          if (match) visible++;
+        });
+        document.getElementById("emptyState").style.display = visible
+          ? "none"
+          : "block";
+        document.querySelector(".sort-row").style.display = term
+          ? "none"
+          : "flex";
+      });
+
+      document.querySelectorAll(".nav-item").forEach((item) =>
+        item.addEventListener("click", () => {
+          document
+            .querySelectorAll(".nav-item")
+            .forEach((nav) => nav.classList.remove("active"));
+          item.classList.add("active");
+          const name = item.dataset.nav;
+          if (name !== "Beranda")
+            showToast(`${name}: ini adalah demo tampilan frontend.`);
+          else showToast("Anda berada di Beranda.");
+        }),
+      );
+
+      document.querySelectorAll("[data-compose]").forEach((button) =>
+        button.addEventListener("click", () => {
+          openComposer();
+          const type = button.dataset.compose;
+          if (type === "foto")
+            postText.placeholder = "Bagikan foto dan ceritakan sesuatu...";
+          else if (type === "video")
+            postText.placeholder = "Ceritakan video yang ingin Anda bagikan...";
+          else if (type === "event")
+            postText.placeholder = "Bagikan acara profesional Anda...";
+          else postText.placeholder = "Mulai menulis artikel...";
+        }),
+      );
+
+      document
+        .getElementById("sortButton")
+        .addEventListener("click", () =>
+          showToast("Feed diurutkan berdasarkan Teratas."),
+        );
+
+      document.getElementById("showMoreNews").addEventListener("click", () => {
+        const list = document.querySelector(".news-list");
+        if (list.dataset.expanded) {
+          list
+            .querySelectorAll('[data-extra="1"]')
+            .forEach((el) => el.remove());
+          delete list.dataset.expanded;
+          document.getElementById("showMoreNews").innerHTML =
+            'Lihat lebih banyak <svg viewBox="0 0 16 16" fill="currentColor"><path d="m3 6 5 5 5-5z"/></svg>';
+        } else {
+          [
+            [
+              "Perusahaan mulai berinvestasi pada reskilling",
+              "7 jam yang lalu • 712 pembaca",
+            ],
+            [
+              "Kolaborasi lintas fungsi jadi kunci inovasi",
+              "kemarin • 689 pembaca",
+            ],
+          ].forEach(([title, meta]) => {
+            const li = document.createElement("li");
+            li.dataset.extra = "1";
+            li.innerHTML = `<a href="#news">${title}</a><span>${meta}</span>`;
+            list.appendChild(li);
+          });
+          list.dataset.expanded = "1";
+          document.getElementById("showMoreNews").textContent =
+            "Tampilkan lebih sedikit";
+        }
+      });
+
+      /* Pixel Status Bar — jam real-time */
+      function updatePixelClock() {
+        const now = new Date();
+        const h = now.getHours();
+        const m = String(now.getMinutes()).padStart(2, "0");
+        document.getElementById("pixelClock").textContent = `${h}:${m}`;
+      }
+      updatePixelClock();
+      setInterval(updatePixelClock, 30000);
+    </script>
+  </body>
+</html>

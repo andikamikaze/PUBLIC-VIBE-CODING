@@ -1,0 +1,1689 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#ffffff" />
+    <title>Simple NewsReader</title>
+    <meta
+      name="description"
+      content="Aplikasi pembaca berita minimalis untuk mengelola sumber, menyimpan artikel, dan membaca tanpa gangguan."
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #ffffff;
+        --sidebar-bg: #fafafa;
+        --text: #18181b;
+        --text-muted: #71717a;
+        --border: #e4e4e7;
+        --accent: #18181b;
+        --accent-soft: #f4f4f5;
+        --danger: #ef4444;
+        --radius: 8px;
+        --shadow:
+          0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          16px/1.6 "Inter",
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible {
+        outline: 2px solid var(--text);
+        outline-offset: 2px;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      /* Layout Utama */
+      .app {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 280px minmax(0, 1fr);
+      }
+
+      /* Sidebar */
+      .sidebar {
+        height: 100vh;
+        position: sticky;
+        top: 0;
+        background: var(--sidebar-bg);
+        border-right: 1px solid var(--border);
+        padding: 32px 24px;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: -0.5px;
+        margin-bottom: 40px;
+        color: var(--text);
+      }
+      .brand-mark {
+        width: 32px;
+        height: 32px;
+        background: var(--text);
+        color: var(--bg);
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .nav-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-muted);
+        font-weight: 600;
+        margin: 32px 0 12px;
+      }
+      .nav {
+        display: grid;
+        gap: 4px;
+      }
+      .nav-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-align: left;
+        padding: 12px; /* Diperbesar untuk target sentuh 44px+ */
+        min-height: 44px;
+        border: 0;
+        border-radius: var(--radius);
+        background: transparent;
+        color: var(--text-muted);
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.15s ease;
+      }
+      .nav-btn:hover {
+        background: var(--accent-soft);
+        color: var(--text);
+      }
+      .nav-btn.active {
+        background: var(--accent-soft);
+        color: var(--text);
+        font-weight: 600;
+      }
+      .count {
+        margin-left: auto;
+        font-size: 12px;
+        color: var(--text-muted);
+        background: var(--bg);
+        padding: 2px 8px;
+        border-radius: 100px;
+        border: 1px solid var(--border);
+      }
+      .source-list {
+        display: grid;
+        gap: 4px;
+      }
+      .source-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        min-height: 44px;
+        font-size: 13px;
+        color: var(--text-muted);
+        border-radius: var(--radius);
+        transition: background 0.15s;
+      }
+      .source-item:hover {
+        background: var(--accent-soft);
+        color: var(--text);
+      }
+      .source-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--text-muted);
+        flex: none;
+      }
+      .source-item button {
+        margin-left: auto;
+        background: none;
+        border: 0;
+        color: var(--text-muted);
+        opacity: 0;
+        font-size: 18px;
+        line-height: 1;
+        transition: opacity 0.15s;
+        min-width: 44px;
+        min-height: 44px;
+        display: grid;
+        place-items: center;
+      }
+      .source-item:hover button {
+        opacity: 1;
+      }
+      .sidebar-bottom {
+        margin-top: auto;
+        border-top: 1px solid var(--border);
+        padding-top: 24px;
+      }
+      .profile {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 4px;
+      }
+      .avatar {
+        height: 36px;
+        width: 36px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: var(--accent-soft);
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .profile strong {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .profile small {
+        color: var(--text-muted);
+        font-size: 12px;
+      }
+
+      /* Main Content */
+      .main {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+      .topbar {
+        height: 72px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 48px;
+        background: var(--bg);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+      .breadcrumbs {
+        font-size: 13px;
+        color: var(--text-muted);
+        font-weight: 500;
+      }
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .search-wrap {
+        position: relative;
+      }
+      .search-wrap span {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        font-size: 16px;
+        pointer-events: none;
+      }
+      .search {
+        width: 240px;
+        height: 44px; /* Target sentuh 44px */
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--bg);
+        padding: 0 16px 0 40px;
+        font-size: 14px;
+        color: var(--text);
+        transition: all 0.15s ease;
+      }
+      .search:focus {
+        outline: none;
+        border-color: var(--text);
+        box-shadow: 0 0 0 3px var(--accent-soft);
+      }
+
+      .icon-btn,
+      .btn {
+        border: 1px solid var(--border);
+        background: var(--bg);
+        border-radius: var(--radius);
+        color: var(--text);
+        min-height: 44px; /* Target sentuh 44px */
+        min-width: 44px;
+        padding: 0 16px;
+        font-size: 14px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.15s ease;
+      }
+      .icon-btn {
+        width: 44px;
+        padding: 0;
+        font-size: 18px;
+      }
+      .icon-btn:hover,
+      .btn:hover {
+        background: var(--accent-soft);
+        border-color: var(--text-muted);
+      }
+      .btn.primary {
+        background: var(--text);
+        border-color: var(--text);
+        color: var(--bg);
+      }
+      .btn.primary:hover {
+        opacity: 0.9;
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .content {
+        flex: 1;
+        max-width: 1200px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 48px 48px 80px;
+      }
+      .page-heading {
+        margin-bottom: 40px;
+      }
+      .eyebrow {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: var(--text-muted);
+        font-weight: 600;
+        margin-bottom: 12px;
+      }
+      .page-heading h1 {
+        font-size: clamp(28px, 3vw, 36px);
+        line-height: 1.2;
+        letter-spacing: -0.5px;
+        font-weight: 700;
+        margin: 0 0 12px;
+      }
+      .page-heading p {
+        margin: 0;
+        color: var(--text-muted);
+        font-size: 16px;
+        line-height: 1.6;
+        max-width: 600px;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        gap: 64px;
+        align-items: start;
+      }
+
+      /* Story List */
+      .filters {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 32px;
+      }
+      .filter {
+        border: 1px solid var(--border);
+        border-radius: 100px;
+        background: transparent;
+        min-height: 44px; /* Target sentuh 44px */
+        padding: 0 16px;
+        font-size: 13px;
+        color: var(--text-muted);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+      }
+      .filter:hover {
+        border-color: var(--text-muted);
+        color: var(--text);
+      }
+      .filter.active {
+        background: var(--text);
+        border-color: var(--text);
+        color: var(--bg);
+      }
+
+      .story-list {
+        display: grid;
+      }
+      .story {
+        padding: 32px 0;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .story:first-child {
+        padding-top: 16px;
+      }
+      .story-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--text-muted);
+        font-weight: 500;
+        flex-wrap: wrap;
+      }
+      .publication {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .story h3 {
+        font-size: 20px;
+        line-height: 1.4;
+        letter-spacing: -0.3px;
+        margin: 0;
+        font-weight: 600;
+      }
+      .story h3 a {
+        color: var(--text);
+        transition: color 0.15s;
+      }
+      .story h3 a:hover {
+        color: var(--text-muted);
+      }
+      .story p {
+        font-size: 15px;
+        line-height: 1.7;
+        color: var(--text-muted);
+        margin: 0;
+      }
+
+      .story-actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-top: 8px;
+        flex-wrap: wrap;
+      }
+      .story-actions button {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        min-height: 44px;
+        padding: 0 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: color 0.15s;
+      }
+      .story-actions button:hover {
+        color: var(--text);
+      }
+      .story-actions button.saved {
+        color: var(--danger);
+      }
+      .external-link {
+        font-size: 13px;
+        color: var(--text-muted);
+        text-decoration: underline;
+        margin-left: auto;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .external-link:hover {
+        color: var(--text);
+      }
+
+      /* Right Rail */
+      .right-rail {
+        position: sticky;
+        top: 96px;
+      }
+      .panel {
+        margin-bottom: 40px;
+      }
+      .panel h2 {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-muted);
+        font-weight: 600;
+        margin: 0 0 16px;
+      }
+      .topic-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        background: none;
+        border: 0;
+        text-align: left;
+        padding: 12px 0;
+        min-height: 44px;
+        font-size: 14px;
+        color: var(--text);
+        cursor: pointer;
+        border-bottom: 1px solid var(--border);
+        transition: color 0.15s;
+      }
+      .topic-row:last-child {
+        border-bottom: 0;
+      }
+      .topic-row span:last-child {
+        color: var(--text-muted);
+        font-size: 13px;
+      }
+      .topic-row:hover {
+        color: var(--text-muted);
+      }
+      .source-card {
+        display: flex;
+        align-items: center;
+        padding: 8px 0;
+      }
+      .source-card strong {
+        font-size: 14px;
+        font-weight: 500;
+        display: block;
+      }
+      .source-card small {
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+      .btn-text {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        padding: 12px 0;
+        min-height: 44px;
+        width: 100%;
+        text-align: left;
+        transition: color 0.15s;
+      }
+      .btn-text:hover {
+        color: var(--text);
+      }
+
+      .empty {
+        border: 1px dashed var(--border);
+        border-radius: var(--radius);
+        padding: 48px 24px;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 14px;
+      }
+      .empty strong {
+        display: block;
+        color: var(--text);
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      /* Reader View */
+      .reader-view {
+        max-width: 680px;
+        margin: 0 auto;
+        padding-top: 24px;
+      }
+      .back-link {
+        border: 0;
+        background: none;
+        color: var(--text-muted);
+        padding: 0;
+        margin-bottom: 32px;
+        font-size: 14px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 44px;
+        transition: color 0.15s;
+      }
+      .back-link:hover {
+        color: var(--text);
+      }
+      .reader-view .reader-meta {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin: 16px 0;
+        font-weight: 500;
+      }
+      .reader-view h1 {
+        font-size: clamp(32px, 4vw, 42px);
+        line-height: 1.2;
+        letter-spacing: -0.5px;
+        margin: 0 0 16px;
+        font-weight: 700;
+      }
+      .reader-view .dek {
+        font-size: 18px;
+        line-height: 1.6;
+        color: var(--text-muted);
+        margin: 0 0 40px;
+      }
+      .reader-body-text {
+        font-size: 17px;
+        line-height: 1.8;
+        color: var(--text);
+      }
+      .reader-body-text p {
+        margin: 0 0 24px;
+      }
+      .reader-controls {
+        display: flex;
+        gap: 12px;
+        margin-top: 48px;
+        padding-top: 32px;
+        border-top: 1px solid var(--border);
+        flex-wrap: wrap;
+      }
+
+      /* Modal */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        z-index: 50;
+      }
+      .modal-backdrop.open {
+        display: flex;
+      }
+      .modal {
+        width: min(480px, 100%);
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 32px;
+        box-shadow: var(--shadow);
+      }
+      .modal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+      .modal h2 {
+        font-size: 18px;
+        margin: 0;
+        font-weight: 600;
+        letter-spacing: -0.3px;
+      }
+      .modal p {
+        font-size: 14px;
+        color: var(--text-muted);
+        margin: 8px 0 24px;
+        line-height: 1.5;
+      }
+      .field {
+        display: grid;
+        gap: 8px;
+        margin: 16px 0;
+      }
+      .field label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .field input,
+      .field select {
+        height: 44px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 0 14px;
+        background: var(--bg);
+        color: var(--text);
+        font-size: 14px;
+        width: 100%;
+        transition: all 0.15s;
+      }
+      .field input:focus,
+      .field select:focus {
+        outline: none;
+        border-color: var(--text);
+        box-shadow: 0 0 0 3px var(--accent-soft);
+      }
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 32px;
+      }
+
+      /* Toast */
+      .toast {
+        position: fixed;
+        bottom: 32px;
+        left: 50%;
+        transform: translate(-50%, 12px);
+        opacity: 0;
+        pointer-events: none;
+        background: var(--text);
+        color: var(--bg);
+        padding: 12px 20px;
+        border-radius: 100px;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        z-index: 100;
+        box-shadow: var(--shadow);
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      .footer-note {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 64px;
+        text-align: center;
+        padding-bottom: 32px;
+      }
+
+      .mobile-menu,
+      .mobile-close {
+        display: none;
+      }
+
+      /* Dark Mode */
+      body.dark {
+        color-scheme: dark;
+        --bg: #09090b;
+        --sidebar-bg: #111113;
+        --text: #fafafa;
+        --text-muted: #a1a1aa;
+        --border: #27272a;
+        --accent: #fafafa;
+        --accent-soft: #27272a;
+      }
+
+      /* Responsive */
+      @media (max-width: 1024px) {
+        .layout {
+          grid-template-columns: 1fr;
+          gap: 48px;
+        }
+        .right-rail {
+          position: static;
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 32px;
+        }
+        .panel {
+          margin-bottom: 0;
+        }
+      }
+      @media (max-width: 768px) {
+        .app {
+          display: block;
+        }
+        .sidebar {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 280px;
+          z-index: 100;
+          box-shadow: 100vw 0 0 rgba(0, 0, 0, 0.5);
+        }
+        .sidebar.open {
+          display: flex;
+        }
+        .mobile-menu,
+        .mobile-close {
+          display: flex;
+        }
+        .mobile-close {
+          position: absolute;
+          top: 24px;
+          right: 24px;
+          background: none;
+          border: none;
+          font-size: 20px;
+          color: var(--text);
+          min-width: 44px;
+          min-height: 44px;
+        }
+        .topbar {
+          height: 64px;
+          padding: 0 16px;
+        }
+        .breadcrumbs {
+          display: none;
+        }
+        .search {
+          width: 140px;
+        }
+        .content {
+          padding: 24px 16px 60px;
+        }
+        .page-heading {
+          margin-bottom: 32px;
+        }
+        .right-rail {
+          grid-template-columns: 1fr;
+        }
+        .story h3 {
+          font-size: 18px;
+        }
+        .reader-view h1 {
+          font-size: 28px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar" id="sidebar">
+        <button class="mobile-close" id="mobile-close" aria-label="Tutup menu">
+          ✕
+        </button>
+        <a class="brand" href="#" data-view="home">
+          <span class="brand-mark">NR</span>
+          <span>NewsReader</span>
+        </a>
+
+        <div class="nav-label">Perpustakaan</div>
+        <nav class="nav" aria-label="Navigasi utama">
+          <button class="nav-btn active" data-view="home">
+            <span>▤</span> Untuk Anda
+          </button>
+          <button class="nav-btn" data-view="saved">
+            <span>♡</span> Artikel tersimpan
+            <span class="count" id="saved-count">0</span>
+          </button>
+          <button class="nav-btn" data-view="history">
+            <span>◷</span> Riwayat baca
+          </button>
+        </nav>
+
+        <div class="nav-label">Topik</div>
+        <nav class="nav" id="topic-nav">
+          <button class="nav-btn" data-topic="Teknologi">Teknologi</button>
+          <button class="nav-btn" data-topic="Bisnis">Bisnis</button>
+          <button class="nav-btn" data-topic="Sains">Sains</button>
+          <button class="nav-btn" data-topic="Budaya">Budaya</button>
+        </nav>
+
+        <div class="nav-label">Sumber Anda</div>
+        <div class="source-list" id="source-list"></div>
+        <button
+          class="btn-text"
+          id="add-source-sidebar"
+          style="margin-top: 12px"
+        >
+          + Tambah sumber
+        </button>
+
+        <div class="sidebar-bottom">
+          <button class="nav-btn" id="theme-toggle" style="margin-bottom: 16px">
+            <span>◐</span> Ganti tampilan
+          </button>
+          <div class="profile">
+            <span class="avatar">NR</span>
+            <div><strong>Pembaca</strong><small>Ruang pribadi</small></div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div style="display: flex; align-items: center; gap: 16px">
+            <button
+              class="icon-btn mobile-menu"
+              id="mobile-menu"
+              aria-label="Buka menu"
+            >
+              ☰
+            </button>
+            <span class="breadcrumbs" id="breadcrumb"
+              >Perpustakaan / Untuk Anda</span
+            >
+          </div>
+          <div class="top-actions">
+            <div class="search-wrap">
+              <span>⌕</span>
+              <input
+                class="search"
+                id="search"
+                type="search"
+                placeholder="Cari artikel..."
+                aria-label="Cari artikel"
+                autocomplete="off"
+              />
+            </div>
+            <button
+              class="icon-btn"
+              id="refresh"
+              title="Muat ulang artikel"
+              aria-label="Muat ulang artikel"
+            >
+              ↻
+            </button>
+            <button class="btn primary" id="add-source-top">
+              <span>+</span> Tambah sumber
+            </button>
+          </div>
+        </header>
+
+        <section class="content" id="content" aria-live="polite"></section>
+      </main>
+    </div>
+
+    <!-- Modal Tambah Sumber -->
+    <div
+      class="modal-backdrop"
+      id="modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+    >
+      <form class="modal" id="source-form" novalidate>
+        <div class="modal-head">
+          <h2 id="modal-title">Tambahkan sumber</h2>
+          <button
+            type="button"
+            class="icon-btn"
+            id="close-modal"
+            aria-label="Tutup"
+            style="border: none; background: transparent"
+          >
+            ✕
+          </button>
+        </div>
+        <p>
+          Tambahkan publikasi atau feed RSS ke perpustakaan Anda. Sumber baru
+          disimpan secara lokal di browser ini.
+        </p>
+
+        <div class="field">
+          <label for="source-name">Nama publikasi</label>
+          <input
+            id="source-name"
+            required
+            placeholder="Contoh: Tech Journal"
+            minlength="3"
+          />
+        </div>
+        <div class="field">
+          <label for="source-url">URL situs atau RSS</label>
+          <input
+            id="source-url"
+            type="url"
+            required
+            placeholder="https://example.com/feed.xml"
+          />
+        </div>
+        <div class="field">
+          <label for="source-topic">Topik</label>
+          <select id="source-topic">
+            <option>Teknologi</option>
+            <option>Bisnis</option>
+            <option>Sains</option>
+            <option>Budaya</option>
+            <option>Umum</option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn" id="cancel-modal">Batal</button>
+          <button type="submit" class="btn primary">Simpan sumber</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="toast" id="toast" role="status"></div>
+
+    <script>
+      // --- 1. Helper & Utility Functions ---
+      function safeParse(key, fallback) {
+        try {
+          const item = localStorage.getItem(key);
+          return item ? JSON.parse(item) : fallback;
+        } catch (e) {
+          console.warn(
+            `Gagal memuat ${key} dari localStorage, menggunakan fallback.`,
+            e,
+          );
+          return fallback;
+        }
+      }
+
+      function formatTimeAgo(dateString) {
+        if (!dateString) return "Baru";
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return "Baru";
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffMins < 1) return "Baru saja";
+        if (diffMins < 60) return `${diffMins} menit lalu`;
+        if (diffHours < 24) return `${diffHours} jam lalu`;
+        return `${diffDays} hari lalu`;
+      }
+
+      const esc = (s) =>
+        String(s).replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+
+      // --- 2. Data & State ---
+      function mockStory(id, source, topic, title, desc, minsAgo, body) {
+        return {
+          id,
+          source,
+          topic,
+          title,
+          desc,
+          url: `https://example.com/article/${id}`,
+          publishedAt: new Date(Date.now() - minsAgo * 60000).toISOString(),
+          time: `${Math.max(1, Math.ceil(body.join(" ").length / 1000))} menit baca`,
+          body,
+        };
+      }
+
+      const initialStories = [
+        mockStory(
+          1,
+          "The Daily Brief",
+          "Teknologi",
+          "Internet yang lebih kecil, lebih personal, mulai tumbuh kembali",
+          "Dari blog independen hingga komunitas kecil, semakin banyak orang membangun ruang digital yang mereka kendalikan sendiri.",
+          12,
+          [
+            "Selama bertahun-tahun, pengalaman internet semakin terkonsentrasi pada sejumlah platform besar. Kini, gelombang baru situs pribadi, buletin independen, dan komunitas terkurasi menawarkan alternatif yang lebih tenang.",
+            "Daya tariknya bukan sekadar nostalgia. Situs yang dimiliki sendiri memberi penulis kendali atas format, hubungan dengan pembaca, dan umur panjang karya mereka.",
+          ],
+        ),
+        mockStory(
+          2,
+          "The Science Desk",
+          "Sains",
+          "Apa yang dapat diajarkan jaringan hutan tentang koneksi",
+          "Peneliti mempelajari hubungan kompleks antara akar, jamur, dan ekosistem yang menopang kehidupan di bawah permukaan.",
+          38,
+          [
+            "Hutan bukan kumpulan pohon yang berdiri sendiri. Di bawah tanah, akar, organisme, air, dan nutrisi membentuk sistem yang saling memengaruhi.",
+            "Riset tentang jaringan mikoriza membantu ilmuwan memahami bagaimana tumbuhan berinteraksi dengan lingkungan sekitarnya.",
+          ],
+        ),
+        mockStory(
+          3,
+          "World Review",
+          "Bisnis",
+          "Perusahaan mulai mengukur produktivitas dengan cara berbeda",
+          "Tim kerja mengevaluasi ulang rapat, waktu fokus, dan hasil kerja alih-alih sekadar menghitung jam yang dihabiskan di kantor.",
+          60,
+          [
+            "Banyak organisasi mulai meninjau ulang indikator produktivitas tradisional. Kehadiran dan jumlah rapat tidak selalu menggambarkan kualitas hasil kerja.",
+            "Pendekatan yang lebih berorientasi hasil membutuhkan tujuan yang jelas, ekspektasi yang realistis, serta komunikasi yang terstruktur.",
+          ],
+        ),
+        mockStory(
+          4,
+          "The Daily Brief",
+          "Budaya",
+          "Membuat ruang untuk tidak melakukan apa-apa",
+          "Mengapa waktu luang yang tidak terjadwal bisa membantu kita kembali memperhatikan hal-hal kecil di sekitar.",
+          120,
+          [
+            "Waktu luang sering kali diisi dengan daftar aktivitas baru. Padahal, jeda tanpa agenda dapat memberi kesempatan bagi pikiran untuk beristirahat.",
+            "Menyisihkan beberapa menit tanpa notifikasi atau target tidak harus menjadi ritual besar.",
+          ],
+        ),
+        mockStory(
+          5,
+          "The Science Desk",
+          "Sains",
+          "Peta baru untuk memahami kota yang lebih sejuk",
+          "Data suhu tingkat jalan membantu perencana kota menemukan lokasi yang paling membutuhkan pepohonan dan ruang teduh.",
+          180,
+          [
+            "Suhu di dalam kota dapat berubah drastis hanya dalam jarak beberapa blok. Material bangunan, lalu lintas, tutupan pohon, dan bentuk jalan berkontribusi pada perbedaan tersebut.",
+            "Pemetaan suhu yang lebih rinci memungkinkan pemerintah memprioritaskan intervensi di kawasan yang paling rentan.",
+          ],
+        ),
+        mockStory(
+          6,
+          "World Review",
+          "Teknologi",
+          "Desain perangkat lunak yang memberi pengguna lebih banyak kendali",
+          "Pilihan privasi yang jelas dan pengaturan sederhana menjadi bagian penting dari pengalaman produk digital.",
+          240,
+          [
+            "Produk digital sering kali menawarkan banyak kemampuan, tetapi menyembunyikan pengaturan yang menentukan bagaimana data digunakan.",
+            "Desain yang baik membuat pilihan penting mudah ditemukan, menjelaskan konsekuensi dengan bahasa yang sederhana.",
+          ],
+        ),
+      ];
+
+      let stories = safeParse("newsreader-stories", null) || initialStories;
+      let saved = new Set(safeParse("newsreader-saved", []));
+      let history = safeParse("newsreader-history", []);
+      let sources = safeParse("newsreader-sources", null) || [
+        {
+          name: "The Daily Brief",
+          url: "https://example.com/daily-brief",
+          topic: "Budaya",
+        },
+        {
+          name: "The Science Desk",
+          url: "https://example.com/science",
+          topic: "Sains",
+        },
+        {
+          name: "World Review",
+          url: "https://example.com/world-review",
+          topic: "Bisnis",
+        },
+      ];
+
+      let view = "home",
+        topic = "Semua",
+        query = "",
+        activeStory = null;
+      let isLoading = false,
+        fetchError = null;
+      const content = document.getElementById("content");
+
+      // --- 3. Network Service Module ---
+      /**
+       * NewsService
+       * Mengambil artikel berita menggunakan Spaceflight News API (Gratis, tanpa API Key).
+       * Jika gagal (misal: offline), akan fallback ke data lokal (initialStories).
+       * Dokumentasi API: https://api.spaceflightnewsapi.net/v4/docs/
+       */
+      const NewsService = {
+        async fetchArticles(topicFilter = "Semua", searchQuery = "") {
+          const baseUrl = "https://api.spaceflightnewsapi.net/v4/articles";
+          const params = new URLSearchParams({ limit: 15 });
+          if (searchQuery) params.append("search", searchQuery);
+
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
+
+            const response = await fetch(`${baseUrl}?${params.toString()}`, {
+              signal: controller.signal,
+            });
+            clearTimeout(timeoutId);
+
+            if (!response.ok)
+              throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+
+            return data.results.map((item) => ({
+              id: `api-${item.id}`,
+              source: item.news_site || "Unknown Source",
+              topic: topicFilter === "Semua" ? "Sains" : topicFilter,
+              title: item.title,
+              desc: item.summary || "Tidak ada deskripsi tersedia.",
+              url: item.url,
+              publishedAt: item.published_at,
+              time: "5 menit baca",
+              body: [
+                item.summary || "Tidak ada deskripsi tersedia.",
+                "Artikel ini diambil dari sumber eksternal. Klik tombol di bawah untuk membaca selengkapnya di situs asli.",
+              ],
+            }));
+          } catch (error) {
+            console.warn(
+              "NewsService: Gagal mengambil dari API, menggunakan fallback lokal.",
+              error,
+            );
+            return []; // Return empty, caller will handle fallback
+          }
+        },
+      };
+
+      // --- 4. Core Logic ---
+      function persist() {
+        localStorage.setItem("newsreader-saved", JSON.stringify([...saved]));
+        localStorage.setItem("newsreader-history", JSON.stringify(history));
+        localStorage.setItem("newsreader-sources", JSON.stringify(sources));
+        localStorage.setItem("newsreader-stories", JSON.stringify(stories));
+      }
+
+      function toast(message) {
+        const el = document.getElementById("toast");
+        el.textContent = message;
+        el.classList.add("show");
+        clearTimeout(toast.timer);
+        toast.timer = setTimeout(() => el.classList.remove("show"), 3000);
+      }
+
+      async function loadStories() {
+        if (isLoading) return;
+        if (view === "saved" || view === "history") {
+          render();
+          return;
+        }
+
+        isLoading = true;
+        fetchError = null;
+        render(); // Show loading state
+
+        try {
+          const fetched = await NewsService.fetchArticles(topic, query);
+          let finalStories = [];
+
+          if (fetched.length > 0) {
+            // Gabungkan dengan initialStories agar ID lama (yang mungkin disimpan) tetap ada
+            const existingIds = new Set(fetched.map((s) => s.id));
+            const fallbackStories = initialStories.filter(
+              (s) => !existingIds.has(s.id),
+            );
+            finalStories = [...fetched, ...fallbackStories];
+          } else {
+            finalStories = initialStories;
+          }
+
+          // Apply local filtering if query exists (for fallback consistency)
+          if (query) {
+            const q = query.toLowerCase();
+            const filtered = finalStories.filter((s) =>
+              [s.title, s.desc, s.source, s.topic]
+                .join(" ")
+                .toLowerCase()
+                .includes(q),
+            );
+            if (filtered.length === 0) {
+              fetchError = "Tidak ada hasil yang cocok untuk pencarian Anda.";
+            }
+            stories = filtered;
+          } else {
+            stories = finalStories;
+          }
+        } catch (e) {
+          fetchError =
+            "Gagal memuat artikel dari jaringan. Menampilkan data lokal.";
+          stories = initialStories;
+        } finally {
+          isLoading = false;
+          render();
+        }
+      }
+
+      function renderSources() {
+        document.getElementById("source-list").innerHTML = sources
+          .map(
+            (s, i) => `
+            <div class="source-item">
+              <span class="source-dot"></span>
+              <span>${esc(s.name)}</span>
+              ${i > 2 ? `<button data-remove-source="${i}" aria-label="Hapus ${esc(s.name)}">×</button>` : ""}
+            </div>
+          `,
+          )
+          .join("");
+        document.getElementById("saved-count").textContent = saved.size || "";
+      }
+
+      function updateNav() {
+        document
+          .querySelectorAll("[data-view]")
+          .forEach((b) =>
+            b.classList.toggle("active", b.dataset.view === view),
+          );
+        document
+          .querySelectorAll("[data-topic]")
+          .forEach((b) =>
+            b.classList.toggle(
+              "active",
+              view === "topic" && b.dataset.topic === topic,
+            ),
+          );
+
+        const viewNames = {
+          home: "Untuk Anda",
+          saved: "Artikel tersimpan",
+          history: "Riwayat baca",
+          reader: "Membaca",
+          topic: topic,
+        };
+        document.getElementById("breadcrumb").textContent =
+          "Perpustakaan / " + (viewNames[view] || "Untuk Anda");
+      }
+
+      function storyCard(s) {
+        const dateStr = s.publishedAt
+          ? formatTimeAgo(s.publishedAt)
+          : s.ago || "Baru";
+        return `
+          <article class="story">
+            <div class="story-meta">
+              <span class="publication">${esc(s.source)}</span>
+              <span>·</span>
+              <span>${esc(s.topic)}</span>
+              <span>·</span>
+              <time datetime="${s.publishedAt || ""}">${esc(dateStr)}</time>
+            </div>
+            <h3><a href="#" data-read="${s.id}">${esc(s.title)}</a></h3>
+            <p>${esc(s.desc)}</p>
+            <div class="story-actions">
+              <button data-read="${s.id}">Baca artikel</button>
+              <button data-save="${s.id}" class="${saved.has(s.id) ? "saved" : ""}">
+                ${saved.has(s.id) ? "♥ Tersimpan" : "♡ Simpan"}
+              </button>
+              ${s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer" class="external-link">Sumber asli ↗</a>` : ""}
+            </div>
+          </article>
+        `;
+      }
+
+      function homePage() {
+        if (isLoading) {
+          content.innerHTML = `
+            <div class="page-heading">
+              <div class="eyebrow">Memuat...</div>
+              <h1>${esc(view === "topic" ? topic : "Untuk Anda")}</h1>
+            </div>
+            <div class="layout">
+              <section>
+                <div class="empty" style="padding: 64px 24px;">
+                  <div style="font-size: 24px; margin-bottom: 16px; animation: spin 2s linear infinite;">⟳</div>
+                  <strong>Sedang mengambil artikel terbaru...</strong>
+                </div>
+              </section>
+            </div>
+            <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
+          `;
+          return;
+        }
+
+        const list =
+          view === "saved"
+            ? stories.filter((s) => saved.has(s.id))
+            : view === "history"
+              ? stories
+                  .filter((s) => history.includes(s.id))
+                  .sort((a, b) => history.indexOf(b.id) - history.indexOf(a.id))
+              : stories;
+
+        const title =
+          view === "saved"
+            ? "Artikel Tersimpan"
+            : view === "history"
+              ? "Riwayat Baca"
+              : view === "topic"
+                ? topic
+                : "Untuk Anda";
+        const subtitle =
+          view === "saved"
+            ? "Kumpulan cerita yang ingin Anda baca kembali."
+            : view === "history"
+              ? "Lanjutkan membaca dari tempat terakhir."
+              : view === "topic"
+                ? `Artikel pilihan dalam topik ${topic.toLowerCase()}.`
+                : "Berita pilihan untuk memperluas perspektif Anda.";
+
+        content.innerHTML = `
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">${new Date().toLocaleDateString("id-ID", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</div>
+              <h1>${esc(title)}</h1>
+              <p>${esc(subtitle)}</p>
+              ${fetchError ? `<p style="color: var(--danger); margin-top: 8px; font-size: 14px;">⚠️ ${esc(fetchError)}</p>` : ""}
+            </div>
+          </div>
+          <div class="layout">
+            <section>
+              ${
+                view === "home"
+                  ? `
+                <div class="filters">
+                  ${["Semua", "Teknologi", "Bisnis", "Sains", "Budaya"].map((t) => `<button class="filter ${topic === t ? "active" : ""}" data-filter-topic="${t}">${t}</button>`).join("")}
+                </div>
+              `
+                  : ""
+              }
+              <div class="story-list">
+                ${
+                  list.length
+                    ? list.map(storyCard).join("")
+                    : `
+                  <div class="empty">
+                    <strong>${query ? "Tidak ada hasil yang cocok" : view === "saved" ? "Belum ada artikel tersimpan" : view === "history" ? "Belum ada riwayat baca" : "Belum ada artikel"}</strong>
+                    ${query ? "Coba kata kunci lain." : "Simpan artikel atau pilih cerita dari halaman Untuk Anda."}
+                  </div>
+                `
+                }
+              </div>
+            </section>
+            <aside class="right-rail">
+              <section class="panel">
+                <h2>Jelajahi Topik</h2>
+                ${["Teknologi", "Sains", "Bisnis", "Budaya"]
+                  .map((t) => {
+                    const count = stories.filter((s) => s.topic === t).length;
+                    return `<button class="topic-row" data-rail-topic="${t}"><span>${t}</span><span>${count} artikel</span></button>`;
+                  })
+                  .join("")}
+              </section>
+              <section class="panel">
+                <h2>Sumber Anda</h2>
+                ${sources
+                  .slice(0, 4)
+                  .map(
+                    (s) => `
+                  <div class="source-card">
+                    <div><strong>${esc(s.name)}</strong><small>${esc(s.topic)}</small></div>
+                  </div>
+                `,
+                  )
+                  .join("")}
+                <button class="btn-text" id="rail-add-source">+ Tambah sumber</button>
+              </section>
+            </aside>
+          </div>
+          <div class="footer-note">NewsReader · Ruang baca pribadi Anda</div>
+        `;
+      }
+
+      function readerPage(s) {
+        activeStory = s;
+        const dateStr = s.publishedAt
+          ? formatTimeAgo(s.publishedAt)
+          : s.ago || "Baru";
+        content.innerHTML = `
+          <article class="reader-view">
+            <button class="back-link" data-back>← Kembali ke daftar</button>
+            <div class="reader-meta">
+              <span class="publication">${esc(s.source)}</span> · <time datetime="${s.publishedAt || ""}">${esc(dateStr)}</time> · <span>${esc(s.time || "5 menit baca")}</span>
+            </div>
+            <h1>${esc(s.title)}</h1>
+            <p class="dek">${esc(s.desc)}</p>
+            <div class="reader-body-text">
+              ${(s.body || [s.desc]).map((p) => `<p>${esc(p)}</p>`).join("")}
+              ${
+                s.url
+                  ? `
+                <div style="margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border);">
+                  <a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer" class="btn primary" style="text-decoration: none; display: inline-flex;">
+                    Baca di sumber asli ↗
+                  </a>
+                </div>
+              `
+                  : ""
+              }
+            </div>
+            <div class="reader-controls">
+              <button class="btn primary" data-save="${s.id}" ${isLoading ? "disabled" : ""}>${saved.has(s.id) ? "♥ Tersimpan" : "♡ Simpan artikel"}</button>
+              <button class="btn" data-back>← Kembali</button>
+            </div>
+          </article>
+        `;
+      }
+
+      function render() {
+        updateNav();
+        renderSources();
+        if (view === "reader" && activeStory) {
+          readerPage(activeStory);
+          return;
+        }
+        homePage();
+      }
+
+      function openStory(id) {
+        const s = stories.find((x) => String(x.id) === String(id));
+        if (!s) return;
+        history = [
+          String(id),
+          ...history.filter((n) => String(n) !== String(id)),
+        ].slice(0, 30);
+        persist();
+        view = "reader";
+        render();
+      }
+
+      function toggleSave(id) {
+        id = String(id);
+        if (saved.has(id)) {
+          saved.delete(id);
+          toast("Artikel dihapus dari simpanan.");
+        } else {
+          saved.add(id);
+          toast("Artikel disimpan untuk nanti.");
+        }
+        persist();
+        render();
+      }
+
+      function openModal() {
+        document.getElementById("modal-backdrop").classList.add("open");
+        setTimeout(() => document.getElementById("source-name").focus(), 50);
+      }
+
+      function closeModal() {
+        document.getElementById("modal-backdrop").classList.remove("open");
+      }
+
+      // --- 5. Event Listeners ---
+      document.addEventListener("click", (e) => {
+        const target = e.target.closest("button, a");
+        if (!target) return;
+
+        if (target.dataset.view) {
+          e.preventDefault();
+          view = target.dataset.view;
+          topic = "Semua";
+          query = "";
+          document.getElementById("search").value = "";
+          if (view === "home" || view === "topic") loadStories();
+          else render();
+          document.getElementById("sidebar").classList.remove("open");
+        }
+        if (target.dataset.topic) {
+          view = "topic";
+          topic = target.dataset.topic;
+          query = "";
+          document.getElementById("search").value = "";
+          loadStories();
+          document.getElementById("sidebar").classList.remove("open");
+        }
+        if (target.dataset.filterTopic) {
+          topic = target.dataset.filterTopic;
+          loadStories();
+        }
+        if (target.dataset.railTopic) {
+          view = "topic";
+          topic = target.dataset.railTopic;
+          query = "";
+          document.getElementById("search").value = "";
+          loadStories();
+        }
+        if (target.dataset.read) {
+          e.preventDefault();
+          openStory(target.dataset.read);
+        }
+        if (target.dataset.save) {
+          e.preventDefault();
+          toggleSave(target.dataset.save);
+        }
+        if (target.hasAttribute("data-back")) {
+          view = "home";
+          render();
+        }
+        if (
+          ["add-source-top", "add-source-sidebar", "rail-add-source"].includes(
+            target.id,
+          )
+        ) {
+          openModal();
+        }
+        if (
+          ["close-modal", "cancel-modal", "mobile-close"].includes(target.id)
+        ) {
+          closeModal();
+          document.getElementById("sidebar").classList.remove("open");
+        }
+        if (target.id === "mobile-menu") {
+          document.getElementById("sidebar").classList.add("open");
+        }
+        if (target.id === "theme-toggle") {
+          document.body.classList.toggle("dark");
+          localStorage.setItem(
+            "newsreader-dark",
+            document.body.classList.contains("dark"),
+          );
+        }
+        if (target.id === "refresh") {
+          toast("Daftar artikel diperbarui.");
+          loadStories();
+        }
+        if (target.dataset.removeSource) {
+          sources.splice(Number(target.dataset.removeSource), 1);
+          persist();
+          render();
+          toast("Sumber dihapus.");
+        }
+      });
+
+      // Debounced search
+      let searchTimeout;
+      document.getElementById("search").addEventListener("input", (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          query = e.target.value;
+          loadStories();
+        }, 400);
+      });
+
+      document.getElementById("source-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const nameInput = document.getElementById("source-name");
+        const urlInput = document.getElementById("source-url");
+        const topicSelect = document.getElementById("source-topic");
+
+        const name = nameInput.value.trim();
+        const url = urlInput.value.trim();
+        const t = topicSelect.value;
+
+        // Validasi ketat
+        if (!name || name.length < 3) {
+          toast("Nama publikasi minimal 3 karakter.");
+          nameInput.focus();
+          return;
+        }
+
+        try {
+          new URL(url);
+        } catch (_) {
+          toast(
+            "URL tidak valid. Pastikan diawali dengan http:// atau https://",
+          );
+          urlInput.focus();
+          return;
+        }
+
+        if (sources.some((s) => s.url === url)) {
+          toast("Sumber dengan URL ini sudah ada di perpustakaan Anda.");
+          return;
+        }
+
+        sources.push({ name, url, topic: t });
+        persist();
+        closeModal();
+        e.target.reset();
+        render();
+        toast("Sumber berhasil ditambahkan.");
+      });
+
+      document
+        .getElementById("modal-backdrop")
+        .addEventListener("click", (e) => {
+          if (e.target.id === "modal-backdrop") closeModal();
+        });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          closeModal();
+          document.getElementById("sidebar").classList.remove("open");
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+          e.preventDefault();
+          document.getElementById("search").focus();
+        }
+      });
+
+      // Init
+      if (localStorage.getItem("newsreader-dark") === "true") {
+        document.body.classList.add("dark");
+      }
+
+      // Load initial data
+      loadStories();
+    </script>
+  </body>
+</html>

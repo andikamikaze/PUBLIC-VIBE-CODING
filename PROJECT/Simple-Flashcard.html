@@ -1,0 +1,2165 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#fafaf7" />
+    <title>Simple Flashcard</title>
+    <style>
+      :root {
+        --bg: #fafaf7;
+        --panel: #ffffff;
+        --ink: #1a1d1b;
+        --ink-soft: #3a403c;
+        --muted: #8a8f8b;
+        --line: #eceee9;
+        --line-soft: #f3f4f0;
+        --accent: #2f5a45;
+        --accent-hover: #234634;
+        --accent-soft: #eaf1ec;
+        --yellow: #f5efd0;
+        --lav: #ece9f4;
+        --radius: 14px;
+        --radius-lg: 20px;
+        --shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      }
+
+      [data-theme="dark"] {
+        --bg: #0f1419;
+        --panel: #1a1f2e;
+        --ink: #e8eaed;
+        --ink-soft: #b8bcc4;
+        --muted: #6b7280;
+        --line: #2d3748;
+        --line-soft: #1f2937;
+        --accent: #4ade80;
+        --accent-hover: #22c55e;
+        --accent-soft: #1a2e1f;
+        --yellow: #3d3520;
+        --lav: #2d2640;
+        --shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        transition:
+          background 0.3s,
+          color 0.3s;
+      }
+      body {
+        margin: 0;
+        font:
+          15px/1.55 "Inter",
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+        font-feature-settings: "cv11", "ss01";
+        -webkit-font-smoothing: antialiased;
+        letter-spacing: -0.005em;
+      }
+      button,
+      input,
+      textarea,
+      select {
+        font: inherit;
+        color: inherit;
+      }
+      button {
+        cursor: pointer;
+        border: 0;
+        background: transparent;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      textarea:focus-visible,
+      select:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      button:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+      h1 {
+        font-size: clamp(30px, 3.4vw, 42px);
+        font-weight: 600;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
+      }
+      h2 {
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: -0.015em;
+      }
+      h3 {
+        font-size: 15px;
+        font-weight: 600;
+      }
+
+      /* Layout */
+      .app {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 240px minmax(0, 1fr);
+      }
+
+      /* Sidebar */
+      aside {
+        background: var(--panel);
+        border-right: 1px solid var(--line);
+        padding: 32px 20px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 40px;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 8px;
+        font-size: 17px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      .brand-mark {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        background: var(--ink);
+        color: var(--bg);
+        display: grid;
+        place-items: center;
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .nav-label {
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 600;
+        padding: 0 12px;
+        margin-bottom: 10px;
+      }
+      .nav {
+        display: grid;
+        gap: 2px;
+      }
+      .nav button {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        color: var(--ink-soft);
+        padding: 10px 12px;
+        text-align: left;
+        border-radius: 9px;
+        font-size: 14px;
+        font-weight: 500;
+        transition:
+          background 0.15s,
+          color 0.15s;
+      }
+      .nav button:hover {
+        background: var(--line-soft);
+      }
+      .nav button.active {
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .nav .ico {
+        width: 18px;
+        text-align: center;
+        font-size: 16px;
+        opacity: 0.85;
+      }
+      .side-bottom {
+        margin-top: auto;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+      }
+      .side-bottom small {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 500;
+      }
+      .side-bottom strong {
+        display: block;
+        margin: 6px 0 12px;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .mini-progress {
+        height: 4px;
+        background: var(--line-soft);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .mini-progress span {
+        display: block;
+        height: 100%;
+        width: 0;
+        background: var(--accent);
+        transition: width 0.3s ease;
+      }
+
+      /* Main */
+      main {
+        min-width: 0;
+        padding: 40px clamp(28px, 5vw, 72px) 80px;
+        max-width: 1400px;
+        width: 100%;
+        margin: 0 auto;
+      }
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 56px;
+      }
+      .crumb {
+        font-size: 13px;
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .date {
+        color: var(--muted);
+        font-size: 13px;
+        margin-right: 4px;
+      }
+      .avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: var(--accent-soft);
+        color: var(--accent);
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .page {
+        display: none;
+      }
+      .page.active {
+        display: block;
+        animation: fadeIn 0.3s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 24px;
+        margin-bottom: 44px;
+      }
+      .eyebrow {
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--accent);
+        font-weight: 600;
+        margin-bottom: 12px;
+      }
+      .sub {
+        color: var(--muted);
+        margin-top: 10px;
+        font-size: 15px;
+        max-width: 520px;
+      }
+
+      /* Buttons */
+      .btn {
+        border: 1px solid transparent;
+        border-radius: 10px;
+        padding: 10px 16px;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 600;
+        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition:
+          background 0.15s,
+          transform 0.1s;
+      }
+      [data-theme="dark"] .btn {
+        color: #0f1419;
+      }
+      .btn:hover:not(:disabled) {
+        background: var(--accent-hover);
+      }
+      .btn:active:not(:disabled) {
+        transform: translateY(1px);
+      }
+      .btn.secondary {
+        background: var(--panel);
+        color: var(--ink);
+        border-color: var(--line);
+      }
+      .btn.secondary:hover:not(:disabled) {
+        background: var(--line-soft);
+      }
+      .btn.ghost {
+        background: transparent;
+        color: var(--ink-soft);
+        border-color: var(--line);
+      }
+      .btn.ghost:hover {
+        background: var(--line-soft);
+      }
+      .btn.icon {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        border-radius: 8px;
+      }
+
+      /* Stats */
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        margin-bottom: 48px;
+      }
+      .stat {
+        padding: 24px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+      }
+      .stat-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 500;
+      }
+      .stat-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        background: var(--line-soft);
+        color: var(--accent);
+        font-size: 14px;
+      }
+      .stat-num {
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: -0.03em;
+        margin: 18px 0 4px;
+      }
+      .stat-note {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      /* Dashboard grid */
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.9fr);
+        gap: 20px;
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 26px;
+        min-width: 0;
+        box-shadow: var(--shadow);
+      }
+      .panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 22px;
+      }
+      .text-link {
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 600;
+        padding: 4px;
+      }
+      .text-link:hover {
+        text-decoration: underline;
+      }
+
+      /* Deck list */
+      .deck-list {
+        display: grid;
+        gap: 10px;
+      }
+      .deck-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 14px 16px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        cursor: pointer;
+        transition:
+          border-color 0.15s,
+          background 0.15s;
+      }
+      .deck-row:hover {
+        border-color: #c8d5cb;
+        background: var(--line-soft);
+      }
+      [data-theme="dark"] .deck-row:hover {
+        border-color: var(--accent);
+      }
+      .deck-cover {
+        width: 42px;
+        height: 46px;
+        border-radius: 9px;
+        display: grid;
+        place-items: center;
+        font-size: 19px;
+        flex-shrink: 0;
+      }
+      .cover-green {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .cover-yellow {
+        background: var(--yellow);
+        color: #8a7a20;
+      }
+      [data-theme="dark"] .cover-yellow {
+        color: #d4c470;
+      }
+      .cover-lav {
+        background: var(--lav);
+        color: #5b4f8a;
+      }
+      [data-theme="dark"] .cover-lav {
+        color: #a78bfa;
+      }
+      .deck-info {
+        min-width: 0;
+        flex: 1;
+      }
+      .deck-info strong {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .deck-info small {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .deck-count {
+        text-align: right;
+        color: var(--muted);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      .deck-count span {
+        color: var(--accent);
+        font-weight: 600;
+        font-size: 11px;
+      }
+
+      /* Review banner */
+      .review-banner {
+        background: var(--accent-soft);
+        border-radius: var(--radius);
+        padding: 26px;
+        margin-bottom: 20px;
+      }
+      .review-banner .big {
+        font-size: 34px;
+        letter-spacing: -0.03em;
+        font-weight: 600;
+        margin: 10px 0 4px;
+      }
+      .review-banner p {
+        font-size: 13px;
+        color: var(--ink-soft);
+        margin-bottom: 20px;
+      }
+      .review-banner .btn {
+        width: 100%;
+        background: var(--accent);
+      }
+
+      /* Activity */
+      .activity {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 6px;
+        height: 120px;
+        padding: 8px 0 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .bar-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        height: 100%;
+        flex: 1;
+        font-size: 10px;
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .bar {
+        width: min(22px, 70%);
+        border-radius: 4px 4px 0 0;
+        background: var(--line-soft);
+        min-height: 4px;
+        transition: height 0.3s ease;
+      }
+      .bar.today {
+        background: var(--accent);
+      }
+
+      .empty {
+        padding: 44px 20px;
+        text-align: center;
+        border: 1px dashed var(--line);
+        border-radius: 12px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      /* Decks page */
+      .search-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 28px;
+      }
+      .search {
+        width: 100%;
+        max-width: 380px;
+        padding: 11px 14px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+        font-size: 14px;
+      }
+      .search:focus {
+        border-color: var(--accent);
+      }
+      .deck-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+      }
+      .deck-card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 22px;
+        min-width: 0;
+        transition: border-color 0.15s;
+        box-shadow: var(--shadow);
+      }
+      .deck-card:hover {
+        border-color: #c8d5cb;
+      }
+      [data-theme="dark"] .deck-card:hover {
+        border-color: var(--accent);
+      }
+      .deck-card .deck-cover {
+        margin-bottom: 22px;
+        width: 46px;
+        height: 50px;
+      }
+      .deck-card p {
+        color: var(--muted);
+        font-size: 13px;
+        min-height: 40px;
+        margin: 10px 0 22px;
+        line-height: 1.5;
+      }
+      .deck-card-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .card-actions {
+        display: flex;
+        gap: 5px;
+      }
+      .icon-btn {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        border-radius: 8px;
+        width: 30px;
+        height: 30px;
+        color: var(--ink-soft);
+        display: grid;
+        place-items: center;
+        font-size: 13px;
+        transition: background 0.15s;
+      }
+      .icon-btn:hover {
+        background: var(--line-soft);
+        color: var(--accent);
+      }
+
+      /* Study */
+      .study-wrap {
+        max-width: 720px;
+        margin: 0 auto;
+      }
+      .study-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 32px;
+        gap: 12px;
+      }
+      .study-progress {
+        height: 4px;
+        background: var(--line-soft);
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 32px;
+      }
+      .study-progress span {
+        display: block;
+        height: 100%;
+        width: 0;
+        background: var(--accent);
+        transition: width 0.3s ease;
+      }
+      .study-card {
+        width: 100%;
+        min-height: 360px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        border-radius: var(--radius-lg);
+        padding: 48px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        cursor: pointer;
+        position: relative;
+        transition:
+          background 0.2s,
+          border-color 0.2s;
+        box-shadow: var(--shadow);
+      }
+      .study-card:hover {
+        border-color: #c8d5cb;
+      }
+      [data-theme="dark"] .study-card:hover {
+        border-color: var(--accent);
+      }
+      .study-card .label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        color: var(--accent);
+        font-weight: 600;
+        margin-bottom: 32px;
+      }
+      .study-card .question {
+        font-size: clamp(24px, 3vw, 34px);
+        line-height: 1.3;
+        letter-spacing: -0.02em;
+        font-weight: 600;
+        max-width: 540px;
+      }
+      .study-card .flip-hint {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 40px;
+      }
+      .study-card.flipped {
+        background: var(--accent-soft);
+        border-color: #c8d5cb;
+      }
+      [data-theme="dark"] .study-card.flipped {
+        border-color: var(--accent);
+      }
+      .study-controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 20px;
+      }
+      .study-controls .btn {
+        padding: 15px;
+      }
+      .session-meta {
+        display: flex;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 500;
+        margin-bottom: 12px;
+      }
+      .study-complete {
+        text-align: center;
+        padding: 56px 28px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow);
+      }
+      .complete-mark {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--accent-soft);
+        color: var(--accent);
+        display: grid;
+        place-items: center;
+        margin: 0 auto 24px;
+        font-size: 24px;
+        font-weight: 700;
+      }
+      .study-complete h2 {
+        font-size: 28px;
+        letter-spacing: -0.02em;
+      }
+      .study-complete .actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 28px;
+      }
+
+      /* Form */
+      .form-panel {
+        max-width: 680px;
+      }
+      .field {
+        display: grid;
+        gap: 8px;
+        margin-bottom: 22px;
+      }
+      .field label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ink-soft);
+        letter-spacing: 0.01em;
+      }
+      .field input,
+      .field textarea,
+      .field select {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+        font-size: 14px;
+        transition: border-color 0.15s;
+      }
+      .field input:focus,
+      .field textarea:focus,
+      .field select:focus {
+        border-color: var(--accent);
+        outline: none;
+      }
+      .field textarea {
+        min-height: 110px;
+        resize: vertical;
+        line-height: 1.5;
+      }
+      .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 28px;
+        padding-top: 24px;
+        border-top: 1px solid var(--line);
+      }
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      /* Toast */
+      .toast {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        background: var(--ink);
+        color: var(--bg);
+        padding: 12px 18px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 500;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+        opacity: 0;
+        transform: translateY(8px);
+        pointer-events: none;
+        transition:
+          opacity 0.2s,
+          transform 0.2s;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+      .toast-undo {
+        background: transparent;
+        color: var(--accent);
+        border: 1px solid var(--accent);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .toast-undo:hover {
+        background: var(--accent);
+        color: var(--bg);
+      }
+
+      /* Modal */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 200;
+        padding: 20px;
+      }
+      .modal-overlay.show {
+        display: flex;
+        animation: fadeIn 0.2s ease;
+      }
+      .modal {
+        background: var(--panel);
+        border-radius: var(--radius-lg);
+        padding: 32px;
+        max-width: 500px;
+        width: 100%;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      }
+      .modal h2 {
+        margin-bottom: 20px;
+      }
+      .modal-close {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: var(--line-soft);
+        color: var(--ink);
+        display: grid;
+        place-items: center;
+        font-size: 18px;
+      }
+      .shortcut-list {
+        display: grid;
+        gap: 12px;
+        margin-top: 20px;
+      }
+      .shortcut-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .shortcut-key {
+        background: var(--line-soft);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-family: monospace;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      /* Edit card modal */
+      .edit-card-list {
+        display: grid;
+        gap: 12px;
+        margin-top: 20px;
+      }
+      .edit-card-item {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--bg);
+      }
+      .edit-card-item .card-preview {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: start;
+      }
+      .edit-card-item .card-text {
+        min-width: 0;
+      }
+      .edit-card-item .card-text strong {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+      .edit-card-item .card-text small {
+        color: var(--muted);
+        font-size: 12px;
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      /* Responsive */
+      @media (max-width: 1050px) {
+        .app {
+          grid-template-columns: 200px minmax(0, 1fr);
+        }
+        aside {
+          padding: 24px 14px;
+        }
+        .deck-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .dashboard-grid {
+          grid-template-columns: 1fr;
+        }
+        .dashboard-grid .right-panel {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+        }
+        .review-banner {
+          margin: 0;
+        }
+      }
+      @media (max-width: 720px) {
+        .app {
+          display: block;
+        }
+        aside {
+          position: fixed;
+          z-index: 10;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          top: auto;
+          height: 64px;
+          padding: 6px 8px;
+          border-right: 0;
+          border-top: 1px solid var(--line);
+          display: block;
+          background: var(--panel);
+        }
+        .brand,
+        .nav-label,
+        .side-bottom {
+          display: none;
+        }
+        .nav {
+          display: flex;
+          justify-content: space-around;
+          gap: 2px;
+        }
+        .nav button {
+          width: auto;
+          flex: 1;
+          flex-direction: column;
+          gap: 2px;
+          padding: 8px 2px;
+          font-size: 10px;
+          text-align: center;
+        }
+        .nav .ico {
+          font-size: 16px;
+        }
+        main {
+          padding: 24px 18px 88px;
+        }
+        .topbar {
+          margin-bottom: 36px;
+        }
+        .date {
+          display: none;
+        }
+        .heading {
+          align-items: flex-start;
+          flex-direction: column;
+          margin-bottom: 28px;
+        }
+        .heading > .btn {
+          width: 100%;
+        }
+        .stats {
+          grid-template-columns: 1fr;
+          gap: 10px;
+          margin-bottom: 32px;
+        }
+        .stat {
+          padding: 18px;
+        }
+        .stat-num {
+          font-size: 28px;
+          margin-top: 14px;
+        }
+        .panel {
+          padding: 20px;
+        }
+        .dashboard-grid .right-panel {
+          display: block;
+        }
+        .review-banner {
+          margin-bottom: 16px;
+        }
+        .deck-grid {
+          grid-template-columns: 1fr;
+        }
+        .deck-card p {
+          min-height: 0;
+        }
+        .study-card {
+          min-height: 320px;
+          padding: 32px 24px;
+        }
+        .study-top {
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+        .study-top .btn {
+          padding: 8px 12px;
+          font-size: 12px;
+        }
+        .two-col {
+          grid-template-columns: 1fr;
+        }
+        .search-row {
+          flex-wrap: wrap;
+        }
+        .search {
+          max-width: none;
+        }
+        .avatar {
+          display: none;
+        }
+        .form-actions {
+          flex-direction: column-reverse;
+        }
+        .form-actions .btn {
+          width: 100%;
+        }
+        .toast {
+          left: 16px;
+          right: 16px;
+          bottom: 80px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+          animation: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside>
+        <div class="brand">
+          <span class="brand-mark">F</span>
+          <span>Flashcard</span>
+        </div>
+        <div>
+          <div class="nav-label">Menu</div>
+          <nav class="nav" aria-label="Navigasi utama">
+            <button class="active" data-page="dashboard">
+              <span class="ico">⌂</span><span>Beranda</span>
+            </button>
+            <button data-page="decks">
+              <span class="ico">▤</span><span>Koleksi</span>
+            </button>
+            <button data-page="study">
+              <span class="ico">↻</span><span>Belajar</span>
+            </button>
+            <button data-page="create">
+              <span class="ico">＋</span><span>Buat</span>
+            </button>
+          </nav>
+        </div>
+        <div class="side-bottom">
+          <small>Target hari ini</small>
+          <strong id="side-target">0 dari 10 kartu</strong>
+          <div class="mini-progress"><span id="side-progress"></span></div>
+        </div>
+      </aside>
+
+      <main>
+        <header class="topbar">
+          <div class="crumb" id="breadcrumb">Flashcard · Beranda</div>
+          <div class="top-actions">
+            <button
+              class="btn icon ghost"
+              id="theme-toggle"
+              title="Ganti tema"
+              aria-label="Ganti tema"
+            >
+              <span id="theme-icon">☾</span>
+            </button>
+            <button
+              class="btn icon ghost"
+              id="shortcuts-btn"
+              title="Keyboard shortcuts"
+              aria-label="Keyboard shortcuts"
+            >
+              ⌨
+            </button>
+            <button
+              class="btn icon ghost"
+              id="export-btn"
+              title="Export data"
+              aria-label="Export data"
+            >
+              ↓
+            </button>
+            <button
+              class="btn icon ghost"
+              id="import-btn"
+              title="Import data"
+              aria-label="Import data"
+            >
+              ↑
+            </button>
+            <span class="date" id="today-date"></span>
+            <button class="btn" data-go="create">＋ Buat set</button>
+            <div class="avatar">FA</div>
+          </div>
+        </header>
+
+        <!-- Dashboard -->
+        <section class="page active" id="page-dashboard">
+          <div class="heading">
+            <div>
+              <div class="eyebrow">Ruang Belajar Anda</div>
+              <h1>Belajar sedikit,<br />ingat lebih lama.</h1>
+              <p class="sub">
+                Semua yang perlu diingat, tersusun rapi dalam satu tempat yang
+                tenang.
+              </p>
+            </div>
+            <button class="btn" data-go="study">Mulai belajar →</button>
+          </div>
+
+          <div class="stats">
+            <article class="stat">
+              <div class="stat-head">
+                <span>Total kartu</span>
+                <span class="stat-icon">▤</span>
+              </div>
+              <div class="stat-num" id="stat-cards">0</div>
+              <div class="stat-note">Di semua koleksi</div>
+            </article>
+            <article class="stat">
+              <div class="stat-head">
+                <span>Koleksi</span>
+                <span class="stat-icon">▦</span>
+              </div>
+              <div class="stat-num" id="stat-decks">0</div>
+              <div class="stat-note">Topik yang dipelajari</div>
+            </article>
+            <article class="stat">
+              <div class="stat-head">
+                <span>Hari ini</span>
+                <span class="stat-icon">✓</span>
+              </div>
+              <div class="stat-num" id="stat-today">0</div>
+              <div class="stat-note">Kartu ditinjau</div>
+            </article>
+          </div>
+
+          <div class="dashboard-grid">
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>Lanjutkan belajar</h2>
+                  <p class="sub" style="margin-top: 4px">
+                    Pilih koleksi untuk mulai mengulang.
+                  </p>
+                </div>
+                <button class="text-link" data-go="decks">Lihat semua →</button>
+              </div>
+              <div class="deck-list" id="recent-decks"></div>
+            </section>
+            <div class="right-panel">
+              <section class="review-banner">
+                <div class="eyebrow">Sesi Harian</div>
+                <div class="big" id="due-count">0 kartu</div>
+                <p>Luangkan beberapa menit untuk memperkuat ingatan.</p>
+                <button class="btn" data-go="study">Mulai mengulang →</button>
+              </section>
+              <section class="panel">
+                <div class="panel-head">
+                  <div>
+                    <h2>Aktivitas</h2>
+                    <p class="sub" style="margin-top: 4px">
+                      Tinjauan 7 hari terakhir
+                    </p>
+                  </div>
+                </div>
+                <div class="activity" id="activity-chart"></div>
+              </section>
+            </div>
+          </div>
+        </section>
+
+        <!-- Decks -->
+        <section class="page" id="page-decks">
+          <div class="heading">
+            <div>
+              <div class="eyebrow">Perpustakaan Pribadi</div>
+              <h1>Koleksi kartu</h1>
+              <p class="sub">
+                Atur topik dan temukan kartu yang ingin Anda kuasai.
+              </p>
+            </div>
+            <button class="btn" data-go="create">＋ Koleksi baru</button>
+          </div>
+          <div class="search-row">
+            <input
+              class="search"
+              id="deck-search"
+              placeholder="Cari koleksi..."
+              aria-label="Cari koleksi"
+            />
+            <select class="search" id="deck-sort" style="max-width: 200px">
+              <option value="name">Nama A–Z</option>
+              <option value="count">Jumlah kartu</option>
+            </select>
+          </div>
+          <div class="deck-grid" id="all-decks"></div>
+        </section>
+
+        <!-- Study -->
+        <section class="page" id="page-study">
+          <div class="study-wrap">
+            <div class="study-top">
+              <button class="btn secondary" data-go="decks">← Koleksi</button>
+              <span class="crumb" id="study-deck-name">—</span>
+              <button class="btn ghost" id="shuffle-btn">Acak ↻</button>
+            </div>
+            <div class="session-meta">
+              <span id="study-counter">Kartu 0 dari 0</span>
+              <span id="study-known">0 dikuasai</span>
+            </div>
+            <div class="study-progress">
+              <span id="study-progress-fill"></span>
+            </div>
+            <div id="study-stage"></div>
+          </div>
+        </section>
+
+        <!-- Create -->
+        <section class="page" id="page-create">
+          <div class="heading">
+            <div>
+              <div class="eyebrow">Tambahkan Pengetahuan</div>
+              <h1 id="create-heading">Buat koleksi baru</h1>
+              <p class="sub">Mulai dari satu pertanyaan sederhana.</p>
+            </div>
+          </div>
+          <div class="panel form-panel">
+            <form id="create-form">
+              <div class="field">
+                <label for="deck-title">Nama koleksi</label>
+                <input
+                  id="deck-title"
+                  required
+                  maxlength="70"
+                  placeholder="Contoh: Kosakata bahasa Inggris"
+                />
+              </div>
+              <div class="field">
+                <label for="deck-description">Deskripsi (opsional)</label>
+                <input
+                  id="deck-description"
+                  maxlength="140"
+                  placeholder="Apa yang ingin Anda pelajari?"
+                />
+              </div>
+              <div class="two-col">
+                <div class="field">
+                  <label for="card-front">Pertanyaan</label>
+                  <textarea
+                    id="card-front"
+                    required
+                    maxlength="400"
+                    placeholder="Apa arti kata 'resilient'?"
+                  ></textarea>
+                </div>
+                <div class="field">
+                  <label for="card-back">Jawaban</label>
+                  <textarea
+                    id="card-back"
+                    required
+                    maxlength="400"
+                    placeholder="Mampu pulih dengan cepat dari kesulitan."
+                  ></textarea>
+                </div>
+              </div>
+              <div class="field">
+                <label for="deck-color">Warna koleksi</label>
+                <select id="deck-color">
+                  <option value="green">Hijau sage</option>
+                  <option value="yellow">Kuning lembut</option>
+                  <option value="lav">Lavender</option>
+                </select>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn secondary" data-go="decks">
+                  Batal
+                </button>
+                <button class="btn" type="submit">Simpan kartu →</button>
+              </div>
+            </form>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <!-- Shortcuts Modal -->
+    <div class="modal-overlay" id="shortcuts-modal">
+      <div class="modal" role="dialog" aria-labelledby="shortcuts-title">
+        <button class="modal-close" id="shortcuts-close" aria-label="Tutup">
+          ×
+        </button>
+        <h2 id="shortcuts-title">Keyboard Shortcuts</h2>
+        <div class="shortcut-list">
+          <div class="shortcut-item">
+            <span>Navigasi ke Beranda</span>
+            <span class="shortcut-key">Alt + 1</span>
+          </div>
+          <div class="shortcut-item">
+            <span>Navigasi ke Koleksi</span>
+            <span class="shortcut-key">Alt + 2</span>
+          </div>
+          <div class="shortcut-item">
+            <span>Navigasi ke Belajar</span>
+            <span class="shortcut-key">Alt + 3</span>
+          </div>
+          <div class="shortcut-item">
+            <span>Navigasi ke Buat</span>
+            <span class="shortcut-key">Alt + 4</span>
+          </div>
+          <div class="shortcut-item">
+            <span>Flip kartu (saat belajar)</span>
+            <span class="shortcut-key">Enter / Space</span>
+          </div>
+          <div class="shortcut-item">
+            <span>Sudah ingat</span>
+            <span class="shortcut-key">→</span>
+          </div>
+          <div class="shortcut-item">
+            <span>Belum ingat</span>
+            <span class="shortcut-key">←</span>
+          </div>
+          <div class="shortcut-item">
+            <span>Acak kartu</span>
+            <span class="shortcut-key">S</span>
+          </div>
+          <div class="shortcut-item">
+            <span>Toggle dark mode</span>
+            <span class="shortcut-key">D</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Cards Modal -->
+    <div class="modal-overlay" id="edit-modal">
+      <div class="modal" role="dialog" aria-labelledby="edit-title">
+        <button class="modal-close" id="edit-close" aria-label="Tutup">
+          ×
+        </button>
+        <h2 id="edit-title">Edit Kartu</h2>
+        <p class="sub" style="margin-bottom: 16px">
+          Kelola kartu dalam koleksi ini
+        </p>
+        <div class="edit-card-list" id="edit-card-list"></div>
+      </div>
+    </div>
+
+    <!-- Hidden file input for import -->
+    <input type="file" id="import-file" accept=".json" style="display: none" />
+
+    <script>
+      const starterDecks = [
+        {
+          id: "english",
+          name: "Kosakata bahasa Inggris",
+          description: "Kata dan ungkapan sehari-hari.",
+          icon: "文",
+          color: "green",
+          cards: [
+            ["Abundant", "Berlimpah; tersedia dalam jumlah besar."],
+            ["Resilient", "Mampu pulih dengan cepat dari kesulitan."],
+            ["Concise", "Singkat dan jelas, tanpa kata yang tidak perlu."],
+            ["Subtle", "Tidak langsung terlihat atau mudah dikenali."],
+            ["Reliable", "Dapat dipercaya atau diandalkan."],
+          ],
+        },
+        {
+          id: "science",
+          name: "Dasar-dasar sains",
+          description: "Konsep dasar untuk memahami dunia.",
+          icon: "◉",
+          color: "yellow",
+          cards: [
+            [
+              "Apa fungsi mitokondria?",
+              "Menghasilkan sebagian besar ATP sebagai sumber energi sel.",
+            ],
+            [
+              "Apa itu fotosintesis?",
+              "Proses tumbuhan mengubah cahaya menjadi energi kimia.",
+            ],
+            ["Apa satuan gaya dalam SI?", "Newton (N)."],
+            [
+              "Apa itu atom?",
+              "Unit dasar materi yang mempertahankan sifat unsur.",
+            ],
+          ],
+        },
+        {
+          id: "japanese",
+          name: "Bahasa Jepang · Pemula",
+          description: "Kosakata dan ungkapan dasar Jepang.",
+          icon: "あ",
+          color: "lav",
+          cards: [
+            ["おはようございます", "Selamat pagi."],
+            ["ありがとう", "Terima kasih."],
+            ["水 (みず)", "Air."],
+          ],
+        },
+      ];
+
+      const clone = (x) => JSON.parse(JSON.stringify(x));
+      let decks,
+        reviewedToday = 0,
+        reviewHistory = [],
+        studyDeckId = "english",
+        studyCards = [],
+        studyIndex = 0,
+        flipped = false,
+        knownCount = 0,
+        sessionDone = false,
+        deletedDeckBackup = null,
+        undoTimer = null;
+
+      try {
+        decks =
+          JSON.parse(localStorage.getItem("flashcard-decks")) ||
+          clone(starterDecks);
+        reviewedToday = Number(localStorage.getItem("flashcard-reviewed") || 0);
+        reviewHistory = JSON.parse(
+          localStorage.getItem("flashcard-history") || "[]",
+        );
+      } catch (e) {
+        decks = clone(starterDecks);
+      }
+
+      const $ = (id) => document.getElementById(id);
+
+      function save() {
+        try {
+          localStorage.setItem("flashcard-decks", JSON.stringify(decks));
+          localStorage.setItem("flashcard-reviewed", String(reviewedToday));
+          localStorage.setItem(
+            "flashcard-history",
+            JSON.stringify(reviewHistory),
+          );
+        } catch (e) {}
+      }
+
+      function toast(s, showUndo = false) {
+        const toastEl = $("toast");
+        toastEl.innerHTML = s;
+
+        if (showUndo && deletedDeckBackup) {
+          const undoBtn = document.createElement("button");
+          undoBtn.className = "toast-undo";
+          undoBtn.textContent = "Undo";
+          undoBtn.onclick = () => {
+            if (deletedDeckBackup) {
+              decks.unshift(deletedDeckBackup);
+              deletedDeckBackup = null;
+              save();
+              renderDashboard();
+              renderDecks();
+              renderStats();
+              toast("Koleksi dipulihkan");
+              clearTimeout(undoTimer);
+              toastEl.classList.remove("show");
+            }
+          };
+          toastEl.appendChild(undoBtn);
+
+          clearTimeout(undoTimer);
+          undoTimer = setTimeout(() => {
+            deletedDeckBackup = null;
+          }, 5000);
+        }
+
+        toastEl.classList.add("show");
+        clearTimeout(toast.timer);
+        toast.timer = setTimeout(
+          () => toastEl.classList.remove("show"),
+          showUndo ? 5000 : 2300,
+        );
+      }
+
+      function esc(s) {
+        return String(s).replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      }
+
+      function deckById(id) {
+        return decks.find((d) => d.id === id);
+      }
+
+      function totalCards() {
+        return decks.reduce((n, d) => n + d.cards.length, 0);
+      }
+
+      function colorClass(c) {
+        return (
+          { green: "cover-green", yellow: "cover-yellow", lav: "cover-lav" }[
+            c
+          ] || "cover-green"
+        );
+      }
+
+      function navigate(page) {
+        document
+          .querySelectorAll(".page")
+          .forEach((p) =>
+            p.classList.toggle("active", p.id === "page-" + page),
+          );
+        document
+          .querySelectorAll(".nav button")
+          .forEach((b) =>
+            b.classList.toggle("active", b.dataset.page === page),
+          );
+        $("breadcrumb").textContent =
+          "Flashcard · " +
+          ({
+            dashboard: "Beranda",
+            decks: "Koleksi",
+            study: "Belajar",
+            create: "Buat",
+          }[page] || page);
+
+        if (page === "dashboard") renderDashboard();
+        if (page === "decks") renderDecks();
+        if (page === "study" && !studyCards.length) startStudy(studyDeckId);
+        if (page === "create") {
+          $("create-heading").textContent = "Buat koleksi baru";
+          $("deck-title").value = "";
+          $("deck-description").value = "";
+          $("card-front").value = "";
+          $("card-back").value = "";
+          $("deck-title").disabled = false;
+        }
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      document
+        .querySelectorAll("[data-page]")
+        .forEach((b) =>
+          b.addEventListener("click", () => navigate(b.dataset.page)),
+        );
+      document
+        .querySelectorAll("[data-go]")
+        .forEach((b) =>
+          b.addEventListener("click", () => navigate(b.dataset.go)),
+        );
+
+      function renderStats() {
+        $("stat-cards").textContent = totalCards();
+        $("stat-decks").textContent = decks.length;
+        $("stat-today").textContent = reviewedToday;
+        $("due-count").textContent = totalCards() + " kartu";
+        $("side-target").textContent =
+          Math.min(reviewedToday, 10) + " dari 10 kartu";
+        $("side-progress").style.width =
+          Math.min((reviewedToday / 10) * 100, 100) + "%";
+      }
+
+      function renderDashboard() {
+        renderStats();
+        $("recent-decks").innerHTML =
+          decks
+            .slice(0, 4)
+            .map(
+              (d) =>
+                `<div class="deck-row" data-study="${esc(d.id)}">
+                  <div class="deck-cover ${colorClass(d.color)}">${esc(d.icon)}</div>
+                  <div class="deck-info">
+                    <strong>${esc(d.name)}</strong>
+                    <small>${esc(d.description || "Koleksi belajar pribadi")}</small>
+                  </div>
+                  <div class="deck-count">
+                    ${d.cards.length} kartu<br><span>→ Mulai</span>
+                  </div>
+                </div>`,
+            )
+            .join("") ||
+          '<div class="empty">Belum ada koleksi. Buat koleksi pertama Anda.</div>';
+
+        document.querySelectorAll("[data-study]").forEach((el) =>
+          el.addEventListener("click", () => {
+            startStudy(el.dataset.study);
+            navigate("study");
+          }),
+        );
+
+        const days = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+        const today = new Date().getDay();
+        $("activity-chart").innerHTML = Array.from({ length: 7 }, (_, i) => {
+          const day = (today - 6 + i + 7) % 7;
+          const count = reviewHistory.filter(
+            (x) => new Date(x.date).getDay() === day,
+          ).length;
+          return `<div class="bar-col">
+            <div class="bar ${i === 6 ? "today" : ""}" style="height:${Math.max(
+              4,
+              Math.min(80, count * 10),
+            )}px"></div>
+            <span>${days[day]}</span>
+          </div>`;
+        }).join("");
+      }
+
+      function renderDecks() {
+        const query = $("deck-search").value.toLowerCase();
+        const sort = $("deck-sort").value;
+        let list = decks.filter((d) =>
+          (d.name + " " + d.description).toLowerCase().includes(query),
+        );
+        list.sort((a, b) =>
+          sort === "count"
+            ? b.cards.length - a.cards.length
+            : a.name.localeCompare(b.name, "id"),
+        );
+
+        $("all-decks").innerHTML =
+          list
+            .map(
+              (d) =>
+                `<article class="deck-card">
+                  <div class="deck-cover ${colorClass(d.color)}">${esc(d.icon)}</div>
+                  <h3>${esc(d.name)}</h3>
+                  <p>${esc(d.description || "Koleksi kartu belajar Anda.")}</p>
+                  <div class="deck-card-foot">
+                    <span>${d.cards.length} kartu</span>
+                    <div class="card-actions">
+                      <button class="icon-btn" title="Belajar" data-study="${esc(d.id)}">▶</button>
+                      <button class="icon-btn" title="Edit kartu" data-edit="${esc(d.id)}">✎</button>
+                      <button class="icon-btn" title="Tambah kartu" data-add="${esc(d.id)}">＋</button>
+                      <button class="icon-btn" title="Hapus" data-delete="${esc(d.id)}">×</button>
+                    </div>
+                  </div>
+                </article>`,
+            )
+            .join("") ||
+          '<div class="empty" style="grid-column:1/-1">Tidak ada koleksi yang cocok.</div>';
+
+        document.querySelectorAll("[data-study]").forEach((el) =>
+          el.addEventListener("click", () => {
+            startStudy(el.dataset.study);
+            navigate("study");
+          }),
+        );
+        document.querySelectorAll("[data-edit]").forEach((el) =>
+          el.addEventListener("click", () => {
+            openEditModal(el.dataset.edit);
+          }),
+        );
+        document.querySelectorAll("[data-add]").forEach((el) =>
+          el.addEventListener("click", () => {
+            studyDeckId = el.dataset.add;
+            $("deck-title").value = deckById(studyDeckId)?.name || "";
+            $("create-heading").textContent = "Tambah kartu";
+            $("deck-description").value =
+              deckById(studyDeckId)?.description || "";
+            navigate("create");
+            $("deck-title").disabled = true;
+          }),
+        );
+        document.querySelectorAll("[data-delete]").forEach((el) =>
+          el.addEventListener("click", () => {
+            const d = deckById(el.dataset.delete);
+            if (
+              d &&
+              confirm(`Hapus koleksi "${d.name}" beserta semua kartunya?`)
+            ) {
+              deletedDeckBackup = d;
+              decks = decks.filter((x) => x.id !== d.id);
+              save();
+              renderDecks();
+              renderStats();
+              toast("Koleksi dihapus", true);
+            }
+          }),
+        );
+      }
+
+      $("deck-search").addEventListener("input", renderDecks);
+      $("deck-sort").addEventListener("change", renderDecks);
+
+      function startStudy(id) {
+        const d = deckById(id);
+        if (!d || !d.cards.length) {
+          toast("Koleksi ini belum memiliki kartu.");
+          return;
+        }
+        studyDeckId = id;
+        studyCards = d.cards.map((c, i) => ({
+          front: c[0],
+          back: c[1],
+          originalIndex: i,
+        }));
+        studyIndex = 0;
+        flipped = false;
+        knownCount = 0;
+        sessionDone = false;
+        renderStudy();
+      }
+
+      function renderStudy() {
+        const d = deckById(studyDeckId);
+        if (!d) return;
+        $("study-deck-name").textContent = d.name;
+
+        if (sessionDone) {
+          $("study-counter").textContent =
+            `${studyCards.length} kartu ditinjau`;
+          $("study-known").textContent = `${knownCount} dikuasai`;
+          $("study-progress-fill").style.width = "100%";
+          $("study-stage").innerHTML = `
+            <div class="study-complete">
+              <div class="complete-mark">✓</div>
+              <h2>Sesi selesai.</h2>
+              <p class="sub" style="margin:12px auto 0;max-width:360px">
+                Anda menguasai ${knownCount} dari ${studyCards.length} kartu dalam sesi ini.
+              </p>
+              <div class="actions">
+                <button class="btn secondary" id="study-back">Kembali</button>
+                <button class="btn" id="study-again">Ulangi sesi →</button>
+              </div>
+            </div>`;
+          $("study-again").onclick = () => startStudy(studyDeckId);
+          $("study-back").onclick = () => navigate("decks");
+          return;
+        }
+
+        const c = studyCards[studyIndex];
+        $("study-counter").textContent =
+          `Kartu ${studyIndex + 1} dari ${studyCards.length}`;
+        $("study-known").textContent = `${knownCount} dikuasai`;
+        $("study-progress-fill").style.width =
+          (studyIndex / studyCards.length) * 100 + "%";
+
+        $("study-stage").innerHTML = `
+          <button class="study-card ${flipped ? "flipped" : ""}" id="active-study-card"
+            aria-label="${flipped ? "Sisi jawaban" : "Tampilkan jawaban"}">
+            <span class="label">${flipped ? "Jawaban" : "Pertanyaan"}</span>
+            <span class="question">${esc(flipped ? c.back : c.front)}</span>
+            <span class="flip-hint">${
+              flipped
+                ? "Nilai ingatan Anda di bawah"
+                : "Klik kartu atau tekan Enter untuk membalik"
+            }</span>
+          </button>
+          <div class="study-controls">
+            <button class="btn secondary" id="study-again-card" ${!flipped ? "disabled" : ""}>
+              × Belum ingat
+            </button>
+            <button class="btn" id="study-known-card" ${!flipped ? "disabled" : ""}>
+              ✓ Sudah ingat
+            </button>
+          </div>`;
+
+        $("active-study-card").onclick = () => {
+          flipped = !flipped;
+          renderStudy();
+        };
+        $("study-again-card").onclick = () => answerCard(false);
+        $("study-known-card").onclick = () => answerCard(true);
+      }
+
+      function answerCard(known) {
+        if (!flipped) return;
+        if (known) knownCount++;
+        reviewedToday++;
+        reviewHistory.push({ date: new Date().toISOString(), known });
+        if (reviewHistory.length > 500)
+          reviewHistory = reviewHistory.slice(-500);
+        save();
+        studyIndex++;
+        flipped = false;
+        if (studyIndex >= studyCards.length) sessionDone = true;
+        renderStudy();
+        renderStats();
+      }
+
+      $("shuffle-btn").addEventListener("click", () => {
+        if (studyCards.length < 2) return;
+        for (let i = studyCards.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [studyCards[i], studyCards[j]] = [studyCards[j], studyCards[i]];
+        }
+        studyIndex = 0;
+        flipped = false;
+        sessionDone = false;
+        knownCount = 0;
+        renderStudy();
+        toast("Urutan kartu diacak");
+      });
+
+      $("create-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const title = $("deck-title").value.trim();
+        const desc = $("deck-description").value.trim();
+        const front = $("card-front").value.trim();
+        const back = $("card-back").value.trim();
+        const color = $("deck-color").value;
+        if (!title || !front || !back) return;
+
+        let d;
+        if ($("deck-title").disabled) {
+          d = deckById(studyDeckId);
+          if (!d) return;
+          d.cards.push([front, back]);
+          d.description = desc;
+          toast("Kartu ditambahkan");
+        } else {
+          d = {
+            id: "deck-" + Date.now(),
+            name: title,
+            description: desc,
+            icon: color === "yellow" ? "✳" : color === "lav" ? "あ" : "▤",
+            color,
+            cards: [[front, back]],
+          };
+          decks.unshift(d);
+          toast("Koleksi dan kartu dibuat");
+        }
+        save();
+        $("deck-title").disabled = false;
+        renderStats();
+        navigate("decks");
+      });
+
+      $("today-date").textContent = new Intl.DateTimeFormat("id-ID", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+      }).format(new Date());
+
+      // Theme toggle
+      function initTheme() {
+        const saved = localStorage.getItem("flashcard-theme");
+        const prefersDark = window.matchMedia(
+          "(prefers-color-scheme: dark)",
+        ).matches;
+        const theme = saved || (prefersDark ? "dark" : "light");
+        setTheme(theme);
+      }
+
+      function setTheme(theme) {
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem("flashcard-theme", theme);
+        $("theme-icon").textContent = theme === "dark" ? "☀" : "☾";
+      }
+
+      $("theme-toggle").addEventListener("click", () => {
+        const current = document.documentElement.getAttribute("data-theme");
+        setTheme(current === "dark" ? "light" : "dark");
+      });
+
+      // Shortcuts modal
+      $("shortcuts-btn").addEventListener("click", () => {
+        $("shortcuts-modal").classList.add("show");
+      });
+
+      $("shortcuts-close").addEventListener("click", () => {
+        $("shortcuts-modal").classList.remove("show");
+      });
+
+      $("shortcuts-modal").addEventListener("click", (e) => {
+        if (e.target === $("shortcuts-modal")) {
+          $("shortcuts-modal").classList.remove("show");
+        }
+      });
+
+      // Edit cards modal
+      function openEditModal(deckId) {
+        const d = deckById(deckId);
+        if (!d) return;
+
+        $("edit-title").textContent = `Edit: ${d.name}`;
+
+        const list = $("edit-card-list");
+        list.innerHTML = d.cards
+          .map(
+            (card, idx) => `
+          <div class="edit-card-item" data-idx="${idx}">
+            <div class="card-preview">
+              <div class="card-text">
+                <strong>${esc(card[0])}</strong>
+                <small>${esc(card[1])}</small>
+              </div>
+              <button class="icon-btn" data-delete-card="${idx}" title="Hapus kartu">×</button>
+            </div>
+          </div>
+        `,
+          )
+          .join("");
+
+        list.querySelectorAll("[data-delete-card]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const idx = parseInt(btn.dataset.deleteCard);
+            if (confirm("Hapus kartu ini?")) {
+              d.cards.splice(idx, 1);
+              save();
+              openEditModal(deckId);
+              renderDecks();
+              renderStats();
+              toast("Kartu dihapus");
+            }
+          });
+        });
+
+        $("edit-modal").classList.add("show");
+      }
+
+      $("edit-close").addEventListener("click", () => {
+        $("edit-modal").classList.remove("show");
+      });
+
+      $("edit-modal").addEventListener("click", (e) => {
+        if (e.target === $("edit-modal")) {
+          $("edit-modal").classList.remove("show");
+        }
+      });
+
+      // Export/Import
+      $("export-btn").addEventListener("click", () => {
+        const data = {
+          decks,
+          reviewedToday,
+          reviewHistory,
+          exportDate: new Date().toISOString(),
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `flashcard-backup-${new Date().toISOString().split("T")[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast("Data berhasil diexport");
+      });
+
+      $("import-btn").addEventListener("click", () => {
+        $("import-file").click();
+      });
+
+      $("import-file").addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const data = JSON.parse(event.target.result);
+            if (data.decks && Array.isArray(data.decks)) {
+              if (
+                confirm("Import akan menggantikan data saat ini. Lanjutkan?")
+              ) {
+                decks = data.decks;
+                reviewedToday = data.reviewedToday || 0;
+                reviewHistory = data.reviewHistory || [];
+                save();
+                renderDashboard();
+                renderDecks();
+                renderStats();
+                toast("Data berhasil diimport");
+              }
+            } else {
+              toast("Format file tidak valid");
+            }
+          } catch (err) {
+            toast("Gagal membaca file");
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = "";
+      });
+
+      // Keyboard shortcuts
+      document.addEventListener("keydown", (e) => {
+        // Study mode shortcuts
+        if ($("page-study").classList.contains("active") && !sessionDone) {
+          if (e.key === "Enter" && e.target.id !== "active-study-card") {
+            e.preventDefault();
+            flipped = !flipped;
+            renderStudy();
+          }
+          if (e.key === " " && e.target.id === "active-study-card") {
+            e.preventDefault();
+            flipped = !flipped;
+            renderStudy();
+          }
+          if (e.key === "ArrowRight" && flipped) {
+            e.preventDefault();
+            answerCard(true);
+          }
+          if (e.key === "ArrowLeft" && flipped) {
+            e.preventDefault();
+            answerCard(false);
+          }
+          if (
+            e.key.toLowerCase() === "s" &&
+            e.target.tagName !== "INPUT" &&
+            e.target.tagName !== "TEXTAREA"
+          ) {
+            e.preventDefault();
+            $("shuffle-btn").click();
+          }
+        }
+
+        // Global shortcuts
+        if (
+          e.altKey &&
+          e.target.tagName !== "INPUT" &&
+          e.target.tagName !== "TEXTAREA"
+        ) {
+          if (e.key === "1") {
+            e.preventDefault();
+            navigate("dashboard");
+          }
+          if (e.key === "2") {
+            e.preventDefault();
+            navigate("decks");
+          }
+          if (e.key === "3") {
+            e.preventDefault();
+            navigate("study");
+          }
+          if (e.key === "4") {
+            e.preventDefault();
+            navigate("create");
+          }
+        }
+
+        // Theme toggle
+        if (
+          e.key.toLowerCase() === "d" &&
+          e.target.tagName !== "INPUT" &&
+          e.target.tagName !== "TEXTAREA" &&
+          !e.ctrlKey &&
+          !e.metaKey
+        ) {
+          e.preventDefault();
+          $("theme-toggle").click();
+        }
+
+        // Close modals with Escape
+        if (e.key === "Escape") {
+          $("shortcuts-modal").classList.remove("show");
+          $("edit-modal").classList.remove("show");
+        }
+      });
+
+      initTheme();
+      renderDashboard();
+      renderDecks();
+    </script>
+  </body>
+</html>

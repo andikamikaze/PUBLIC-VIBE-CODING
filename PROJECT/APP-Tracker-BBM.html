@@ -1,0 +1,1948 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aplikasi Tracker BBM</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <style>
+      :root {
+        --ink: #111827;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+        --soft: #f4f4f2;
+        --green: #166534;
+        --red: #b91c1c;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        color: var(--ink);
+        background: #fff;
+        line-height: 1.55;
+        font-size: 15px;
+        -webkit-font-smoothing: antialiased;
+      }
+      .container {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+
+      /* ---------- header ---------- */
+      header.site {
+        position: sticky;
+        top: 0;
+        background: #fff;
+        border-bottom: 1px solid var(--line);
+        z-index: 60;
+      }
+      .site-inner {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        height: 58px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-weight: 700;
+        font-size: 15.5px;
+        letter-spacing: -0.01em;
+      }
+      .brand svg {
+        flex: none;
+      }
+      nav.top {
+        display: flex;
+        gap: 18px;
+        margin-left: auto;
+        flex-wrap: wrap;
+      }
+      nav.top a {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 13px;
+        padding: 4px 0;
+        border-bottom: 2px solid transparent;
+      }
+      nav.top a:hover {
+        color: var(--ink);
+        border-bottom-color: var(--ink);
+      }
+
+      /* ---------- layout ---------- */
+      main {
+        padding: 30px 0 70px;
+      }
+      section {
+        margin-bottom: 42px;
+        scroll-margin-top: 70px;
+      }
+      h2.sec {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 16.5px;
+        font-weight: 700;
+        margin-bottom: 14px;
+        letter-spacing: -0.01em;
+      }
+      h2.sec .num {
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 12.5px;
+        border: 1px solid var(--line);
+        border-radius: 99px;
+        padding: 2px 9px;
+      }
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 20px;
+      }
+      .hint {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 5px;
+      }
+
+      /* ---------- stat cards ---------- */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+      }
+      .stat {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 15px 17px;
+      }
+      .stat-label {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 7px;
+      }
+      .stat-value {
+        font-size: 21px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.01em;
+      }
+      .stat-sub {
+        font-size: 11.5px;
+        color: var(--muted);
+        margin-top: 3px;
+      }
+
+      /* ---------- form ---------- */
+      .fields {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+      }
+      .fields .wide {
+        grid-column: 1 / -1;
+      }
+      label.f {
+        display: block;
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-bottom: 6px;
+        font-weight: 600;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 9px 12px;
+        font: inherit;
+        color: var(--ink);
+        background: #fff;
+      }
+      input:focus,
+      select:focus {
+        outline: 2px solid var(--ink);
+        outline-offset: -1px;
+        border-color: var(--ink);
+      }
+      input.err {
+        border-color: var(--red);
+        outline-color: var(--red);
+      }
+      .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 18px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .err-msg {
+        font-size: 12px;
+        color: var(--red);
+        margin-top: 5px;
+        display: none;
+      }
+      .err-msg.show {
+        display: block;
+      }
+
+      /* ---------- buttons ---------- */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        border: 1px solid var(--ink);
+        background: var(--ink);
+        color: #fff;
+        border-radius: 9px;
+        padding: 9px 16px;
+        font: inherit;
+        font-size: 13.5px;
+        font-weight: 600;
+      }
+      .btn:hover {
+        background: #000;
+      }
+      .btn.secondary {
+        background: #fff;
+        color: var(--ink);
+      }
+      .btn.secondary:hover {
+        background: var(--soft);
+      }
+      .btn.small {
+        padding: 5px 11px;
+        font-size: 12.5px;
+        border-radius: 7px;
+      }
+      .btn.danger {
+        border-color: var(--red);
+        background: #fff;
+        color: var(--red);
+      }
+      .btn.danger:hover {
+        background: var(--red);
+        color: #fff;
+      }
+
+      /* ---------- charts ---------- */
+      .chart-block {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 18px 20px 10px;
+        margin-bottom: 14px;
+      }
+      .chart-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+      }
+      .chart-title {
+        font-size: 13.5px;
+        font-weight: 700;
+      }
+      .chart-sub {
+        font-size: 11.5px;
+        color: var(--muted);
+      }
+      .legend {
+        display: flex;
+        gap: 16px;
+        font-size: 11.5px;
+        color: var(--muted);
+        align-items: center;
+      }
+      .legend i {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 2px;
+        margin-right: 5px;
+        vertical-align: -1px;
+      }
+      svg.chart {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .chart-note {
+        font-size: 11.5px;
+        color: var(--muted);
+        margin: 4px 2px 6px;
+      }
+
+      /* ---------- table ---------- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+        min-width: 640px;
+      }
+      th {
+        text-align: left;
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 11.5px;
+        letter-spacing: 0.03em;
+        border-bottom: 1px solid var(--ink);
+        padding: 8px 8px;
+        white-space: nowrap;
+      }
+      td {
+        padding: 9px 8px;
+        border-bottom: 1px solid var(--soft);
+        vertical-align: middle;
+      }
+      tr:hover td {
+        background: #fafaf8;
+      }
+      td.num,
+      th.num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      .badge {
+        display: inline-block;
+        font-size: 10.5px;
+        border: 1px solid var(--line);
+        border-radius: 99px;
+        padding: 1px 8px;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      .row-del {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--muted);
+        padding: 4px;
+        border-radius: 6px;
+        display: inline-flex;
+      }
+      .row-del:hover {
+        color: var(--red);
+        background: #fef2f2;
+      }
+      .history-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+      }
+      .empty {
+        color: var(--muted);
+        font-size: 13px;
+        padding: 22px;
+        border: 1px dashed var(--line);
+        border-radius: 10px;
+        text-align: center;
+      }
+
+      /* ---------- estimasi ---------- */
+      .est-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+      .est {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 15px 17px;
+      }
+      .est-label {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 6px;
+        font-weight: 600;
+      }
+      .est-value {
+        font-size: 19px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+      .est-sub {
+        font-size: 11.5px;
+        color: var(--muted);
+        margin-top: 4px;
+        line-height: 1.45;
+      }
+
+      /* ---------- map ---------- */
+      .map-tools {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 14px;
+      }
+      #map {
+        height: 400px;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        background: var(--soft);
+      }
+      .leaflet-container {
+        font: inherit;
+        font-size: 12.5px;
+      }
+      .station-list {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+      .station-item {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 11px 13px;
+        cursor: pointer;
+        display: flex;
+        gap: 11px;
+        align-items: flex-start;
+      }
+      .station-item:hover {
+        border-color: #9ca3af;
+      }
+      .station-item.active {
+        border-color: var(--ink);
+        background: #fafaf8;
+      }
+      .station-item svg {
+        flex: none;
+        margin-top: 2px;
+      }
+      .si-name {
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.3;
+      }
+      .si-sub {
+        font-size: 11.5px;
+        color: var(--muted);
+        margin-top: 2px;
+        line-height: 1.4;
+      }
+      .map-status {
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-top: 10px;
+        display: none;
+      }
+      .map-status.show {
+        display: block;
+      }
+
+      /* ---------- toast ---------- */
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 26px;
+        transform: translateX(-50%) translateY(10px);
+        background: var(--ink);
+        color: #fff;
+        padding: 10px 18px;
+        border-radius: 9px;
+        font-size: 13px;
+        opacity: 0;
+        transition:
+          opacity 0.22s,
+          transform 0.22s;
+        pointer-events: none;
+        z-index: 120;
+        max-width: 86vw;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%);
+      }
+
+      footer {
+        border-top: 1px solid var(--line);
+        padding: 22px 0 34px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      @media (max-width: 780px) {
+        .stats-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .fields {
+          grid-template-columns: 1fr;
+        }
+        .est-grid {
+          grid-template-columns: 1fr;
+        }
+        .station-list {
+          grid-template-columns: 1fr;
+        }
+        nav.top a {
+          font-size: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <svg style="display: none" aria-hidden="true">
+      <symbol
+        id="i-drop"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.7"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path
+          d="M12 2.7c3.2 3.9 6 7.3 6 10.6a6 6 0 1 1-12 0c0-3.3 2.8-6.7 6-10.6z"
+        />
+      </symbol>
+      <symbol
+        id="i-gauge"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.7"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M3.5 17a9 9 0 1 1 17 0" />
+        <path d="M12 13.8 15.5 10" />
+        <circle cx="12" cy="15.6" r="1.1" fill="currentColor" stroke="none" />
+      </symbol>
+      <symbol
+        id="i-chart"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.7"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M4 4v16h16" />
+        <path d="m7 14 3.5-4 3 2.5L19 7" />
+      </symbol>
+      <symbol
+        id="i-wallet"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.7"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <rect x="3" y="6" width="18" height="13" rx="2.5" />
+        <path d="M3 10h18" />
+        <circle cx="16.8" cy="14.5" r="1" fill="currentColor" stroke="none" />
+      </symbol>
+      <symbol
+        id="i-map-pin"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.7"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M12 21.5s7-6.1 7-11.5a7 7 0 1 0-14 0c0 5.4 7 11.5 7 11.5z" />
+        <circle cx="12" cy="10" r="2.6" />
+      </symbol>
+      <symbol
+        id="i-plus"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M12 5v14M5 12h14" />
+      </symbol>
+      <symbol
+        id="i-trash"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.7"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M4 7h16M10 4h4M6 7l1 13h10l1-13M10 11v6M14 11v6" />
+      </symbol>
+      <symbol
+        id="i-target"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.7"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="12" cy="12" r="8.5" />
+        <circle cx="12" cy="12" r="4.5" />
+        <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+      </symbol>
+      <symbol
+        id="i-cal"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.7"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+        <path d="M3.5 10h17M8 3v4M16 3v4" />
+      </symbol>
+      <symbol
+        id="i-road"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.7"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M4.5 20 7 4M19.5 20 17 4M12 5v2M12 10v2M12 15v2M12 20v1" />
+      </symbol>
+      <symbol
+        id="i-rupiah"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.7"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M7 4h11M7 9h11M7 14h5" />
+        <path d="M7 4c0 7 3.2 10.5 9 12" />
+        <path d="M13 16.5V20" />
+      </symbol>
+    </svg>
+
+    <header class="site">
+      <div class="container site-inner">
+        <div class="brand">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            style="color: #111827"
+          >
+            <use href="#i-drop" />
+          </svg>
+          Tracker BBM
+        </div>
+        <nav class="top">
+          <a href="#input">Input</a>
+          <a href="#grafik">Grafik</a>
+          <a href="#estimasi">Estimasi</a>
+          <a href="#spbu">SPBU</a>
+          <a href="#riwayat">Riwayat</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <!-- ====== statistik ringkas ====== -->
+      <section id="ringkasan">
+        <div class="stats-grid">
+          <div class="stat">
+            <div class="stat-label">
+              <svg width="14" height="14"><use href="#i-gauge" /></svg>Efisiensi
+              rata-rata
+            </div>
+            <div class="stat-value" id="stEff">—</div>
+            <div class="stat-sub" id="stEffSub">km / liter</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">
+              <svg width="14" height="14"><use href="#i-rupiah" /></svg>Total
+              pengeluaran
+            </div>
+            <div class="stat-value" id="stCost">Rp0</div>
+            <div class="stat-sub" id="stCostSub">— pengisian</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">
+              <svg width="14" height="14"><use href="#i-road" /></svg>Jarak
+              tempuh
+            </div>
+            <div class="stat-value" id="stDist">—</div>
+            <div class="stat-sub" id="stDistSub">km antar pengisian</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">
+              <svg width="14" height="14"><use href="#i-cal" /></svg>Biaya per
+              km
+            </div>
+            <div class="stat-value" id="stPerKm">—</div>
+            <div class="stat-sub" id="stPerKmSub">rupiah / km</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== 1. form input ====== -->
+      <section id="input">
+        <h2 class="sec">
+          <svg width="18" height="18"><use href="#i-drop" /></svg>Tambah
+          Pengisian<span class="num">1</span>
+        </h2>
+        <div class="card">
+          <form id="fillForm" novalidate>
+            <div class="fields">
+              <div>
+                <label class="f" for="fDate">Tanggal pengisian</label>
+                <input type="date" id="fDate" required />
+                <div class="err-msg" id="eDate">Pilih tanggal pengisian.</div>
+              </div>
+              <div>
+                <label class="f" for="fStation">SPBU / merek BBM</label>
+                <input
+                  type="text"
+                  id="fStation"
+                  placeholder="mis. Pertamina — Ron 92"
+                  list="stationSuggest"
+                  maxlength="40"
+                />
+                <div class="hint">Opsional, muncul di riwayat</div>
+                <datalist id="stationSuggest">
+                  <option>Pertamina Ron 90</option>
+                  <option>Pertamina Ron 92</option>
+                  <option>Pertamina Ron 95 (Dex)</option>
+                  <option>Pertamina Solar / B40</option>
+                  <option>Shell Extra 92</option>
+                  <option>Shell Extra 95</option>
+                  <option>BP Brite 92</option>
+                  <option>SPBU Non-brand</option>
+                </datalist>
+              </div>
+
+              <div>
+                <label class="f" for="fLiter">Jumlah liter</label>
+                <input
+                  type="number"
+                  id="fLiter"
+                  step="0.01"
+                  min="0.1"
+                  placeholder="mis. 30.50"
+                  required
+                />
+                <div class="err-msg" id="eLiter">
+                  Masukkan jumlah liter (&gt; 0).
+                </div>
+              </div>
+              <div>
+                <label class="f" for="fPrice">Harga per liter (Rp)</label>
+                <input
+                  type="number"
+                  id="fPrice"
+                  step="1"
+                  min="0"
+                  placeholder="mis. 10000"
+                  required
+                />
+                <div class="err-msg" id="ePrice">Masukkan harga per liter.</div>
+              </div>
+
+              <div>
+                <label class="f" for="fTotal">Total bayar (Rp)</label>
+                <input
+                  type="number"
+                  id="fTotal"
+                  step="1"
+                  min="0"
+                  placeholder="otomatis dari liter × harga"
+                  required
+                />
+                <div class="err-msg" id="eTotal">Masukkan total bayar.</div>
+              </div>
+              <div>
+                <label class="f" for="fOdo">Posisi odometer (km)</label>
+                <input
+                  type="number"
+                  id="fOdo"
+                  step="1"
+                  min="0"
+                  placeholder="mis. 45012"
+                  required
+                />
+                <div class="err-msg" id="eOdo">Masukkan posisi odometer.</div>
+              </div>
+
+              <div class="wide">
+                <label class="f" for="fNote">Catatan</label>
+                <input
+                  type="text"
+                  id="fNote"
+                  placeholder="mis. full tank, perjalanan luar kota"
+                  maxlength="60"
+                />
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn">
+                <svg width="15" height="15"><use href="#i-plus" /></svg>Simpan
+                pengisian
+              </button>
+              <button type="button" class="btn secondary" id="btnDemo">
+                Isi contoh data
+              </button>
+              <button type="button" class="btn secondary" id="btnClear">
+                Hapus semua data
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ====== 3. grafik ====== -->
+      <section id="grafik">
+        <h2 class="sec">
+          <svg width="18" height="18"><use href="#i-chart" /></svg>Tren Harga &
+          Efisiensi<span class="num">3</span>
+        </h2>
+
+        <div class="chart-block">
+          <div class="chart-head">
+            <div>
+              <div class="chart-title">Harga per liter dari waktu ke waktu</div>
+              <div class="chart-sub" id="priceSub">Belum ada data</div>
+            </div>
+            <div class="legend">
+              <span><i style="background: #111827"></i>Rp / liter</span>
+            </div>
+          </div>
+          <svg
+            class="chart"
+            id="chartPrice"
+            viewBox="0 0 760 240"
+            role="img"
+            aria-label="Grafik tren harga BBM per liter"
+          ></svg>
+          <div class="chart-note">
+            Titik kecil = harga yang tercatat setiap pengisian; garis
+            menghubungkan urutan tanggal.
+          </div>
+        </div>
+
+        <div class="chart-block">
+          <div class="chart-head">
+            <div>
+              <div class="chart-title">Efisiensi kendaraan (km per liter)</div>
+              <div class="chart-sub" id="effSub">
+                Butuh minimal 2 pengisian berurutan
+              </div>
+            </div>
+            <div class="legend">
+              <span><i style="background: #166534"></i>km / liter</span
+              ><span><i style="background: #d4d4d4"></i>rata-rata</span>
+            </div>
+          </div>
+          <svg
+            class="chart"
+            id="chartEff"
+            viewBox="0 0 760 240"
+            role="img"
+            aria-label="Grafik efisiensi kendaraan km per liter"
+          ></svg>
+          <div class="chart-note">
+            Efisiensi dihitung dari selisih odometer sejak pengisian sebelumnya
+            dibagi liter yang dihabiskan; pengisian pertama tidak punya
+            pembanding.
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== 4. estimasi bulanan ====== -->
+      <section id="estimasi">
+        <h2 class="sec">
+          <svg width="18" height="18"><use href="#i-wallet" /></svg>Estimasi
+          Pengeluaran Bulanan<span class="num">4</span>
+        </h2>
+        <div class="est-grid">
+          <div class="est">
+            <div class="est-label">Rata-rata per bulan</div>
+            <div class="est-value" id="estMonth">Rp0</div>
+            <div class="est-sub" id="estMonthSub">
+              Dihitung dari total pengeluaran dibagi jumlah bulan yang punya
+              data.
+            </div>
+          </div>
+          <div class="est">
+            <div class="est-label">Bulan berjalan</div>
+            <div class="est-value" id="estCurrent">Rp0</div>
+            <div class="est-sub" id="estCurrentSub">
+              Akumulasi pengeluaran bulan ini.
+            </div>
+          </div>
+          <div class="est">
+            <div class="est-label">Proyeksi bulan depan</div>
+            <div class="est-value" id="estNext">Rp0</div>
+            <div class="est-sub" id="estNextSub">
+              Rata-rata bulanan ± pola terakhir (3 pengisian terbaru).
+            </div>
+          </div>
+        </div>
+        <div class="chart-block" style="margin-top: 14px">
+          <div class="chart-head">
+            <div>
+              <div class="chart-title">Pengeluaran per bulan</div>
+              <div class="chart-sub" id="monthSub">Belum ada data</div>
+            </div>
+            <div class="legend">
+              <span><i style="background: #111827"></i>Rp / bulan</span>
+            </div>
+          </div>
+          <svg
+            class="chart"
+            id="chartMonth"
+            viewBox="0 0 760 220"
+            role="img"
+            aria-label="Grafik batang pengeluaran BBM per bulan"
+          ></svg>
+        </div>
+      </section>
+
+      <!-- ====== 5. peta SPBU ====== -->
+      <section id="spbu">
+        <h2 class="sec">
+          <svg width="18" height="18"><use href="#i-map-pin" /></svg>SPBU
+          Terdekat<span class="num">5</span>
+        </h2>
+        <div class="card">
+          <div class="map-tools">
+            <button class="btn small" id="btnLocate">
+              <svg width="14" height="14"><use href="#i-target" /></svg>Gunakan
+              lokasi saya
+            </button>
+            <span class="chart-sub" id="locStatus"
+              >Klik tombol untuk izinkan akses GPS, atau tulis nama kota lalu
+              cari.</span
+            >
+          </div>
+          <div id="map"></div>
+          <div class="map-status" id="mapStatus"></div>
+          <div
+            style="display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap"
+          >
+            <input
+              type="text"
+              id="cityInput"
+              placeholder="cari area, mis. Bandung"
+              style="max-width: 280px"
+            />
+            <button class="btn secondary small" id="btnCity">Cari area</button>
+          </div>
+          <div class="station-list" id="stationList"></div>
+          <div class="hint" style="margin-top: 12px">
+            Lokasi SPBU diambil langsung dari OpenStreetMap (database publik),
+            jadi daftarnya bergantung pada kelengkapan data di sekitar posisi
+            Anda.
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== 2. riwayat ====== -->
+      <section id="riwayat">
+        <h2 class="sec">
+          <svg width="18" height="18"><use href="#i-cal" /></svg>Riwayat
+          Pengisian<span class="num">2</span>
+        </h2>
+        <div class="card">
+          <div id="tableArea">
+            <div class="empty" id="emptyMsg">
+              Belum ada data. Tambahkan pengisian pertama Anda di atas, atau
+              klik “Isi contoh data” untuk melihat cara kerjanya.
+            </div>
+            <div class="table-wrap" id="tableWrap" style="display: none">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Tanggal</th>
+                    <th>SPBU / BBM</th>
+                    <th class="num">Liter</th>
+                    <th class="num">Rp/liter</th>
+                    <th class="num">Total</th>
+                    <th class="num">Odometer</th>
+                    <th class="num">Jarak</th>
+                    <th class="num">km/l</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="history-actions">
+            <button class="btn secondary small" id="btnExport">
+              Unduh CSV
+            </button>
+            <button class="btn secondary small" id="btnImport">
+              Impor CSV
+            </button>
+            <input
+              type="file"
+              id="fileInput"
+              accept=".csv"
+              style="display: none"
+            />
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="container">
+        Tracker BBM — data tersimpan hanya di browser Anda (localStorage).
+        Grafik dan estimasi dihitung dari catatan pengisian yang Anda masukkan;
+        peta memakai OpenStreetMap.
+      </div>
+    </footer>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+      /* ================= util ================= */
+      const $ = (s) => document.querySelector(s);
+      const nf = new Intl.NumberFormat("id-ID");
+      const rp = (n) => "Rp" + nf.format(Math.round(n));
+
+      function toast(msg) {
+        const t = $("#toast");
+        t.textContent = msg;
+        t.classList.add("show");
+        clearTimeout(t._tm);
+        t._tm = setTimeout(() => t.classList.remove("show"), 2600);
+      }
+      function fmtDate(iso) {
+        // 2026-11-14 -> 14 Nov 2026
+        const m = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "Mei",
+          "Jun",
+          "Jul",
+          "Agu",
+          "Sep",
+          "Okt",
+          "Nov",
+          "Des",
+        ];
+        const [y, mo, d] = iso.split("-").map(Number);
+        return d + " " + m[mo - 1] + " " + y;
+      }
+      function monthKey(iso) {
+        return iso.slice(0, 7);
+      }
+      function monthLabel(key) {
+        // 2026-11 -> Nov 26
+        const m = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "Mei",
+          "Jun",
+          "Jul",
+          "Agu",
+          "Sep",
+          "Okt",
+          "Nov",
+          "Des",
+        ];
+        const [y, mo] = key.split("-").map(Number);
+        return m[mo - 1] + " " + String(y).slice(2);
+      }
+
+      /* ================= penyimpanan ================= */
+      const LS_KEY = "tracker_bbm_v1";
+      let fills = []; // {id,date,station,liter,price,total,odo,note}
+
+      function load() {
+        try {
+          fills = JSON.parse(localStorage.getItem(LS_KEY) || "[]");
+        } catch (e) {
+          fills = [];
+        }
+        if (!Array.isArray(fills)) fills = [];
+      }
+      function save() {
+        localStorage.setItem(LS_KEY, JSON.stringify(fills));
+        fills.sort((a, b) =>
+          a.date === b.date ? a.odo - b.odo : a.date < b.date ? -1 : 1,
+        );
+      }
+
+      /* ================= kalkulasi ================= */
+      function computeRows() {
+        const s = [...fills].sort((a, b) =>
+          a.date === b.date ? a.odo - b.odo : a.date < b.date ? -1 : 1,
+        );
+        const out = [];
+        for (let i = 0; i < s.length; i++) {
+          const r = { ...s[i] };
+          if (i > 0) {
+            const dist = r.odo - s[i - 1].odo;
+            r.dist = dist > 0 ? dist : null;
+            r.eff = dist > 0 ? dist / r.liter : null; // km per liter sejak pengisian sebelumnya
+          } else {
+            r.dist = null;
+            r.eff = null;
+          }
+          out.push(r);
+        }
+        return out;
+      }
+
+      function stats() {
+        const rows = computeRows();
+        const effs = rows
+          .map((r) => r.eff)
+          .filter((v) => v != null && isFinite(v) && v > 0);
+        const totalCost = fills.reduce((a, f) => a + f.total, 0);
+        const totalLiter = fills.reduce((a, f) => a + f.liter, 0);
+        const odoMin = fills.length ? Math.min(...fills.map((f) => f.odo)) : 0;
+        const odoMax = fills.length ? Math.max(...fills.map((f) => f.odo)) : 0;
+        return {
+          rows,
+          avgEff: effs.length
+            ? effs.reduce((a, b) => a + b, 0) / effs.length
+            : null,
+          bestEff: effs.length ? Math.max(...effs) : null,
+          totalCost,
+          totalLiter,
+          dist: odoMax - odoMin,
+          perKm:
+            odoMax > odoMin && totalCost > 0
+              ? totalCost / (odoMax - odoMin)
+              : null,
+          avgPrice: fills.length
+            ? fills.reduce((a, f) => a + f.price, 0) / fills.length
+            : null,
+        };
+      }
+
+      /* grafik garis generik: id, data [{x:label,y:number}], warna, format y */
+      function lineChart(svgId, data, color, fmt, avgLine) {
+        const svg = $(svgId);
+        const W = 760,
+          H = 240,
+          L = 56,
+          R = 16,
+          T = 18,
+          B = 34;
+        if (!data.length) {
+          svg.innerHTML =
+            '<rect x="0" y="0" width="760" height="240" fill="#fafaf8"/>' +
+            '<text x="380" y="126" text-anchor="middle" font-size="12.5" fill="#6b7280">Belum cukup data untuk menggambar grafik</text>';
+          return;
+        }
+        const xs = data.map((d, i) =>
+          data.length === 1
+            ? (L + R) / 2
+            : L + (i * (W - L - R)) / (data.length - 1),
+        );
+        const ys = data.map((d) => d.y);
+        let yMin = Math.min(...ys),
+          yMax = Math.max(...ys);
+        if (yMax === yMin) {
+          yMin = Math.max(0, yMin * 0.9);
+          yMax = yMax * 1.1 + 1;
+        }
+        const pad = (yMax - yMin) * 0.12;
+        yMin = Math.max(0, yMin - pad);
+        yMax = yMax + pad;
+        const X = (v) => v,
+          Y = (v) => H - B - ((v - yMin) * (H - T - B)) / (yMax - yMin);
+        let g = "";
+
+        // grid + label sumbu Y (4 garis)
+        for (let i = 0; i <= 4; i++) {
+          const v = yMin + ((yMax - yMin) * i) / 4;
+          const y = Y(v);
+          g += `<line x1="${L}" y1="${y}" x2="${W - R}" y2="${y}" stroke="#ececec"/>`;
+          g += `<text x="${L - 8}" y="${y + 3.5}" text-anchor="end" font-size="10.5" fill="#9ca3af">${fmt(v)}</text>`;
+        }
+
+        // rata-rata
+        const avg = ys.reduce((a, b) => a + b, 0) / ys.length;
+        if (avgLine && data.length > 1) {
+          g += `<line x1="${L}" y1="${Y(avg)}" x2="${W - R}" y2="${Y(avg)}" stroke="#d4d4d4" stroke-dasharray="4 4"/>`;
+          g += `<text x="${W - R}" y="${Y(avg) - 6}" text-anchor="end" font-size="10.5" fill="#9ca3af">rata-rata ${fmt(avg)}</text>`;
+        }
+
+        // garis + titik
+        const pts = data
+          .map((d, i) => `${xs[i].toFixed(1)},${Y(d.y).toFixed(1)}`)
+          .join(" ");
+        g += `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>`;
+        data.forEach((d, i) => {
+          g += `<circle cx="${xs[i].toFixed(1)}" cy="${Y(d.y).toFixed(1)}" r="4" fill="#fff" stroke="${color}" stroke-width="2"/>`;
+        });
+
+        // label X (maks 8, selang-seling)
+        const step = Math.ceil(data.length / 8);
+        data.forEach((d, i) => {
+          if (i % step === 0 || i === data.length - 1) {
+            g += `<text x="${xs[i].toFixed(1)}" y="${H - B + 16}" text-anchor="middle" font-size="10.5" fill="#9ca3af">${d.x}</text>`;
+          }
+        });
+
+        svg.innerHTML = g;
+      }
+
+      /* grafik batang bulanan */
+      function barChart(svgId, items) {
+        // items [{key,label,val}]
+        const svg = $(svgId);
+        const W = 760,
+          H = 220,
+          L = 56,
+          R = 16,
+          T = 14,
+          B = 30;
+        if (!items.length) {
+          svg.innerHTML =
+            '<rect x="0" y="0" width="760" height="220" fill="#fafaf8"/>' +
+            '<text x="380" y="116" text-anchor="middle" font-size="12.5" fill="#6b7280">Belum ada data bulanan</text>';
+          return;
+        }
+        const max = Math.max(...items.map((i) => i.val)) * 1.12 || 1;
+        const Y = (v) => H - B - (v * (H - T - B)) / max;
+        const n = items.length;
+        const band = (W - L - R) / n;
+        const bw = Math.min(52, band * 0.6);
+        let g = "";
+        for (let i = 0; i <= 4; i++) {
+          const v = (max * i) / 4,
+            y = Y(v);
+          g += `<line x1="${L}" y1="${y}" x2="${W - R}" y2="${y}" stroke="#ececec"/>`;
+          g += `<text x="${L - 8}" y="${y + 3.5}" text-anchor="end" font-size="10.5" fill="#9ca3af">${shortRp(v)}</text>`;
+        }
+        items.forEach((it, i) => {
+          const cx = L + band * i + band / 2;
+          const y = Y(it.val),
+            h = H - B - y;
+          g += `<rect x="${(cx - bw / 2).toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(h, 1).toFixed(1)}" fill="#111827" rx="3"/>`;
+          g += `<text x="${cx.toFixed(1)}" y="${H - B + 15}" text-anchor="middle" font-size="10.5" fill="#9ca3af">${it.label}</text>`;
+          if (n <= 10)
+            g += `<text x="${cx.toFixed(1)}" y="${(y - 6).toFixed(1)}" text-anchor="middle" font-size="10.5" fill="#6b7280">${shortRp(it.val)}</text>`;
+        });
+        svg.innerHTML = g;
+      }
+      function shortRp(v) {
+        if (v >= 1e6) return (v / 1e6).toFixed(v % 1e6 ? 1 : 0) + "jt";
+        if (v >= 1e3) return Math.round(v / 1e3) + "rb";
+        return Math.round(v);
+      }
+
+      /* ================= render ================= */
+      function render() {
+        const st = stats();
+
+        // kartu statistik
+        $("#stEff").textContent =
+          st.avgEff != null ? st.avgEff.toFixed(2) : "—";
+        $("#stEffSub").textContent =
+          st.avgEff != null
+            ? `km/liter · terbaik ${st.bestEff.toFixed(1)}`
+            : "km / liter";
+        $("#stCost").textContent = rp(st.totalCost);
+        $("#stCostSub").textContent =
+          `${fills.length} pengisian · ${nf.format(st.totalLiter.toFixed(1))} liter`;
+        $("#stDist").textContent = fills.length > 1 ? nf.format(st.dist) : "—";
+        $("#stPerKm").textContent = st.perKm != null ? rp(st.perKm) : "—";
+
+        // tabel riwayat
+        const tb = $("#tbody");
+        tb.innerHTML = "";
+        const rows = [...st.rows].reverse();
+        rows.forEach((r) => {
+          const tr = document.createElement("tr");
+          const distCell = r.dist != null ? nf.format(r.dist) : "—";
+          const effCell =
+            r.eff != null
+              ? r.eff.toFixed(2)
+              : '<span class="badge">pengisian pertama</span>';
+          tr.innerHTML = `
+      <td>${fmtDate(r.date)}</td>
+      <td>${esc(r.station || "-")} ${r.note ? `<span class="badge">${esc(r.note)}</span>` : ""}</td>
+      <td class="num">${nf.format(r.liter)}</td>
+      <td class="num">${nf.format(r.price)}</td>
+      <td class="num">${rp(r.total)}</td>
+      <td class="num">${nf.format(r.odo)}</td>
+      <td class="num">${distCell}</td>
+      <td class="num">${effCell}</td>
+      <td><button class="row-del" title="Hapus baris" data-id="${r.id}">
+        <svg width="15" height="15"><use href="#i-trash"/></svg></button></td>`;
+          tb.appendChild(tr);
+        });
+        $("#emptyMsg").style.display = fills.length ? "none" : "block";
+        $("#tableWrap").style.display = fills.length ? "block" : "none";
+
+        // grafik harga
+        const priceData = st.rows
+          .filter((r) => r.price > 0)
+          .map((r) => ({ x: fmtDate(r.date).slice(0, 6), y: r.price }));
+        $("#priceSub").textContent =
+          st.avgPrice != null
+            ? `${st.rows.length} pengisian · rata-rata ${rp(st.avgPrice)} / liter`
+            : "Belum ada data";
+        lineChart(
+          "#chartPrice",
+          priceData,
+          "#111827",
+          (v) => Math.round(v / 1000) + "rb",
+          false,
+        );
+
+        // grafik efisiensi
+        const effData = st.rows
+          .filter((r) => r.eff != null)
+          .map((r) => ({ x: fmtDate(r.date).slice(0, 6), y: r.eff }));
+        $("#effSub").textContent = effData.length
+          ? `${effData.length} titik data · rata-rata ${st.avgEff.toFixed(2)} km/l`
+          : "Butuh minimal 2 pengisian berurutan";
+        lineChart("#chartEff", effData, "#166534", (v) => v.toFixed(1), true);
+
+        // estimasi bulanan
+        renderEstimate(st);
+      }
+      function esc(s) {
+        return String(s).replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      }
+
+      function renderEstimate(st) {
+        const perMonth = new Map();
+        fills.forEach((f) => {
+          const k = monthKey(f.date);
+          perMonth.set(k, (perMonth.get(k) || 0) + f.total);
+        });
+        const keys = [...perMonth.keys()].sort();
+        const items = keys.map((k) => ({
+          key: k,
+          label: monthLabel(k),
+          val: perMonth.get(k),
+        }));
+        const avg = keys.length ? st.totalCost / keys.length : 0;
+
+        $("#estMonth").textContent = rp(avg);
+        const nowKey = new Date().toISOString().slice(0, 7);
+        $("#estMonthSub").textContent = keys.length
+          ? `${keys.length} bulan berdata · total ${rp(st.totalCost)}`
+          : "Dihitung dari total pengeluaran dibagi jumlah bulan yang punya data.";
+
+        const cur = perMonth.get(nowKey) || 0;
+        $("#estCurrent").textContent = rp(cur);
+        $("#estCurrentSub").textContent =
+          keys.length && perMonth.has(nowKey)
+            ? `Bulan ${monthLabel(nowKey)} · ${fills.filter((f) => monthKey(f.date) === nowKey).length} pengisian`
+            : "Akumulasi pengeluaran bulan ini.";
+
+        // proyeksi: rata-rata bulanan, disesuaikan bobot 3 pengisian terakhir
+        let next = avg;
+        if (fills.length) {
+          const last3 = [...fills].slice(-3);
+          const avgLast = last3.reduce((a, f) => a + f.total, 0) / last3.length;
+          next = keys.length >= 2 ? avg * 0.6 + avgLast * 0.4 : avgLast;
+        }
+        $("#estNext").textContent = rp(next);
+        $("#estNextSub").textContent = fills.length
+          ? "Rata-rata bulanan ± pola terakhir (3 pengisian terbaru)."
+          : "Rata-rata bulanan ± pola terakhir (3 pengisian terbaru).";
+
+        $("#monthSub").textContent = items.length
+          ? `${items.length} bulan · tertinggi ${rp(Math.max(...items.map((i) => i.val)))}`
+          : "Belum ada data";
+        barChart("#chartMonth", items);
+      }
+
+      /* ================= form ================= */
+      const fields = {
+        date: "#fDate",
+        liter: "#fLiter",
+        price: "#fPrice",
+        total: "#fTotal",
+        odo: "#fOdo",
+      };
+      function setErr(id, on) {
+        $(fields[id]).classList.toggle("err", on);
+        const e = $("#e" + id.charAt(0).toUpperCase() + id.slice(1));
+        if (e) e.classList.toggle("show", on);
+      }
+      function readForm() {
+        const v = {
+          date: $("#fDate").value,
+          liter: parseFloat($("#fLiter").value),
+          price: parseFloat($("#fPrice").value),
+          total: parseFloat($("#fTotal").value),
+          odo: parseInt($("#fOdo").value, 10),
+          station: $("#fStation").value.trim(),
+          note: $("#fNote").value.trim(),
+        };
+        return v;
+      }
+      function validate(v) {
+        let ok = true;
+        ["date", "liter", "price", "total", "odo"].forEach((k) => {
+          let bad = false;
+          if (k === "date") bad = !v.date;
+          else if (k === "odo") bad = !(v.odo >= 0);
+          else bad = !(v[k] > 0);
+          setErr(k, bad);
+          if (bad) ok = false;
+        });
+        return ok;
+      }
+      // harga × liter -> total (auto)
+      function autoTotal() {
+        const l = parseFloat($("#fLiter").value),
+          p = parseFloat($("#fPrice").value);
+        if (l > 0 && p > 0 && !$("#fTotal").dataset.manual)
+          $("#fTotal").value = Math.round(l * p);
+      }
+      ["#fLiter", "#fPrice"].forEach((s) =>
+        $(s).addEventListener("input", autoTotal),
+      );
+      $("#fTotal").addEventListener("input", () => {
+        $("#fTotal").dataset.manual = "1";
+      });
+      $("#fLiter").addEventListener(
+        "input",
+        () => delete $("#fTotal").dataset.manual,
+      );
+      $("#fPrice").addEventListener(
+        "input",
+        () => delete $("#fTotal").dataset.manual,
+      );
+      $("#fTotal").addEventListener("change", () => {
+        // koreksi liter jika user ubah total
+        const t = parseFloat($("#fTotal").value),
+          p = parseFloat($("#fPrice").value);
+        if (t > 0 && p > 0 && !$("#fLiter").value) {
+          $("#fLiter").value = (t / p).toFixed(2);
+        }
+      });
+
+      $("#fillForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const v = readForm();
+        if (!validate(v)) {
+          toast("Periksa kembali kolom bertanda merah.");
+          return;
+        }
+        if (v.total < v.liter * v.price * 0.9 - 1) {
+          // toleransi pembulatan pom
+          if (
+            !confirm(
+              "Total bayar lebih kecil dari liter × harga. Tetap simpan?",
+            )
+          )
+            return;
+        }
+        // odometer harus >= maksimum yang ada
+        const maxOdo = fills.length ? Math.max(...fills.map((f) => f.odo)) : -1;
+        if (v.odo < maxOdo) {
+          setErr("odo", true);
+          toast("Odometer tidak boleh lebih kecil dari pencatatan terakhir.");
+          return;
+        }
+        setErr("odo", false);
+        fills.push({
+          id: Date.now() + "" + Math.random().toString(36).slice(2, 6),
+          ...v,
+        });
+        save();
+        render();
+        e.target.reset();
+        delete $("#fTotal").dataset.manual;
+        toast("Pengisian tersimpan.");
+      });
+
+      /* hapus baris */
+      $("#tbody").addEventListener("click", (e) => {
+        const btn = e.target.closest(".row-del");
+        if (!btn) return;
+        fills = fills.filter((f) => f.id !== btn.dataset.id);
+        save();
+        render();
+        toast("Baris dihapus.");
+      });
+
+      /* hapus semua */
+      $("#btnClear").addEventListener("click", () => {
+        if (!fills.length) {
+          toast("Tidak ada data untuk dihapus.");
+          return;
+        }
+        if (
+          confirm(
+            "Hapus SEMUA riwayat pengisian? Tindakan ini tidak bisa dibatalkan.",
+          )
+        ) {
+          fills = [];
+          save();
+          render();
+          toast("Semua data dihapus.");
+        }
+      });
+
+      /* ================= contoh data ================= */
+      const DEMO = [
+        {
+          date: "2026-07-05",
+          station: "Pertamina Ron 92",
+          liter: 32.0,
+          price: 12900,
+          total: 412800,
+          odo: 12040,
+        },
+        {
+          date: "2026-07-19",
+          station: "Pertamina Ron 92",
+          liter: 30.5,
+          price: 12900,
+          total: 393450,
+          odo: 12510,
+        },
+        {
+          date: "2026-08-02",
+          station: "Shell Extra 95",
+          liter: 31.0,
+          price: 13900,
+          total: 430900,
+          odo: 13000,
+        },
+        {
+          date: "2026-08-16",
+          station: "Pertamina Ron 92",
+          liter: 33.2,
+          price: 12900,
+          total: 428280,
+          odo: 13520,
+        },
+        {
+          date: "2026-08-30",
+          station: "Shell Extra 95",
+          liter: 28.4,
+          price: 13900,
+          total: 394760,
+          odo: 14000,
+        },
+        {
+          date: "2026-09-13",
+          station: "Pertamina Ron 92",
+          liter: 30.0,
+          price: 13100,
+          total: 393000,
+          odo: 14475,
+        },
+        {
+          date: "2026-09-27",
+          station: "Pertamina Ron 92",
+          liter: 31.6,
+          price: 13100,
+          total: 413960,
+          odo: 15000,
+        },
+        {
+          date: "2026-10-11",
+          station: "Pertamina Ron 92",
+          liter: 30.8,
+          price: 13100,
+          total: 403480,
+          odo: 15520,
+        },
+        {
+          date: "2026-10-25",
+          station: "Shell Extra 95",
+          liter: 29.0,
+          price: 13900,
+          total: 403100,
+          odo: 16000,
+        },
+        {
+          date: "2026-11-08",
+          station: "Pertamina Ron 92",
+          liter: 32.5,
+          price: 13100,
+          total: 425750,
+          odo: 16560,
+        },
+        {
+          date: "2026-11-14",
+          station: "Pertamina Ron 92",
+          liter: 30.0,
+          price: 13100,
+          total: 393000,
+          odo: 17050,
+        },
+      ];
+      $("#btnDemo").addEventListener("click", () => {
+        if (
+          fills.length &&
+          !confirm("Tambahkan 11 baris contoh ke data yang ada?")
+        )
+          return;
+        DEMO.forEach((d, i) =>
+          fills.push({ id: "demo" + i + Date.now(), note: "", ...d }),
+        );
+        save();
+        render();
+        toast("Contoh data 11 pengisian dimuat.");
+      });
+
+      /* ================= CSV ================= */
+      $("#btnExport").addEventListener("click", () => {
+        if (!fills.length) {
+          toast("Belum ada data untuk diunduh.");
+          return;
+        }
+        const head =
+          "tanggal,spbu,liter,harga_per_liter,total,odometer,catatan";
+        const lines = [...fills]
+          .sort((a, b) => (a.date < b.date ? -1 : 1))
+          .map((f) =>
+            [
+              f.date,
+              f.station || "",
+              f.liter,
+              f.price,
+              f.total,
+              f.odo,
+              f.note || "",
+            ]
+              .map((x) =>
+                String(x).includes(",")
+                  ? '"' + String(x).replace(/"/g, '""') + '"'
+                  : x,
+              )
+              .join(","),
+          );
+        const csv = head + "\n" + lines.join("\n");
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+        a.download = "tracker-bbm.csv";
+        a.click();
+        URL.revokeObjectURL(a.href);
+        toast("CSV diunduh.");
+      });
+      $("#btnImport").addEventListener("click", () => $("#fileInput").click());
+      $("#fileInput").addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const rd = new FileReader();
+        rd.onload = () => {
+          const lines = String(rd.result)
+            .split(/\r?\n/)
+            .filter((l) => l.trim());
+          if (lines.length < 2) {
+            toast("CSV kosong.");
+            return;
+          }
+          let added = 0,
+            skipped = 0;
+          lines.slice(1).forEach((l) => {
+            const c = l.match(/("([^"]*)"|[^,]*)(,|$)/g)
+              ? parseCsvLine(l)
+              : l.split(",");
+            const [date, station, liter, price, total, odo, note] = c;
+            const o = {
+              id: "csv" + Date.now() + Math.random().toString(36).slice(2, 6),
+              date: String(date || "").trim(),
+              station: String(station || "").trim(),
+              liter: parseFloat(liter),
+              price: parseFloat(price),
+              total: parseFloat(total),
+              odo: parseInt(odo, 10),
+              note: String(note || "").trim(),
+            };
+            if (
+              o.date &&
+              o.liter > 0 &&
+              o.price > 0 &&
+              o.total > 0 &&
+              o.odo >= 0
+            ) {
+              fills.push(o);
+              added++;
+            } else skipped++;
+          });
+          save();
+          render();
+          toast(
+            `Impor selesai: ${added} baris masuk${skipped ? `, ${skipped} dilewati` : ""}.`,
+          );
+          e.target.value = "";
+        };
+        rd.readAsText(file);
+      });
+      function parseCsvLine(l) {
+        const out = [];
+        let cur = "",
+          inQ = false;
+        for (let i = 0; i < l.length; i++) {
+          const ch = l[i];
+          if (inQ) {
+            if (ch === '"') {
+              if (l[i + 1] === '"') {
+                cur += '"';
+                i++;
+              } else inQ = false;
+            } else cur += ch;
+          } else if (ch === '"') inQ = true;
+          else if (ch === ",") {
+            out.push(cur);
+            cur = "";
+          } else cur += ch;
+        }
+        out.push(cur);
+        return out;
+      }
+
+      /* ================= init default ================= */
+      $("#fDate").value = new Date().toISOString().slice(0, 10);
+
+      /* ================= peta SPBU ================= */
+      const TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+      const map = L.map("map", { scrollWheelZoom: true }).setView(
+        [-6.2, 106.82],
+        11,
+      );
+      L.tileLayer(TILES, {
+        maxZoom: 19,
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      }).addTo(map);
+      let userMarker = null,
+        stationLayer = L.layerGroup().addTo(map);
+
+      function setStatus(msg) {
+        const el = $("#mapStatus");
+        if (msg) {
+          el.textContent = msg;
+          el.classList.add("show");
+        } else el.classList.remove("show");
+      }
+
+      /* beberapa mirror Overpass, dicoba berurutan agar tahan blokir/sibuk */
+      const OVERPASS = [
+        "https://overpass-api.de/api/interpreter",
+        "https://overpass.kumi.systems/api/interpreter",
+        "https://overpass.private.coffee/api/interpreter",
+      ];
+
+      function fetchStations(lat, lng) {
+        const box = [
+          (lat - 0.045).toFixed(4),
+          (lng - 0.045).toFixed(4),
+          (lat + 0.045).toFixed(4),
+          (lng + 0.045).toFixed(4),
+        ].join(",");
+        const q = `[out:json][timeout:25];node["amenity"="fuel"](${box});out body 40;`;
+        setStatus("Mencari SPBU di sekitar posisi…");
+        fetchOverpass(0);
+        function fetchOverpass(i) {
+          const url = OVERPASS[i] + "?data=" + encodeURIComponent(q);
+          fetch(url)
+            .then((r) => {
+              if (!r.ok) throw 0;
+              return r.json();
+            })
+            .then((d) => showStations(lat, lng, d))
+            .catch(() => {
+              if (i + 1 < OVERPASS.length) fetchOverpass(i + 1);
+              else failOverpass();
+            });
+        }
+        function failOverpass() {
+          renderStationList([]);
+          setStatus(
+            "Peta tetap bisa dipakai, tetapi daftar SPBU tidak bisa dimuat saat ini (layanan OpenStreetMap Overpass tidak terjangkau). Coba beberapa saat lagi.",
+          );
+        }
+      }
+      function showStations(lat, lng, d) {
+        stationLayer.clearLayers();
+        const list = (d.elements || []).map((el) => ({
+          lat: el.lat,
+          lng: el.lon,
+          name:
+            (el.tags && (el.tags.name || el.tags.brand || el.tags.operator)) ||
+            "SPBU",
+          brand: (el.tags && el.tags.brand) || "",
+        }));
+        list.forEach((s) => (s.km = hav(lat, lng, s.lat, s.lng)));
+        list.sort((a, b) => a.km - b.km);
+        const top = list.slice(0, 12);
+        top.forEach((s) => {
+          L.circleMarker([s.lat, s.lng], {
+            radius: 8,
+            color: "#111827",
+            weight: 2,
+            fillColor: "#fff",
+            fillOpacity: 1,
+          })
+            .bindPopup(
+              `<b>${esc(s.name)}</b><br>${s.km.toFixed(1)} km dari posisi Anda`,
+            )
+            .addTo(stationLayer);
+        });
+        renderStationList(top);
+        setStatus(
+          top.length
+            ? `${top.length} SPBU ditemukan dalam radius ±5 km (data OpenStreetMap).`
+            : "Tidak ada SPBU terdata di sekitar posisi ini (database OpenStreetMap belum lengkap di area tersebut).",
+        );
+      }
+      function hav(lat1, lng1, lat2, lng2) {
+        const R = 6371,
+          r = (x) => (x * Math.PI) / 180;
+        const dLat = r(lat2 - lat1),
+          dLng = r(lng2 - lng1);
+        const a =
+          Math.sin(dLat / 2) ** 2 +
+          Math.cos(r(lat1)) * Math.cos(r(lat2)) * Math.sin(dLng / 2) ** 2;
+        return 2 * R * Math.asin(Math.sqrt(a));
+      }
+      function renderStationList(list) {
+        const wrap = $("#stationList");
+        wrap.innerHTML = "";
+        if (!list.length) {
+          wrap.innerHTML =
+            '<div class="empty">Belum ada SPBU untuk ditampilkan. Tentukan posisi dulu.</div>';
+          return;
+        }
+        list.forEach((s, i) => {
+          const div = document.createElement("div");
+          div.className = "station-item";
+          div.style.cursor = "pointer";
+          div.innerHTML = `
+      <svg width="17" height="17" style="color:#111827"><use href="#i-map-pin"/></svg>
+      <div>
+        <div class="si-name">${esc(s.name)}</div>
+        <div class="si-sub">${i === 0 ? "Terdekat · " : ""}${s.km.toFixed(1)} km${s.brand ? ` · ${esc(s.brand)}` : ""}</div>
+      </div>`;
+          div.addEventListener("click", () => map.setView([s.lat, s.lng], 15));
+          wrap.appendChild(div);
+        });
+      }
+
+      $("#btnLocate").addEventListener("click", () => {
+        if (!navigator.geolocation) {
+          setStatus("Browser ini tidak mendukung geolocation.");
+          return;
+        }
+        setStatus("Meminta izin lokasi…");
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude: lat, longitude: lng } = pos.coords;
+            setUser(lat, lng);
+            fetchStations(lat, lng);
+            $("#locStatus").textContent =
+              `Posisi Anda: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+          },
+          (err) => {
+            setStatus(
+              "Izin lokasi ditolak / gagal. Gunakan kolom “cari area” di bawah peta.",
+            );
+          },
+          { enableHighAccuracy: true, timeout: 10000 },
+        );
+      });
+      function setUser(lat, lng) {
+        if (userMarker) map.removeLayer(userMarker);
+        userMarker = L.circleMarker([lat, lng], {
+          radius: 9,
+          color: "#b91c1c",
+          weight: 2,
+          fillColor: "#fff",
+          fillOpacity: 1,
+        })
+          .bindPopup("Posisi Anda")
+          .addTo(map);
+        map.setView([lat, lng], 13);
+      }
+
+      /* cari area (nama kota) — Nominatim */
+      $("#btnCity").addEventListener("click", () => {
+        const q = $("#cityInput").value.trim();
+        if (!q) {
+          toast("Tulis nama area terlebih dahulu.");
+          return;
+        }
+        setStatus("Mencari area…");
+        fetch(
+          "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" +
+            encodeURIComponent(q),
+        )
+          .then((r) => r.json())
+          .then((d) => {
+            if (!d.length) {
+              setStatus(`Area "${q}" tidak ditemukan.`);
+              return;
+            }
+            const { lat, lng } = {
+              lat: parseFloat(d[0].lat),
+              lng: parseFloat(d[0].lon),
+            };
+            setUser(lat, lng);
+            fetchStations(lat, lng);
+            $("#locStatus").textContent =
+              `Area: ${esc(d[0].display_name || q).slice(0, 90)}`;
+          })
+          .catch(() => setStatus("Pencarian area gagal. Coba lagi."));
+      });
+      $("#cityInput").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          $("#btnCity").click();
+        }
+      });
+
+      /* ================= mulai ================= */
+      load();
+      render();
+    </script>
+  </body>
+</html>

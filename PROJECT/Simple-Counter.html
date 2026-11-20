@@ -1,0 +1,1378 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta
+      name="theme-color"
+      content="#ffffff"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#121212"
+      media="(prefers-color-scheme: dark)"
+    />
+    <meta
+      name="description"
+      content="A clean, private simple counter with live text statistics, reading time, keyword frequency, and a numeric counter with configurable step size."
+    />
+    <title>Simple Counter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #fafaf9;
+        --panel: #ffffff;
+        --text: #1a1a1a;
+        --muted: #737373;
+        --faint: #a3a3a3;
+        --line: #ececec;
+        --line-soft: #f3f3f3;
+        --accent: #2563eb;
+        --accent-soft: #eff6ff;
+        --green: #16a34a;
+        --red: #dc2626;
+        --radius: 16px;
+        --radius-sm: 10px;
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.03), 0 4px 16px rgba(0, 0, 0, 0.02);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #121212;
+          --panel: #1e1e1e;
+          --text: #f5f5f5;
+          --muted: #a3a3a3;
+          --faint: #737373;
+          --line: #2a2a2a;
+          --line-soft: #252525;
+          --accent: #3b82f6;
+          --accent-soft: #1e3a8a;
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font:
+          15px/1.6 "Inter",
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      button,
+      input,
+      textarea,
+      select {
+        font: inherit;
+        color: inherit;
+      }
+      button {
+        cursor: pointer;
+        border: 0;
+        background: transparent;
+      }
+
+      button:focus-visible,
+      input:focus-visible,
+      textarea:focus-visible,
+      select:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+
+      .app {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: env(safe-area-inset-top, 16px) env(safe-area-inset-right, 16px)
+          env(safe-area-inset-bottom, 16px) env(safe-area-inset-left, 16px);
+      }
+
+      /* Topbar */
+      .topbar {
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--line);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 600;
+        font-size: 15px;
+        letter-spacing: -0.01em;
+        text-decoration: none;
+        color: var(--text);
+      }
+      .brand-mark {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: var(--text);
+        color: var(--bg);
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        font-size: 13px;
+      }
+      .top-meta {
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+      }
+
+      /* Tabs */
+      .tabs {
+        display: flex;
+        gap: 8px;
+        padding: 16px 0 24px;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 24px;
+      }
+      .tab-btn {
+        flex: 1;
+        padding: 12px 16px;
+        border: 1px solid transparent;
+        border-bottom: 2px solid transparent;
+        background: transparent;
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 8px 8px 0 0;
+        transition: all 0.15s ease;
+        min-height: 44px;
+      }
+      .tab-btn:hover {
+        color: var(--text);
+        background: var(--line-soft);
+      }
+      .tab-btn.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+        background: var(--accent-soft);
+      }
+
+      /* Layout */
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 20px;
+        align-items: stretch;
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        min-width: 0;
+      }
+      .panel-head {
+        padding: 18px 22px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .panel-title {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      /* Editor */
+      .editor-panel {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .editor-tools {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .editor-state {
+        font-size: 12px;
+        color: var(--faint);
+        margin-right: 8px;
+      }
+      .icon-btn {
+        color: var(--muted);
+        padding: 8px 12px;
+        border-radius: 7px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        min-height: 44px;
+        transition:
+          background 0.15s ease,
+          color 0.15s ease;
+      }
+      .icon-btn:hover:not(:disabled) {
+        background: var(--accent-soft);
+        color: var(--text);
+      }
+      .icon-btn:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+      .icon-btn svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      textarea {
+        display: block;
+        width: 100%;
+        min-height: 360px;
+        flex: 1;
+        resize: vertical;
+        border: 0;
+        background: transparent;
+        color: var(--text);
+        padding: 24px;
+        font-size: 16px;
+        line-height: 1.8;
+        outline: none;
+      }
+      textarea::placeholder {
+        color: var(--faint);
+      }
+      .editor-foot {
+        border-top: 1px solid var(--line);
+        padding: 12px 22px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        color: var(--faint);
+        font-size: 11px;
+        flex-wrap: wrap;
+      }
+
+      /* Stats */
+      .stats-panel {
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .stats-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .live-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--green);
+        font-size: 10px;
+        font-weight: 600;
+      }
+      .primary-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .stat-card {
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        padding: 16px 14px;
+        min-width: 0;
+      }
+      .stat-value {
+        font-size: 32px;
+        line-height: 1.15;
+        letter-spacing: -0.03em;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        overflow-wrap: anywhere;
+      }
+      .stat-label {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 6px;
+      }
+      .stat-list {
+        display: flex;
+        flex-direction: column;
+      }
+      .stat-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 9px 0;
+        font-size: 12.5px;
+        color: var(--muted);
+        border-top: 1px solid var(--line-soft);
+      }
+      .stat-row:first-child {
+        border-top: 1px solid var(--line);
+        padding-top: 14px;
+      }
+      .stat-row strong {
+        font-size: 12.5px;
+        color: var(--text);
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Goal / Limit */
+      .goal {
+        border-top: 1px solid var(--line);
+        padding-top: 18px;
+      }
+      .goal-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        font-size: 12.5px;
+        flex-wrap: wrap;
+      }
+      .goal-top label {
+        font-weight: 600;
+      }
+      .goal-input {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .control {
+        padding: 6px 8px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: var(--panel);
+        color: var(--text);
+        font-size: 12px;
+      }
+      .control:focus {
+        border-color: var(--accent);
+        outline: none;
+      }
+      .track {
+        height: 4px;
+        background: var(--line-soft);
+        border-radius: 20px;
+        overflow: hidden;
+        margin: 14px 0 10px;
+      }
+      .fill {
+        height: 100%;
+        width: 0;
+        background: var(--text);
+        border-radius: 20px;
+        transition: width 0.25s ease;
+      }
+      .fill.over {
+        background: var(--red);
+      }
+      .goal-caption {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .limit-message.over {
+        color: var(--red);
+        font-weight: 700;
+      }
+
+      /* Below Grid */
+      .below-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-top: 20px;
+      }
+      .secondary-panel {
+        padding: 22px;
+      }
+      .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      h2 {
+        font-size: 13px;
+        margin: 0;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .section-sub {
+        font-size: 11px;
+        color: var(--faint);
+      }
+      .keywords {
+        min-height: 105px;
+      }
+      .empty {
+        padding: 22px 0;
+        color: var(--muted);
+        font-size: 12.5px;
+      }
+      .empty small {
+        display: block;
+        margin-top: 4px;
+        color: var(--faint);
+        font-size: 11.5px;
+      }
+      .keyword-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 0;
+        border-top: 1px solid var(--line-soft);
+        font-size: 13px;
+      }
+      .keyword-row:first-child {
+        border-top: 1px solid var(--line);
+      }
+      .kw-word {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 12.5px;
+        font-weight: 500;
+      }
+      .kw-count {
+        color: var(--muted);
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+      }
+      .info-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      .info-item h3 {
+        font-size: 12px;
+        margin: 0 0 6px;
+        font-weight: 600;
+      }
+      .info-item p {
+        font-size: 12.5px;
+        color: var(--muted);
+        margin: 0;
+        line-height: 1.65;
+      }
+
+      /* Numeric Counter */
+      .numeric-panel {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 32px 24px;
+        text-align: center;
+        max-width: 500px;
+        margin: 0 auto;
+      }
+      .numeric-display {
+        margin: 24px 0 32px;
+        width: 100%;
+      }
+      .numeric-value {
+        font-size: clamp(64px, 15vw, 96px);
+        font-weight: 700;
+        letter-spacing: -0.04em;
+        font-variant-numeric: tabular-nums;
+        color: var(--text);
+        line-height: 1;
+        word-break: break-all;
+      }
+      .numeric-label {
+        font-size: 14px;
+        color: var(--muted);
+        margin-top: 8px;
+        font-weight: 500;
+      }
+      .step-config {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 32px;
+        justify-content: center;
+        width: 100%;
+      }
+      .step-config label {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .step-config input {
+        width: 90px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        background: var(--panel);
+        color: var(--text);
+        font-size: 18px;
+        text-align: center;
+        font-variant-numeric: tabular-nums;
+        min-height: 44px;
+      }
+      .num-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 12px;
+        width: 100%;
+      }
+      .num-btn {
+        height: 56px;
+        border-radius: var(--radius-sm);
+        font-size: 16px;
+        font-weight: 600;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        color: var(--text);
+        transition: all 0.15s ease;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .num-btn:active {
+        transform: scale(0.96);
+      }
+      .num-btn svg {
+        width: 24px;
+        height: 24px;
+      }
+      .num-btn.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+      .num-btn.primary:active {
+        background: #1d4ed8;
+      }
+      .num-btn.secondary {
+        background: var(--accent-soft);
+        border-color: var(--accent-soft);
+        color: var(--accent);
+      }
+      .num-btn.secondary:active {
+        background: #dbeafe;
+      }
+      .num-btn.outline:active {
+        background: var(--line-soft);
+      }
+
+      /* Footer & Notice */
+      footer {
+        border-top: 1px solid var(--line);
+        padding: 22px 0 32px;
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 40px;
+      }
+      .footer-inner {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      #notice {
+        position: fixed;
+        left: 50%;
+        bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+        transform: translateX(-50%) translateY(8px);
+        padding: 12px 20px;
+        border-radius: 8px;
+        background: var(--text);
+        color: var(--bg);
+        font-size: 13px;
+        font-weight: 500;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        z-index: 100;
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity 0.2s ease,
+          transform 0.2s ease;
+      }
+      #notice.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* Responsive */
+      @media (max-width: 900px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+        .app {
+          padding: env(safe-area-inset-top, 16px)
+            env(safe-area-inset-right, 16px) env(safe-area-inset-bottom, 16px)
+            env(safe-area-inset-left, 16px);
+        }
+      }
+      @media (max-width: 720px) {
+        .topbar {
+          height: 56px;
+        }
+        .below-grid {
+          grid-template-columns: 1fr;
+        }
+        .info-list {
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+        textarea {
+          min-height: 280px;
+          padding: 18px;
+          font-size: 15.5px;
+        }
+        .panel-head {
+          padding: 15px 18px;
+        }
+        .stats-panel,
+        .secondary-panel {
+          padding: 18px;
+        }
+        .editor-foot {
+          font-size: 10.5px;
+          padding: 10px 18px;
+        }
+        .footer-inner {
+          flex-direction: column;
+          gap: 4px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          transition: none !important;
+          scroll-behavior: auto !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Simple Counter home">
+          <span class="brand-mark" aria-hidden="true">SC</span>
+          <span>Simple Counter</span>
+        </a>
+        <div class="top-meta">
+          <span class="dot" aria-hidden="true"></span>
+          <span>Runs locally</span>
+        </div>
+      </header>
+
+      <nav class="tabs" role="tablist" aria-label="Counter modes">
+        <button
+          class="tab-btn active"
+          role="tab"
+          aria-selected="true"
+          aria-controls="panel-text"
+          id="tab-text"
+        >
+          Text Counter
+        </button>
+        <button
+          class="tab-btn"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-numeric"
+          id="tab-numeric"
+        >
+          Numeric Counter
+        </button>
+      </nav>
+
+      <main>
+        <!-- Text Counter Panel -->
+        <section
+          id="panel-text"
+          class="panel-container active"
+          role="tabpanel"
+          aria-labelledby="tab-text"
+        >
+          <div class="workspace">
+            <div class="panel editor-panel">
+              <div class="panel-head">
+                <label class="panel-title" for="editor">Your text</label>
+                <div class="editor-tools">
+                  <span class="editor-state" id="editor-state">Ready</span>
+                  <button
+                    class="icon-btn"
+                    id="sample"
+                    type="button"
+                    aria-label="Load sample text"
+                  >
+                    Sample
+                  </button>
+                  <button
+                    class="icon-btn"
+                    id="undo"
+                    type="button"
+                    hidden
+                    aria-label="Undo"
+                  >
+                    Undo
+                  </button>
+                  <button
+                    class="icon-btn"
+                    id="clear"
+                    type="button"
+                    disabled
+                    aria-label="Clear text"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M3 6h18" />
+                      <path d="M8 6V4h8v2" />
+                      <path d="M6 6l1 14h10l1-14" />
+                    </svg>
+                    Clear
+                  </button>
+                </div>
+              </div>
+              <textarea
+                id="editor"
+                placeholder="Start typing or paste your text here…"
+                spellcheck="true"
+                aria-describedby="privacy-note"
+              ></textarea>
+              <div class="editor-foot">
+                <span id="privacy-note"
+                  >Your text stays in this tab. Nothing is uploaded.</span
+                >
+                <div style="display: flex; gap: 12px; align-items: center">
+                  <span id="line-count">0 lines</span>
+                  <button
+                    class="icon-btn primary"
+                    id="copy"
+                    type="button"
+                    disabled
+                    style="
+                      background: var(--text);
+                      color: var(--bg);
+                      border-radius: 7px;
+                      min-height: 36px;
+                      padding: 0 12px;
+                    "
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                      style="width: 14px; height: 14px"
+                    >
+                      <rect x="9" y="9" width="11" height="11" rx="2" />
+                      <path d="M5 15V5a2 2 0 0 1 2-2h10" />
+                    </svg>
+                    Copy
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <aside class="panel stats-panel" aria-label="Text statistics">
+              <div class="stats-heading">
+                <span>Overview</span>
+                <span class="live-label"
+                  ><span class="dot" aria-hidden="true"></span> Live</span
+                >
+              </div>
+
+              <div class="primary-stats" aria-live="polite" aria-atomic="true">
+                <div class="stat-card">
+                  <div class="stat-value" id="words">0</div>
+                  <div class="stat-label">Words</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-value" id="characters">0</div>
+                  <div class="stat-label">Characters</div>
+                </div>
+              </div>
+
+              <div class="stat-list">
+                <div class="stat-row">
+                  <span>Without spaces</span><strong id="no-spaces">0</strong>
+                </div>
+                <div class="stat-row">
+                  <span>Sentences</span><strong id="sentences">0</strong>
+                </div>
+                <div class="stat-row">
+                  <span>Paragraphs</span><strong id="paragraphs">0</strong>
+                </div>
+                <div class="stat-row">
+                  <span>Reading time</span><strong id="reading">0 sec</strong>
+                </div>
+                <div class="stat-row">
+                  <span>Speaking time</span><strong id="speaking">0 sec</strong>
+                </div>
+              </div>
+
+              <div class="goal">
+                <div class="goal-top">
+                  <label for="limit">Character limit</label>
+                  <div class="goal-input">
+                    <select class="control" id="limit" style="width: 110px">
+                      <option value="0">No limit</option>
+                      <option value="160">SMS · 160</option>
+                      <option value="280">Post · 280</option>
+                      <option value="2200">Caption · 2200</option>
+                      <option value="custom">Custom…</option>
+                    </select>
+                    <label for="custom-limit" id="custom-label" hidden
+                      >Max</label
+                    >
+                    <input
+                      class="control"
+                      id="custom-limit"
+                      type="number"
+                      min="1"
+                      max="1000000"
+                      value="500"
+                      inputmode="numeric"
+                      pattern="[0-9]*"
+                      aria-label="Custom character limit"
+                      hidden
+                      style="width: 70px"
+                    />
+                  </div>
+                </div>
+                <div
+                  class="track"
+                  id="progress"
+                  role="progressbar"
+                  aria-label="Character limit progress"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-valuenow="0"
+                  hidden
+                >
+                  <div class="fill" id="fill"></div>
+                </div>
+                <div class="goal-caption">
+                  <span id="limit-message" class="limit-message"
+                    >Ready when you are. No limit set.</span
+                  >
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          <div class="below-grid">
+            <div class="panel secondary-panel">
+              <div class="section-head">
+                <h2>Most-used keywords</h2>
+                <span class="section-sub">Top 5</span>
+              </div>
+              <div class="keywords" id="keywords">
+                <div class="empty">
+                  Your most-used keywords will appear here.<small
+                    >Common English words are excluded.</small
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="panel secondary-panel">
+              <div class="section-head"><h2>How estimates work</h2></div>
+              <div class="info-list">
+                <div class="info-item">
+                  <h3>Reading</h3>
+                  <p>
+                    Estimated at 238 words per minute. Actual speed varies by
+                    reader and text complexity.
+                  </p>
+                </div>
+                <div class="info-item">
+                  <h3>Speaking</h3>
+                  <p>
+                    Estimated at 130 words per minute — useful for rough
+                    presentation timing.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Numeric Counter Panel -->
+        <section
+          id="panel-numeric"
+          class="panel-container"
+          role="tabpanel"
+          aria-labelledby="tab-numeric"
+          hidden
+        >
+          <div class="panel numeric-panel">
+            <div
+              class="panel-head"
+              style="
+                width: 100%;
+                border-bottom: 1px solid var(--line);
+                padding-bottom: 16px;
+                margin-bottom: 24px;
+              "
+            >
+              <span class="panel-title">Numeric Counter</span>
+            </div>
+            <div class="numeric-display">
+              <div class="numeric-value" id="num-value">0</div>
+              <div class="numeric-label">Current Count</div>
+            </div>
+            <div class="numeric-controls" style="width: 100%">
+              <div class="step-config">
+                <label for="step-size">Step size</label>
+                <input
+                  type="number"
+                  id="step-size"
+                  min="1"
+                  max="10000"
+                  value="1"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                />
+              </div>
+              <div class="num-buttons">
+                <button
+                  class="num-btn secondary"
+                  id="num-decrement"
+                  aria-label="Decrement"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M5 12h14" />
+                  </svg>
+                </button>
+                <button
+                  class="num-btn outline"
+                  id="num-reset"
+                  aria-label="Reset"
+                >
+                  Reset
+                </button>
+                <button
+                  class="num-btn primary"
+                  id="num-increment"
+                  aria-label="Increment"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <div class="footer-inner">
+          <span>© Simple Counter</span>
+          <span>Private by design · No account required</span>
+        </div>
+      </footer>
+    </div>
+
+    <div id="notice" role="status" aria-live="polite"></div>
+
+    <script>
+      (() => {
+        const $ = (id) => document.getElementById(id);
+        const format = (n) => n.toLocaleString();
+
+        const notify = (message) => {
+          const el = $("notice");
+          if (!el) return;
+          el.textContent = message;
+          el.classList.add("show");
+          clearTimeout(notify.timer);
+          notify.timer = setTimeout(() => el.classList.remove("show"), 2200);
+        };
+
+        const Storage = {
+          get: (key, fallback) => {
+            try {
+              const item = localStorage.getItem(key);
+              return item ? JSON.parse(item) : fallback;
+            } catch {
+              return fallback;
+            }
+          },
+          set: (key, value) => {
+            try {
+              localStorage.setItem(key, JSON.stringify(value));
+            } catch (e) {
+              console.warn("Storage failed", e);
+            }
+          },
+        };
+
+        const TextCounter = {
+          editor: $("editor"),
+          stopWords: new Set(
+            "a an the and or but if then so to of in on at by for with from as is are was were be been being it its this that these those i me my we our you your he she they them their his her not no do does did have has had will would can could should into about than also just very".split(
+              " ",
+            ),
+          ),
+          graphemes:
+            typeof Intl.Segmenter === "function"
+              ? new Intl.Segmenter(undefined, { granularity: "grapheme" })
+              : null,
+          wordSegmenter:
+            typeof Intl.Segmenter === "function"
+              ? new Intl.Segmenter(undefined, { granularity: "word" })
+              : null,
+          backup: "",
+
+          init() {
+            this.editor.value = Storage.get("sc_text", "");
+            $("limit").value = Storage.get("sc_limit", "0");
+            $("custom-limit").value = Storage.get("sc_custom_limit", "500");
+
+            if ($("limit").value === "custom") {
+              $("custom-limit").hidden = false;
+              $("custom-label").hidden = false;
+            }
+            this.bindEvents();
+            this.update();
+          },
+
+          bindEvents() {
+            this.editor.addEventListener("input", () => {
+              Storage.set("sc_text", this.editor.value);
+              this.update();
+            });
+
+            $("limit").addEventListener("change", (e) => {
+              Storage.set("sc_limit", e.target.value);
+              $("custom-limit").hidden = e.target.value !== "custom";
+              $("custom-label").hidden = e.target.value !== "custom";
+              this.update();
+            });
+
+            $("custom-limit").addEventListener("input", (e) => {
+              Storage.set("sc_custom_limit", e.target.value);
+              this.update();
+            });
+
+            $("clear").addEventListener("click", () => {
+              if (
+                !this.editor.value ||
+                confirm("Clear all text? This cannot be undone.")
+              ) {
+                this.backup = this.editor.value;
+                this.editor.value = "";
+                $("undo").hidden = false;
+                Storage.set("sc_text", "");
+                this.update();
+                this.editor.focus();
+                notify("Text cleared");
+              }
+            });
+
+            $("undo").addEventListener("click", () => {
+              this.editor.value = this.backup;
+              this.backup = "";
+              $("undo").hidden = true;
+              Storage.set("sc_text", this.editor.value);
+              this.update();
+              this.editor.focus();
+            });
+
+            $("sample").addEventListener("click", () => {
+              if (this.editor.value) {
+                this.backup = this.editor.value;
+                $("undo").hidden = false;
+              }
+              this.editor.value =
+                "Clear writing starts with a simple idea. Give that idea room to breathe.\n\nChoose words that help your reader, not words that make your sentences look impressive. A short sentence can carry a big thought.\n\nRead your draft aloud. Notice where you pause, where you stumble, and where your attention drifts. Then revise with purpose. Good writing is not about saying more. It is about making every word count.";
+              Storage.set("sc_text", this.editor.value);
+              this.update();
+              this.editor.focus();
+            });
+
+            $("copy").addEventListener("click", async () => {
+              try {
+                await navigator.clipboard.writeText(this.editor.value);
+                notify("Text copied to clipboard");
+              } catch {
+                this.editor.focus();
+                this.editor.select();
+                notify("Press Ctrl+C or Command+C to copy");
+              }
+            });
+          },
+
+          count(s) {
+            return this.graphemes
+              ? Array.from(this.graphemes.segment(s)).length
+              : Array.from(s).length;
+          },
+
+          update() {
+            const text = this.editor.value;
+            const n = this.count(text);
+
+            const words = this.wordSegmenter
+              ? Array.from(this.wordSegmenter.segment(text)).filter(
+                  (x) => x.isWordLike,
+                ).length
+              : (text.match(/[\p{L}\p{N}]+(?:['’\-][\p{L}\p{N}]+)*/gu) || [])
+                  .length;
+
+            $("words").textContent = format(words);
+            $("characters").textContent = format(n);
+            $("no-spaces").textContent = format(
+              this.count(text.replace(/\s/g, "")),
+            );
+            $("sentences").textContent = format(
+              (text.match(/[^.!?。！？]+(?:[.!?。！？]+|$)/g) || []).filter(
+                (x) => x.trim(),
+              ).length,
+            );
+            $("paragraphs").textContent = format(
+              text.split(/\n+/).filter((x) => x.trim()).length,
+            );
+
+            const lineCount = text ? text.split("\n").length : 0;
+            $("line-count").textContent =
+              format(lineCount) + (lineCount === 1 ? " line" : " lines");
+
+            const readSec = Math.ceil((words / 238) * 60);
+            const speakSec = Math.ceil((words / 130) * 60);
+            $("reading").textContent =
+              readSec < 60
+                ? readSec + " sec"
+                : Math.floor(readSec / 60) +
+                  " min" +
+                  (readSec % 60 ? " " + (readSec % 60) + " sec" : "");
+            $("speaking").textContent =
+              speakSec < 60
+                ? speakSec + " sec"
+                : Math.floor(speakSec / 60) +
+                  " min" +
+                  (speakSec % 60 ? " " + (speakSec % 60) + " sec" : "");
+
+            $("editor-state").textContent = text ? "Editing" : "Ready";
+            $("copy").disabled = $("clear").disabled = !text;
+
+            const isCustom = $("limit").value === "custom";
+            let limitVal = isCustom
+              ? Number($("custom-limit").value)
+              : Number($("limit").value);
+            if (!Number.isFinite(limitVal) || limitVal < 1) limitVal = 0;
+
+            $("progress").hidden = !limitVal;
+            const over = !!limitVal && n > limitVal;
+            $("limit-message").classList.toggle("over", over);
+            $("fill").classList.toggle("over", over);
+
+            if (limitVal) {
+              $("limit-message").textContent = over
+                ? `${format(n - limitVal)} characters over the limit`
+                : `${format(limitVal - n)} characters remaining`;
+              $("fill").style.width = `${Math.min((n / limitVal) * 100, 100)}%`;
+            } else {
+              $("limit-message").textContent = isCustom
+                ? "Enter a positive character limit."
+                : "Ready when you are. No limit set.";
+              $("fill").style.width = "0%";
+            }
+
+            this.updateKeywords(text);
+          },
+
+          updateKeywords(text) {
+            const words =
+              text.match(/[\p{L}\p{N}]+(?:['’\-][\p{L}\p{N}]+)*/gu) || [];
+            const counts = new Map();
+            words.forEach((word) => {
+              const normalized = word.toLocaleLowerCase();
+              if (!this.stopWords.has(normalized) && normalized.length > 1) {
+                counts.set(normalized, (counts.get(normalized) || 0) + 1);
+              }
+            });
+
+            const top = [...counts.entries()]
+              .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+              .slice(0, 5);
+
+            const box = $("keywords");
+            box.replaceChildren();
+
+            if (!top.length) {
+              const empty = document.createElement("div");
+              empty.className = "empty";
+              empty.textContent = words.length
+                ? "No keywords found in this text."
+                : "Your most-used keywords will appear here.";
+              const small = document.createElement("small");
+              small.textContent = "Common English words are excluded.";
+              empty.append(small);
+              box.append(empty);
+              return;
+            }
+
+            top.forEach(([word, count]) => {
+              const row = document.createElement("div");
+              row.className = "keyword-row";
+              const label = document.createElement("span");
+              label.className = "kw-word";
+              label.textContent = word;
+              const value = document.createElement("span");
+              value.className = "kw-count";
+              value.textContent =
+                "× " + count + (count === 1 ? " time" : " times");
+              row.append(label, value);
+              box.append(row);
+            });
+          },
+        };
+
+        const NumericCounter = {
+          value: 0,
+          step: 1,
+
+          init() {
+            this.value = Storage.get("nc_value", 0);
+            this.step = Storage.get("nc_step", 1);
+
+            $("num-value").textContent = format(this.value);
+            $("step-size").value = this.step;
+            this.bindEvents();
+          },
+
+          bindEvents() {
+            $("num-increment").addEventListener("click", () => {
+              this.value += this.step;
+              this.saveAndRender();
+            });
+
+            $("num-decrement").addEventListener("click", () => {
+              this.value -= this.step;
+              this.saveAndRender();
+            });
+
+            $("num-reset").addEventListener("click", () => {
+              this.value = 0;
+              this.saveAndRender();
+              notify("Counter reset");
+            });
+
+            $("step-size").addEventListener("change", (e) => {
+              let val = parseInt(e.target.value, 10);
+              if (Number.isNaN(val) || val < 1) val = 1;
+              if (val > 10000) val = 10000;
+              this.step = val;
+              e.target.value = this.step;
+              Storage.set("nc_step", this.step);
+            });
+          },
+
+          saveAndRender() {
+            Storage.set("nc_value", this.value);
+            $("num-value").textContent = format(this.value);
+          },
+        };
+
+        document.querySelectorAll(".tab-btn").forEach((tab) => {
+          tab.addEventListener("click", () => {
+            document.querySelectorAll(".tab-btn").forEach((t) => {
+              t.classList.remove("active");
+              t.setAttribute("aria-selected", "false");
+            });
+            tab.classList.add("active");
+            tab.setAttribute("aria-selected", "true");
+
+            document.querySelectorAll(".panel-container").forEach((panel) => {
+              panel.hidden = true;
+              panel.classList.remove("active");
+            });
+            const target = $(tab.getAttribute("aria-controls"));
+            target.hidden = false;
+            target.classList.add("active");
+          });
+        });
+
+        TextCounter.init();
+        NumericCounter.init();
+      })();
+    </script>
+  </body>
+</html>

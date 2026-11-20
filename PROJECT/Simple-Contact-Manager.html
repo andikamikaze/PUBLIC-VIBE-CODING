@@ -1,0 +1,1564 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta
+      name="theme-color"
+      content="#ffffff"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#0f172a"
+      media="(prefers-color-scheme: dark)"
+    />
+    <title>Simple Contact Manager</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #fafafa;
+        --surface: #ffffff;
+        --ink: #111827;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+        --accent: #2563eb;
+        --accent-soft: #eff6ff;
+        --danger: #ef4444;
+        --danger-soft: #fef2f2;
+        --shadow:
+          0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+        --shadow-lg:
+          0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+      }
+
+      /* Dark Mode Support */
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --bg: #0f172a;
+          --surface: #1e293b;
+          --ink: #f1f5f9;
+          --muted: #94a3b8;
+          --line: #334155;
+          --accent: #3b82f6;
+          --accent-soft: #1e3a8a;
+          --danger: #f87171;
+          --danger-soft: #450a0a;
+        }
+        .group-pill.work {
+          background: #1e3a8a;
+          color: #93c5fd;
+          border-color: #1e40af;
+        }
+        .group-pill.clients {
+          background: #431407;
+          color: #fdba74;
+          border-color: #7c2d12;
+        }
+        .group-pill.friends {
+          background: #052e16;
+          color: #86efac;
+          border-color: #166534;
+        }
+        .metric:nth-child(2) .metric-icon {
+          background: #431407;
+          color: #fb923c;
+        }
+        .metric:nth-child(3) .metric-icon {
+          background: #052e16;
+          color: #4ade80;
+        }
+        dialog::backdrop {
+          background: rgba(0, 0, 0, 0.6);
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          "Inter",
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        font-size: 14px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      button,
+      input,
+      select,
+      textarea {
+        font-family: inherit;
+        font-size: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      textarea:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      svg {
+        width: 18px;
+        height: 18px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        flex-shrink: 0;
+      }
+      .app {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        width: 260px;
+        background: var(--surface);
+        border-right: 1px solid var(--line);
+        display: flex;
+        flex-direction: column;
+        padding: 32px 24px;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: -0.5px;
+        color: var(--ink);
+        margin-bottom: 40px;
+      }
+      .brand-mark {
+        width: 36px;
+        height: 36px;
+        display: grid;
+        place-items: center;
+        border-radius: 10px;
+        background: var(--accent);
+        color: #fff;
+      }
+      .nav {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        flex: 1;
+      }
+      .nav button {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+        text-align: left;
+        color: var(--muted);
+        font-weight: 500;
+        transition: all 0.15s ease;
+        min-height: 44px; /* Accessible touch target */
+      }
+      .nav button:hover {
+        background: var(--bg);
+        color: var(--ink);
+      }
+      .nav button.active {
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .nav .count {
+        margin-left: auto;
+        font-size: 12px;
+        background: var(--bg);
+        padding: 2px 8px;
+        border-radius: 99px;
+        color: var(--muted);
+      }
+      .nav button.active .count {
+        background: #dbeafe;
+        color: var(--accent);
+      }
+      .sidebar-footer {
+        margin-top: auto;
+        padding-top: 24px;
+        border-top: 1px solid var(--line);
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      .sidebar-footer strong {
+        display: block;
+        color: var(--ink);
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      /* Main Content */
+      .main {
+        flex: 1;
+        padding: 40px 48px;
+        max-width: 1200px;
+        width: 100%;
+        margin: 0 auto;
+      }
+      .page-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 40px;
+      }
+      .eyebrow {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+      }
+      .page-head h1 {
+        font-size: 28px;
+        font-weight: 600;
+        letter-spacing: -0.5px;
+        margin: 0 0 8px;
+        line-height: 1.2;
+      }
+      .page-head p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 15px;
+      }
+
+      /* Metrics */
+      .summary {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+        margin-bottom: 40px;
+      }
+      .metric {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 24px;
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        transition: border-color 0.15s;
+      }
+      .metric:hover {
+        border-color: #d1d5db;
+      }
+      .metric-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .metric strong {
+        display: block;
+        font-size: 28px;
+        font-weight: 600;
+        letter-spacing: -0.5px;
+        line-height: 1;
+        margin-bottom: 6px;
+      }
+      .metric span {
+        display: block;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      /* Panel & Table */
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .panel-head {
+        padding: 24px 24px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .panel-head h2 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0 0 4px;
+      }
+      .panel-head p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .toolbar {
+        display: flex;
+        gap: 12px;
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--line);
+      }
+      .search {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px 14px;
+        flex: 1;
+        background: var(--bg);
+        transition: all 0.15s;
+        min-height: 44px;
+      }
+      .search:focus-within {
+        border-color: var(--accent);
+        background: var(--surface);
+        box-shadow: 0 0 0 3px var(--accent-soft);
+      }
+      .search input {
+        border: 0;
+        outline: 0;
+        width: 100%;
+        background: transparent;
+        color: var(--ink);
+      }
+      .search input::placeholder {
+        color: #9ca3af;
+      }
+      .select {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px 14px;
+        background: var(--surface);
+        color: var(--ink);
+        cursor: pointer;
+        outline: none;
+        transition: all 0.15s;
+        min-height: 44px;
+      }
+      .select:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-soft);
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      .contact-row {
+        display: grid;
+        grid-template-columns: 1.5fr 1.5fr 1fr 1fr 80px;
+        gap: 16px;
+        align-items: center;
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--line);
+        min-width: 700px;
+        transition: background 0.1s;
+      }
+      .contact-row:hover {
+        background: var(--bg);
+      }
+      .contact-row:last-child {
+        border-bottom: 0;
+      }
+      .table-labels {
+        background: var(--bg);
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 12px 24px;
+        border-bottom: 1px solid var(--line);
+      }
+      .person {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+      .person .avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 600;
+        flex-shrink: 0;
+      }
+      .person-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ink);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .person-sub {
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .cell {
+        font-size: 14px;
+        color: var(--ink);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .cell a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .cell a:hover {
+        text-decoration: underline;
+      }
+      .group-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 99px;
+        font-size: 12px;
+        font-weight: 500;
+        border: 1px solid transparent;
+      }
+      .group-pill.work {
+        background: #eff6ff;
+        color: #2563eb;
+        border-color: #dbeafe;
+      }
+      .group-pill.clients {
+        background: #fff7ed;
+        color: #ea580c;
+        border-color: #ffedd5;
+      }
+      .group-pill.friends {
+        background: #f0fdf4;
+        color: #16a34a;
+        border-color: #dcfce7;
+      }
+
+      .row-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 4px;
+      }
+      .mini-btn {
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        border-radius: 6px;
+        padding: 8px;
+        display: grid;
+        place-items: center;
+        transition: all 0.15s;
+        min-width: 44px;
+        min-height: 44px; /* Accessible touch target */
+      }
+      .mini-btn:hover {
+        background: var(--line);
+        color: var(--ink);
+      }
+      .mini-btn.favorite {
+        color: #f59e0b;
+      }
+      .mini-btn.favorite svg {
+        fill: #fde68a;
+        stroke: #f59e0b;
+      }
+      .empty {
+        padding: 64px 20px;
+        text-align: center;
+        color: var(--muted);
+      }
+      .empty strong {
+        display: block;
+        color: var(--ink);
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+      .empty p {
+        margin: 0 0 20px;
+        font-size: 14px;
+      }
+      .panel-foot {
+        padding: 16px 24px;
+        border-top: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: 12px;
+        background: var(--bg);
+      }
+
+      /* Buttons */
+      .btn {
+        border: 0;
+        background: var(--accent);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-weight: 500;
+        font-size: 14px;
+        transition: background 0.15s;
+        min-height: 44px;
+      }
+      .btn:hover {
+        background: #1d4ed8;
+      }
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .btn.secondary {
+        background: var(--surface);
+        color: var(--ink);
+        border: 1px solid var(--line);
+      }
+      .btn.secondary:hover {
+        background: var(--bg);
+      }
+      .btn.danger {
+        background: var(--danger-soft);
+        color: var(--danger);
+        border: 1px solid #fecaca;
+      }
+      .btn.danger:hover {
+        background: #fee2e2;
+      }
+
+      /* Dialog */
+      dialog {
+        border: 0;
+        border-radius: 16px;
+        padding: 0;
+        width: min(520px, calc(100% - 32px));
+        color: var(--ink);
+        box-shadow: var(--shadow-lg);
+      }
+      dialog::backdrop {
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(4px);
+      }
+      .dialog-inner {
+        padding: 32px;
+      }
+      .dialog-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 24px;
+      }
+      .dialog-top h2 {
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: -0.3px;
+        margin: 0 0 6px;
+      }
+      .dialog-top p {
+        font-size: 14px;
+        color: var(--muted);
+        margin: 0;
+      }
+      .close-btn {
+        border: 0;
+        background: var(--bg);
+        border-radius: 8px;
+        padding: 8px;
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        transition: all 0.15s;
+        min-width: 44px;
+        min-height: 44px;
+      }
+      .close-btn:hover {
+        background: var(--line);
+        color: var(--ink);
+      }
+      .field {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--ink);
+        margin-bottom: 16px;
+      }
+      .field input,
+      .field select,
+      .field textarea {
+        display: block;
+        width: 100%;
+        margin-top: 6px;
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--ink);
+        transition: all 0.15s;
+      }
+      .field input:focus,
+      .field select:focus,
+      .field textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-soft);
+      }
+      .field input::placeholder,
+      .field textarea::placeholder {
+        color: #9ca3af;
+      }
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 32px;
+        padding-top: 24px;
+        border-top: 1px solid var(--line);
+      }
+      .danger-zone {
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .danger-zone small {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      /* Validation States */
+      .error-msg {
+        display: block;
+        color: var(--danger);
+        font-size: 12px;
+        margin-top: 4px;
+        min-height: 16px;
+        font-weight: 500;
+      }
+      .field input.invalid,
+      .field select.invalid,
+      .field textarea.invalid {
+        border-color: var(--danger);
+      }
+      .field input.invalid:focus,
+      .field select.invalid:focus,
+      .field textarea.invalid:focus {
+        box-shadow: 0 0 0 3px var(--danger-soft);
+      }
+
+      /* Toast */
+      .toast {
+        position: fixed;
+        bottom: 32px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        padding: 12px 20px;
+        border-radius: 8px;
+        background: var(--ink);
+        color: #fff;
+        box-shadow: var(--shadow-lg);
+        font-size: 14px;
+        font-weight: 500;
+        z-index: 9999;
+        opacity: 0;
+        transition: all 0.3s ease;
+        pointer-events: none;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* Footer */
+      .footer {
+        display: flex;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: 12px;
+        padding: 32px 0 0;
+        margin-top: 32px;
+        border-top: 1px solid var(--line);
+      }
+
+      /* Responsive */
+      @media (max-width: 900px) {
+        .app {
+          flex-direction: column;
+        }
+        .sidebar {
+          width: 100%;
+          height: auto;
+          position: relative;
+          padding: 20px 24px;
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .brand {
+          margin-bottom: 20px;
+        }
+        .nav {
+          flex-direction: row;
+          overflow-x: auto;
+          padding-bottom: 4px;
+        }
+        .nav button {
+          white-space: nowrap;
+        }
+        .main {
+          padding: 24px;
+        }
+        .summary {
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+        .page-head {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 16px;
+        }
+        .page-head .btn {
+          width: 100%;
+        }
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (max-width: 600px) {
+        .toolbar {
+          flex-direction: column;
+        }
+        .select {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <symbol id="i-users" viewBox="0 0 24 24">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+        <circle cx="10" cy="7" r="4" />
+        <path d="M20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+      </symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="7" height="7" rx="1" />
+        <rect x="14" y="3" width="7" height="7" rx="1" />
+        <rect x="14" y="14" width="7" height="7" rx="1" />
+        <rect x="3" y="14" width="7" height="7" rx="1" />
+      </symbol>
+      <symbol id="i-star" viewBox="0 0 24 24">
+        <path
+          d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"
+        />
+      </symbol>
+      <symbol id="i-folder" viewBox="0 0 24 24">
+        <path
+          d="M3 6a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"
+        />
+      </symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24">
+        <path d="M12 5v14M5 12h14" />
+      </symbol>
+      <symbol id="i-search" viewBox="0 0 24 24">
+        <circle cx="10.5" cy="10.5" r="6.5" />
+        <path d="m16 16 5 5" />
+      </symbol>
+      <symbol id="i-edit" viewBox="0 0 24 24">
+        <path d="M12 20h9" />
+        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" />
+      </symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24">
+        <path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6" />
+      </symbol>
+      <symbol id="i-download" viewBox="0 0 24 24">
+        <path
+          d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"
+        />
+      </symbol>
+    </svg>
+
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">
+            <svg><use href="#i-users" /></svg>
+          </span>
+          Contact Manager
+        </div>
+        <nav class="nav" aria-label="Navigasi utama">
+          <button class="active" data-view="all">
+            <svg><use href="#i-grid" /></svg> Overview
+          </button>
+          <button data-view="all">
+            <svg><use href="#i-users" /></svg> All contacts
+            <span class="count" id="nav-total">0</span>
+          </button>
+          <button data-view="favorites">
+            <svg><use href="#i-star" /></svg> Favorites
+          </button>
+          <button data-view="groups">
+            <svg><use href="#i-folder" /></svg> Groups
+          </button>
+        </nav>
+        <div class="sidebar-footer">
+          <strong>Local Workspace</strong>
+          Data tersimpan aman di browser ini. Tidak memerlukan akun atau koneksi
+          internet.
+        </div>
+      </aside>
+
+      <main class="main">
+        <section class="page-head">
+          <div>
+            <div class="eyebrow">PERSONAL DIRECTORY</div>
+            <h1 id="page-title">Your contacts, organized.</h1>
+            <p id="page-subtitle">
+              Semua koneksi penting, dalam satu tempat yang mudah dicari.
+            </p>
+          </div>
+          <button class="btn" id="add-btn">
+            <svg><use href="#i-plus" /></svg> Add contact
+          </button>
+        </section>
+
+        <section class="summary" aria-label="Ringkasan kontak">
+          <div class="metric">
+            <div class="metric-icon">
+              <svg><use href="#i-users" /></svg>
+            </div>
+            <div>
+              <strong id="total">0</strong>
+              <span>Total contacts</span>
+            </div>
+          </div>
+          <div class="metric">
+            <div class="metric-icon">
+              <svg><use href="#i-star" /></svg>
+            </div>
+            <div>
+              <strong id="favorites">0</strong>
+              <span>Favorite contacts</span>
+            </div>
+          </div>
+          <div class="metric">
+            <div class="metric-icon">
+              <svg><use href="#i-folder" /></svg>
+            </div>
+            <div>
+              <strong id="groups-total">0</strong>
+              <span>Contact groups</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 id="list-title">All contacts</h2>
+              <p>Kelola detail dan temukan kontak dengan cepat.</p>
+            </div>
+            <button class="btn secondary" id="export-panel">
+              <svg><use href="#i-download" /></svg> Export
+            </button>
+          </div>
+          <div class="toolbar">
+            <label class="search">
+              <svg><use href="#i-search" /></svg>
+              <input
+                id="search"
+                type="search"
+                placeholder="Search name, email, or company..."
+                aria-label="Cari kontak"
+              />
+            </label>
+            <select
+              id="group-filter"
+              class="select"
+              aria-label="Filter berdasarkan grup"
+            >
+              <option value="all">All groups</option>
+              <option value="Work">Work</option>
+              <option value="Clients">Clients</option>
+              <option value="Friends">Friends</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <div class="contact-row table-labels">
+              <div>Contact</div>
+              <div>Email address</div>
+              <div>Group</div>
+              <div>Company</div>
+              <div style="text-align: right">Actions</div>
+            </div>
+            <div id="list" aria-live="polite"></div>
+          </div>
+          <div class="panel-foot">
+            <span id="count">Showing 0 contacts</span>
+            <span>Contact Manager · Local data</span>
+          </div>
+        </section>
+
+        <footer class="footer">
+          <span>Contact Manager — personal address book</span>
+          <span>Data Anda tetap di perangkat ini.</span>
+        </footer>
+      </main>
+    </div>
+
+    <dialog id="contact-dialog">
+      <form id="contact-form" class="dialog-inner">
+        <div class="dialog-top">
+          <div>
+            <h2 id="dialog-title">Add a contact</h2>
+            <p>Tambahkan detail agar mudah ditemukan nanti.</p>
+          </div>
+          <button
+            type="button"
+            class="close-btn"
+            id="close-dialog"
+            aria-label="Tutup"
+          >
+            <svg style="width: 20px; height: 20px">
+              <use href="#i-plus" transform="rotate(45 12 12)" />
+            </svg>
+          </button>
+        </div>
+        <input type="hidden" name="id" />
+        <label class="field">
+          Full name *
+          <input
+            name="name"
+            required
+            maxlength="70"
+            placeholder="e.g. Alex Morgan"
+            autocomplete="name"
+            aria-invalid="false"
+            aria-describedby="error-name"
+          />
+          <span class="error-msg" id="error-name"></span>
+        </label>
+        <div class="form-grid">
+          <label class="field">
+            Email address *
+            <input
+              name="email"
+              type="email"
+              required
+              maxlength="120"
+              placeholder="name@example.com"
+              autocomplete="email"
+              inputmode="email"
+              aria-invalid="false"
+              aria-describedby="error-email"
+            />
+            <span class="error-msg" id="error-email"></span>
+          </label>
+          <label class="field">
+            Phone number
+            <input
+              name="phone"
+              type="tel"
+              maxlength="35"
+              placeholder="+62 812..."
+              inputmode="tel"
+              autocomplete="tel"
+            />
+          </label>
+        </div>
+        <div class="form-grid">
+          <label class="field">
+            Company
+            <input
+              name="company"
+              maxlength="70"
+              placeholder="Company or organization"
+            />
+          </label>
+          <label class="field">
+            Group
+            <select name="group">
+              <option>Work</option>
+              <option>Clients</option>
+              <option>Friends</option>
+            </select>
+          </label>
+        </div>
+        <label class="field">
+          Notes
+          <textarea
+            name="notes"
+            rows="2"
+            maxlength="500"
+            placeholder="Additional details (optional)"
+          ></textarea>
+        </label>
+        <div class="dialog-actions">
+          <button type="button" class="btn secondary" id="cancel-btn">
+            Cancel
+          </button>
+          <button type="submit" class="btn">Save contact</button>
+        </div>
+        <div class="danger-zone" id="delete-zone" hidden>
+          <small>Remove this contact from your address book permanently.</small>
+          <button type="button" class="btn danger" id="delete-btn">
+            <svg><use href="#i-trash" /></svg> Delete
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status"></div>
+
+    <script>
+      const initial = [
+        {
+          id: 1,
+          name: "Alex Morgan",
+          email: "alex@example.com",
+          phone: "+1 555 0101",
+          company: "Fieldwork Studio",
+          group: "Work",
+          favorite: true,
+          notes: "",
+        },
+        {
+          id: 2,
+          name: "Jamie Chen",
+          email: "jamie@example.com",
+          phone: "+1 555 0102",
+          company: "Sunday Supply",
+          group: "Clients",
+          favorite: false,
+          notes: "",
+        },
+        {
+          id: 3,
+          name: "Riley Brooks",
+          email: "riley@example.com",
+          phone: "+1 555 0103",
+          company: "",
+          group: "Friends",
+          favorite: true,
+          notes: "",
+        },
+        {
+          id: 4,
+          name: "Sam Rivera",
+          email: "sam@example.com",
+          phone: "+1 555 0104",
+          company: "Fieldwork Studio",
+          group: "Work",
+          favorite: false,
+          notes: "",
+        },
+        {
+          id: 5,
+          name: "Taylor Ellis",
+          email: "taylor@example.com",
+          phone: "+1 555 0105",
+          company: "",
+          group: "Friends",
+          favorite: false,
+          notes: "",
+        },
+        {
+          id: 6,
+          name: "Jordan Park",
+          email: "jordan@example.com",
+          phone: "+1 555 0106",
+          company: "Common Ground",
+          group: "Work",
+          favorite: false,
+          notes: "",
+        },
+      ];
+
+      const $ = (id) => document.getElementById(id);
+      let contacts = [];
+      let filter = "all";
+      let view = "all";
+      let editingId = null;
+      let toastTimer;
+      let isSubmitting = false; // Prevent repeated taps
+
+      // Robust data loading with schema validation
+      function loadContacts() {
+        try {
+          const saved = localStorage.getItem("contact-manager-contacts");
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed)) {
+              const validContacts = parsed
+                .filter(
+                  (c) => c && typeof c.id === "number" && c.name && c.email,
+                )
+                .map((c) => ({
+                  id: c.id,
+                  name: String(c.name).trim(),
+                  email: String(c.email).trim(),
+                  phone: String(c.phone || "").trim(),
+                  company: String(c.company || "").trim(),
+                  group: ["Work", "Clients", "Friends"].includes(c.group)
+                    ? c.group
+                    : "Work",
+                  favorite: !!c.favorite,
+                  notes: String(c.notes || "").trim(),
+                }));
+
+              if (validContacts.length > 0) {
+                contacts = validContacts;
+                return;
+              }
+            }
+          }
+        } catch (e) {
+          console.warn(
+            "Gagal memuat data dari penyimpanan lokal, menggunakan data awal.",
+            e,
+          );
+        }
+        contacts = initial.map((c) => ({ ...c }));
+      }
+      loadContacts();
+
+      function persist() {
+        try {
+          localStorage.setItem(
+            "contact-manager-contacts",
+            JSON.stringify(contacts),
+          );
+          render();
+          return true;
+        } catch (e) {
+          console.error("Storage error:", e);
+          render();
+          return false;
+        }
+      }
+
+      function notify(message) {
+        const toast = $("toast");
+        toast.textContent = message;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          toast.classList.remove("show");
+        }, 2800);
+      }
+
+      function initials(name) {
+        if (!name) return "?";
+        return name
+          .trim()
+          .split(/\s+/)
+          .slice(0, 2)
+          .map((x) => x[0] || "")
+          .join("")
+          .toUpperCase();
+      }
+
+      function el(tag, cls, text) {
+        const n = document.createElement(tag);
+        if (cls) n.className = cls;
+        if (text !== undefined) n.textContent = text;
+        return n;
+      }
+
+      function icon(name) {
+        const s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        const u = document.createElementNS("http://www.w3.org/2000/svg", "use");
+        u.setAttribute("href", "#i-" + name);
+        s.append(u);
+        return s;
+      }
+
+      function validateForm(f) {
+        let isValid = true;
+        const name = f.name.value.trim();
+        const email = f.email.value.trim();
+
+        // Clear previous errors
+        document
+          .querySelectorAll(".error-msg")
+          .forEach((el) => (el.textContent = ""));
+        document.querySelectorAll(".invalid").forEach((el) => {
+          el.classList.remove("invalid");
+          el.setAttribute("aria-invalid", "false");
+        });
+
+        if (!name) {
+          document.getElementById("error-name").textContent =
+            "Nama lengkap wajib diisi.";
+          f.name.classList.add("invalid");
+          f.name.setAttribute("aria-invalid", "true");
+          isValid = false;
+        } else if (name.length < 2) {
+          document.getElementById("error-name").textContent =
+            "Nama minimal 2 karakter.";
+          f.name.classList.add("invalid");
+          f.name.setAttribute("aria-invalid", "true");
+          isValid = false;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email) {
+          document.getElementById("error-email").textContent =
+            "Alamat email wajib diisi.";
+          f.email.classList.add("invalid");
+          f.email.setAttribute("aria-invalid", "true");
+          isValid = false;
+        } else if (!emailRegex.test(email)) {
+          document.getElementById("error-email").textContent =
+            "Format email tidak valid.";
+          f.email.classList.add("invalid");
+          f.email.setAttribute("aria-invalid", "true");
+          isValid = false;
+        }
+
+        return isValid;
+      }
+
+      function render() {
+        const q = $("search").value.trim().toLowerCase();
+        const gf = $("group-filter").value;
+
+        let shown = contacts.filter((c) => {
+          const matchesFilter =
+            filter === "all" ||
+            (filter === "favorites" && c.favorite) ||
+            c.group === filter;
+          const matchesGroup = gf === "all" || c.group === gf;
+          const matchesSearch = [
+            c.name,
+            c.email,
+            c.company || "",
+            c.phone || "",
+            c.notes || "",
+          ]
+            .join(" ")
+            .toLowerCase()
+            .includes(q);
+          return matchesFilter && matchesGroup && matchesSearch;
+        });
+
+        if (view === "favorites") {
+          shown = shown.filter((c) => c.favorite);
+        }
+
+        // Subtle improvement: sort by group when in groups view
+        if (view === "groups") {
+          shown.sort((a, b) => a.group.localeCompare(b.group));
+        }
+
+        const list = $("list");
+        list.replaceChildren();
+
+        shown.forEach((c) => {
+          const row = el("div", "contact-row");
+
+          const person = el("div", "person");
+          const av = el("span", "avatar", initials(c.name));
+          const pinfo = el("div");
+          const name = el("div", "person-name", c.name);
+          const sub = el("div", "person-sub", c.phone || "No phone added");
+          pinfo.append(name, sub);
+          person.append(av, pinfo);
+
+          const email = el("a", "cell", c.email);
+          email.href = "mailto:" + c.email;
+          email.title = c.email;
+
+          const group = el("div");
+          const pill = el(
+            "span",
+            "group-pill " + c.group.toLowerCase(),
+            c.group,
+          );
+          group.append(pill);
+
+          const company = el("div", "cell", c.company || "—");
+          company.title = c.company || "";
+
+          const actions = el("div", "row-actions");
+
+          const fav = el(
+            "button",
+            "mini-btn" + (c.favorite ? " favorite" : ""),
+          );
+          fav.type = "button";
+          fav.title = c.favorite ? "Remove favorite" : "Add favorite";
+          fav.setAttribute("aria-label", fav.title + " " + c.name);
+          fav.append(icon("star"));
+          fav.onclick = () => {
+            c.favorite = !c.favorite;
+            persist();
+            notify(
+              c.favorite ? "Added to favorites" : "Removed from favorites",
+            );
+          };
+
+          const edit = el("button", "mini-btn");
+          edit.type = "button";
+          edit.title = "Edit contact";
+          edit.setAttribute("aria-label", "Edit " + c.name);
+          edit.append(icon("edit"));
+          edit.onclick = () => openDialog(c);
+
+          actions.append(fav, edit);
+          row.append(person, email, group, company, actions);
+          list.append(row);
+        });
+
+        if (!shown.length) {
+          const empty = el("div", "empty");
+          const strong = el(
+            "strong",
+            "",
+            q ? "No contacts found" : "Nothing here yet",
+          );
+          const p = el(
+            "p",
+            "",
+            q
+              ? "Try another search term or change the group filter."
+              : "Add a contact to start building your address book.",
+          );
+          empty.append(strong, p);
+          if (!q) {
+            const b = el("button", "btn");
+            b.type = "button";
+            b.append(icon("plus"), document.createTextNode(" Add contact"));
+            b.onclick = () => openDialog();
+            empty.append(b);
+          }
+          list.append(empty);
+        }
+
+        $("total").textContent = contacts.length;
+        $("nav-total").textContent = contacts.length;
+        $("favorites").textContent = contacts.filter((c) => c.favorite).length;
+        $("groups-total").textContent = new Set(
+          contacts.map((c) => c.group),
+        ).size;
+        $("count").textContent =
+          `Showing ${shown.length} of ${contacts.length} contacts`;
+
+        $("list-title").textContent =
+          view === "favorites"
+            ? "Favorite contacts"
+            : view === "groups"
+              ? "Contacts by group"
+              : "All contacts";
+      }
+
+      function setView(next) {
+        view = next;
+        if (next === "favorites") filter = "favorites";
+        else if (next === "all") filter = "all";
+
+        document
+          .querySelectorAll(".nav button")
+          .forEach((b) =>
+            b.classList.toggle("active", b.dataset.view === next),
+          );
+
+        $("page-title").textContent =
+          next === "favorites"
+            ? "Your favorite people."
+            : next === "groups"
+              ? "Contacts by group."
+              : "Your contacts, organized.";
+        $("page-subtitle").textContent =
+          next === "favorites"
+            ? "Orang-orang yang ingin Anda jangkau lebih cepat."
+            : next === "groups"
+              ? "Lihat koneksi berdasarkan kategori mereka."
+              : "Semua koneksi penting, dalam satu tempat yang mudah dicari.";
+
+        $("group-filter").value = "all";
+        render();
+      }
+
+      function openDialog(c) {
+        editingId = c ? c.id : null;
+        $("contact-form").reset();
+        $("contact-form").elements.id.value = c ? c.id : "";
+        $("dialog-title").textContent = c ? "Edit contact" : "Add a contact";
+        $("delete-zone").hidden = !c;
+
+        // Clear validation states
+        document
+          .querySelectorAll(".error-msg")
+          .forEach((el) => (el.textContent = ""));
+        document.querySelectorAll(".invalid").forEach((el) => {
+          el.classList.remove("invalid");
+          el.setAttribute("aria-invalid", "false");
+        });
+
+        const f = $("contact-form").elements;
+        if (c) {
+          ["name", "email", "phone", "company", "group", "notes"].forEach(
+            (k) => (f[k].value = c[k] || ""),
+          );
+        } else {
+          f.group.value = "Work";
+        }
+        $("contact-dialog").showModal();
+        f.name.focus();
+      }
+
+      function closeDialog() {
+        $("contact-dialog").close();
+      }
+
+      $("add-btn").onclick = () => openDialog();
+      $("close-dialog").onclick = closeDialog;
+      $("cancel-btn").onclick = closeDialog;
+      $("search").addEventListener("input", render);
+      $("group-filter").addEventListener("change", render);
+
+      document
+        .querySelectorAll(".nav button")
+        .forEach((b) => (b.onclick = () => setView(b.dataset.view)));
+
+      $("contact-form").onsubmit = (e) => {
+        e.preventDefault();
+        if (isSubmitting) return; // Prevent repeated taps
+
+        const f = e.currentTarget.elements;
+        if (!validateForm(f)) return;
+
+        isSubmitting = true;
+        const submitBtn = f.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = "Menyimpan...";
+        submitBtn.disabled = true;
+        $("contact-dialog").setAttribute("aria-busy", "true");
+
+        const data = {
+          name: f.name.value.trim(),
+          email: f.email.value.trim(),
+          phone: f.phone.value.trim(),
+          company: f.company.value.trim(),
+          group: f.group.value,
+          notes: f.notes.value.trim(),
+        };
+
+        // Slight delay to allow UI to update (show disabled state) before processing
+        setTimeout(() => {
+          if (editingId !== null) {
+            const c = contacts.find((x) => x.id === editingId);
+            if (c) Object.assign(c, data);
+          } else {
+            contacts.unshift({ id: Date.now(), ...data, favorite: false });
+          }
+
+          const success = persist();
+          isSubmitting = false;
+          submitBtn.textContent = originalText;
+          submitBtn.disabled = false;
+          $("contact-dialog").removeAttribute("aria-busy");
+
+          closeDialog();
+          notify(
+            success
+              ? editingId !== null
+                ? "Kontak berhasil diperbarui"
+                : "Kontak berhasil ditambahkan"
+              : "Gagal menyimpan data. Penyimpanan mungkin penuh.",
+          );
+        }, 150);
+      };
+
+      $("delete-btn").onclick = () => {
+        if (
+          editingId !== null &&
+          confirm(
+            "Hapus kontak ini secara permanen? Tindakan ini tidak dapat dibatalkan.",
+          )
+        ) {
+          if (isSubmitting) return;
+          isSubmitting = true;
+          const btn = $("delete-btn");
+          btn.disabled = true;
+          btn.textContent = "Menghapus...";
+
+          setTimeout(() => {
+            contacts = contacts.filter((c) => c.id !== editingId);
+            persist();
+            closeDialog();
+            notify("Kontak berhasil dihapus");
+            isSubmitting = false;
+            btn.disabled = false;
+            btn.innerHTML = '<svg><use href="#i-trash"></use></svg> Delete';
+          }, 150);
+        }
+      };
+
+      function exportContacts() {
+        if (contacts.length === 0) {
+          notify("Tidak ada kontak untuk diekspor.");
+          return;
+        }
+        const blob = new Blob([JSON.stringify(contacts, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "contact-manager-backup.json";
+        document.body.appendChild(a); // Required for Firefox compatibility
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        notify("Kontak berhasil diekspor sebagai JSON");
+      }
+
+      $("export-panel").onclick = exportContacts;
+
+      // Initial render
+      render();
+    </script>
+  </body>
+</html>

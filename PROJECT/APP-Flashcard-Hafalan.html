@@ -1,0 +1,3177 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#f5f6fc" />
+    <meta
+      name="description"
+      content="Aplikasi flashcard hafalan interaktif dengan swipe, spaced repetition otomatis, impor/ekspor CSV, dan statistik penguasaan."
+    />
+    <title>Aplikasi Flashcard Hafalan Interaktif</title>
+    <link
+      rel="icon"
+      href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="%236366f1"/><path d="M13 4 6 14h5l-1 6 7-10h-5l1-6z" fill="white"/></svg>'
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      body {
+        font-family:
+          "Plus Jakarta Sans",
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+        background: #f5f6fc;
+        color: #181b2e;
+        min-height: 100vh;
+        font-size: 15px;
+        -webkit-tap-highlight-color: transparent;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        background:
+          radial-gradient(
+            640px 420px at 92% -60px,
+            rgba(139, 92, 246, 0.16),
+            transparent 62%
+          ),
+          radial-gradient(
+            700px 520px at -8% 26%,
+            rgba(99, 102, 241, 0.11),
+            transparent 62%
+          ),
+          radial-gradient(
+            520px 420px at 82% 92%,
+            rgba(20, 184, 166, 0.09),
+            transparent 62%
+          );
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        background: none;
+        border: none;
+        cursor: pointer;
+      }
+      input,
+      textarea {
+        font: inherit;
+      }
+      .wrap {
+        max-width: 840px;
+        margin: 0 auto;
+        padding: 16px 20px 90px;
+      }
+
+      /* ===== Topbar ===== */
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        background: rgba(245, 246, 252, 0.82);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid #e9ebf4;
+      }
+      .topbar-in {
+        max-width: 840px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 20px;
+        gap: 12px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .logo {
+        width: 34px;
+        height: 34px;
+        border-radius: 11px;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        flex: none;
+      }
+      .logo svg {
+        width: 18px;
+        height: 18px;
+      }
+      .bname {
+        font-weight: 800;
+        font-size: 17px;
+        letter-spacing: -0.01em;
+      }
+      .bname b {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .tabs {
+        display: flex;
+        gap: 4px;
+        background: #e9ebf4;
+        padding: 4px;
+        border-radius: 999px;
+      }
+      .tab {
+        padding: 7px 16px;
+        border-radius: 999px;
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #5d6280;
+        transition: all 0.15s;
+      }
+      .tab.active {
+        background: #fff;
+        color: #181b2e;
+        box-shadow: 0 1px 4px rgba(23, 26, 43, 0.12);
+      }
+      body.in-study .topbar {
+        display: none;
+      }
+
+      /* ===== Views ===== */
+      .view {
+        display: none;
+      }
+      .view.active {
+        display: block;
+      }
+      #view-study.active {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        padding: 14px 16px 46px;
+        min-height: 100dvh;
+      }
+
+      /* ===== Hero & stats ===== */
+      .hero {
+        margin-top: 26px;
+      }
+      .hero-date {
+        font-size: 13px;
+        color: #8a8fa5;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .hero h1 {
+        font-size: clamp(23px, 4.6vw, 30px);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        line-height: 1.25;
+      }
+      .hero-sub {
+        color: #5d6280;
+        font-size: 15px;
+        max-width: 580px;
+        line-height: 1.6;
+        margin-top: 8px;
+      }
+      .hero-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+      }
+      .stat-chips {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin: 20px 0 6px;
+      }
+      .stat {
+        background: #fff;
+        border-radius: 16px;
+        padding: 14px 10px;
+        text-align: center;
+        border: 1px solid #eef0f7;
+      }
+      .stat b {
+        display: block;
+        font-size: 20px;
+        line-height: 1.2;
+      }
+      .stat span {
+        font-size: 12px;
+        color: #71768c;
+      }
+      .stat.hot b {
+        color: #e11d48;
+      }
+      .stat svg {
+        width: 14px;
+        height: 14px;
+        color: #f59e0b;
+        vertical-align: -2px;
+      }
+      .section-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 24px 0 12px;
+      }
+      .section-title h2 {
+        font-size: 18px;
+      }
+      .section-title h3 {
+        font-size: 15px;
+      }
+
+      /* ===== Buttons ===== */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: 700;
+        border-radius: 14px;
+        padding: 12px 18px;
+        font-size: 14.5px;
+        transition:
+          transform 0.15s,
+          box-shadow 0.15s,
+          background 0.15s,
+          opacity 0.15s;
+        text-decoration: none;
+      }
+      .btn:active {
+        transform: scale(0.97);
+      }
+      .btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .btn svg {
+        width: 17px;
+        height: 17px;
+        flex: none;
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: #fff;
+        box-shadow: 0 6px 16px rgba(99, 102, 241, 0.32);
+      }
+      .btn-primary:hover:not(:disabled) {
+        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.42);
+      }
+      .btn-ghost {
+        background: #fff;
+        color: #3d4157;
+        border: 1.5px solid #e3e6f0;
+      }
+      .btn-ghost:hover:not(:disabled) {
+        border-color: #c9cde3;
+        background: #fafbff;
+      }
+      .btn-soft {
+        background: #eef0fa;
+        color: #4a4fa8;
+      }
+      .btn-soft:hover:not(:disabled) {
+        background: #e4e7f7;
+      }
+      .btn-soft.danger {
+        background: #fde8ec;
+        color: #e11d48;
+      }
+      .btn-sm {
+        padding: 8px 13px;
+        font-size: 13px;
+        border-radius: 11px;
+      }
+      .icon-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        background: #f0f1f8;
+        color: #3d4157;
+        display: inline-grid;
+        place-items: center;
+        transition: background 0.15s;
+        flex: none;
+      }
+      .icon-btn:hover {
+        background: #e4e6f2;
+      }
+      .icon-btn.danger {
+        color: #e11d48;
+      }
+      .icon-btn svg {
+        width: 17px;
+        height: 17px;
+      }
+
+      /* ===== Deck grid ===== */
+      .deck-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 14px;
+      }
+      .deck-card {
+        display: flex;
+        gap: 12px;
+        padding: 16px;
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 2px 12px rgba(23, 26, 43, 0.07);
+        cursor: pointer;
+        transition:
+          transform 0.18s,
+          box-shadow 0.18s;
+        border: 1px solid #eef0f7;
+      }
+      .deck-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 26px rgba(23, 26, 43, 0.12);
+      }
+      .dc-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 13px;
+        background: linear-gradient(
+          135deg,
+          var(--dc1, #6366f1),
+          var(--dc2, #8b5cf6)
+        );
+        color: #fff;
+        display: grid;
+        place-items: center;
+        flex: none;
+      }
+      .dc-icon svg {
+        width: 20px;
+        height: 20px;
+      }
+      .dc-icon.big {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+      }
+      .dc-icon.big svg {
+        width: 24px;
+        height: 24px;
+      }
+      .dc-main {
+        flex: 1;
+        min-width: 0;
+      }
+      .dc-main h3 {
+        font-size: 16.5px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .dc-desc {
+        color: #71768c;
+        font-size: 13px;
+        margin-top: 3px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .dc-meta {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+      .chip {
+        background: #f0f1f8;
+        color: #5d6280;
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .chip-due {
+        background: #fde8ec;
+        color: #e11d48;
+      }
+      .dc-side {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        justify-content: center;
+      }
+      .ring {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        background: conic-gradient(
+          var(--c, #10b981) calc(var(--p) * 1%),
+          #eceef5 0
+        );
+        display: grid;
+        place-items: center;
+        position: relative;
+        flex: none;
+      }
+      .ring::before {
+        content: "";
+        position: absolute;
+        inset: 4px;
+        background: #fff;
+        border-radius: 50%;
+      }
+      .ring b {
+        position: relative;
+        z-index: 1;
+        font-size: 11px;
+        font-weight: 800;
+        color: #181b2e;
+      }
+      .ring.big {
+        width: 74px;
+        height: 74px;
+      }
+      .ring.big b {
+        font-size: 15px;
+      }
+      .empty {
+        grid-column: 1/-1;
+        text-align: center;
+        padding: 46px 20px;
+        color: #71768c;
+      }
+
+      /* ===== Deck detail ===== */
+      .dv-head {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-top: 6px;
+      }
+      .dv-titles {
+        flex: 1;
+        min-width: 0;
+      }
+      .dv-titles h2 {
+        font-size: 22px;
+      }
+      .dv-titles p {
+        color: #71768c;
+        font-size: 13.5px;
+        margin-top: 2px;
+      }
+      .dv-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 16px;
+        flex-wrap: wrap;
+      }
+      .dv-tools {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+      }
+      .panel {
+        background: #fff;
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: 0 2px 10px rgba(23, 26, 43, 0.06);
+        margin: 16px 0;
+      }
+      .panel h3 {
+        font-size: 15px;
+        margin-bottom: 10px;
+      }
+      .dv-stats {
+        display: flex;
+        gap: 18px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .dv-stats-chips {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        flex: 1;
+        min-width: 200px;
+      }
+      .dv-bar {
+        display: flex;
+        height: 10px;
+        border-radius: 6px;
+        overflow: hidden;
+        gap: 2px;
+        background: #eef0f7;
+      }
+      .dv-bar i {
+        display: block;
+        min-width: 2px;
+      }
+      .legend {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+        font-size: 12px;
+        color: #71768c;
+      }
+      .dotc {
+        width: 10px;
+        height: 10px;
+        border-radius: 3px;
+        display: inline-block;
+        margin-right: 6px;
+        vertical-align: -1px;
+      }
+      .hint {
+        font-size: 12.5px;
+        color: #8a8fa5;
+        line-height: 1.5;
+      }
+      .hint-center {
+        text-align: center;
+        color: #71768c;
+        font-size: 13.5px;
+        padding: 14px;
+        line-height: 1.6;
+      }
+      .dim {
+        color: #a3a8bd;
+        font-style: italic;
+      }
+      .cardlist {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .crow {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 12px 14px;
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 1px 3px rgba(23, 26, 43, 0.06);
+        border: 1px solid #eef0f7;
+      }
+      .crow .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-top: 5px;
+        flex: none;
+      }
+      .dot.s-new {
+        background: #cbd5e1;
+      }
+      .dot.s-learning {
+        background: #f59e0b;
+      }
+      .dot.s-young {
+        background: #38bdf8;
+      }
+      .dot.s-mastered {
+        background: #10b981;
+      }
+      .ctexts {
+        flex: 1;
+        min-width: 0;
+        cursor: pointer;
+      }
+      .ctexts b {
+        display: block;
+        font-size: 14.5px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .ctexts span {
+        display: block;
+        font-size: 13px;
+        color: #71768c;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        margin-top: 2px;
+      }
+      .cactions {
+        display: flex;
+        gap: 4px;
+      }
+      .cactions .icon-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+      }
+
+      /* ===== Study view ===== */
+      .study-top {
+        width: min(92vw, 520px);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 8px;
+      }
+      .study-prog {
+        flex: 1;
+        height: 8px;
+        background: #e6e8f3;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .study-prog-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #6366f1, #8b5cf6);
+        border-radius: 4px;
+        transition: width 0.3s;
+        width: 0;
+      }
+      .study-count {
+        font-size: 13px;
+        font-weight: 700;
+        color: #5d6280;
+        white-space: nowrap;
+      }
+      #study-live {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        width: 100%;
+      }
+      .stack-holder {
+        position: relative;
+        width: min(92vw, 480px);
+        height: min(56vh, 380px);
+      }
+      .stack-next {
+        position: absolute;
+        inset: 0;
+        background: #fff;
+        border-radius: 24px;
+        transform: translateY(14px) scale(0.955);
+        opacity: 0.6;
+        box-shadow: 0 10px 26px rgba(23, 26, 43, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 28px;
+        text-align: center;
+        color: #9aa0b5;
+        font-weight: 600;
+        font-size: 15px;
+        overflow: hidden;
+      }
+      #sn-text {
+        display: -webkit-box;
+        line-clamp: 2;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .fc {
+        position: absolute;
+        inset: 0;
+        perspective: 1200px;
+        touch-action: none;
+        cursor: grab;
+        user-select: none;
+        -webkit-user-select: none;
+        z-index: 2;
+      }
+      .fc:active {
+        cursor: grabbing;
+      }
+      .fc-inner {
+        position: absolute;
+        inset: 0;
+        transform-style: preserve-3d;
+        transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+      .fc.flipped .fc-inner {
+        transform: rotateY(180deg);
+      }
+      .fc-face {
+        position: absolute;
+        inset: 0;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        background: #fff;
+        border-radius: 24px;
+        box-shadow: 0 18px 40px rgba(23, 26, 43, 0.14);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 34px 24px;
+        text-align: center;
+      }
+      .fc-front {
+        border-top: 6px solid var(--deckA, #6366f1);
+      }
+      .fc-back {
+        transform: rotateY(180deg);
+        border-top: 6px solid #10b981;
+      }
+      .fc-label {
+        position: absolute;
+        top: 20px;
+        left: 0;
+        right: 0;
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        font-weight: 800;
+        color: #a3a8bd;
+      }
+      .fc-text {
+        font-size: clamp(18px, 4.2vh, 24px);
+        font-weight: 700;
+        line-height: 1.45;
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow-y: auto;
+        max-height: 100%;
+        text-align: center;
+        width: 100%;
+      }
+      .fc-hint {
+        position: absolute;
+        bottom: 16px;
+        left: 0;
+        right: 0;
+        font-size: 12px;
+        color: #a3a8bd;
+      }
+      .stamp {
+        position: absolute;
+        top: 26px;
+        padding: 6px 13px;
+        border-radius: 10px;
+        font-weight: 800;
+        font-size: 15px;
+        letter-spacing: 0.06em;
+        border: 3px solid;
+        opacity: 0;
+        pointer-events: none;
+        background: rgba(255, 255, 255, 0.92);
+        transition: opacity 0.1s;
+      }
+      .stamp-ok {
+        left: 20px;
+        color: #059669;
+        border-color: #059669;
+        transform: rotate(-14deg);
+      }
+      .stamp-no {
+        right: 20px;
+        color: #e11d48;
+        border-color: #e11d48;
+        transform: rotate(14deg);
+      }
+      .study-actions {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        justify-content: center;
+        width: min(92vw, 520px);
+      }
+      .sbtn {
+        border: none;
+        cursor: pointer;
+        color: #fff;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        justify-content: center;
+        transition:
+          transform 0.15s,
+          opacity 0.15s;
+        white-space: nowrap;
+      }
+      .sbtn svg {
+        width: 18px;
+        height: 18px;
+      }
+      .sbtn:active {
+        transform: scale(0.96);
+      }
+      .sbtn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .sbtn-red {
+        background: linear-gradient(135deg, #fb7185, #e11d48);
+        padding: 14px 16px;
+        border-radius: 16px;
+        font-size: 14.5px;
+        flex: 1;
+        box-shadow: 0 8px 18px rgba(225, 29, 72, 0.3);
+      }
+      .sbtn-green {
+        background: linear-gradient(135deg, #34d399, #059669);
+        padding: 14px 16px;
+        border-radius: 16px;
+        font-size: 14.5px;
+        flex: 1;
+        box-shadow: 0 8px 18px rgba(5, 150, 105, 0.3);
+      }
+      .sbtn-flip {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: #fff;
+        color: #3d4157;
+        box-shadow: 0 8px 20px rgba(23, 26, 43, 0.16);
+        flex: none;
+      }
+      .sbtn-flip svg {
+        width: 22px;
+        height: 22px;
+      }
+      .study-tip {
+        font-size: 12.5px;
+        color: #8a8fa5;
+        text-align: center;
+        line-height: 1.6;
+        padding: 0 14px;
+      }
+      .sum-card {
+        background: #fff;
+        border-radius: 24px;
+        padding: 26px 24px;
+        width: min(92vw, 480px);
+        text-align: center;
+        box-shadow: 0 18px 40px rgba(23, 26, 43, 0.12);
+        margin-top: 14px;
+      }
+      .sum-card h2 {
+        font-size: 22px;
+        margin-bottom: 6px;
+      }
+      .sum-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+        gap: 10px;
+        margin: 18px 0;
+      }
+      .sum-item {
+        background: #f7f8fd;
+        border-radius: 14px;
+        padding: 12px 8px;
+      }
+      .sum-item b {
+        display: block;
+        font-size: 19px;
+      }
+      .sum-item span {
+        font-size: 11.5px;
+        color: #71768c;
+      }
+      .sum-item.ok b {
+        color: #059669;
+      }
+      .sum-item.no b {
+        color: #e11d48;
+      }
+      .sum-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 8px;
+      }
+
+      /* ===== Stats view ===== */
+      .bars {
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+        height: 150px;
+        margin-top: 16px;
+      }
+      .bar {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 6px;
+        height: 100%;
+      }
+      .bfill {
+        width: 100%;
+        max-width: 36px;
+        border-radius: 8px;
+        background: linear-gradient(180deg, #818cf8, #6366f1);
+        min-height: 3px;
+      }
+      .bar.today .bfill {
+        background: linear-gradient(180deg, #34d399, #10b981);
+      }
+      .blabel {
+        font-size: 11px;
+        color: #8a8fa5;
+        white-space: nowrap;
+      }
+      .bval {
+        font-size: 11px;
+        font-weight: 700;
+        color: #3d4157;
+      }
+      .ds-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 0;
+        border-top: 1px solid #eef0f7;
+        cursor: pointer;
+      }
+      .ds-row:hover {
+        background: #fafbff;
+      }
+      .ds-row:first-of-type {
+        border-top: none;
+      }
+      .ds-mid {
+        flex: 1;
+        min-width: 0;
+      }
+      .ds-mid b {
+        font-size: 14px;
+        display: block;
+        margin-bottom: 6px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .ds-bar {
+        height: 7px;
+        background: #eef0f7;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 5px;
+      }
+      .ds-bar i {
+        display: block;
+        height: 100%;
+        border-radius: 4px;
+      }
+      .ds-pct {
+        font-size: 14px;
+        flex: none;
+      }
+
+      /* ===== Modals ===== */
+      .modal-back {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 18, 35, 0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+        z-index: 50;
+        opacity: 0;
+        transition: opacity 0.2s;
+        backdrop-filter: blur(3px);
+        -webkit-backdrop-filter: blur(3px);
+      }
+      .modal-back.show {
+        opacity: 1;
+      }
+      .modal {
+        background: #fff;
+        border-radius: 22px;
+        width: min(560px, 100%);
+        max-height: calc(100dvh - 36px);
+        overflow-y: auto;
+        transform: translateY(14px) scale(0.98);
+        transition: transform 0.2s;
+      }
+      .modal-back.show .modal {
+        transform: none;
+      }
+      .modal.modal-sm {
+        width: min(440px, 100%);
+      }
+      .m-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        border-bottom: 1px solid #eef0f7;
+      }
+      .m-head h3 {
+        font-size: 17px;
+      }
+      .m-body {
+        padding: 16px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .m-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 14px 20px;
+        border-top: 1px solid #eef0f7;
+        flex-wrap: wrap;
+      }
+      .field label {
+        display: block;
+        font-size: 13px;
+        font-weight: 700;
+        color: #3d4157;
+        margin-bottom: 6px;
+      }
+      input[type="text"],
+      textarea {
+        width: 100%;
+        border: 1.5px solid #e3e6f0;
+        border-radius: 12px;
+        padding: 11px 13px;
+        font-size: 14.5px;
+        background: #fbfbfe;
+        color: #181b2e;
+      }
+      textarea {
+        resize: vertical;
+        min-height: 76px;
+        line-height: 1.55;
+      }
+      input:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #818cf8;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        background: #fff;
+      }
+      .colorpick {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .cchip {
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+        border: none;
+        cursor: pointer;
+        outline: 2px solid transparent;
+        outline-offset: 2px;
+      }
+      .cchip.sel {
+        outline-color: #181b2e;
+      }
+      .radios {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .rchip {
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1.5px solid #e3e6f0;
+        background: #fff;
+        font-size: 13px;
+        font-weight: 600;
+        color: #5d6280;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .rchip.sel {
+        background: #181b2e;
+        color: #fff;
+        border-color: #181b2e;
+      }
+      .imp-file-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 8px;
+        flex-wrap: wrap;
+      }
+      .imp-preview {
+        background: #f7f8fd;
+        border: 1.5px dashed #d9dceb;
+        border-radius: 12px;
+        padding: 12px;
+        margin-top: 2px;
+        min-height: 46px;
+      }
+      .pv-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+        font-size: 13px;
+        flex-wrap: wrap;
+      }
+      .pv-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 13px;
+        padding: 5px 0;
+        border-top: 1px solid #eceef6;
+      }
+      .pv-row span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .pv-row span:first-child {
+        max-width: 42%;
+        font-weight: 600;
+      }
+      .pv-row .arr {
+        color: #a3a8bd;
+        flex: none;
+      }
+      .pv-row span:last-child {
+        flex: 1;
+        color: #5d6280;
+        min-width: 0;
+      }
+
+      /* ===== Toast ===== */
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 22px;
+        transform: translateX(-50%) translateY(8px);
+        background: #181b2e;
+        color: #fff;
+        padding: 11px 18px;
+        border-radius: 999px;
+        font-size: 13.5px;
+        font-weight: 600;
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.25s;
+        z-index: 99;
+        max-width: 90vw;
+        text-align: center;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+      .toast.t-err {
+        background: #e11d48;
+      }
+
+      @media (max-width: 600px) {
+        .stat-chips {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .dv-titles h2 {
+          font-size: 19px;
+        }
+        .wrap {
+          padding: 12px 14px 70px;
+        }
+        .bname {
+          display: none;
+        }
+        .ring {
+          width: 42px;
+          height: 42px;
+        }
+        .study-actions {
+          gap: 10px;
+        }
+        .sbtn-red,
+        .sbtn-green {
+          padding: 13px 8px;
+          font-size: 13.5px;
+          gap: 6px;
+        }
+        .sbtn svg {
+          width: 16px;
+          height: 16px;
+        }
+        .sbtn-flip {
+          width: 54px;
+          height: 54px;
+        }
+        .study-tip {
+          font-size: 11.5px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-in">
+        <div class="brand">
+          <span class="logo" id="logo"></span
+          ><span class="bname">Flash<b>Hafalan</b></span>
+        </div>
+        <nav class="tabs">
+          <button class="tab active" data-nav="home">Beranda</button>
+          <button class="tab" data-nav="stats">Statistik</button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <!-- BERANDA -->
+      <section class="view active" id="view-home">
+        <div id="home-body"></div>
+      </section>
+
+      <!-- DETAIL DEK -->
+      <section class="view" id="view-deck"><div id="deck-body"></div></section>
+
+      <!-- MODE LATIHAN -->
+      <section class="view" id="view-study">
+        <div class="study-top">
+          <button
+            class="icon-btn"
+            id="study-exit"
+            title="Keluar sesi (Esc)"
+          ></button>
+          <div class="study-prog">
+            <div id="sp-fill" class="study-prog-fill"></div>
+          </div>
+          <div id="sp-count" class="study-count">0/0</div>
+        </div>
+        <div id="study-live">
+          <div class="stack-holder">
+            <div class="stack-next" id="stack-next">
+              <span id="sn-text"></span>
+            </div>
+            <div class="fc" id="fc">
+              <div class="fc-inner">
+                <div class="fc-face fc-front">
+                  <span class="fc-label" id="fc-label">PERTANYAAN</span>
+                  <div class="fc-text" id="ft-front"></div>
+                  <span class="fc-hint">Ketuk kartu untuk melihat jawaban</span>
+                </div>
+                <div class="fc-face fc-back">
+                  <span class="fc-label">JAWABAN</span>
+                  <div class="fc-text" id="ft-back"></div>
+                  <span class="fc-hint"
+                    >Geser kanan jika ingat — kiri jika belum</span
+                  >
+                </div>
+              </div>
+              <div class="stamp stamp-ok" id="st-ok">INGAT</div>
+              <div class="stamp stamp-no" id="st-no">BELUM INGAT</div>
+            </div>
+          </div>
+          <div class="study-actions">
+            <button class="sbtn sbtn-red" id="b-no" disabled></button>
+            <button
+              class="sbtn sbtn-flip"
+              id="b-flip"
+              title="Putar kartu (Spasi)"
+            ></button>
+            <button class="sbtn sbtn-green" id="b-ok" disabled></button>
+          </div>
+          <p class="study-tip">
+            Geser kanan = ingat &middot; geser kiri = belum ingat &middot; ketuk
+            kartu = putar<br />Di komputer: Spasi untuk memutar, panah
+            kiri/kanan untuk menjawab
+          </p>
+        </div>
+        <div id="study-summary" hidden>
+          <div class="sum-card">
+            <h2>Sesi Selesai</h2>
+            <p id="sum-note" class="hint"></p>
+            <div class="sum-grid">
+              <div class="sum-item">
+                <b id="sum-total">0</b><span>Kartu dijawab</span>
+              </div>
+              <div class="sum-item ok">
+                <b id="sum-ok">0</b><span>Ingat</span>
+              </div>
+              <div class="sum-item no">
+                <b id="sum-no">0</b><span>Belum ingat</span>
+              </div>
+              <div class="sum-item">
+                <b id="sum-acc">0%</b><span>Akurasi</span>
+              </div>
+              <div class="sum-item">
+                <b id="sum-dur">0</b><span>Durasi</span>
+              </div>
+            </div>
+            <div class="sum-actions">
+              <button class="btn btn-ghost btn-sm" id="sum-home">
+                Ke Beranda
+              </button>
+              <button class="btn btn-ghost btn-sm" id="sum-again">
+                Ulangi Latihan
+              </button>
+              <button class="btn btn-primary" id="sum-back">
+                Kembali ke Dek
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STATISTIK -->
+      <section class="view" id="view-stats">
+        <div id="stats-body"></div>
+      </section>
+    </main>
+
+    <!-- MODAL: DEK BARU / UBAH -->
+    <div class="modal-back" id="m-deck" hidden>
+      <div class="modal modal-sm">
+        <div class="m-head">
+          <h3 id="mdk-title">Dek Baru</h3>
+          <button class="icon-btn" data-close="m-deck" title="Tutup"></button>
+        </div>
+        <div class="m-body">
+          <div class="field">
+            <label for="dk-name">Nama dek</label
+            ><input
+              type="text"
+              id="dk-name"
+              maxlength="60"
+              placeholder="Mis. Kosakata Bahasa Jepang"
+            />
+          </div>
+          <div class="field">
+            <label for="dk-desc">Deskripsi (opsional)</label
+            ><input
+              type="text"
+              id="dk-desc"
+              maxlength="120"
+              placeholder="Materi apa yang mau dihafal?"
+            />
+          </div>
+          <div class="field">
+            <label>Warna</label>
+            <div class="colorpick" id="dk-colors"></div>
+          </div>
+        </div>
+        <div class="m-actions">
+          <button class="btn btn-ghost" data-close="m-deck">Batal</button
+          ><button class="btn btn-primary" id="dk-save">Simpan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: KARTU BARU / UBAH -->
+    <div class="modal-back" id="m-card" hidden>
+      <div class="modal">
+        <div class="m-head">
+          <h3 id="mcd-title">Kartu Baru</h3>
+          <button class="icon-btn" data-close="m-card" title="Tutup"></button>
+        </div>
+        <div class="m-body">
+          <div class="field">
+            <label for="cd-front">Sisi depan — pertanyaan</label
+            ><textarea
+              id="cd-front"
+              rows="3"
+              placeholder="Mis. Ibu kota Jepang?"
+            ></textarea>
+          </div>
+          <div class="field">
+            <label for="cd-back">Sisi belakang — jawaban</label
+            ><textarea
+              id="cd-back"
+              rows="3"
+              placeholder="Mis. Tokyo"
+            ></textarea>
+          </div>
+          <p class="hint">
+            Tips: tekan Ctrl atau Cmd + Enter untuk menyimpan cepat.
+          </p>
+        </div>
+        <div class="m-actions">
+          <button class="btn btn-ghost" data-close="m-card">Batal</button>
+          <button class="btn btn-ghost" id="cd-save-more" hidden>
+            Simpan &amp; Tambah Lagi
+          </button>
+          <button class="btn btn-primary" id="cd-save">Simpan Kartu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: IMPOR -->
+    <div class="modal-back" id="m-import" hidden>
+      <div class="modal">
+        <div class="m-head">
+          <h3 id="mim-title">Impor Kartu</h3>
+          <button class="icon-btn" data-close="m-import" title="Tutup"></button>
+        </div>
+        <div class="m-body">
+          <div id="imp-newfields">
+            <div class="field">
+              <label for="imp-name">Nama dek baru</label
+              ><input
+                type="text"
+                id="imp-name"
+                maxlength="60"
+                placeholder="Mis. Kosakata TOEFL"
+              />
+            </div>
+            <div class="field">
+              <label>Warna</label>
+              <div class="colorpick" id="imp-colors"></div>
+            </div>
+          </div>
+          <div class="field">
+            <label for="imp-text"
+              >Tempel daftar kartu (satu kartu per baris)</label
+            >
+            <textarea
+              id="imp-text"
+              rows="7"
+              placeholder="Format: pertanyaan ; jawaban — pemisah otomatis terdeteksi&#10;contoh:&#10;ibu kota Indonesia;Jakarta&#10;ibu kota Vietnam;Hanoi&#10;&#10;Bisa juga: koma, Tab, atau tanda |"
+            ></textarea>
+            <div class="imp-file-row">
+              <button class="btn btn-ghost btn-sm" id="imp-browse">
+                Pilih Berkas CSV / TXT
+              </button>
+              <span class="hint" id="imp-fname">Belum ada berkas dipilih</span>
+            </div>
+            <input
+              type="file"
+              id="imp-file"
+              accept=".csv,.txt,.tsv,.md"
+              hidden
+            />
+          </div>
+          <div class="field">
+            <label>Pemisah kolom</label>
+            <div class="radios" id="imp-delim">
+              <button class="rchip sel" data-d="auto">Otomatis</button>
+              <button class="rchip" data-d=";">Titik koma ;</button>
+              <button class="rchip" data-d=",">Koma ,</button>
+              <button class="rchip" data-d="tab">Tab</button>
+              <button class="rchip" data-d="|">Garis |</button>
+            </div>
+          </div>
+          <div class="field" id="imp-modewrap">
+            <label>Jika dek sudah berisi kartu</label>
+            <div class="radios" id="imp-mode">
+              <button class="rchip sel" data-m="merge">Gabungkan</button>
+              <button class="rchip" data-m="replace">Ganti semua</button>
+            </div>
+          </div>
+          <div class="imp-preview" id="imp-preview">
+            <span class="hint">Pratinjau akan muncul di sini&hellip;</span>
+          </div>
+        </div>
+        <div class="m-actions">
+          <button class="btn btn-ghost" data-close="m-import">Batal</button
+          ><button class="btn btn-primary" id="imp-go">Impor Kartu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: EKSPOR -->
+    <div class="modal-back" id="m-export" hidden>
+      <div class="modal">
+        <div class="m-head">
+          <h3 id="exp-title">Ekspor</h3>
+          <button class="icon-btn" data-close="m-export" title="Tutup"></button>
+        </div>
+        <div class="m-body">
+          <p class="hint">
+            Format: <b>pertanyaan;jawaban</b> — satu kartu per baris, kompatibel
+            CSV (teks yang mengandung tanda khusus dibungkus tanda kutip).
+          </p>
+          <textarea id="exp-text" rows="10" readonly></textarea>
+        </div>
+        <div class="m-actions">
+          <button class="btn btn-ghost" data-close="m-export">Tutup</button>
+          <button class="btn btn-ghost" id="exp-copy">Salin</button>
+          <button class="btn btn-primary" id="exp-dl">Unduh CSV</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: KONFIRMASI -->
+    <div class="modal-back" id="m-confirm" hidden>
+      <div class="modal modal-sm">
+        <div class="m-head"><h3 id="cf-title">Konfirmasi</h3></div>
+        <div class="m-body">
+          <p
+            id="cf-msg"
+            style="font-size: 14px; color: #5d6280; line-height: 1.6"
+          ></p>
+        </div>
+        <div class="m-actions">
+          <button class="btn btn-ghost" data-close="m-confirm">Batal</button
+          ><button class="btn btn-primary" id="cf-ok">Ya</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+      "use strict";
+      /* ================= UTIL ================= */
+      const $ = (s) => document.querySelector(s);
+      const $$ = (s) => [...document.querySelectorAll(s)];
+      const uid = () =>
+        Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      const ESC = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      };
+      const esc = (s) =>
+        String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ESC[c]);
+      const DAY_MS = 86400000,
+        MIN_MS = 60000;
+      const ID_DAYS = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+      function dayKey(d) {
+        const x = d instanceof Date ? d : new Date(d);
+        return (
+          x.getFullYear() +
+          "-" +
+          String(x.getMonth() + 1).padStart(2, "0") +
+          "-" +
+          String(x.getDate()).padStart(2, "0")
+        );
+      }
+      function shuffle(a) {
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          const t = a[i];
+          a[i] = a[j];
+          a[j] = t;
+        }
+        return a;
+      }
+      function fmtDur(ms) {
+        const s = Math.max(0, Math.round(ms / 1000));
+        return s < 60
+          ? s + " detik"
+          : Math.floor(s / 60) + " mnt " + (s % 60) + " dtk";
+      }
+      function trunc(s, n) {
+        s = String(s || "");
+        return s.length > n ? s.slice(0, n - 1) + "…" : s;
+      }
+      function slug(s) {
+        return (
+          String(s || "")
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "") || "dek"
+        );
+      }
+
+      /* ================= IKON SVG ================= */
+      function svg(p) {
+        return (
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+          p +
+          "</svg>"
+        );
+      }
+      const IC = {
+        bolt: svg('<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>'),
+        book: svg(
+          '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+        ),
+        back: svg('<path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>'),
+        close: svg('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>'),
+        plus: svg('<path d="M12 5v14"/><path d="M5 12h14"/>'),
+        pencil: svg(
+          '<path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>',
+        ),
+        trash: svg(
+          '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+        ),
+        down: svg(
+          '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
+        ),
+        up: svg(
+          '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/>',
+        ),
+        check: svg('<path d="M20 6 9 17l-5-5"/>'),
+        x: svg('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>'),
+        flip: svg(
+          '<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',
+        ),
+        flame: svg(
+          '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+        ),
+        play: svg('<path d="m6 3 14 9-14 9V3z"/>'),
+        repeat: svg(
+          '<path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>',
+        ),
+      };
+      const COLORS = [
+        { name: "Indigo", a: "#6366f1", b: "#8b5cf6" },
+        { name: "Teal", a: "#14b8a6", b: "#06b6d4" },
+        { name: "Rose", a: "#f43f5e", b: "#fb7185" },
+        { name: "Amber", a: "#f59e0b", b: "#f97316" },
+        { name: "Sky", a: "#0ea5e9", b: "#3b82f6" },
+        { name: "Emerald", a: "#10b981", b: "#84cc16" },
+      ];
+
+      /* ================= STATE & PENYIMPANAN ================= */
+      const LS_KEY = "flashhafalan.v1";
+      let DB = null;
+      let STORAGE_OK = true;
+
+      function mk(front, back) {
+        return {
+          id: uid(),
+          front,
+          back,
+          ease: 2.5,
+          reps: 0,
+          lapses: 0,
+          interval: 0,
+          due: Date.now(),
+        };
+      }
+      function newCard(f, b) {
+        return mk(f, b);
+      }
+      function defaultDB() {
+        const now = Date.now();
+        return {
+          version: 1,
+          settings: { newPerSession: 20 },
+          log: { days: {}, total: 0 },
+          decks: [
+            {
+              id: uid(),
+              name: "Kosakata Bahasa Inggris",
+              desc: "Contoh dek — kata-kata sehari-hari",
+              color: 0,
+              created: now,
+              cards: [
+                mk("book", "buku"),
+                mk("always", "selalu"),
+                mk("library", "perpustakaan"),
+                mk("to forget", "lupa"),
+                mk("to remember", "ingat"),
+                mk("practice", "latihan"),
+                mk("difficult", "sulit"),
+                mk("fluent", "fasih"),
+              ],
+            },
+            {
+              id: uid(),
+              name: "Ibu Kota Negara ASEAN",
+              desc: "Contoh dek — geografi dasar",
+              color: 3,
+              created: now - 1,
+              cards: [
+                mk("Ibu kota Indonesia?", "Jakarta"),
+                mk("Ibu kota Singapura?", "Singapura"),
+                mk("Ibu kota Malaysia?", "Kuala Lumpur"),
+                mk("Ibu kota Thailand?", "Bangkok"),
+                mk("Ibu kota Filipina?", "Manila"),
+                mk("Ibu kota Vietnam?", "Hanoi"),
+              ],
+            },
+          ],
+        };
+      }
+      function normalize() {
+        DB.version = DB.version || 1;
+        DB.settings = DB.settings || {};
+        DB.settings.newPerSession = DB.settings.newPerSession || 20;
+        DB.log = DB.log || { days: {}, total: 0 };
+        DB.log.days = DB.log.days || {};
+        DB.log.total = DB.log.total || 0;
+        DB.decks = Array.isArray(DB.decks) ? DB.decks : [];
+        DB.decks.forEach((d) => {
+          d.name = d.name || "Dek tanpa nama";
+          d.desc = d.desc || "";
+          d.color = d.color || 0;
+          d.created = d.created || Date.now();
+          d.cards = Array.isArray(d.cards) ? d.cards : [];
+          d.cards.forEach((c) => {
+            c.id = c.id || uid();
+            c.front = String(c.front == null ? "" : c.front);
+            c.back = String(c.back == null ? "" : c.back);
+            c.ease = c.ease || 2.5;
+            c.reps = c.reps || 0;
+            c.lapses = c.lapses || 0;
+            c.interval = c.interval || 0;
+            c.due = c.due || Date.now();
+          });
+        });
+      }
+      function save() {
+        if (!STORAGE_OK) return;
+        try {
+          localStorage.setItem(LS_KEY, JSON.stringify(DB));
+        } catch (e) {
+          STORAGE_OK = false;
+        }
+      }
+      function load() {
+        try {
+          const raw = localStorage.getItem(LS_KEY);
+          DB = raw ? JSON.parse(raw) : null;
+        } catch (e) {
+          DB = null;
+          try {
+            localStorage.getItem("x");
+          } catch (e2) {
+            STORAGE_OK = false;
+          }
+        }
+        if (!DB) DB = defaultDB();
+        normalize();
+        save();
+      }
+      function getDeck(id) {
+        return DB.decks.find((d) => d.id === id);
+      }
+      function getCard(deckId, cardId) {
+        const d = getDeck(deckId);
+        return d ? d.cards.find((c) => c.id === cardId) : undefined;
+      }
+
+      /* ================= SPACED REPETITION (varian SM-2) =================
+   Ingat   : langkah 10 menit -> 1 hari -> interval x faktor kemudahan (ease)
+   Belum  : kembali 10 menit, ease turun, interval di-reset.
+   Terkuasai = interval >= 21 hari.                                   */
+      function scheduleKnown(c) {
+        if (c.reps === 0)
+          c.interval = 10; // 10 menit
+        else if (c.reps === 1)
+          c.interval = 1440; // 1 hari
+        else c.interval = Math.min(525600, Math.round(c.interval * c.ease));
+        c.reps++;
+        c.ease = Math.min(2.8, (c.ease || 2.5) + 0.08);
+        c.due = Date.now() + c.interval * MIN_MS;
+      }
+      function scheduleUnknown(c) {
+        c.reps = 0;
+        c.lapses = (c.lapses || 0) + 1;
+        c.interval = 10;
+        c.ease = Math.max(1.3, (c.ease || 2.5) - 0.2);
+        c.due = Date.now() + 10 * MIN_MS;
+      }
+      function statusOf(c) {
+        if ((c.reps || 0) === 0 && (c.lapses || 0) === 0) return "new";
+        if ((c.interval || 0) < 1440) return "learning";
+        if (c.interval < 30240) return "young";
+        return "mastered";
+      }
+      const SCORE = { new: 0, learning: 0.25, young: 0.6, mastered: 1 };
+      const STATUS_LABEL = {
+        new: "Baru",
+        learning: "Belajar",
+        young: "Menguasai",
+        mastered: "Terkuasai",
+      };
+      function deckStats(deck) {
+        const t = deck.cards.length;
+        const counts = { new: 0, learning: 0, young: 0, mastered: 0 };
+        deck.cards.forEach((c) => counts[statusOf(c)]++);
+        const score =
+          counts.new * SCORE.new +
+          counts.learning * SCORE.learning +
+          counts.young * SCORE.young +
+          counts.mastered * SCORE.mastered;
+        return { t, counts, mastery: t ? Math.round((score / t) * 100) : 0 };
+      }
+      function ringColor(p) {
+        return p < 40 ? "#f43f5e" : p < 75 ? "#f59e0b" : "#10b981";
+      }
+      function sessionCards(deck, mode) {
+        if (mode === "free") return shuffle(deck.cards.slice());
+        const now = Date.now();
+        const review = deck.cards
+          .filter((c) => c.due <= now && statusOf(c) !== "new")
+          .sort((a, b) => a.due - b.due);
+        const fresh = deck.cards.filter((c) => statusOf(c) === "new");
+        return review.concat(fresh.slice(0, DB.settings.newPerSession));
+      }
+      function logReview(known) {
+        const k = dayKey(new Date());
+        const e = DB.log.days[k] || (DB.log.days[k] = { n: 0, ok: 0 });
+        e.n++;
+        if (known) e.ok++;
+        DB.log.total = (DB.log.total || 0) + 1;
+      }
+      function calcStreak() {
+        const days = DB.log.days;
+        let s = 0;
+        const d = new Date();
+        if (!days[dayKey(d)]) d.setDate(d.getDate() - 1);
+        while (days[dayKey(d)]) {
+          s++;
+          d.setDate(d.getDate() - 1);
+        }
+        return s;
+      }
+
+      /* ================= NAVIGASI VIEW ================= */
+      let currentView = "home",
+        curDeckId = null;
+      function show(view) {
+        currentView = view;
+        $$(".view").forEach((v) =>
+          v.classList.toggle("active", v.id === "view-" + view),
+        );
+        $$(".tab").forEach((b) =>
+          b.classList.toggle(
+            "active",
+            b.dataset.nav === (view === "stats" ? "stats" : "home"),
+          ),
+        );
+        document.body.classList.toggle("in-study", view === "study");
+        window.scrollTo(0, 0);
+      }
+      function go(view) {
+        show(view);
+        if (view === "home") renderHome();
+        else if (view === "stats") renderStats();
+        else if (view === "deck") renderDeck();
+      }
+
+      /* ================= RENDER: BERANDA ================= */
+      const homeBody = $("#home-body"),
+        deckBody = $("#deck-body"),
+        statsBody = $("#stats-body");
+      function renderHome() {
+        const decks = DB.decks;
+        const allCards = decks.flatMap((d) => d.cards);
+        const dueCount = decks.reduce(
+          (n, d) => n + sessionCards(d, "srs").length,
+          0,
+        );
+        const mastery = allCards.length
+          ? Math.round(
+              (allCards.reduce((s, c) => s + SCORE[statusOf(c)], 0) /
+                allCards.length) *
+                100,
+            )
+          : 0;
+        const tgl = new Date().toLocaleDateString("id-ID", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+        let hero;
+        if (!decks.length) {
+          hero =
+            '<h1>Selamat datang di FlashHafalan</h1><p class="hero-sub">Buat dek kartu hafalan pertamamu, atau impor daftar kartu dari CSV. Setiap kartu yang kamu jawab akan dijadwalkan ulang otomatis dengan sistem <i>spaced repetition</i> agar hafalanmu awet jangka panjang.</p>';
+        } else if (dueCount) {
+          hero =
+            "<h1>" +
+            dueCount +
+            ' kartu siap diulang hari ini</h1><p class="hero-sub">Ayo latihan singkat — hafalan makin kuat bila diulang tepat waktu.</p>';
+        } else {
+          hero =
+            '<h1>Semua kartu sudah diulang</h1><p class="hero-sub">Kerja bagus! Kartu berikutnya akan muncul sesuai jadwal pengulangan. Kamu juga bisa Latihan Bebas kapan saja.</p>';
+        }
+        homeBody.innerHTML =
+          '<div class="hero"><p class="hero-date">' +
+          tgl +
+          "</p>" +
+          hero +
+          '<div class="hero-actions">' +
+          '<button class="btn btn-primary" data-act="new-deck">' +
+          IC.plus +
+          " Dek Baru</button>" +
+          '<button class="btn btn-ghost" data-act="import-new">' +
+          IC.up +
+          " Impor Dek</button>" +
+          "</div></div>" +
+          (decks.length
+            ? '<div class="stat-chips">' +
+              '<div class="stat"><b>' +
+              decks.length +
+              "</b><span>Dek</span></div>" +
+              '<div class="stat"><b>' +
+              allCards.length +
+              "</b><span>Kartu</span></div>" +
+              '<div class="stat' +
+              (dueCount ? " hot" : "") +
+              '"><b>' +
+              dueCount +
+              "</b><span>Siap diulang</span></div>" +
+              '<div class="stat"><b>' +
+              mastery +
+              "%</b><span>Penguasaan</span></div>" +
+              "</div>" +
+              '<div class="section-title"><h2>Dek Saya</h2></div>' +
+              '<div class="deck-grid">' +
+              decks.map(deckCardHTML).join("") +
+              "</div>"
+            : "");
+      }
+      function deckCardHTML(d) {
+        const st = deckStats(d);
+        const col = COLORS[d.color % COLORS.length];
+        const due = sessionCards(d, "srs").length;
+        return (
+          '<article class="deck-card" data-act="open-deck" data-id="' +
+          d.id +
+          '" style="--dc1:' +
+          col.a +
+          ";--dc2:" +
+          col.b +
+          '">' +
+          '<div class="dc-icon">' +
+          IC.book +
+          "</div>" +
+          '<div class="dc-main"><h3>' +
+          esc(d.name) +
+          "</h3>" +
+          (d.desc ? '<p class="dc-desc">' + esc(d.desc) + "</p>" : "") +
+          '<div class="dc-meta">' +
+          '<span class="chip">' +
+          st.t +
+          " kartu</span>" +
+          (due
+            ? '<span class="chip chip-due">' + due + " siap diulang</span>"
+            : "") +
+          '<span class="chip">' +
+          st.mastery +
+          "% dikuasai</span>" +
+          "</div></div>" +
+          '<div class="dc-side">' +
+          '<div class="ring" style="--p:' +
+          st.mastery +
+          ";--c:" +
+          ringColor(st.mastery) +
+          '"><b>' +
+          st.mastery +
+          "%</b></div>" +
+          '<button class="btn btn-primary btn-sm" data-act="study-deck" data-id="' +
+          d.id +
+          '"' +
+          (due ? "" : " disabled") +
+          ">Belajar</button>" +
+          "</div></article>"
+        );
+      }
+
+      /* ================= RENDER: DETAIL DEK ================= */
+      function renderDeck() {
+        const d = getDeck(curDeckId);
+        if (!d) {
+          go("home");
+          return;
+        }
+        const st = deckStats(d);
+        const col = COLORS[d.color % COLORS.length];
+        const sList = sessionCards(d, "srs");
+        const seg = [
+          ["Baru", "#cbd5e1", st.counts.new],
+          ["Belajar", "#f59e0b", st.counts.learning],
+          ["Menguasai", "#38bdf8", st.counts.young],
+          ["Terkuasai", "#10b981", st.counts.mastered],
+        ];
+        const bar = st.t
+          ? '<div class="dv-bar">' +
+            seg
+              .filter((s) => s[2] > 0)
+              .map(
+                (s) =>
+                  '<i style="width:' +
+                  ((s[2] / st.t) * 100).toFixed(2) +
+                  "%;background:" +
+                  s[1] +
+                  '"></i>',
+              )
+              .join("") +
+            "</div>" +
+            '<div class="legend">' +
+            seg
+              .map(
+                (s) =>
+                  '<span><i class="dotc" style="background:' +
+                  s[1] +
+                  '"></i>' +
+                  s[0] +
+                  ": " +
+                  s[2] +
+                  "</span>",
+              )
+              .join("") +
+            "</div>"
+          : "";
+        deckBody.innerHTML =
+          '<div class="dv-head">' +
+          '<button class="icon-btn" data-act="go-home" title="Kembali">' +
+          IC.back +
+          "</button>" +
+          '<div class="dc-icon big" style="background:linear-gradient(135deg,' +
+          col.a +
+          "," +
+          col.b +
+          ')">' +
+          IC.book +
+          "</div>" +
+          '<div class="dv-titles"><h2>' +
+          esc(d.name) +
+          "</h2>" +
+          (d.desc ? "<p>" + esc(d.desc) + "</p>" : "") +
+          "</div>" +
+          "</div>" +
+          '<div class="dv-actions">' +
+          '<button class="btn btn-primary" data-act="study"' +
+          (sList.length ? "" : " disabled") +
+          ">" +
+          IC.play +
+          " Mulai Belajar" +
+          (sList.length ? " (" + sList.length + ")" : "") +
+          "</button>" +
+          '<button class="btn btn-ghost" data-act="free"' +
+          (st.t ? "" : " disabled") +
+          ">" +
+          IC.repeat +
+          " Latihan Bebas</button>" +
+          "</div>" +
+          (!sList.length
+            ? '<p class="hint-center">' +
+              (st.t
+                ? "Tidak ada kartu jatuh tempo saat ini — kembali lagi sesuai jadwal, atau coba Latihan Bebas."
+                : "Dek masih kosong — tambahkan kartu pertamamu.") +
+              "</p>"
+            : "") +
+          '<div class="panel"><div class="dv-stats">' +
+          '<div class="ring big" style="--p:' +
+          st.mastery +
+          ";--c:" +
+          ringColor(st.mastery) +
+          '"><b>' +
+          st.mastery +
+          "%</b></div>" +
+          '<div class="dv-stats-chips">' +
+          '<div class="dc-meta">' +
+          '<span class="chip">' +
+          st.t +
+          " kartu</span>" +
+          '<span class="chip' +
+          (sList.length ? " chip-due" : "") +
+          '">' +
+          sList.length +
+          " siap diulang</span>" +
+          '<span class="chip">' +
+          st.counts.mastered +
+          " terkuasai</span>" +
+          "</div>" +
+          bar +
+          "</div></div></div>" +
+          '<div class="dv-tools">' +
+          '<button class="btn btn-soft btn-sm" data-act="add-card">' +
+          IC.plus +
+          " Tambah Kartu</button>" +
+          '<button class="btn btn-soft btn-sm" data-act="import-deck">' +
+          IC.up +
+          " Impor</button>" +
+          '<button class="btn btn-soft btn-sm" data-act="export-deck">' +
+          IC.down +
+          " Ekspor</button>" +
+          '<button class="btn btn-soft btn-sm" data-act="edit-deck">' +
+          IC.pencil +
+          " Ubah Dek</button>" +
+          '<button class="btn btn-soft btn-sm danger" data-act="del-deck" data-id="' +
+          d.id +
+          '">' +
+          IC.trash +
+          " Hapus Dek</button>" +
+          "</div>" +
+          '<div class="section-title"><h3>Kartu (' +
+          st.t +
+          ")</h3></div>" +
+          '<div class="cardlist">' +
+          (d.cards.map(cardRowHTML).join("") ||
+            '<p class="hint-center">Belum ada kartu. Tambahkan manual atau impor dari CSV / teks.</p>') +
+          "</div>";
+      }
+      function cardRowHTML(c) {
+        const s = statusOf(c);
+        return (
+          '<div class="crow">' +
+          '<span class="dot s-' +
+          s +
+          '" title="' +
+          STATUS_LABEL[s] +
+          '"></span>' +
+          '<div class="ctexts" data-act="edit-card" data-id="' +
+          c.id +
+          '" title="Ketuk untuk mengubah">' +
+          "<b>" +
+          esc(c.front) +
+          "</b>" +
+          "<span>" +
+          (esc(c.back) || '<i class="dim">(kosong)</i>') +
+          "</span>" +
+          "</div>" +
+          '<div class="cactions">' +
+          '<button class="icon-btn" data-act="edit-card" data-id="' +
+          c.id +
+          '" title="Ubah kartu">' +
+          IC.pencil +
+          "</button>" +
+          '<button class="icon-btn danger" data-act="del-card" data-id="' +
+          c.id +
+          '" title="Hapus kartu">' +
+          IC.trash +
+          "</button>" +
+          "</div></div>"
+        );
+      }
+
+      /* ================= RENDER: STATISTIK ================= */
+      function dsRow(d) {
+        const st = deckStats(d);
+        const col = COLORS[d.color % COLORS.length];
+        const due = sessionCards(d, "srs").length;
+        return (
+          '<div class="ds-row" data-act="open-deck" data-id="' +
+          d.id +
+          '">' +
+          '<span class="dotc" style="background:' +
+          col.a +
+          ';width:12px;height:12px"></span>' +
+          '<div class="ds-mid"><b>' +
+          esc(d.name) +
+          "</b>" +
+          '<div class="ds-bar"><i style="width:' +
+          st.mastery +
+          "%;background:" +
+          ringColor(st.mastery) +
+          '"></i></div>' +
+          '<span class="hint">' +
+          st.t +
+          " kartu &middot; " +
+          st.counts.mastered +
+          " terkuasai &middot; " +
+          due +
+          " siap diulang</span>" +
+          '</div><b class="ds-pct">' +
+          st.mastery +
+          "%</b></div>"
+        );
+      }
+      function renderStats() {
+        const decks = DB.decks;
+        const allCards = decks.flatMap((d) => d.cards);
+        const mastery = allCards.length
+          ? Math.round(
+              (allCards.reduce((s, c) => s + SCORE[statusOf(c)], 0) /
+                allCards.length) *
+                100,
+            )
+          : 0;
+        const dueCount = decks.reduce(
+          (n, d) => n + sessionCards(d, "srs").length,
+          0,
+        );
+        const tk = dayKey(new Date());
+        const todayN = (DB.log.days[tk] && DB.log.days[tk].n) || 0;
+        const streak = calcStreak();
+        const daysArr = [];
+        for (let i = 6; i >= 0; i--) {
+          const dt = new Date(Date.now() - i * DAY_MS);
+          const e = DB.log.days[dayKey(dt)];
+          daysArr.push({
+            v: (e && e.n) || 0,
+            lbl: ID_DAYS[dt.getDay()],
+            today: i === 0,
+          });
+        }
+        const mx = Math.max(1, ...daysArr.map((x) => x.v));
+        const bars = daysArr
+          .map(
+            (x) =>
+              '<div class="bar' +
+              (x.today ? " today" : "") +
+              '">' +
+              (x.v ? '<span class="bval">' + x.v + "</span>" : "") +
+              '<div class="bfill" style="height:' +
+              Math.max(3, (x.v / mx) * 100) +
+              '%"></div>' +
+              '<span class="blabel">' +
+              (x.today ? "Hari ini" : x.lbl) +
+              "</span>" +
+              "</div>",
+          )
+          .join("");
+        statsBody.innerHTML =
+          '<div class="section-title"><h2>Statistik Belajar</h2></div>' +
+          '<div class="stat-chips">' +
+          '<div class="stat"><b>' +
+          decks.length +
+          "</b><span>Dek</span></div>" +
+          '<div class="stat"><b>' +
+          allCards.length +
+          "</b><span>Kartu</span></div>" +
+          '<div class="stat"><b>' +
+          mastery +
+          "%</b><span>Penguasaan</span></div>" +
+          '<div class="stat"><b>' +
+          todayN +
+          "</b><span>Ulasan hari ini</span></div>" +
+          '<div class="stat"><b>' +
+          (DB.log.total || 0) +
+          "</b><span>Total ulasan</span></div>" +
+          '<div class="stat"><b>' +
+          streak +
+          " " +
+          IC.flame +
+          "</b><span>Hari beruntun</span></div>" +
+          '<div class="stat hot"><b>' +
+          dueCount +
+          "</b><span>Siap diulang</span></div>" +
+          "</div>" +
+          '<div class="panel"><h3>Ulasan 7 Hari Terakhir</h3><div class="bars">' +
+          bars +
+          "</div></div>" +
+          '<div class="panel"><h3>Penguasaan per Dek</h3>' +
+          (decks.length
+            ? decks.map(dsRow).join("")
+            : '<p class="hint-center">Belum ada dek.</p>') +
+          '<p class="hint" style="margin-top:10px">Bobot penguasaan: Baru 0% &middot; Belajar 25% &middot; Menguasai 60% &middot; Terkuasai (interval &ge; 21 hari) 100%.</p>' +
+          "</div>" +
+          '<div class="panel"><h3>Backup &amp; Pulihkan</h3>' +
+          '<p class="hint">Semua data tersimpan di browser ini (localStorage) — tidak dikirim ke mana pun. Unduh cadangan JSON untuk berpindah perangkat atau berjaga-jaga.</p>' +
+          '<div class="hero-actions">' +
+          '<button class="btn btn-soft btn-sm" data-act="backup-dl">' +
+          IC.down +
+          " Unduh Backup</button>" +
+          '<button class="btn btn-soft btn-sm" data-act="backup-restore">' +
+          IC.up +
+          " Pulihkan Backup</button>" +
+          '<input type="file" id="restore-file" accept=".json,application/json" hidden>' +
+          "</div></div>";
+      }
+      /* ================= MODAL ================= */
+      function openM(id) {
+        const m = document.getElementById(id);
+        if (!m) return;
+        m.hidden = false;
+        requestAnimationFrame(() => m.classList.add("show"));
+      }
+      function closeM(id) {
+        const m = document.getElementById(id);
+        if (!m) return;
+        m.classList.remove("show");
+        setTimeout(() => {
+          m.hidden = true;
+        }, 180);
+      }
+      let cfCb = null;
+      function askConfirm(title, msg, okText, danger, cb) {
+        $("#cf-title").textContent = title;
+        $("#cf-msg").textContent = msg;
+        const ok = $("#cf-ok");
+        ok.textContent = okText || "Ya";
+        ok.classList.toggle("btn-danger", !!danger);
+        ok.classList.toggle("btn-primary", !danger);
+        cfCb = cb;
+        openM("m-confirm");
+      }
+      function renderColorpick(sel, selIdx) {
+        $(sel).innerHTML = COLORS.map(
+          (c, i) =>
+            '<button type="button" class="cchip' +
+            (i === selIdx ? " sel" : "") +
+            '" data-ci="' +
+            i +
+            '" style="background:linear-gradient(135deg,' +
+            c.a +
+            "," +
+            c.b +
+            ')" title="' +
+            c.name +
+            '"></button>',
+        ).join("");
+      }
+
+      /* ================= MODAL DEK ================= */
+      let dkEdit = null,
+        dkColor = 0;
+      function openDeckModal(deckId) {
+        dkEdit = deckId || null;
+        const d = dkEdit ? getDeck(dkEdit) : null;
+        $("#mdk-title").textContent = d ? "Ubah Dek" : "Dek Baru";
+        $("#dk-name").value = d ? d.name : "";
+        $("#dk-desc").value = d ? d.desc || "" : "";
+        dkColor = d ? d.color || 0 : DB.decks.length % COLORS.length;
+        renderColorpick("#dk-colors", dkColor);
+        openM("m-deck");
+      }
+      function saveDeck() {
+        const name = $("#dk-name").value.trim();
+        if (!name) {
+          toast("Beri nama dek terlebih dahulu", "err");
+          $("#dk-name").focus();
+          return;
+        }
+        const desc = $("#dk-desc").value.trim();
+        if (dkEdit) {
+          const d = getDeck(dkEdit);
+          if (d) {
+            d.name = name;
+            d.desc = desc;
+            d.color = dkColor;
+          }
+          toast("Dek diperbarui");
+        } else {
+          const d = {
+            id: uid(),
+            name,
+            desc,
+            color: dkColor,
+            created: Date.now(),
+            cards: [],
+          };
+          DB.decks.unshift(d);
+          curDeckId = d.id;
+          toast("Dek baru dibuat — tambahkan kartunya");
+        }
+        save();
+        closeM("m-deck");
+        go("deck");
+      }
+
+      /* ================= MODAL KARTU ================= */
+      let cdDeck = null,
+        cdEdit = null;
+      function openCardModal(deckId, cardId) {
+        cdDeck = deckId;
+        cdEdit = cardId || null;
+        const c = cdEdit ? getCard(deckId, cdEdit) : null;
+        $("#mcd-title").textContent = c ? "Ubah Kartu" : "Kartu Baru";
+        $("#cd-front").value = c ? c.front : "";
+        $("#cd-back").value = c ? c.back || "" : "";
+        $("#cd-save-more").hidden = !!c;
+        openM("m-card");
+      }
+      function saveCard(again) {
+        const f = $("#cd-front").value.trim();
+        const b = $("#cd-back").value.trim();
+        if (!f) {
+          toast("Sisi depan (pertanyaan) tidak boleh kosong", "err");
+          return;
+        }
+        const d = getDeck(cdDeck);
+        if (!d) {
+          closeM("m-card");
+          return;
+        }
+        if (cdEdit) {
+          const c = getCard(cdDeck, cdEdit);
+          if (c) {
+            c.front = f;
+            c.back = b;
+          }
+          toast("Kartu diperbarui");
+        } else {
+          d.cards.push(newCard(f, b));
+          toast("Kartu ditambahkan");
+        }
+        save();
+        if (again && !cdEdit) {
+          $("#cd-front").value = "";
+          $("#cd-back").value = "";
+          $("#cd-front").focus();
+        } else {
+          closeM("m-card");
+        }
+        if (currentView === "deck") renderDeck();
+      }
+
+      /* ================= MODE LATIHAN + SWIPE ================= */
+      let S = null,
+        lastMode = "srs",
+        drag = null;
+      const SWIPE_T = 90;
+      function startStudy(deckId, mode) {
+        const d = getDeck(deckId);
+        if (!d) return;
+        const cards = sessionCards(d, mode);
+        if (!cards.length) {
+          toast(
+            mode === "free"
+              ? "Dek ini belum memiliki kartu."
+              : "Tidak ada kartu yang perlu diulang sekarang.",
+          );
+          return;
+        }
+        S = {
+          deckId,
+          mode,
+          queue: cards.map((c) => c.id),
+          answered: 0,
+          known: 0,
+          unknown: 0,
+          requeued: {},
+          t0: Date.now(),
+          busy: false,
+          flipped: false,
+          done: false,
+        };
+        lastMode = mode;
+        curDeckId = deckId;
+        $("#fc").style.setProperty(
+          "--deckA",
+          COLORS[d.color % COLORS.length].a,
+        );
+        $("#study-live").hidden = false;
+        $("#study-summary").hidden = true;
+        show("study");
+        if (mode === "free")
+          setTimeout(
+            () => toast("Mode bebas — jadwal pengulangan tidak diubah"),
+            350,
+          );
+        renderStudyCard();
+      }
+      function resetFC() {
+        const f = $("#fc");
+        f.style.transition = "none";
+        f.style.transform = "";
+        f.style.opacity = "";
+        $("#st-ok").style.opacity = 0;
+        $("#st-no").style.opacity = 0;
+        void f.offsetHeight;
+      }
+      function renderStudyCard() {
+        if (!S) return;
+        if (!S.queue.length) {
+          endStudy();
+          return;
+        }
+        const c = getCard(S.deckId, S.queue[0]);
+        resetFC();
+        $("#ft-front").textContent = c.front;
+        $("#ft-back").textContent = c.back || "—";
+        $("#fc").classList.remove("flipped");
+        S.flipped = false;
+        syncFlipBtns();
+        const nx = S.queue.length > 1 ? getCard(S.deckId, S.queue[1]) : null;
+        $("#sn-text").textContent = nx ? nx.front : "";
+        $("#stack-next").style.visibility = nx ? "visible" : "hidden";
+        $("#fc-label").textContent =
+          S.mode === "free" ? "PERTANYAAN · MODE BEBAS" : "PERTANYAAN";
+        updateStudyProgress();
+      }
+      function updateStudyProgress() {
+        const total = S.answered + S.queue.length;
+        $("#sp-count").textContent = S.answered + "/" + total;
+        $("#sp-fill").style.width = total
+          ? (S.answered / total) * 100 + "%"
+          : "0%";
+      }
+      function syncFlipBtns() {
+        $("#b-ok").disabled = !S.flipped;
+        $("#b-no").disabled = !S.flipped;
+      }
+      function snapBack() {
+        const f = $("#fc");
+        f.style.transition = "transform .25s ease-out";
+        f.style.transform = "";
+        $("#st-ok").style.opacity = 0;
+        $("#st-no").style.opacity = 0;
+      }
+      function doFlip() {
+        if (!S || S.done || S.busy) return;
+        S.flipped = !S.flipped;
+        $("#fc").classList.toggle("flipped", S.flipped);
+        syncFlipBtns();
+        if (S.flipped && navigator.vibrate) navigator.vibrate(8);
+      }
+      function answer(ok) {
+        if (!S || S.done || S.busy) return;
+        if (!S.flipped) {
+          doFlip();
+          snapBack();
+          return;
+        }
+        S.busy = true;
+        const id = S.queue[0];
+        const card = getCard(S.deckId, id);
+        const f = $("#fc");
+        f.style.transition =
+          "transform .3s cubic-bezier(.3,.7,.4,1), opacity .3s";
+        f.style.transform =
+          "translateX(" +
+          (ok ? 150 : -150) +
+          "%) rotate(" +
+          (ok ? 18 : -18) +
+          "deg)";
+        f.style.opacity = "0";
+        $("#st-ok").style.opacity = 0;
+        $("#st-no").style.opacity = 0;
+        if (navigator.vibrate) navigator.vibrate(ok ? 12 : [10, 40, 10]);
+        setTimeout(() => {
+          if (S.mode === "srs") {
+            if (ok) scheduleKnown(card);
+            else scheduleUnknown(card);
+          }
+          logReview(ok);
+          if (ok) S.known++;
+          else S.unknown++;
+          S.queue.shift();
+          S.answered++;
+          if (!ok && (S.requeued[id] || 0) < 2) {
+            S.requeued[id] = (S.requeued[id] || 0) + 1;
+            S.queue.push(id);
+          }
+          save();
+          S.busy = false;
+          if (S.queue.length) renderStudyCard();
+          else endStudy();
+        }, 300);
+      }
+      function endStudy() {
+        S.done = true;
+        $("#study-live").hidden = true;
+        const total = S.known + S.unknown;
+        const acc = total ? Math.round((S.known / total) * 100) : 0;
+        $("#sum-total").textContent = S.answered;
+        $("#sum-ok").textContent = S.known;
+        $("#sum-no").textContent = S.unknown;
+        $("#sum-acc").textContent = acc + "%";
+        $("#sum-dur").textContent = fmtDur(Date.now() - S.t0);
+        $("#sum-note").textContent =
+          S.mode === "free"
+            ? "Mode bebas: jadwal pengulangan tidak diubah."
+            : S.unknown > 0
+              ? "Kartu yang belum kamu ingat akan muncul lagi sekitar 10 menit dari sekarang."
+              : "Kerja bagus! Kartu akan kembali sesuai jadwal pengulangan.";
+        $("#sum-again").disabled =
+          !getDeck(S.deckId) || !getDeck(S.deckId).cards.length;
+        $("#study-summary").hidden = false;
+        updateStudyProgress();
+      }
+      function exitStudy() {
+        if (!S) {
+          go(curDeckId ? "deck" : "home");
+          return;
+        }
+        if (!S.done && S.answered > 0) {
+          askConfirm(
+            "Keluar dari sesi latihan?",
+            "Kemajuan yang sudah kamu jawab sudah tersimpan ke jadwal. Keluar sekarang?",
+            "Keluar",
+            true,
+            () => {
+              const dk = S.deckId;
+              S = null;
+              curDeckId = dk;
+              go("deck");
+            },
+          );
+        } else {
+          const dk = S.deckId;
+          S = null;
+          curDeckId = dk;
+          go("deck");
+        }
+      }
+      function initSwipe() {
+        const f = $("#fc");
+        f.addEventListener("pointerdown", (e) => {
+          if (!S || S.done || S.busy) return;
+          if (e.button !== undefined && e.button !== 0) return;
+          drag = { x0: e.clientX, y0: e.clientY, dx: 0, moved: false };
+          try {
+            f.setPointerCapture(e.pointerId);
+          } catch (err) {}
+          f.style.transition = "none";
+        });
+        f.addEventListener("pointermove", (e) => {
+          if (!drag) return;
+          drag.dx = e.clientX - drag.x0;
+          const dy = e.clientY - drag.y0;
+          if (Math.abs(drag.dx) > 7 || Math.abs(dy) > 7) drag.moved = true;
+          const rot = Math.max(-14, Math.min(14, drag.dx * 0.06));
+          f.style.transform =
+            "translateX(" + drag.dx + "px) rotate(" + rot + "deg)";
+          const p = Math.min(1, Math.abs(drag.dx) / SWIPE_T);
+          $("#st-ok").style.opacity = drag.dx > 0 ? p : 0;
+          $("#st-no").style.opacity = drag.dx < 0 ? p : 0;
+        });
+        f.addEventListener("pointerup", () => {
+          if (!drag) return;
+          const dx = drag.dx,
+            moved = drag.moved;
+          drag = null;
+          if (!S || S.done || S.busy) return;
+          if (Math.abs(dx) >= SWIPE_T && S.flipped) {
+            answer(dx > 0);
+            return;
+          }
+          if (Math.abs(dx) >= SWIPE_T && !S.flipped) {
+            doFlip();
+            snapBack();
+            return;
+          }
+          if (!moved) {
+            doFlip();
+            return;
+          }
+          snapBack();
+        });
+        f.addEventListener("pointercancel", () => {
+          drag = null;
+          snapBack();
+        });
+      }
+
+      /* ================= IMPOR ================= */
+      let impTarget = null,
+        impColor = 0;
+      function openImport(deckId) {
+        impTarget = deckId || null;
+        $("#mim-title").textContent = deckId
+          ? "Impor ke Dek Ini"
+          : "Impor sebagai Dek Baru";
+        $("#imp-newfields").hidden = !!deckId;
+        $("#imp-modewrap").hidden = !deckId;
+        $("#imp-name").value = "";
+        $("#imp-text").value = "";
+        $("#imp-file").value = "";
+        $("#imp-fname").textContent = "Belum ada berkas dipilih";
+        impColor = DB.decks.length % COLORS.length;
+        renderColorpick("#imp-colors", impColor);
+        $$("#imp-delim .rchip").forEach((r, i) =>
+          r.classList.toggle("sel", i === 0),
+        );
+        $$("#imp-mode .rchip").forEach((r, i) =>
+          r.classList.toggle("sel", i === 0),
+        );
+        updImportPreview();
+        openM("m-import");
+      }
+      function detectDelim(text) {
+        const line = text.split(/\r?\n/).find((l) => l.trim()) || "";
+        const cand = [";", "\t", "|", ","];
+        let best = ";",
+          bc = -1;
+        cand.forEach((c) => {
+          const n = line.split(c).length - 1;
+          if (n > bc) {
+            bc = n;
+            best = c;
+          }
+        });
+        return best;
+      }
+      function chosenDelim() {
+        const sel = $("#imp-delim .rchip.sel");
+        const d = sel ? sel.dataset.d : "auto";
+        if (d === "auto") return detectDelim($("#imp-text").value);
+        return d === "tab" ? "\t" : d;
+      }
+      function delimName(d) {
+        return d === "\t" ? "Tab" : d;
+      }
+      function splitCSVLine(line, d) {
+        const out = [];
+        let cur = "",
+          q = false;
+        for (let i = 0; i < line.length; i++) {
+          const ch = line[i];
+          if (q) {
+            if (ch === '"') {
+              if (line[i + 1] === '"') {
+                cur += '"';
+                i++;
+              } else q = false;
+            } else cur += ch;
+          } else {
+            if (ch === '"') q = true;
+            else if (ch === d) {
+              out.push(cur);
+              cur = "";
+            } else cur += ch;
+          }
+        }
+        out.push(cur);
+        return out.map((s) => s.trim());
+      }
+      function parseImport() {
+        const text = $("#imp-text").value;
+        const d = chosenDelim();
+        const out = [];
+        text.split(/\r?\n/).forEach((line) => {
+          if (!line.trim()) return;
+          const p = splitCSVLine(line, d);
+          const f = (p[0] || "").trim(),
+            b = (p[1] === undefined ? "" : p[1]).trim();
+          if (!f && !b) return;
+          out.push({ front: f, back: b });
+        });
+        return out;
+      }
+      function updImportPreview() {
+        const pv = $("#imp-preview");
+        const rows = parseImport();
+        if (!rows.length) {
+          pv.innerHTML =
+            '<span class="hint">Pratinjau akan muncul di sini&hellip;</span>';
+          return;
+        }
+        pv.innerHTML =
+          '<div class="pv-head"><b>' +
+          rows.length +
+          ' kartu terdeteksi</b><span class="hint">pemisah: ' +
+          esc(delimName(chosenDelim())) +
+          "</span></div>" +
+          rows
+            .slice(0, 5)
+            .map(
+              (r) =>
+                '<div class="pv-row"><span>' +
+                (esc(r.front) || '<i class="dim">(kosong)</i>') +
+                "</span>" +
+                '<span class="arr">&rarr;</span>' +
+                "<span>" +
+                (esc(r.back) || '<i class="dim">(kosong)</i>') +
+                "</span></div>",
+            )
+            .join("") +
+          (rows.length > 5
+            ? '<div class="hint">&hellip; dan ' +
+              (rows.length - 5) +
+              " kartu lainnya</div>"
+            : "");
+      }
+      function doImport() {
+        const rows = parseImport();
+        if (!rows.length) {
+          toast(
+            "Tidak ada baris kartu yang terbaca — periksa formatnya",
+            "err",
+          );
+          return;
+        }
+        let d;
+        if (impTarget) {
+          d = getDeck(impTarget);
+          const sel = $("#imp-mode .rchip.sel");
+          const mode = sel ? sel.dataset.m : "merge";
+          if (mode === "replace") d.cards = [];
+        } else {
+          d = {
+            id: uid(),
+            name:
+              $("#imp-name").value.trim() || "Dek Impor " + dayKey(new Date()),
+            desc: "Hasil impor kartu",
+            color: impColor,
+            created: Date.now(),
+            cards: [],
+          };
+          DB.decks.unshift(d);
+        }
+        rows.forEach((r) => d.cards.push(newCard(r.front, r.back)));
+        curDeckId = d.id;
+        save();
+        closeM("m-import");
+        toast(rows.length + " kartu berhasil diimpor");
+        go("deck");
+      }
+
+      /* ================= EKSPOR ================= */
+      let expDeck = null;
+      function csvField(s) {
+        s = String(s == null ? "" : s);
+        return /[;"\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+      }
+      function toCSV(d) {
+        return d.cards
+          .map((c) => csvField(c.front) + ";" + csvField(c.back))
+          .join("\n");
+      }
+      function openExport(deckId) {
+        const d = getDeck(deckId);
+        if (!d) return;
+        expDeck = deckId;
+        $("#exp-title").innerHTML = "Ekspor &ldquo;" + esc(d.name) + "&rdquo;";
+        $("#exp-text").value = d.cards.length ? toCSV(d) : "(dek masih kosong)";
+        openM("m-export");
+      }
+      function downloadFile(name, content, mime) {
+        const blob = new Blob([content], { type: mime });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          URL.revokeObjectURL(a.href);
+          a.remove();
+        }, 800);
+      }
+      function dlExport() {
+        const d = getDeck(expDeck);
+        if (!d) return;
+        downloadFile(
+          "flashhafalan-" + slug(d.name) + ".csv",
+          "\ufeff" + toCSV(d),
+          "text/csv;charset=utf-8",
+        );
+        toast("Berkas CSV diunduh");
+      }
+      async function copyExport() {
+        const t = $("#exp-text").value;
+        if (!t) {
+          toast("Tidak ada yang bisa disalin", "err");
+          return;
+        }
+        try {
+          await navigator.clipboard.writeText(t);
+          toast("Daftar kartu tersalin ke clipboard");
+        } catch (e) {
+          $("#exp-text").select();
+          try {
+            document.execCommand("copy");
+            toast("Daftar kartu tersalin");
+          } catch (e2) {
+            toast("Gagal menyalin — salin manual dari kotak teks", "err");
+          }
+        }
+      }
+
+      /* ================= TOAST ================= */
+      let toastT = null;
+      function toast(msg, type) {
+        const t = $("#toast");
+        t.textContent = msg;
+        t.className = "toast show" + (type === "err" ? " t-err" : "");
+        clearTimeout(toastT);
+        toastT = setTimeout(() => {
+          t.className = "toast";
+        }, 2400);
+      }
+
+      /* ================= EVENT GLOBAL ================= */
+      document.addEventListener("click", (e) => {
+        const closer = e.target.closest("[data-close]");
+        if (closer) {
+          closeM(closer.dataset.close);
+          return;
+        }
+        const cc = e.target.closest(".cchip");
+        if (cc) {
+          const g = cc.parentElement;
+          g.querySelectorAll(".cchip").forEach((x) =>
+            x.classList.remove("sel"),
+          );
+          cc.classList.add("sel");
+          if (g.id === "dk-colors") dkColor = +cc.dataset.ci;
+          else impColor = +cc.dataset.ci;
+          return;
+        }
+        const rc = e.target.closest(".rchip");
+        if (rc) {
+          const g = rc.parentElement;
+          g.querySelectorAll(".rchip").forEach((x) =>
+            x.classList.remove("sel"),
+          );
+          rc.classList.add("sel");
+          if (g.id === "imp-delim") updImportPreview();
+          return;
+        }
+        const t = e.target.closest("[data-act]");
+        if (!t) return;
+        const act = t.dataset.act,
+          id = t.dataset.id;
+        switch (act) {
+          case "new-deck":
+            openDeckModal(null);
+            break;
+          case "edit-deck":
+            openDeckModal(id || curDeckId);
+            break;
+          case "open-deck":
+            curDeckId = id;
+            go("deck");
+            break;
+          case "study-deck":
+            startStudy(id, "srs");
+            break;
+          case "study":
+            startStudy(curDeckId, "srs");
+            break;
+          case "free":
+            startStudy(curDeckId, "free");
+            break;
+          case "add-card":
+            openCardModal(curDeckId, null);
+            break;
+          case "edit-card":
+            openCardModal(curDeckId, id);
+            break;
+          case "del-card": {
+            const c = getCard(curDeckId, id),
+              d = getDeck(curDeckId);
+            if (!c || !d) break;
+            askConfirm(
+              "Hapus kartu ini?",
+              "\u201C" +
+                trunc(c.front, 60) +
+                "\u201D akan dihapus permanen dari \u201C" +
+                d.name +
+                "\u201D.",
+              "Hapus",
+              true,
+              () => {
+                d.cards = d.cards.filter((x) => x.id !== id);
+                save();
+                renderDeck();
+                toast("Kartu dihapus");
+              },
+            );
+            break;
+          }
+          case "del-deck": {
+            const d = getDeck(id);
+            if (!d) break;
+            askConfirm(
+              "Hapus dek ini?",
+              "\u201C" +
+                d.name +
+                "\u201D beserta " +
+                d.cards.length +
+                " kartu di dalamnya akan dihapus permanen.",
+              "Hapus Dek",
+              true,
+              () => {
+                DB.decks = DB.decks.filter((x) => x.id !== id);
+                save();
+                curDeckId = null;
+                go("home");
+                toast("Dek dihapus");
+              },
+            );
+            break;
+          }
+          case "import-new":
+            openImport(null);
+            break;
+          case "import-deck":
+            openImport(curDeckId);
+            break;
+          case "export-deck":
+            openExport(curDeckId);
+            break;
+          case "go-home":
+            go("home");
+            break;
+          case "backup-dl":
+            downloadFile(
+              "flashhafalan-backup-" + dayKey(new Date()) + ".json",
+              JSON.stringify(DB, null, 2),
+              "application/json",
+            );
+            toast("Backup JSON diunduh");
+            break;
+          case "backup-restore": {
+            const inp = $("#restore-file");
+            if (inp) inp.click();
+            break;
+          }
+        }
+      });
+      document.addEventListener("change", (e) => {
+        if (e.target.id !== "restore-file") return;
+        const f = e.target.files[0];
+        e.target.value = "";
+        if (!f) return;
+        f.text()
+          .then((t) => {
+            let o;
+            try {
+              o = JSON.parse(t);
+            } catch (err) {
+              toast("Berkas bukan JSON yang valid", "err");
+              return;
+            }
+            if (!o || !Array.isArray(o.decks)) {
+              toast("Struktur backup tidak dikenali", "err");
+              return;
+            }
+            askConfirm(
+              "Pulihkan backup?",
+              "Data saat ini akan diganti dengan " +
+                o.decks.length +
+                " dek dari berkas backup. Lanjutkan?",
+              "Pulihkan",
+              true,
+              () => {
+                DB = o;
+                normalize();
+                save();
+                curDeckId = null;
+                go("home");
+                toast("Backup berhasil dipulihkan");
+              },
+            );
+          })
+          .catch(() => toast("Gagal membaca berkas", "err"));
+      });
+      document.addEventListener("keydown", (e) => {
+        if (
+          (e.ctrlKey || e.metaKey) &&
+          e.key === "Enter" &&
+          !$("#m-card").hidden
+        ) {
+          e.preventDefault();
+          saveCard(false);
+          return;
+        }
+        const modalOpen = $$(".modal-back").some((m) => !m.hidden);
+        if (e.key === "Escape") {
+          if (modalOpen) {
+            const m = $$(".modal-back").find((x) => !x.hidden);
+            closeM(m.id);
+          } else if (currentView === "study" && S) {
+            exitStudy();
+          }
+          return;
+        }
+        if (modalOpen || currentView !== "study" || !S || S.done) return;
+        if (e.code === "Space") {
+          e.preventDefault();
+          doFlip();
+        } else if (e.key === "ArrowRight") {
+          e.preventDefault();
+          answer(true);
+        } else if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          answer(false);
+        }
+      });
+
+      /* ================= INIT ================= */
+      function init() {
+        load();
+        if (!STORAGE_OK)
+          setTimeout(
+            () =>
+              toast(
+                "Penyimpanan browser tidak tersedia — data tidak akan tersimpan.",
+                "err",
+              ),
+            400,
+          );
+        $("#logo").innerHTML = IC.bolt;
+        $("#study-exit").innerHTML = IC.close;
+        $("#b-no").innerHTML = IC.x + " Belum Ingat";
+        $("#b-flip").innerHTML = IC.flip;
+        $("#b-ok").innerHTML = "Ingat " + IC.check;
+        $$(".icon-btn[data-close]").forEach((b) => {
+          b.innerHTML = IC.close;
+        });
+        $$(".tab").forEach((b) =>
+          b.addEventListener("click", () => go(b.dataset.nav)),
+        );
+        $$(".modal-back").forEach((m) =>
+          m.addEventListener("click", (e) => {
+            if (e.target === m) closeM(m.id);
+          }),
+        );
+        $("#dk-save").addEventListener("click", saveDeck);
+        $("#cd-save").addEventListener("click", () => saveCard(false));
+        $("#cd-save-more").addEventListener("click", () => saveCard(true));
+        $("#imp-browse").addEventListener("click", () =>
+          $("#imp-file").click(),
+        );
+        $("#imp-text").addEventListener("input", updImportPreview);
+        $("#imp-file").addEventListener("change", (e) => {
+          const f = e.target.files[0];
+          if (!f) return;
+          f.text()
+            .then((t) => {
+              $("#imp-text").value = t;
+              $("#imp-fname").textContent =
+                f.name + " (" + (f.size / 1024).toFixed(1) + " KB)";
+              updImportPreview();
+            })
+            .catch(() => toast("Gagal membaca berkas", "err"));
+        });
+        $("#imp-go").addEventListener("click", doImport);
+        $("#exp-dl").addEventListener("click", dlExport);
+        $("#exp-copy").addEventListener("click", copyExport);
+        $("#cf-ok").addEventListener("click", () => {
+          const cb = cfCb;
+          cfCb = null;
+          closeM("m-confirm");
+          if (cb) cb();
+        });
+        $("#b-flip").addEventListener("click", doFlip);
+        $("#b-ok").addEventListener("click", () => answer(true));
+        $("#b-no").addEventListener("click", () => answer(false));
+        $("#study-exit").addEventListener("click", exitStudy);
+        $("#sum-back").addEventListener("click", () => go("deck"));
+        $("#sum-home").addEventListener("click", () => go("home"));
+        $("#sum-again").addEventListener("click", () => {
+          const d = getDeck(curDeckId);
+          if (!d) return;
+          const m = sessionCards(d, lastMode).length
+            ? lastMode
+            : d.cards.length
+              ? "free"
+              : lastMode;
+          startStudy(curDeckId, m);
+        });
+        initSwipe();
+        go("home");
+      }
+      init();
+    </script>
+  </body>
+</html>

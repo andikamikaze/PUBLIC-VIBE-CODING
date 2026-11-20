@@ -1,0 +1,1022 @@
+from pathlib import Path html = r'''<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#f5f6f2" />
+    <meta
+      name="description"
+      content="Look up public IP addresses and provider-reported network and location details."
+    />
+    <title>Simple IP Address Lookup</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f5f6f2;
+        --surface: #fff;
+        --ink: #17221e;
+        --muted: #69756f;
+        --line: #e1e7e1;
+        --accent: #236c52;
+        --accent-hover: #18543e;
+        --soft: #eaf3ed;
+        --danger: #a33131;
+        --danger-bg: #fff0ef;
+        --shadow: 0 14px 44px rgba(27, 48, 36, 0.07);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #111714;
+          --surface: #19211d;
+          --ink: #edf4ef;
+          --muted: #a4b1a8;
+          --line: #303c35;
+          --accent: #8ad0aa;
+          --accent-hover: #a2e1bd;
+          --soft: #22372b;
+          --danger: #ffaaa4;
+          --danger-bg: #3b2423;
+          --shadow: 0 14px 44px rgba(0, 0, 0, 0.18);
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        min-height: 100%;
+        background: var(--bg);
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      button {
+        touch-action: manipulation;
+      }
+      .shell {
+        width: min(100% - 32px, 760px);
+        margin: 0 auto;
+        padding: calc(22px + env(safe-area-inset-top)) 0
+          calc(30px + env(safe-area-inset-bottom));
+      }
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 48px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+        font-weight: 750;
+        letter-spacing: -0.025em;
+      }
+      .brand-mark {
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        background: var(--accent);
+        color: #fff;
+      }
+      .brand-mark svg {
+        width: 20px;
+        height: 20px;
+      }
+      .privacy-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 650;
+      }
+      .privacy-chip svg {
+        width: 15px;
+        height: 15px;
+      }
+      .intro {
+        margin-bottom: 28px;
+      }
+      .eyebrow {
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin: 0 0 12px;
+      }
+      h1 {
+        font-size: clamp(32px, 7vw, 48px);
+        line-height: 1.06;
+        letter-spacing: -0.055em;
+        margin: 0;
+        max-width: 580px;
+        font-weight: 760;
+      }
+      .lede {
+        margin: 14px 0 0;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.65;
+        max-width: 510px;
+      }
+      .search-card,
+      .result-card,
+      .privacy-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        box-shadow: var(--shadow);
+      }
+      .search-card {
+        padding: 20px;
+        margin-bottom: 16px;
+      }
+      .field-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 700;
+        margin: 0 0 9px;
+      }
+      .input-row {
+        display: flex;
+        gap: 9px;
+      }
+      .ip-input {
+        min-width: 0;
+        flex: 1;
+        height: 50px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--bg);
+        color: var(--ink);
+        padding: 0 14px;
+        font-size: 15px;
+        outline: none;
+        transition:
+          border-color 0.15s,
+          box-shadow 0.15s;
+      }
+      .ip-input::placeholder {
+        color: var(--muted);
+        opacity: 0.8;
+      }
+      .ip-input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+      }
+      .primary-btn,
+      .secondary-btn,
+      .icon-btn {
+        min-height: 48px;
+        border: 0;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 720;
+        transition:
+          background 0.15s,
+          transform 0.15s;
+      }
+      .primary-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        padding: 0 18px;
+        background: var(--accent);
+        color: #fff;
+        white-space: nowrap;
+      }
+      @media (prefers-color-scheme: dark) {
+        .primary-btn {
+          color: #11251a;
+        }
+      }
+      .primary-btn:hover {
+        background: var(--accent-hover);
+      }
+      .primary-btn:active,
+      .secondary-btn:active,
+      .icon-btn:active {
+        transform: scale(0.985);
+      }
+      button:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 3px;
+      }
+      button:disabled {
+        opacity: 0.65;
+        cursor: wait;
+      }
+      .primary-btn svg {
+        width: 17px;
+        height: 17px;
+      }
+      .quick-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin-top: 14px;
+      }
+      .quick-label {
+        font-size: 12px;
+        color: var(--muted);
+        margin-right: 2px;
+      }
+      .secondary-btn {
+        min-height: 34px;
+        padding: 0 11px;
+        border: 1px solid var(--line);
+        background: transparent;
+        color: var(--ink);
+        font-size: 12px;
+      }
+      .secondary-btn:hover {
+        background: var(--soft);
+      }
+      .message {
+        display: none;
+        align-items: flex-start;
+        gap: 9px;
+        padding: 12px 13px;
+        border-radius: 12px;
+        margin-top: 14px;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .message.show {
+        display: flex;
+      }
+      .message.error {
+        color: var(--danger);
+        background: var(--danger-bg);
+      }
+      .message.info {
+        color: var(--muted);
+        background: var(--bg);
+      }
+      .message svg {
+        width: 17px;
+        height: 17px;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+      .result-card {
+        overflow: hidden;
+        margin-bottom: 16px;
+      }
+      .result-head {
+        padding: 22px 22px 20px;
+        background: var(--soft);
+        border-bottom: 1px solid var(--line);
+      }
+      .result-kicker {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        color: var(--accent);
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+      }
+      .status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #3b9b68;
+      }
+      .ip-display-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 12px;
+      }
+      .ip-display {
+        font-size: clamp(23px, 5.5vw, 34px);
+        line-height: 1.2;
+        font-weight: 760;
+        letter-spacing: -0.045em;
+        overflow-wrap: anywhere;
+        font-variant-numeric: tabular-nums;
+      }
+      .icon-btn {
+        flex-shrink: 0;
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        min-height: 44px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        color: var(--ink);
+      }
+      .icon-btn svg {
+        width: 18px;
+        height: 18px;
+      }
+      .subline {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .details {
+        padding: 6px 22px 12px;
+      }
+      .detail-row {
+        display: grid;
+        grid-template-columns: minmax(105px, 0.8fr) minmax(0, 1.5fr);
+        gap: 14px;
+        padding: 15px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .detail-row:last-child {
+        border-bottom: 0;
+      }
+      .detail-label {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      .detail-value {
+        font-size: 13px;
+        font-weight: 650;
+        text-align: right;
+        overflow-wrap: anywhere;
+        line-height: 1.5;
+      }
+      .detail-value.empty {
+        color: var(--muted);
+        font-weight: 450;
+      }
+      .privacy-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 13px;
+        padding: 17px 18px;
+        box-shadow: none;
+      }
+      .privacy-icon {
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        width: 36px;
+        height: 36px;
+        border-radius: 11px;
+        background: var(--soft);
+        color: var(--accent);
+      }
+      .privacy-icon svg {
+        width: 19px;
+        height: 19px;
+      }
+      .privacy-title {
+        font-size: 13px;
+        font-weight: 750;
+        margin: 1px 0 5px;
+      }
+      .privacy-copy {
+        font-size: 12px;
+        line-height: 1.65;
+        color: var(--muted);
+        margin: 0;
+      }
+      .footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 24px;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.5;
+      }
+      .footer a {
+        color: var(--muted);
+        text-underline-offset: 3px;
+      }
+      .loading-spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      @media (min-width: 600px) {
+        .shell {
+          padding-top: 34px;
+        }
+        .topbar {
+          margin-bottom: 60px;
+        }
+        .search-card {
+          padding: 24px;
+        }
+        .result-head {
+          padding: 26px 28px 24px;
+        }
+        .details {
+          padding: 8px 28px 14px;
+        }
+        .detail-row {
+          padding: 17px 0;
+        }
+        .privacy-card {
+          padding: 20px 22px;
+        }
+      }
+      @media (max-width: 420px) {
+        .shell {
+          width: min(100% - 24px, 760px);
+        }
+        .topbar {
+          margin-bottom: 38px;
+        }
+        .search-card {
+          padding: 15px;
+          border-radius: 18px;
+        }
+        .input-row {
+          flex-direction: column;
+        }
+        .primary-btn {
+          width: 100%;
+        }
+        .result-head {
+          padding: 19px 17px;
+        }
+        .details {
+          padding: 4px 17px 8px;
+        }
+        .detail-row {
+          grid-template-columns: 100px minmax(0, 1fr);
+          gap: 8px;
+        }
+        .detail-value {
+          font-size: 12px;
+        }
+        .privacy-card {
+          padding: 15px;
+        }
+        .footer {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 4px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          scroll-behavior: auto !important;
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"
+            ><svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path
+                d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"
+              /></svg
+          ></span>
+          <span>simple tools</span>
+        </div>
+        <div class="privacy-chip">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            aria-hidden="true"
+          >
+            <rect x="5" y="10" width="14" height="11" rx="2" />
+            <path d="M8 10V7a4 4 0 1 1 8 0v3" />
+          </svg>
+          Privacy-minded
+        </div>
+      </header>
+
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">Network utility / 01</p>
+        <h1 id="page-title">IP address<br />lookup.</h1>
+        <p class="lede">
+          Find the network details behind a public IP address. Quick,
+          straightforward, and no account needed.
+        </p>
+      </section>
+
+      <section class="search-card" aria-label="IP address search">
+        <form id="lookup-form" novalidate>
+          <label class="field-label" for="ip-input">IP address</label>
+          <div class="input-row">
+            <input
+              class="ip-input"
+              id="ip-input"
+              name="ip"
+              type="text"
+              inputmode="url"
+              autocomplete="off"
+              autocapitalize="off"
+              spellcheck="false"
+              maxlength="45"
+              placeholder="e.g. 8.8.8.8 or 2001:4860:4860::8888"
+              aria-describedby="input-help message"
+            />
+            <button class="primary-btn" id="lookup-btn" type="submit">
+              <svg
+                id="search-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <circle cx="10.8" cy="10.8" r="6.8" />
+                <path d="m16 16 5 5" />
+              </svg>
+              <span id="button-label">Look up IP</span>
+            </button>
+          </div>
+          <div class="quick-row">
+            <span class="quick-label" id="input-help">Try an example</span>
+            <button class="secondary-btn" type="button" data-ip="8.8.8.8">
+              8.8.8.8
+            </button>
+            <button class="secondary-btn" type="button" data-ip="1.1.1.1">
+              1.1.1.1
+            </button>
+            <button class="secondary-btn" type="button" id="my-ip-btn">
+              My public IP
+            </button>
+          </div>
+          <div
+            id="message"
+            class="message"
+            role="status"
+            aria-live="polite"
+          ></div>
+        </form>
+      </section>
+
+      <section
+        id="result-card"
+        class="result-card"
+        aria-labelledby="result-heading"
+        hidden
+      >
+        <div class="result-head">
+          <div class="result-kicker">
+            <span class="status-dot"></span
+            ><span id="result-heading">Lookup complete</span>
+          </div>
+          <div class="ip-display-row">
+            <div class="ip-display" id="result-ip">—</div>
+            <button
+              type="button"
+              class="icon-btn"
+              id="copy-btn"
+              aria-label="Copy IP address"
+              title="Copy IP address"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                aria-hidden="true"
+              >
+                <rect x="8" y="8" width="12" height="12" rx="2" />
+                <path
+                  d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                />
+              </svg>
+            </button>
+          </div>
+          <div class="subline" id="result-subline">
+            Network information reported by the lookup provider
+          </div>
+        </div>
+        <div class="details" id="details" aria-live="polite"></div>
+      </section>
+
+      <aside class="privacy-card" aria-labelledby="privacy-heading">
+        <div class="privacy-icon" aria-hidden="true">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+          >
+            <path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z" />
+            <path d="m9 12 2 2 4-4" />
+          </svg>
+        </div>
+        <div>
+          <h2 class="privacy-title" id="privacy-heading">A note on privacy</h2>
+          <p class="privacy-copy">
+            Your lookup is sent to ipwho.is to retrieve IP metadata. This page
+            does not save a lookup history or use an app account. The provider
+            receives the IP address you request and may process request data
+            under its own policies. IP-based location is approximate and may
+            identify a network or ISP rather than a person's exact location.
+          </p>
+        </div>
+      </aside>
+
+      <footer class="footer">
+        <span>Simple — IP Address Lookup</span>
+        <span
+          >Metadata by
+          <a href="https://ipwho.is/" target="_blank" rel="noopener noreferrer"
+            >ipwho.is</a
+          ></span
+        >
+      </footer>
+    </main>
+    <script>
+      (() => {
+        "use strict";
+        const form = document.querySelector("#lookup-form");
+        const input = document.querySelector("#ip-input");
+        const lookupBtn = document.querySelector("#lookup-btn");
+        const buttonLabel = document.querySelector("#button-label");
+        const searchIcon = document.querySelector("#search-icon");
+        const message = document.querySelector("#message");
+        const resultCard = document.querySelector("#result-card");
+        const resultIp = document.querySelector("#result-ip");
+        const resultHeading = document.querySelector("#result-heading");
+        const resultSubline = document.querySelector("#result-subline");
+        const details = document.querySelector("#details");
+        const copyBtn = document.querySelector("#copy-btn");
+        const myIpBtn = document.querySelector("#my-ip-btn");
+        let activeController = null;
+        let requestSequence = 0;
+        let lastIp = "";
+
+        const fields = [
+          [
+            "Location",
+            (d) => [d.city, d.region, d.country].filter(Boolean).join(", "),
+          ],
+          ["Country code", (d) => d.country_code],
+          ["Postal code", (d) => d.postal],
+          [
+            "Coordinates",
+            (d) =>
+              Number.isFinite(d.latitude) && Number.isFinite(d.longitude)
+                ? `${d.latitude}, ${d.longitude}`
+                : "",
+          ],
+          [
+            "Timezone",
+            (d) =>
+              d.timezone &&
+              [d.timezone.id, d.timezone.utc].filter(Boolean).join(" · "),
+          ],
+          ["ISP / Provider", (d) => d.connection && d.connection.isp],
+          ["Organization", (d) => d.connection && d.connection.org],
+          [
+            "Network / ASN",
+            (d) =>
+              d.connection &&
+              [
+                d.connection.asn ? `AS${d.connection.asn}` : "",
+                d.connection.domain,
+              ]
+                .filter(Boolean)
+                .join(" · "),
+          ],
+          ["IP type", (d) => d.type],
+          ["Continent", (d) => d.continent],
+        ];
+
+        function isValidIPv4(value) {
+          const parts = value.split(".");
+          if (parts.length !== 4) return false;
+          return parts.every(
+            (part) =>
+              /^\d{1,3}$/.test(part) &&
+              Number(part) >= 0 &&
+              Number(part) <= 255,
+          );
+        }
+
+        function isValidIPv6(value) {
+          if (
+            !value ||
+            !value.includes(":") ||
+            value.includes("%") ||
+            value.includes(":::")
+          )
+            return false;
+          if (!/^[0-9a-f:.]+$/i.test(value)) return false;
+          const halves = value.split("::");
+          if (halves.length > 2) return false;
+          const parseSide = (side) => {
+            if (!side) return [];
+            const groups = side.split(":");
+            for (let i = 0; i < groups.length; i++) {
+              const group = groups[i];
+              if (group.includes(".")) {
+                if (i !== groups.length - 1 || !isValidIPv4(group)) return null;
+                groups.splice(i, 1, "v4a", "v4b");
+                break;
+              }
+              if (!/^[0-9a-f]{1,4}$/i.test(group)) return null;
+            }
+            return groups;
+          };
+          const left = parseSide(halves[0]);
+          const right = parseSide(halves.length === 2 ? halves[1] : "");
+          if (!left || !right) return false;
+          const count = left.length + right.length;
+          return halves.length === 2 ? count < 8 : count === 8;
+        }
+
+        function validateIP(raw) {
+          const value = raw.trim();
+          if (!value) return "Enter an IP address, or choose “My public IP”.";
+          if (
+            value.length > 45 ||
+            /[\s/\\?#@]/.test(value) ||
+            value.includes("://")
+          )
+            return "Enter a plain IPv4 or IPv6 address without a URL or port.";
+          if (!(isValidIPv4(value) || isValidIPv6(value)))
+            return "That doesn't look like a valid IPv4 or IPv6 address. Check the address and try again.";
+          return "";
+        }
+
+        function showMessage(text, kind = "error") {
+          message.replaceChildren();
+          const icon = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "svg",
+          );
+          icon.setAttribute("viewBox", "0 0 24 24");
+          icon.setAttribute("fill", "none");
+          icon.setAttribute("stroke", "currentColor");
+          icon.setAttribute("stroke-width", "1.8");
+          icon.setAttribute("aria-hidden", "true");
+          const path = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "path",
+          );
+          if (kind === "error") {
+            path.setAttribute(
+              "d",
+              "M12 9v4m0 4h.01M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0Z",
+            );
+          } else {
+            path.setAttribute(
+              "d",
+              "M12 16v-4m0-4h.01M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z",
+            );
+          }
+          icon.append(path);
+          const span = document.createElement("span");
+          span.textContent = text;
+          message.append(icon, span);
+          message.className = `message show ${kind}`;
+        }
+        function clearMessage() {
+          message.className = "message";
+          message.replaceChildren();
+        }
+
+        function setLoading(loading) {
+          lookupBtn.disabled = loading;
+          myIpBtn.disabled = loading;
+          document
+            .querySelectorAll("[data-ip]")
+            .forEach((btn) => (btn.disabled = loading));
+          buttonLabel.textContent = loading ? "Looking up…" : "Look up IP";
+          searchIcon.hidden = loading;
+          if (loading) {
+            const spinner = document.createElement("span");
+            spinner.className = "loading-spinner";
+            spinner.id = "loading-spinner";
+            spinner.setAttribute("aria-hidden", "true");
+            lookupBtn.prepend(spinner);
+          } else {
+            document.querySelector("#loading-spinner")?.remove();
+          }
+          lookupBtn.setAttribute("aria-busy", String(loading));
+        }
+
+        function renderResult(data, requested) {
+          const ip = typeof data.ip === "string" ? data.ip : requested;
+          resultIp.textContent = ip;
+          resultHeading.textContent = "Lookup complete";
+          resultSubline.textContent = `Provider-reported details · ${data.type || (ip.includes(":") ? "IPv6" : "IPv4")}`;
+          details.replaceChildren();
+          fields.forEach(([label, getter]) => {
+            let value = "";
+            try {
+              value = getter(data) || "";
+            } catch (_) {
+              value = "";
+            }
+            const row = document.createElement("div");
+            row.className = "detail-row";
+            const name = document.createElement("div");
+            name.className = "detail-label";
+            name.textContent = label;
+            const val = document.createElement("div");
+            val.className = value ? "detail-value" : "detail-value empty";
+            val.textContent = value || "Not provided";
+            row.append(name, val);
+            details.append(row);
+          });
+          resultCard.hidden = false;
+          lastIp = ip;
+        }
+
+        async function lookup(raw, mode = "entered") {
+          if (lookupBtn.disabled) return;
+          const value = raw.trim();
+          if (mode !== "public") {
+            const validation = validateIP(value);
+            if (validation) {
+              showMessage(validation);
+              input.setAttribute("aria-invalid", "true");
+              input.focus();
+              return;
+            }
+          }
+          input.removeAttribute("aria-invalid");
+          clearMessage();
+          activeController?.abort();
+          const controller = new AbortController();
+          activeController = controller;
+          const sequence = ++requestSequence;
+          setLoading(true);
+          showMessage(
+            mode === "public"
+              ? "Finding your public IP and network details…"
+              : "Fetching provider-reported network details…",
+            "info",
+          );
+          try {
+            const endpoint =
+              mode === "public"
+                ? "https://ipwho.is/"
+                : `https://ipwho.is/${encodeURIComponent(value)}`;
+            const response = await fetch(endpoint, {
+              signal: controller.signal,
+              headers: { Accept: "application/json" },
+              cache: "no-store",
+            });
+            if (!response.ok)
+              throw new Error(
+                response.status === 429
+                  ? "The lookup service is busy. Please wait a moment and try again."
+                  : `The lookup service returned an error (${response.status}). Please try again.`,
+              );
+            const data = await response.json();
+            if (sequence !== requestSequence) return;
+            if (data.success === false) {
+              const providerMessage =
+                typeof data.message === "string" ? data.message : "";
+              if (/rate|quota|limit/i.test(providerMessage))
+                throw new Error(
+                  "The lookup service has reached its request limit. Please try again later.",
+                );
+              throw new Error(
+                providerMessage
+                  ? `Lookup failed: ${providerMessage}`
+                  : "The provider couldn't find details for that IP address.",
+              );
+            }
+            if (
+              typeof data.ip !== "string" ||
+              !(isValidIPv4(data.ip) || isValidIPv6(data.ip))
+            )
+              throw new Error(
+                "The provider returned an unexpected response. Please try again.",
+              );
+            input.value = mode === "public" ? "" : value;
+            renderResult(data, value);
+            clearMessage();
+            resultCard.scrollIntoView({
+              behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
+                .matches
+                ? "auto"
+                : "smooth",
+              block: "start",
+            });
+          } catch (error) {
+            if (error.name === "AbortError") return;
+            if (sequence !== requestSequence) return;
+            showMessage(
+              error instanceof TypeError
+                ? "Couldn't reach the lookup service. Check your internet connection, then try again. The service may also be temporarily unavailable."
+                : error.message || "Something went wrong. Please try again.",
+            );
+          } finally {
+            if (sequence === requestSequence) {
+              setLoading(false);
+              activeController = null;
+            }
+          }
+        }
+
+        form.addEventListener("submit", (event) => {
+          event.preventDefault();
+          lookup(input.value);
+        });
+        input.addEventListener("input", () => {
+          input.removeAttribute("aria-invalid");
+          if (message.classList.contains("error")) clearMessage();
+        });
+        document.querySelectorAll("[data-ip]").forEach((btn) =>
+          btn.addEventListener("click", () => {
+            input.value = btn.dataset.ip;
+            lookup(input.value);
+          }),
+        );
+        myIpBtn.addEventListener("click", () => lookup("", "public"));
+        copyBtn.addEventListener("click", async () => {
+          if (!lastIp) return;
+          try {
+            await navigator.clipboard.writeText(lastIp);
+            copyBtn.setAttribute("aria-label", "IP address copied");
+            copyBtn.title = "Copied!";
+            showMessage("IP address copied to clipboard.", "info");
+            window.setTimeout(() => {
+              copyBtn.setAttribute("aria-label", "Copy IP address");
+              copyBtn.title = "Copy IP address";
+              if (message.textContent.includes("copied to clipboard"))
+                clearMessage();
+            }, 1800);
+          } catch (_) {
+            showMessage(
+              "Clipboard access isn't available here. Select and copy the IP address instead.",
+              "info",
+            );
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
+''' path = Path("/mnt/data/index.html") path.write_text(html, encoding="utf-8")
+print(f"Created {path} ({len(html):,} characters)")

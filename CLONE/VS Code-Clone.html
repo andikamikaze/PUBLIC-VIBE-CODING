@@ -1,0 +1,2455 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visual Studio Code — Clone UI (Desktop & Mobile)</title>
+    <style>
+      :root {
+        --bg: #1e1e1e;
+        --panel: #181818;
+        --panel-2: #252526;
+        --panel-3: #2d2d30;
+        --border: #353535;
+        --muted: #858585;
+        --text: #cccccc;
+        --bright: #f2f2f2;
+        --blue: #007acc;
+        --blue-soft: #094771;
+        --activity: #333333;
+        --green: #89d185;
+        --orange: #ce9178;
+        --purple: #c586c0;
+        --yellow: #dcdcaa;
+        --cyan: #4ec9b0;
+        --editor-font:
+          "Cascadia Code", "Fira Code", Consolas, "Courier New", monospace;
+        --ui-font: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        background: #0f0f0f;
+        color: var(--text);
+        font-family: var(--ui-font);
+      }
+      button {
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      /* === Switcher === */
+      .view-switcher {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        z-index: 1000;
+        display: flex;
+        gap: 8px;
+        background: #252526;
+        padding: 6px;
+        border-radius: 8px;
+        border: 1px solid #454545;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      }
+      .switcher-btn {
+        padding: 8px 14px;
+        background: transparent;
+        border: none;
+        color: #999;
+        font-size: 12px;
+        font-weight: 500;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.15s;
+      }
+      .switcher-btn:hover {
+        background: #3c3c3c;
+        color: #fff;
+      }
+      .switcher-btn.active {
+        background: #007acc;
+        color: #fff;
+      }
+      .switcher-btn svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      /* === Desktop View === */
+      .desktop-view {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(
+          ellipse at center,
+          #1a1a1a 0%,
+          #0a0a0a 100%
+        );
+      }
+      .desktop-view.hidden {
+        display: none;
+      }
+      .app {
+        width: calc(100vw - 40px);
+        height: calc(100vh - 40px);
+        min-width: 760px;
+        display: flex;
+        flex-direction: column;
+        background: var(--bg);
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      }
+
+      /* Title bar */
+      .titlebar {
+        height: 30px;
+        flex: 0 0 30px;
+        background: #323233;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 10px;
+        -webkit-app-region: drag;
+        user-select: none;
+        border-bottom: 1px solid #252526;
+        font-size: 12px;
+      }
+      .title-left,
+      .title-center,
+      .title-right {
+        display: flex;
+        align-items: center;
+        height: 100%;
+      }
+      .brand-mark {
+        width: 16px;
+        height: 16px;
+        margin-right: 10px;
+        display: grid;
+        place-items: center;
+      }
+      .brand-mark svg {
+        width: 16px;
+        height: 16px;
+      }
+      .menu {
+        display: flex;
+        gap: 0;
+        height: 100%;
+        align-items: center;
+      }
+      .menu button {
+        border: 0;
+        background: transparent;
+        padding: 3px 8px;
+        font-size: 12.5px;
+        border-radius: 3px;
+        color: #d7d7d7;
+        cursor: default;
+      }
+      .menu button:hover {
+        background: #505050;
+      }
+      .title-center {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        gap: 9px;
+        color: #c5c5c5;
+      }
+      .nav-arrows {
+        display: flex;
+        gap: 6px;
+        color: #a0a0a0;
+        font-size: 16px;
+      }
+      .search-box {
+        width: min(360px, 32vw);
+        height: 24px;
+        background: #3c3c3c;
+        border: 1px solid #3c3c3c;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        padding: 0 9px;
+        gap: 7px;
+        color: #bdbdbd;
+        cursor: text;
+      }
+      .search-box:hover {
+        background: #454545;
+      }
+      .search-box span {
+        font-size: 12px;
+      }
+      .search-box kbd {
+        margin-left: auto;
+        font-size: 10px;
+        color: #aaa;
+        border: 1px solid #666;
+        border-radius: 3px;
+        padding: 1px 4px;
+        font-family: var(--ui-font);
+      }
+      .title-right {
+        gap: 13px;
+        color: #bcbcbc;
+        font-size: 14px;
+        padding-right: 5px;
+      }
+      .window-controls {
+        display: flex;
+        gap: 13px;
+        margin-left: 5px;
+        font-size: 12px;
+      }
+
+      /* Main shell */
+      .workbench {
+        min-height: 0;
+        flex: 1;
+        display: flex;
+      }
+      .activity-bar {
+        width: 48px;
+        flex: 0 0 48px;
+        background: var(--activity);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        border-right: 1px solid #252526;
+      }
+      .activity-top,
+      .activity-bottom {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .activity-icon {
+        height: 48px;
+        width: 100%;
+        display: grid;
+        place-items: center;
+        position: relative;
+        color: #858585;
+        border: 0;
+        background: none;
+      }
+      .activity-icon svg {
+        width: 23px;
+        height: 23px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.5;
+      }
+      .activity-icon:hover {
+        color: #e7e7e7;
+      }
+      .activity-icon.active {
+        color: #fff;
+      }
+      .activity-icon.active::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 7px;
+        bottom: 7px;
+        width: 2px;
+        background: #fff;
+      }
+      .activity-icon .dot {
+        position: absolute;
+        right: 7px;
+        top: 8px;
+        min-width: 15px;
+        height: 15px;
+        border-radius: 9px;
+        background: #007acc;
+        border: 1px solid #333;
+        font-size: 9px;
+        color: white;
+        display: grid;
+        place-items: center;
+      }
+
+      .sidebar {
+        width: 250px;
+        flex: 0 0 250px;
+        min-width: 190px;
+        background: #181818;
+        border-right: 1px solid #303030;
+        display: flex;
+        flex-direction: column;
+      }
+      .sidebar.hidden {
+        display: none;
+      }
+      .side-heading {
+        height: 35px;
+        flex: 0 0 35px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 12px 0 18px;
+        font-size: 11px;
+        letter-spacing: 0.6px;
+        color: #bbb;
+        text-transform: uppercase;
+      }
+      .side-heading .tools {
+        display: flex;
+        gap: 9px;
+        font-size: 15px;
+        color: #aaa;
+      }
+      .side-heading .tools span {
+        cursor: pointer;
+      }
+      .side-heading .tools span:hover {
+        color: #fff;
+      }
+      .section-label {
+        height: 22px;
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        gap: 6px;
+        font-size: 11px;
+        color: #c5c5c5;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .section-label:hover {
+        background: #252526;
+      }
+      .chev {
+        font-size: 10px;
+        color: #aaa;
+        transition: transform 0.15s;
+      }
+      .chev.closed {
+        transform: rotate(-90deg);
+      }
+      .tree {
+        padding-top: 2px;
+        font-size: 13px;
+        overflow: auto;
+      }
+      .tree-row {
+        height: 22px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding-right: 8px;
+        cursor: pointer;
+        white-space: nowrap;
+        position: relative;
+      }
+      .tree-row:hover {
+        background: #2a2d2e;
+      }
+      .tree-row.selected {
+        background: #37373d;
+        color: #fff;
+      }
+      .tree-row .indent {
+        width: 13px;
+        flex: 0 0 13px;
+      }
+      .tree-row .file-icon {
+        width: 15px;
+        display: inline-grid;
+        place-items: center;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .tree-row .file-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .file-js {
+        color: #e5c07b;
+      }
+      .file-html {
+        color: #e37933;
+      }
+      .file-css {
+        color: #519aba;
+      }
+      .file-json {
+        color: #cbcb41;
+      }
+      .file-md {
+        color: #519aba;
+      }
+      .tree-row .git {
+        margin-left: auto;
+        color: #e2c08d;
+        font-size: 11px;
+      }
+      .outline {
+        margin-top: auto;
+        border-top: 1px solid #2a2a2a;
+      }
+      .outline .section-label {
+        height: 22px;
+      }
+      .outline-empty {
+        color: #777;
+        font-size: 11px;
+        padding: 9px 21px 14px;
+      }
+      .panel-body {
+        min-height: 0;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Sidebar views */
+      .side-view {
+        display: none;
+        flex-direction: column;
+        min-height: 0;
+        flex: 1;
+      }
+      .side-view.active {
+        display: flex;
+      }
+      .search-input {
+        margin: 8px 12px;
+        padding: 6px 8px;
+        background: #3c3c3c;
+        border: 1px solid #3c3c3c;
+        color: #eee;
+        border-radius: 3px;
+        font-size: 12px;
+        outline: none;
+      }
+      .search-input:focus {
+        border-color: #007acc;
+      }
+      .source-item {
+        padding: 6px 18px;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .source-item:hover {
+        background: #2a2d2e;
+      }
+      .source-badge {
+        background: #007acc;
+        color: white;
+        font-size: 10px;
+        padding: 1px 5px;
+        border-radius: 8px;
+      }
+
+      /* Editor */
+      .editor-area {
+        flex: 1;
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        background: #1e1e1e;
+      }
+      .tabsbar {
+        flex: 0 0 35px;
+        height: 35px;
+        display: flex;
+        overflow-x: auto;
+        background: #252526;
+        border-bottom: 1px solid #252526;
+      }
+      .tabsbar::-webkit-scrollbar {
+        height: 3px;
+      }
+      .tabsbar::-webkit-scrollbar-thumb {
+        background: #555;
+      }
+      .tab {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        min-width: 140px;
+        max-width: 200px;
+        padding: 0 11px;
+        font-size: 12.5px;
+        color: #999;
+        background: #2d2d2d;
+        border-right: 1px solid #252526;
+        border-top: 1px solid transparent;
+        cursor: pointer;
+      }
+      .tab.active {
+        color: #fff;
+        background: #1e1e1e;
+        border-top: 1px solid #007acc;
+      }
+      .tab:hover {
+        background: #333;
+      }
+      .tab.active:hover {
+        background: #1e1e1e;
+      }
+      .tab .tab-icon {
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .tab .tab-close {
+        margin-left: auto;
+        font-size: 15px;
+        opacity: 0;
+        border-radius: 3px;
+        width: 16px;
+        text-align: center;
+        line-height: 1;
+      }
+      .tab:hover .tab-close,
+      .tab.active .tab-close {
+        opacity: 0.7;
+      }
+      .tab .tab-close:hover {
+        background: #454545;
+        opacity: 1;
+      }
+      .editor-toolbar {
+        height: 22px;
+        flex: 0 0 22px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 15px;
+        color: #999;
+        font-size: 11px;
+      }
+      .breadcrumbs {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .breadcrumbs .crumb {
+        color: #bbb;
+      }
+      .breadcrumbs .sep {
+        color: #666;
+        font-size: 10px;
+      }
+      .editor-actions {
+        display: flex;
+        gap: 13px;
+        font-size: 14px;
+      }
+      .editor-content {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        position: relative;
+        overflow: hidden;
+      }
+      .code-wrap {
+        flex: 1;
+        min-width: 0;
+        overflow: auto;
+        padding: 4px 0 32px;
+        font-family: var(--editor-font);
+        font-size: 13px;
+        line-height: 22px;
+        tab-size: 2;
+      }
+      .code-wrap::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      .code-wrap::-webkit-scrollbar-thumb {
+        background: #424242;
+      }
+      .code-wrap::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .code-line {
+        display: flex;
+        min-width: max-content;
+        padding-right: 40px;
+      }
+      .line-number {
+        flex: 0 0 58px;
+        text-align: right;
+        padding-right: 19px;
+        color: #858585;
+        user-select: none;
+        font-size: 12px;
+      }
+      .line-code {
+        white-space: pre;
+        color: #d4d4d4;
+      }
+      .line-code .kw {
+        color: #c586c0;
+      }
+      .line-code .fn {
+        color: #dcdcaa;
+      }
+      .line-code .str {
+        color: #ce9178;
+      }
+      .line-code .tag {
+        color: #569cd6;
+      }
+      .line-code .attr {
+        color: #9cdcfe;
+      }
+      .line-code .comment {
+        color: #6a9955;
+      }
+      .line-code .num {
+        color: #b5cea8;
+      }
+      .line-code .type {
+        color: #4ec9b0;
+      }
+      .line-code .op {
+        color: #d4d4d4;
+      }
+      .line-code .punct {
+        color: #d4d4d4;
+      }
+      .line-code .var {
+        color: #9cdcfe;
+      }
+      .current-line {
+        background: #2a2d2e;
+      }
+      .minimap {
+        width: 105px;
+        flex: 0 0 105px;
+        padding: 9px 12px;
+        opacity: 0.55;
+        overflow: hidden;
+        border-left: 1px solid #252526;
+      }
+      .mini-line {
+        height: 3px;
+        border-radius: 2px;
+        margin: 3px 0;
+        background: #777;
+        opacity: 0.65;
+      }
+      .mini-line:nth-child(4n) {
+        width: 60%;
+      }
+      .mini-line:nth-child(3n) {
+        width: 80%;
+      }
+      .mini-line:nth-child(5n) {
+        width: 45%;
+      }
+      .mini-line:nth-child(4n + 1) {
+        background: #c586c0;
+      }
+      .mini-line:nth-child(4n + 2) {
+        background: #569cd6;
+      }
+      .overview-ruler {
+        position: absolute;
+        top: 0;
+        right: 3px;
+        width: 3px;
+        height: 100%;
+        background: transparent;
+      }
+      .overview-ruler span {
+        display: block;
+        height: 5px;
+        margin-top: 62px;
+        background: #e2c08d;
+        border-radius: 2px;
+      }
+
+      /* Bottom panel */
+      .bottom-panel {
+        height: 205px;
+        flex: 0 0 205px;
+        background: #181818;
+        border-top: 1px solid #333;
+        display: flex;
+        flex-direction: column;
+        transition: height 0.15s;
+      }
+      .bottom-panel.collapsed {
+        height: 0;
+        flex-basis: 0;
+        border-top: 0;
+      }
+      .panel-tabs {
+        height: 35px;
+        flex: 0 0 35px;
+        display: flex;
+        align-items: center;
+        padding: 0 14px;
+        gap: 22px;
+        text-transform: uppercase;
+        font-size: 11px;
+        color: #999;
+      }
+      .panel-tab {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        position: relative;
+      }
+      .panel-tab.active {
+        color: #e7e7e7;
+      }
+      .panel-tab.active::after {
+        content: "";
+        height: 1px;
+        background: #007acc;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+      }
+      .panel-tools {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        font-size: 14px;
+        color: #aaa;
+        text-transform: none;
+      }
+      .panel-tools span {
+        cursor: pointer;
+      }
+      .panel-tools span:hover {
+        color: #fff;
+      }
+      .terminal-area {
+        flex: 1;
+        overflow: auto;
+        padding: 9px 17px;
+        font: 12px/21px var(--editor-font);
+        color: #ccc;
+      }
+      .terminal-prompt {
+        color: #8fbc8f;
+      }
+      .terminal-muted {
+        color: #888;
+      }
+      .terminal-cursor {
+        display: inline-block;
+        width: 7px;
+        height: 14px;
+        background: #ccc;
+        vertical-align: -3px;
+        margin-left: 3px;
+        animation: blink 1.1s steps(2, start) infinite;
+      }
+      @keyframes blink {
+        to {
+          visibility: hidden;
+        }
+      }
+      .problems-area {
+        display: none;
+        padding: 14px 18px;
+        font-size: 12px;
+        color: #aaa;
+      }
+      .problems-area .problem {
+        display: flex;
+        gap: 9px;
+        align-items: center;
+        margin: 7px 0;
+      }
+      .problem .warning {
+        color: #cca700;
+      }
+
+      /* Status */
+      .statusbar {
+        height: 22px;
+        flex: 0 0 22px;
+        background: #007acc;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #fff;
+        font-size: 11px;
+        padding: 0 9px;
+        user-select: none;
+      }
+      .status-left,
+      .status-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        height: 100%;
+      }
+      .status-item {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 0 3px;
+        white-space: nowrap;
+        cursor: default;
+      }
+      .status-item:hover {
+        background: rgba(255, 255, 255, 0.15);
+      }
+      .status-left .remote {
+        background: #16825d;
+        height: 22px;
+        margin-left: -9px;
+        padding: 0 9px;
+      }
+
+      /* Command palette */
+      .overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 10;
+        background: rgba(0, 0, 0, 0.35);
+        align-items: flex-start;
+        justify-content: center;
+        padding-top: 70px;
+      }
+      .overlay.show {
+        display: flex;
+      }
+      .command-box {
+        width: min(600px, 80vw);
+        background: #252526;
+        border: 1px solid #454545;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .command-input {
+        width: 100%;
+        height: 36px;
+        background: #3c3c3c;
+        border: 1px solid #007acc;
+        outline: none;
+        color: #eee;
+        padding: 0 12px;
+        font-size: 13px;
+      }
+      .command-list {
+        padding: 5px 0;
+      }
+      .command-option {
+        padding: 8px 13px;
+        font-size: 12px;
+        display: flex;
+        justify-content: space-between;
+        cursor: pointer;
+      }
+      .command-option:hover {
+        background: #04395e;
+      }
+      .command-option kbd {
+        color: #999;
+        font-size: 10px;
+      }
+      .toast {
+        position: fixed;
+        bottom: 36px;
+        right: 20px;
+        background: #252526;
+        border: 1px solid #454545;
+        border-left: 3px solid #007acc;
+        color: #ddd;
+        padding: 11px 15px;
+        border-radius: 4px;
+        font-size: 12px;
+        opacity: 0;
+        transform: translateY(8px);
+        transition: 0.2s;
+        pointer-events: none;
+        z-index: 20;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .welcome {
+        display: none;
+        flex: 1;
+        align-items: center;
+        justify-content: center;
+        color: #777;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .welcome strong {
+        font-size: 24px;
+        font-weight: 400;
+        color: #aaa;
+      }
+
+      /* === Mobile View (Pixel Phone) === */
+      .mobile-view {
+        width: 100vw;
+        height: 100vh;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(
+          ellipse at center,
+          #1a1a1a 0%,
+          #0a0a0a 100%
+        );
+        padding: 20px;
+      }
+      .mobile-view.active {
+        display: flex;
+      }
+
+      .phone-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Pixel Phone Frame */
+      .phone-frame {
+        position: relative;
+        width: 390px;
+        height: 844px;
+        background: linear-gradient(145deg, #2a2a2a 0%, #1a1a1a 100%);
+        border-radius: 55px;
+        padding: 12px;
+        box-shadow:
+          0 0 0 2px #4a4a4a,
+          0 0 0 4px #1a1a1a,
+          0 30px 60px rgba(0, 0, 0, 0.7),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+        transform: scale(0.85);
+        transform-origin: center;
+      }
+      @media (max-height: 760px) {
+        .phone-frame {
+          transform: scale(0.68);
+        }
+      }
+      @media (max-height: 620px) {
+        .phone-frame {
+          transform: scale(0.58);
+        }
+      }
+
+      /* Phone buttons (side) */
+      .phone-btn-power {
+        position: absolute;
+        right: -3px;
+        top: 220px;
+        width: 3px;
+        height: 65px;
+        background: #3a3a3a;
+        border-radius: 0 2px 2px 0;
+      }
+      .phone-btn-volup {
+        position: absolute;
+        left: -3px;
+        top: 180px;
+        width: 3px;
+        height: 40px;
+        background: #3a3a3a;
+        border-radius: 2px 0 0 2px;
+      }
+      .phone-btn-voldn {
+        position: absolute;
+        left: -3px;
+        top: 235px;
+        width: 3px;
+        height: 40px;
+        background: #3a3a3a;
+        border-radius: 2px 0 0 2px;
+      }
+
+      .phone-screen {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        border-radius: 43px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Camera punch-hole */
+      .phone-camera {
+        position: absolute;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 10px;
+        height: 10px;
+        background: #0a0a0a;
+        border-radius: 50%;
+        border: 1px solid #1a1a1a;
+        z-index: 100;
+        box-shadow: inset 0 0 2px rgba(100, 100, 255, 0.3);
+      }
+      .phone-camera::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 4px;
+        height: 4px;
+        background: radial-gradient(circle, #334 0%, #111 100%);
+        border-radius: 50%;
+      }
+
+      /* Android status bar */
+      .mobile-statusbar {
+        height: 32px;
+        flex: 0 0 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 500;
+        background: #1e1e1e;
+        z-index: 50;
+      }
+      .statusbar-left {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .statusbar-right {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+      }
+      .statusbar-right svg {
+        width: 14px;
+        height: 14px;
+        fill: #fff;
+      }
+      .statusbar-notch {
+        width: 20px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 2px;
+      }
+
+      /* Mobile VS Code App */
+      .mobile-vscode {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #1e1e1e;
+        min-height: 0;
+      }
+
+      .mobile-appbar {
+        height: 52px;
+        flex: 0 0 52px;
+        background: #2d2d30;
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        gap: 10px;
+        border-bottom: 1px solid #1e1e1e;
+      }
+      .mobile-appbar .hamburger {
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 20px;
+        padding: 6px;
+      }
+      .mobile-appbar .title {
+        flex: 1;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .mobile-appbar .subtitle {
+        font-size: 10px;
+        color: #999;
+        font-weight: 400;
+      }
+      .mobile-appbar .more-btn {
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 18px;
+        padding: 6px;
+      }
+
+      .mobile-editor {
+        flex: 1;
+        overflow: auto;
+        padding: 8px 0;
+        font-family: var(--editor-font);
+        font-size: 12px;
+        line-height: 18px;
+        color: #d4d4d4;
+      }
+      .mobile-editor .m-code-line {
+        display: flex;
+        padding-right: 12px;
+      }
+      .mobile-editor .m-line-num {
+        flex: 0 0 32px;
+        text-align: right;
+        padding-right: 10px;
+        color: #6a6a6a;
+        font-size: 10px;
+      }
+      .mobile-editor .m-line-code {
+        white-space: pre;
+      }
+      .mobile-editor .m-line-code .kw {
+        color: #c586c0;
+      }
+      .mobile-editor .m-line-code .fn {
+        color: #dcdcaa;
+      }
+      .mobile-editor .m-line-code .str {
+        color: #ce9178;
+      }
+      .mobile-editor .m-line-code .tag {
+        color: #569cd6;
+      }
+      .mobile-editor .m-line-code .attr {
+        color: #9cdcfe;
+      }
+      .mobile-editor .m-line-code .comment {
+        color: #6a9955;
+      }
+      .mobile-editor .m-line-code .num {
+        color: #b5cea8;
+      }
+      .mobile-editor .m-line-code .type {
+        color: #4ec9b0;
+      }
+      .mobile-editor .m-line-code .var {
+        color: #9cdcfe;
+      }
+      .mobile-editor .m-current-line {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .mobile-bottom-tabs {
+        height: 56px;
+        flex: 0 0 56px;
+        background: #252526;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        border-top: 1px solid #1e1e1e;
+      }
+      .mobile-tab-btn {
+        background: none;
+        border: none;
+        color: #999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        padding: 4px 12px;
+        font-size: 9px;
+      }
+      .mobile-tab-btn svg {
+        width: 20px;
+        height: 20px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.5;
+      }
+      .mobile-tab-btn.active {
+        color: #007acc;
+      }
+
+      .mobile-minimap {
+        position: absolute;
+        right: 4px;
+        top: 86px;
+        width: 20px;
+        opacity: 0.3;
+        pointer-events: none;
+      }
+      .mobile-minimap .mm-line {
+        height: 1.5px;
+        margin: 1.5px 0;
+        background: #888;
+        border-radius: 1px;
+      }
+
+      /* Android gesture bar */
+      .phone-navbar {
+        height: 20px;
+        flex: 0 0 20px;
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .navbar-pill {
+        width: 120px;
+        height: 4px;
+        background: #fff;
+        border-radius: 2px;
+        opacity: 0.85;
+      }
+
+      /* Mobile drawer */
+      .mobile-drawer-overlay {
+        display: none;
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 200;
+      }
+      .mobile-drawer-overlay.show {
+        display: block;
+      }
+      .mobile-drawer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 280px;
+        height: 100%;
+        background: #1e1e1e;
+        z-index: 201;
+        transform: translateX(-100%);
+        transition: transform 0.25s;
+        display: flex;
+        flex-direction: column;
+        overflow: auto;
+      }
+      .mobile-drawer.open {
+        transform: translateX(0);
+      }
+      .drawer-header {
+        padding: 24px 16px 12px;
+        border-bottom: 1px solid #333;
+        color: #fff;
+      }
+      .drawer-header .project-name {
+        font-size: 16px;
+        font-weight: 500;
+      }
+      .drawer-header .project-path {
+        font-size: 11px;
+        color: #999;
+        margin-top: 2px;
+      }
+      .drawer-section {
+        padding: 8px 0;
+      }
+      .drawer-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 10px 16px;
+        color: #ccc;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      .drawer-item:hover {
+        background: #2a2d2e;
+      }
+      .drawer-item svg {
+        width: 18px;
+        height: 18px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.5;
+      }
+      .drawer-divider {
+        height: 1px;
+        background: #333;
+        margin: 4px 0;
+      }
+
+      /* Mobile command palette */
+      .mobile-cmd-overlay {
+        display: none;
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 300;
+        padding: 30px 16px;
+      }
+      .mobile-cmd-overlay.show {
+        display: flex;
+        flex-direction: column;
+      }
+      .mobile-cmd-box {
+        background: #2d2d30;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      }
+      .mobile-cmd-input {
+        width: 100%;
+        padding: 12px 14px;
+        background: #3c3c3c;
+        border: none;
+        color: #fff;
+        font-size: 14px;
+        outline: none;
+      }
+      .mobile-cmd-list {
+        padding: 4px 0;
+      }
+      .mobile-cmd-item {
+        padding: 10px 14px;
+        color: #ddd;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .mobile-cmd-item:hover {
+        background: #04395e;
+      }
+
+      /* Floating label */
+      .mobile-label {
+        position: absolute;
+        bottom: -40px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #888;
+        font-size: 11px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+      .desktop-label {
+        position: absolute;
+        bottom: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #888;
+        font-size: 11px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .desktop-container {
+        position: relative;
+      }
+
+      /* Responsive for desktop view on small screens */
+      @media (max-width: 900px) {
+        .sidebar {
+          width: 210px;
+          flex-basis: 210px;
+        }
+        .minimap {
+          display: none;
+        }
+      }
+      @media (max-width: 680px) {
+        .sidebar {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Switcher Button -->
+    <div class="view-switcher">
+      <button class="switcher-btn active" data-view="desktop">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <rect x="2" y="4" width="20" height="14" rx="2" />
+          <path d="M8 20h8M12 18v2" />
+        </svg>
+        Desktop
+      </button>
+      <button class="switcher-btn" data-view="mobile">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <rect x="5" y="2" width="14" height="20" rx="2" />
+          <path d="M11 18h2" />
+        </svg>
+        Mobile (Pixel)
+      </button>
+    </div>
+
+    <!-- Desktop View -->
+    <div class="desktop-view" id="desktop-view">
+      <div class="desktop-container">
+        <div class="app">
+          <header class="titlebar">
+            <div class="title-left">
+              <div class="brand-mark" aria-label="VS Code">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="#29a9f5"
+                    d="M17.7 1.1 7.1 10.8 2.6 7.4 0 8.8v6.4l2.6 1.4 4.5-3.4 10.6 9.7 6.3-3.2V4.3l-6.3-3.2ZM4.1 12l3.5-2.7v5.4L4.1 12Zm12.5 7.2-6.8-6.2 6.8-5.9v12.1Zm3.2-1.6V6.4l-3.1 2.8V6.8l3.1 1.6v9.2Z"
+                  />
+                </svg>
+              </div>
+              <nav class="menu" aria-label="Menu aplikasi">
+                <button>File</button><button>Edit</button
+                ><button>Selection</button><button>View</button
+                ><button>Go</button><button>Run</button><button>Terminal</button
+                ><button>Help</button>
+              </nav>
+            </div>
+            <div class="title-center">
+              <div class="nav-arrows"><span>‹</span><span>›</span></div>
+              <div class="search-box" onclick="openCommand()">
+                <span>⌕</span><span>Search</span><kbd>Ctrl + Shift + P</kbd>
+              </div>
+            </div>
+            <div class="title-right">
+              <span>▣</span><span>▤</span><span>◫</span>
+              <div class="window-controls">
+                <span>—</span><span>□</span><span>×</span>
+              </div>
+            </div>
+          </header>
+
+          <main class="workbench">
+            <aside class="activity-bar">
+              <div class="activity-top">
+                <button
+                  class="activity-icon active"
+                  data-view="explorer"
+                  title="Explorer"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <path d="M3.5 4.5h6l2 2h9v13h-17z" />
+                    <path d="M3.5 8h17" />
+                  </svg>
+                </button>
+                <button class="activity-icon" data-view="search" title="Search">
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="10.8" cy="10.8" r="6.7" />
+                    <path d="m16 16 5 5" />
+                  </svg>
+                </button>
+                <button
+                  class="activity-icon"
+                  data-view="source"
+                  title="Source Control"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="6" cy="5" r="2.1" />
+                    <circle cx="18" cy="18" r="2.1" />
+                    <circle cx="18" cy="5" r="2.1" />
+                    <path d="M6 7v8a3 3 0 0 0 3 3h6M18 7v4a3 3 0 0 1-3 3h-2" />
+                  </svg>
+                  <span class="dot">2</span>
+                </button>
+                <button
+                  class="activity-icon"
+                  data-view="run"
+                  title="Run and Debug"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <path d="M7 4.5 19 12 7 19.5z" />
+                    <path d="M4 7v10M2 9v6" />
+                  </svg>
+                </button>
+                <button
+                  class="activity-icon"
+                  data-view="extensions"
+                  title="Extensions"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"
+                    />
+                    <path d="M10 7h4M7 10v4m10-4v4m-3 3h-4" />
+                  </svg>
+                </button>
+              </div>
+              <div class="activity-bottom">
+                <button
+                  class="activity-icon"
+                  title="Accounts"
+                  onclick="notify('Accounts')"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="8" r="3.5" />
+                    <path d="M4.5 20c.5-4 3-6 7.5-6s7 2 7.5 6" />
+                  </svg>
+                </button>
+                <button
+                  class="activity-icon"
+                  title="Manage"
+                  onclick="notify('Manage')"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="3" />
+                    <path
+                      d="m19 13.8 1.5 1.2-1.5 2.6-1.8-.6a7.7 7.7 0 0 1-1.6.9l-.3 1.9h-3l-.4-1.9a7.7 7.7 0 0 1-1.6-.9l-1.8.6L5 15l1.5-1.2a7.6 7.6 0 0 1 0-1.9L5 10.7l1.5-2.6 1.8.6a7.7 7.7 0 0 1 1.6-.9l.4-1.9h3l.3 1.9a7.7 7.7 0 0 1 1.6.9l1.8-.6 1.5 2.6-1.5 1.2a7.6 7.6 0 0 1 0 1.9Z"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </aside>
+
+            <aside class="sidebar" id="sidebar">
+              <!-- Explorer -->
+              <div class="side-view active" id="view-explorer">
+                <div class="side-heading">
+                  <span id="sidebar-title">Explorer</span>
+                  <div class="tools">
+                    <span title="New File" onclick="notify('New File')">⌑</span>
+                    <span title="New Folder" onclick="notify('New Folder')"
+                      >▱</span
+                    >
+                    <span title="Refresh" onclick="notify('Explorer refreshed')"
+                      >↻</span
+                    >
+                    <span title="Collapse" onclick="toggleSidebar()">⌄</span>
+                  </div>
+                </div>
+                <div class="panel-body">
+                  <div class="section-label" onclick="toggleTree()">
+                    <span class="chev" id="tree-chev">⌄</span> MY-PROJECT
+                  </div>
+                  <div class="tree" id="file-tree">
+                    <div class="tree-row" data-file="src" data-type="folder">
+                      <span class="indent"></span><span class="chev">⌄</span
+                      ><span class="file-icon">📁</span
+                      ><span class="file-name">src</span>
+                    </div>
+                    <div class="tree-row" data-file="App.jsx">
+                      <span class="indent"></span><span class="indent"></span
+                      ><span class="file-icon file-js">JS</span
+                      ><span class="file-name">App.jsx</span
+                      ><span class="git">M</span>
+                    </div>
+                    <div
+                      class="tree-row"
+                      data-file="components"
+                      data-type="folder"
+                    >
+                      <span class="indent"></span><span class="indent"></span
+                      ><span class="chev">⌄</span
+                      ><span class="file-icon">📁</span
+                      ><span class="file-name">components</span>
+                    </div>
+                    <div class="tree-row" data-file="Navbar.jsx">
+                      <span class="indent"></span><span class="indent"></span
+                      ><span class="indent"></span
+                      ><span class="file-icon file-js">JS</span
+                      ><span class="file-name">Navbar.jsx</span>
+                    </div>
+                    <div class="tree-row" data-file="Footer.jsx">
+                      <span class="indent"></span><span class="indent"></span
+                      ><span class="indent"></span
+                      ><span class="file-icon file-js">JS</span
+                      ><span class="file-name">Footer.jsx</span>
+                    </div>
+                    <div class="tree-row" data-file="public" data-type="folder">
+                      <span class="indent"></span><span class="chev">›</span
+                      ><span class="file-icon">📁</span
+                      ><span class="file-name">public</span>
+                    </div>
+                    <div class="tree-row" data-file="index.html">
+                      <span class="indent"></span
+                      ><span class="file-icon file-html">5</span
+                      ><span class="file-name">index.html</span>
+                    </div>
+                    <div class="tree-row" data-file="package.json">
+                      <span class="indent"></span
+                      ><span class="file-icon file-json">{ }</span
+                      ><span class="file-name">package.json</span>
+                    </div>
+                    <div class="tree-row" data-file="README.md">
+                      <span class="indent"></span
+                      ><span class="file-icon file-md">M↓</span
+                      ><span class="file-name">README.md</span>
+                    </div>
+                    <div class="tree-row" data-file="vite.config.js">
+                      <span class="indent"></span
+                      ><span class="file-icon file-js">JS</span
+                      ><span class="file-name">vite.config.js</span>
+                    </div>
+                  </div>
+                  <div class="outline">
+                    <div class="section-label">
+                      <span class="chev">›</span> OUTLINE
+                    </div>
+                    <div class="outline-empty">
+                      The active editor cannot provide outline information.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Search View -->
+              <div class="side-view" id="view-search">
+                <div class="side-heading"><span>Search</span></div>
+                <input type="text" class="search-input" placeholder="Search" />
+                <input type="text" class="search-input" placeholder="Replace" />
+                <div class="panel-body">
+                  <div class="source-item">
+                    <span style="color: #e2c08d">3</span> results in 2 files
+                  </div>
+                  <div
+                    class="source-item"
+                    style="padding-left: 28px; color: #aaa; font-size: 11px"
+                  >
+                    App.jsx — 2 matches
+                  </div>
+                  <div
+                    class="source-item"
+                    style="padding-left: 28px; color: #aaa; font-size: 11px"
+                  >
+                    package.json — 1 match
+                  </div>
+                </div>
+              </div>
+
+              <!-- Source Control -->
+              <div class="side-view" id="view-source">
+                <div class="side-heading"><span>Source Control</span></div>
+                <input
+                  type="text"
+                  class="search-input"
+                  placeholder="Message (Ctrl+Enter to commit)"
+                />
+                <div class="panel-body">
+                  <div class="source-item">
+                    <span style="color: #89d185">M</span> App.jsx
+                    <span class="source-badge">1</span>
+                  </div>
+                  <div class="source-item">
+                    <span style="color: #89d185">U</span> components/Navbar.jsx
+                    <span class="source-badge">1</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Run -->
+              <div class="side-view" id="view-run">
+                <div class="side-heading"><span>Run and Debug</span></div>
+                <div class="panel-body">
+                  <div class="source-item" style="color: #aaa; font-size: 12px">
+                    To customize Run and Debug create a launch.json file.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Extensions -->
+              <div class="side-view" id="view-extensions">
+                <div class="side-heading"><span>Extensions</span></div>
+                <input
+                  type="text"
+                  class="search-input"
+                  placeholder="Search Extensions in Marketplace"
+                />
+                <div class="panel-body">
+                  <div class="source-item" style="font-size: 11px">
+                    <div>
+                      <div style="color: #fff; font-weight: 600">ESLint</div>
+                      <div style="color: #999; font-size: 10px">
+                        Integrates ESLint
+                      </div>
+                    </div>
+                  </div>
+                  <div class="source-item" style="font-size: 11px">
+                    <div>
+                      <div style="color: #fff; font-weight: 600">Prettier</div>
+                      <div style="color: #999; font-size: 10px">
+                        Code formatter
+                      </div>
+                    </div>
+                  </div>
+                  <div class="source-item" style="font-size: 11px">
+                    <div>
+                      <div style="color: #fff; font-weight: 600">
+                        GitHub Copilot
+                      </div>
+                      <div style="color: #999; font-size: 10px">
+                        AI pair programmer
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </aside>
+
+            <section class="editor-area">
+              <div class="tabsbar" id="tabsbar">
+                <div class="tab active" data-file="App.jsx">
+                  <span class="tab-icon file-js">JS</span><span>App.jsx</span
+                  ><span class="tab-close">×</span>
+                </div>
+                <div class="tab" data-file="index.html">
+                  <span class="tab-icon file-html">5</span
+                  ><span>index.html</span><span class="tab-close">×</span>
+                </div>
+                <div class="tab" data-file="package.json">
+                  <span class="tab-icon file-json">{ }</span
+                  ><span>package.json</span><span class="tab-close">×</span>
+                </div>
+              </div>
+              <div class="editor-toolbar">
+                <div class="breadcrumbs">
+                  <span>src</span><span class="sep">›</span
+                  ><span class="crumb" id="breadcrumb-file">App.jsx</span
+                  ><span class="sep">›</span><span class="crumb">App</span>
+                </div>
+                <div class="editor-actions">
+                  <span title="Split Editor">◫</span
+                  ><span title="More Actions">···</span>
+                </div>
+              </div>
+              <div class="editor-content">
+                <div class="code-wrap" id="code-wrap"></div>
+                <div class="minimap" aria-hidden="true" id="minimap"></div>
+                <div class="overview-ruler"><span></span></div>
+              </div>
+              <div class="welcome" id="welcome">
+                <strong>Visual Studio Code</strong
+                ><span>Select a file to start editing</span>
+              </div>
+              <section class="bottom-panel" id="bottom-panel">
+                <div class="panel-tabs">
+                  <div class="panel-tab" data-panel="PROBLEMS">
+                    PROBLEMS <span style="margin-left: 5px">2</span>
+                  </div>
+                  <div class="panel-tab" data-panel="OUTPUT">OUTPUT</div>
+                  <div class="panel-tab active" data-panel="TERMINAL">
+                    TERMINAL
+                  </div>
+                  <div class="panel-tab" data-panel="DEBUG">DEBUG CONSOLE</div>
+                  <div class="panel-tools">
+                    <span title="Split Terminal">◫</span>
+                    <span title="Kill Terminal">▣</span>
+                    <span title="Maximize Panel" onclick="togglePanelSize()"
+                      >⌃</span
+                    >
+                    <span title="Close Panel" onclick="togglePanel()">×</span>
+                  </div>
+                </div>
+                <div class="terminal-area" id="terminal-area">
+                  <div>
+                    <span class="terminal-prompt">➜</span>
+                    <span style="color: #6a9955">my-project</span>
+                    <span class="terminal-muted">git:(main)</span> npm run dev
+                  </div>
+                  <div style="color: #d7ba7d">&gt; my-project@0.0.0 dev</div>
+                  <div style="color: #d7ba7d">&gt; vite</div>
+                  <div style="color: #89d185">VITE v5.4.8 ready in 426 ms</div>
+                  <div style="color: #89d185">
+                    ➜ Local:
+                    <span style="color: #4fc1ff">http://localhost:5173/</span>
+                  </div>
+                  <div style="color: #89d185">
+                    ➜ Network: use --host to expose
+                  </div>
+                  <div style="margin-top: 6px">
+                    <span class="terminal-prompt">➜</span>
+                    <span style="color: #6a9955">my-project</span>
+                    <span class="terminal-muted">git:(main)</span>
+                    <span class="terminal-cursor"></span>
+                  </div>
+                </div>
+                <div class="problems-area" id="problems-area">
+                  <div class="problem">
+                    <span class="warning">⚠</span><span>App.jsx</span
+                    ><span>'useEffect' is defined but never used.</span
+                    ><span style="margin-left: auto; color: #777"
+                      >Ln 2, Col 10</span
+                    >
+                  </div>
+                  <div class="problem">
+                    <span class="warning">⚠</span><span>App.jsx</span
+                    ><span>Unexpected console statement.</span
+                    ><span style="margin-left: auto; color: #777"
+                      >Ln 18, Col 3</span
+                    >
+                  </div>
+                </div>
+              </section>
+            </section>
+          </main>
+
+          <footer class="statusbar">
+            <div class="status-left">
+              <div class="status-item remote">‹›</div>
+              <div class="status-item"><span>⎇</span> main*</div>
+              <div class="status-item"><span>⟳</span></div>
+              <div class="status-item"><span>⊗</span> 0</div>
+              <div class="status-item"><span>⚠</span> 2</div>
+            </div>
+            <div class="status-right">
+              <div class="status-item">Ln 12, Col 18</div>
+              <div class="status-item">Spaces: 2</div>
+              <div class="status-item">UTF-8</div>
+              <div class="status-item">CRLF</div>
+              <div class="status-item" id="language-mode">JavaScript JSX</div>
+              <div class="status-item">◉ Prettier</div>
+              <div class="status-item">🔔</div>
+            </div>
+          </footer>
+        </div>
+        <div class="desktop-label">Desktop · VS Code Clone</div>
+      </div>
+    </div>
+
+    <!-- Mobile View -->
+    <div class="mobile-view" id="mobile-view">
+      <div class="phone-wrapper">
+        <div style="position: relative">
+          <div class="phone-frame">
+            <div class="phone-btn-power"></div>
+            <div class="phone-btn-volup"></div>
+            <div class="phone-btn-voldn"></div>
+            <div class="phone-screen">
+              <div class="phone-camera"></div>
+
+              <!-- Android Status Bar -->
+              <div class="mobile-statusbar">
+                <div class="statusbar-left">
+                  <span id="phone-time">9:41</span>
+                </div>
+                <div class="statusbar-right">
+                  <svg viewBox="0 0 24 24"><path d="M2 22h20L12 2z" /></svg>
+                  <svg viewBox="0 0 24 24">
+                    <path d="M12 2L1 12l11 10 11-10z" />
+                  </svg>
+                  <span>100%</span>
+                  <svg viewBox="0 0 24 24">
+                    <rect x="2" y="8" width="18" height="8" rx="1" />
+                    <rect x="20" y="10" width="2" height="4" />
+                    <rect x="3" y="9" width="16" height="6" fill="#fff" />
+                  </svg>
+                </div>
+              </div>
+
+              <!-- VS Code Mobile App -->
+              <div class="mobile-vscode">
+                <div class="mobile-appbar">
+                  <button class="hamburger" onclick="toggleDrawer()">☰</button>
+                  <div class="title">
+                    <div>App.jsx</div>
+                    <div class="subtitle">my-project / src</div>
+                  </div>
+                  <button class="more-btn" onclick="toggleMobileCmd()">
+                    ⋮
+                  </button>
+                </div>
+
+                <div class="mobile-editor" id="mobile-editor"></div>
+
+                <div class="mobile-minimap" id="mobile-minimap"></div>
+
+                <div class="mobile-bottom-tabs">
+                  <button class="mobile-tab-btn" onclick="toggleDrawer()">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M3.5 4.5h6l2 2h9v13h-17z" />
+                      <path d="M3.5 8h17" />
+                    </svg>
+                    <span>Files</span>
+                  </button>
+                  <button class="mobile-tab-btn">
+                    <svg viewBox="0 0 24 24">
+                      <circle cx="10.8" cy="10.8" r="6.7" />
+                      <path d="m16 16 5 5" />
+                    </svg>
+                    <span>Search</span>
+                  </button>
+                  <button class="mobile-tab-btn">
+                    <svg viewBox="0 0 24 24">
+                      <path
+                        d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"
+                        fill="currentColor"
+                        stroke="none"
+                      />
+                    </svg>
+                    <span>Run</span>
+                  </button>
+                  <button class="mobile-tab-btn" onclick="toggleMobileCmd()">
+                    <svg viewBox="0 0 24 24">
+                      <rect x="3" y="4" width="18" height="4" />
+                      <rect x="3" y="10" width="18" height="4" />
+                      <rect x="3" y="16" width="18" height="4" />
+                    </svg>
+                    <span>Commands</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Mobile Drawer -->
+              <div
+                class="mobile-drawer-overlay"
+                id="drawer-overlay"
+                onclick="toggleDrawer()"
+              ></div>
+              <div class="mobile-drawer" id="mobile-drawer">
+                <div class="drawer-header">
+                  <div class="project-name">my-project</div>
+                  <div class="project-path">~/projects/my-project</div>
+                </div>
+                <div class="drawer-section">
+                  <div class="drawer-item">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M3.5 4.5h6l2 2h9v13h-17z" />
+                    </svg>
+                    <span>Explorer</span>
+                  </div>
+                  <div class="drawer-item">
+                    <svg viewBox="0 0 24 24">
+                      <circle cx="10.8" cy="10.8" r="6.7" />
+                      <path d="m16 16 5 5" />
+                    </svg>
+                    <span>Search</span>
+                  </div>
+                  <div class="drawer-item">
+                    <svg viewBox="0 0 24 24">
+                      <circle cx="6" cy="5" r="2.1" />
+                      <circle cx="18" cy="18" r="2.1" />
+                      <path d="M6 7v8a3 3 0 0 0 3 3h6" />
+                    </svg>
+                    <span>Source Control</span>
+                  </div>
+                  <div class="drawer-item">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M7 4.5 19 12 7 19.5z" />
+                    </svg>
+                    <span>Run and Debug</span>
+                  </div>
+                  <div class="drawer-item">
+                    <svg viewBox="0 0 24 24">
+                      <path
+                        d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"
+                      />
+                    </svg>
+                    <span>Extensions</span>
+                  </div>
+                </div>
+                <div class="drawer-divider"></div>
+                <div class="drawer-section">
+                  <div class="drawer-item">
+                    <svg viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="3" />
+                      <path d="M12 1v6m0 10v6" />
+                    </svg>
+                    <span>Settings</span>
+                  </div>
+                  <div class="drawer-item">
+                    <svg viewBox="0 0 24 24">
+                      <circle cx="12" cy="8" r="3.5" />
+                      <path d="M4.5 20c.5-4 3-6 7.5-6s7 2 7.5 6" />
+                    </svg>
+                    <span>Account</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Mobile Command Palette -->
+              <div class="mobile-cmd-overlay" id="mobile-cmd">
+                <div class="mobile-cmd-box">
+                  <input
+                    type="text"
+                    class="mobile-cmd-input"
+                    placeholder="> Type a command..."
+                  />
+                  <div class="mobile-cmd-list">
+                    <div class="mobile-cmd-item">View: Toggle Terminal</div>
+                    <div class="mobile-cmd-item">View: Toggle Side Bar</div>
+                    <div class="mobile-cmd-item">Preferences: Color Theme</div>
+                    <div class="mobile-cmd-item">Developer: Reload Window</div>
+                    <div class="mobile-cmd-item">Help: About</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Android Gesture Bar -->
+              <div class="phone-navbar">
+                <div class="navbar-pill"></div>
+              </div>
+            </div>
+          </div>
+          <div class="mobile-label">Mobile · Pixel Phone · VS Code</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="command-overlay" onclick="closeCommand(event)">
+      <div class="command-box" onclick="event.stopPropagation()">
+        <input
+          class="command-input"
+          id="command-input"
+          placeholder="Type a command or search..."
+          autocomplete="off"
+        />
+        <div class="command-list" id="command-list">
+          <div class="command-option" data-command="toggle-terminal">
+            View: Toggle Terminal <kbd>Ctrl + `</kbd>
+          </div>
+          <div class="command-option" data-command="toggle-sidebar">
+            View: Toggle Primary Side Bar <kbd>Ctrl + B</kbd>
+          </div>
+          <div class="command-option" data-command="toggle-panel">
+            View: Toggle Panel
+          </div>
+          <div class="command-option" data-command="theme">
+            Preferences: Color Theme
+          </div>
+          <div class="command-option" data-command="about">Help: About</div>
+        </div>
+      </div>
+    </div>
+    <div class="toast" id="toast"></div>
+
+    <script>
+      const fileContents = {
+        "App.jsx": [
+          '<span class="kw">import</span> <span class="punct">{</span> <span class="type">useState</span><span class="punct">,</span> <span class="type">useEffect</span> <span class="punct">}</span> <span class="kw">from</span> <span class="str">\'react\'</span><span class="punct">;</span>',
+          '<span class="kw">import</span> <span class="str">\'./App.css\'</span><span class="punct">;</span>',
+          "",
+          '<span class="kw">function</span> <span class="fn">App</span><span class="punct">() {</span>',
+          '  <span class="kw">const</span> <span class="punct">[</span><span class="var">count</span><span class="punct">,</span> <span class="var">setCount</span><span class="punct">]</span> <span class="op">=</span> <span class="fn">useState</span><span class="punct">(</span><span class="num">0</span><span class="punct">);</span>',
+          "",
+          '  <span class="kw">return</span> <span class="punct">(</span>',
+          '    <span class="tag">&lt;main</span> <span class="attr">className</span><span class="op">=</span><span class="str">"app-container"</span><span class="tag">&gt;</span>',
+          '      <span class="tag">&lt;header</span> <span class="attr">className</span><span class="op">=</span><span class="str">"hero"</span><span class="tag">&gt;</span>',
+          '        <span class="tag">&lt;h1&gt;</span>Hello, developer!<span class="tag">&lt;/h1&gt;</span>',
+          '        <span class="tag">&lt;p&gt;</span>Build something amazing today.<span class="tag">&lt;/p&gt;</span>',
+          '      <span class="tag">&lt;/header&gt;</span>',
+          "",
+          '      <span class="tag">&lt;section</span> <span class="attr">className</span><span class="op">=</span><span class="str">"counter-card"</span><span class="tag">&gt;</span>',
+          '        <span class="tag">&lt;p&gt;</span>You clicked <span class="punct">{</span><span class="var">count</span><span class="punct">}</span> times<span class="tag">&lt;/p&gt;</span>',
+          '        <span class="tag">&lt;button</span>',
+          '          <span class="attr">onClick</span><span class="op">=</span><span class="punct">{</span><span class="punct">()</span> <span class="op">=&gt;</span> <span class="fn">setCount</span><span class="punct">(</span><span class="var">count</span> <span class="op">+</span> <span class="num">1</span><span class="punct">)}</span>',
+          '        <span class="tag">&gt;</span>',
+          "          Increment counter",
+          '        <span class="tag">&lt;/button&gt;</span>',
+          '      <span class="tag">&lt;/section&gt;</span>',
+          '    <span class="tag">&lt;/main&gt;</span>',
+          '  <span class="punct">);</span>',
+          '<span class="punct">}</span>',
+          "",
+          '<span class="kw">export default</span> <span class="type">App</span><span class="punct">;</span>',
+        ],
+        "index.html": [
+          '<span class="tag">&lt;!DOCTYPE</span> <span class="attr">html</span><span class="tag">&gt;</span>',
+          '<span class="tag">&lt;html</span> <span class="attr">lang</span><span class="op">=</span><span class="str">"en"</span><span class="tag">&gt;</span>',
+          '<span class="tag">&lt;head&gt;</span>',
+          '  <span class="tag">&lt;meta</span> <span class="attr">charset</span><span class="op">=</span><span class="str">"UTF-8"</span> <span class="tag">/&gt;</span>',
+          '  <span class="tag">&lt;meta</span> <span class="attr">name</span><span class="op">=</span><span class="str">"viewport"</span> <span class="attr">content</span><span class="op">=</span><span class="str">"width=device-width, initial-scale=1.0"</span> <span class="tag">/&gt;</span>',
+          '  <span class="tag">&lt;title&gt;</span>My Project<span class="tag">&lt;/title&gt;</span>',
+          '  <span class="tag">&lt;link</span> <span class="attr">rel</span><span class="op">=</span><span class="str">"icon"</span> <span class="attr">href</span><span class="op">=</span><span class="str">"/favicon.svg"</span> <span class="tag">/&gt;</span>',
+          '<span class="tag">&lt;/head&gt;</span>',
+          '<span class="tag">&lt;body&gt;</span>',
+          '  <span class="tag">&lt;div</span> <span class="attr">id</span><span class="op">=</span><span class="str">"root"</span><span class="tag">&gt;&lt;/div&gt;</span>',
+          '  <span class="tag">&lt;script</span> <span class="attr">type</span><span class="op">=</span><span class="str">"module"</span> <span class="attr">src</span><span class="op">=</span><span class="str">"/src/main.jsx"</span><span class="tag">&gt;&lt;/script&gt;</span>',
+          '<span class="tag">&lt;/body&gt;</span>',
+          '<span class="tag">&lt;/html&gt;</span>',
+        ],
+        "package.json": [
+          '<span class="punct">{</span>',
+          '  <span class="str">"name"</span><span class="punct">:</span> <span class="str">"my-project"</span><span class="punct">,</span>',
+          '  <span class="str">"private"</span><span class="punct">:</span> <span class="kw">true</span><span class="punct">,</span>',
+          '  <span class="str">"version"</span><span class="punct">:</span> <span class="str">"0.0.0"</span><span class="punct">,</span>',
+          '  <span class="str">"type"</span><span class="punct">:</span> <span class="str">"module"</span><span class="punct">,</span>',
+          '  <span class="str">"scripts"</span><span class="punct">:</span> <span class="punct">{</span>',
+          '    <span class="str">"dev"</span><span class="punct">:</span> <span class="str">"vite"</span><span class="punct">,</span>',
+          '    <span class="str">"build"</span><span class="punct">:</span> <span class="str">"vite build"</span><span class="punct">,</span>',
+          '    <span class="str">"preview"</span><span class="punct">:</span> <span class="str">"vite preview"</span>',
+          '  <span class="punct">},</span>',
+          '  <span class="str">"dependencies"</span><span class="punct">:</span> <span class="punct">{</span>',
+          '    <span class="str">"react"</span><span class="punct">:</span> <span class="str">"^18.3.1"</span><span class="punct">,</span>',
+          '    <span class="str">"react-dom"</span><span class="punct">:</span> <span class="str">"^18.3.1"</span>',
+          '  <span class="punct">},</span>',
+          '  <span class="str">"devDependencies"</span><span class="punct">:</span> <span class="punct">{</span>',
+          '    <span class="str">"@vitejs/plugin-react"</span><span class="punct">:</span> <span class="str">"latest"</span><span class="punct">,</span>',
+          '    <span class="str">"vite"</span><span class="punct">:</span> <span class="str">"^5.4.8"</span>',
+          '  <span class="punct">}</span>',
+          '<span class="punct">}</span>',
+        ],
+        "Navbar.jsx": [
+          '<span class="kw">export default function</span> <span class="fn">Navbar</span><span class="punct">() {</span>',
+          '  <span class="kw">return</span> <span class="punct">(</span>',
+          '    <span class="tag">&lt;nav</span> <span class="attr">className</span><span class="op">=</span><span class="str">"navbar"</span><span class="tag">&gt;</span>',
+          '      <span class="tag">&lt;a</span> <span class="attr">href</span><span class="op">=</span><span class="str">"/"</span><span class="tag">&gt;</span>Home<span class="tag">&lt;/a&gt;</span>',
+          '      <span class="tag">&lt;a</span> <span class="attr">href</span><span class="op">=</span><span class="str">"/about"</span><span class="tag">&gt;</span>About<span class="tag">&lt;/a&gt;</span>',
+          '    <span class="tag">&lt;/nav&gt;</span>',
+          '  <span class="punct">);</span>',
+          '<span class="punct">}</span>',
+        ],
+        "Footer.jsx": [
+          '<span class="kw">export default function</span> <span class="fn">Footer</span><span class="punct">() {</span>',
+          '  <span class="kw">return</span> <span class="punct">(</span>',
+          '    <span class="tag">&lt;footer</span> <span class="attr">className</span><span class="op">=</span><span class="str">"footer"</span><span class="tag">&gt;</span>',
+          '      <span class="tag">&lt;p&gt;</span>© 2026 My Project<span class="tag">&lt;/p&gt;</span>',
+          '    <span class="tag">&lt;/footer&gt;</span>',
+          '  <span class="punct">);</span>',
+          '<span class="punct">}</span>',
+        ],
+        "README.md": [
+          '<span class="comment"># My Project</span>',
+          "",
+          "A modern web application built with React and Vite.",
+          "",
+          '<span class="comment">## Getting Started</span>',
+          "",
+          "Install dependencies:",
+          '<span class="str">```bash</span>',
+          "npm install",
+          '<span class="str">```</span>',
+          "",
+          "Run the development server:",
+          '<span class="str">```bash</span>',
+          "npm run dev",
+          '<span class="str">```</span>',
+        ],
+        "vite.config.js": [
+          '<span class="kw">import</span> <span class="punct">{</span> <span class="type">defineConfig</span> <span class="punct">}</span> <span class="kw">from</span> <span class="str">\'vite\'</span><span class="punct">;</span>',
+          '<span class="kw">import</span> <span class="type">react</span> <span class="kw">from</span> <span class="str">\'@vitejs/plugin-react\'</span><span class="punct">;</span>',
+          "",
+          '<span class="comment">// https://vite.dev/config/</span>',
+          '<span class="kw">export default</span> <span class="fn">defineConfig</span><span class="punct">({</span>',
+          '  <span class="attr">plugins</span><span class="punct">:</span> <span class="punct">[</span><span class="fn">react</span><span class="punct">()],</span>',
+          '<span class="punct">});</span>',
+        ],
+      };
+
+      // Mobile versions with different class prefix
+      const mobileFileContents = {};
+      for (const [file, lines] of Object.entries(fileContents)) {
+        mobileFileContents[file] = lines.map((line) =>
+          line
+            .replace(/class="/g, 'class="m-')
+            .replace(/class="m-/g, 'class="')
+            .replace(/<span class="([^"]+)">/g, (match, cls) => {
+              const mobileCls = cls
+                .split(" ")
+                .map((c) => (c.startsWith("m-") ? c : "m-" + c))
+                .join(" ");
+              return `<span class="${mobileCls}">`;
+            }),
+        );
+      }
+
+      let currentFile = "App.jsx";
+      let activePanel = "TERMINAL";
+      const codeWrap = document.getElementById("code-wrap");
+      const mobileEditor = document.getElementById("mobile-editor");
+      const tabsbar = document.getElementById("tabsbar");
+      const sidebar = document.getElementById("sidebar");
+      const bottomPanel = document.getElementById("bottom-panel");
+
+      function renderFile(file) {
+        currentFile = file;
+        const lines = fileContents[file] || [
+          '<span class="comment">// No preview available for this file.</span>',
+        ];
+        codeWrap.innerHTML = lines
+          .map(
+            (line, i) =>
+              `<div class="code-line ${i === 11 ? "current-line" : ""}"><span class="line-number">${i + 1}</span><span class="line-code">${line || "&nbsp;"}</span></div>`,
+          )
+          .join("");
+        document.getElementById("breadcrumb-file").textContent = file;
+        const mode = file.endsWith(".html")
+          ? "HTML"
+          : file.endsWith(".json")
+            ? "JSON"
+            : file.endsWith(".md")
+              ? "Markdown"
+              : file.endsWith(".css")
+                ? "CSS"
+                : "JavaScript JSX";
+        document.getElementById("language-mode").textContent = mode;
+        document
+          .querySelectorAll(".tab")
+          .forEach((t) =>
+            t.classList.toggle("active", t.dataset.file === file),
+          );
+        document
+          .querySelectorAll(".tree-row")
+          .forEach((r) =>
+            r.classList.toggle("selected", r.dataset.file === file),
+          );
+        document.getElementById("minimap").innerHTML = Array.from(
+          { length: Math.max(20, lines.length) },
+          (_, i) =>
+            `<div class="mini-line" style="width:${25 + ((i * 37) % 67)}%"></div>`,
+        ).join("");
+        document.getElementById("welcome").style.display = "none";
+        codeWrap.style.display = "block";
+
+        // Render mobile editor
+        const mLines = mobileFileContents[file] || [
+          '<span class="comment">// No preview</span>',
+        ];
+        mobileEditor.innerHTML = mLines
+          .map(
+            (line, i) =>
+              `<div class="m-code-line ${i === 11 ? "m-current-line" : ""}"><span class="m-line-num">${i + 1}</span><span class="m-line-code">${line || "&nbsp;"}</span></div>`,
+          )
+          .join("");
+        document.getElementById("mobile-minimap").innerHTML = Array.from(
+          { length: Math.max(20, mLines.length) },
+          (_, i) =>
+            `<div class="mm-line" style="width:${20 + ((i * 23) % 60)}%;background:#888;"></div>`,
+        ).join("");
+      }
+
+      function activateFile(file) {
+        if (!file || fileContents[file] === undefined) return;
+        if (![...tabsbar.children].some((t) => t.dataset.file === file)) {
+          const icons = {
+            "index.html": ["5", "file-html"],
+            "package.json": ["{ }", "file-json"],
+            "App.jsx": ["JS", "file-js"],
+            "Navbar.jsx": ["JS", "file-js"],
+            "Footer.jsx": ["JS", "file-js"],
+            "README.md": ["M↓", "file-md"],
+            "vite.config.js": ["JS", "file-js"],
+          };
+          const [icon, cls] = icons[file] || ["•", ""];
+          const tab = document.createElement("div");
+          tab.className = "tab";
+          tab.dataset.file = file;
+          tab.innerHTML = `<span class="tab-icon ${cls}">${icon}</span><span>${file}</span><span class="tab-close">×</span>`;
+          tabsbar.appendChild(tab);
+        }
+        renderFile(file);
+      }
+
+      document.getElementById("file-tree").addEventListener("click", (e) => {
+        const row = e.target.closest(".tree-row");
+        if (!row) return;
+        if (row.dataset.type === "folder") {
+          const c = row.querySelector(".chev");
+          c.classList.toggle("closed");
+          c.textContent = c.classList.contains("closed") ? "›" : "⌄";
+          notify(row.dataset.file + " folder");
+          return;
+        }
+        activateFile(row.dataset.file);
+      });
+
+      tabsbar.addEventListener("click", (e) => {
+        const tab = e.target.closest(".tab");
+        if (!tab) return;
+        if (e.target.classList.contains("tab-close")) {
+          tab.remove();
+          if (tab.dataset.file === currentFile) {
+            const next = tabsbar.querySelector(".tab");
+            if (next) activateFile(next.dataset.file);
+            else {
+              codeWrap.style.display = "none";
+              document.getElementById("welcome").style.display = "flex";
+            }
+          }
+          return;
+        }
+        activateFile(tab.dataset.file);
+      });
+
+      function notify(message) {
+        const toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.classList.add("show");
+        clearTimeout(window.toastTimer);
+        window.toastTimer = setTimeout(
+          () => toast.classList.remove("show"),
+          1900,
+        );
+      }
+
+      function toggleSidebar() {
+        sidebar.classList.toggle("hidden");
+      }
+      function togglePanel() {
+        bottomPanel.classList.toggle("collapsed");
+      }
+      function togglePanelSize() {
+        bottomPanel.style.height =
+          bottomPanel.style.height === "62vh" ? "205px" : "62vh";
+        bottomPanel.style.flexBasis = bottomPanel.style.height;
+      }
+      function toggleTree() {
+        const tree = document.getElementById("file-tree");
+        const chev = document.getElementById("tree-chev");
+        tree.style.display = tree.style.display === "none" ? "block" : "none";
+        chev.classList.toggle("closed");
+      }
+
+      // Activity bar view switching
+      document.querySelectorAll(".activity-icon[data-view]").forEach((btn) =>
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".activity-icon[data-view]")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          const view = btn.dataset.view;
+          sidebar.classList.remove("hidden");
+          document
+            .querySelectorAll(".side-view")
+            .forEach((v) => v.classList.remove("active"));
+          const target = document.getElementById("view-" + view);
+          if (target) target.classList.add("active");
+          const titleMap = {
+            explorer: "Explorer",
+            search: "Search",
+            source: "Source Control",
+            run: "Run and Debug",
+            extensions: "Extensions",
+          };
+          document.getElementById("sidebar-title").textContent =
+            titleMap[view] || "Explorer";
+        }),
+      );
+
+      document.querySelectorAll(".panel-tab").forEach((tab) =>
+        tab.addEventListener("click", () => {
+          activePanel = tab.dataset.panel;
+          document
+            .querySelectorAll(".panel-tab")
+            .forEach((t) => t.classList.toggle("active", t === tab));
+          document.getElementById("terminal-area").style.display =
+            activePanel === "TERMINAL" ? "block" : "none";
+          document.getElementById("problems-area").style.display =
+            activePanel === "PROBLEMS" ? "block" : "none";
+          if (activePanel !== "TERMINAL" && activePanel !== "PROBLEMS")
+            notify(activePanel + " panel");
+        }),
+      );
+
+      function openCommand() {
+        document.getElementById("command-overlay").classList.add("show");
+        const input = document.getElementById("command-input");
+        input.value = "";
+        input.focus();
+      }
+      function closeCommand(e) {
+        if (!e || e.target.id === "command-overlay")
+          document.getElementById("command-overlay").classList.remove("show");
+      }
+      function runCommand(command) {
+        closeCommand();
+        if (command === "toggle-terminal" || command === "toggle-panel")
+          togglePanel();
+        else if (command === "toggle-sidebar") toggleSidebar();
+        else if (command === "theme")
+          notify("Color theme: Dark+ (default dark)");
+        else if (command === "about")
+          notify("Visual Studio Code UI Clone · Frontend demo");
+      }
+      document
+        .querySelectorAll(".command-option")
+        .forEach((option) =>
+          option.addEventListener("click", () =>
+            runCommand(option.dataset.command),
+          ),
+        );
+      document
+        .getElementById("command-input")
+        .addEventListener("input", (e) => {
+          const q = e.target.value.toLowerCase();
+          document
+            .querySelectorAll(".command-option")
+            .forEach(
+              (o) =>
+                (o.style.display = o.textContent.toLowerCase().includes(q)
+                  ? "flex"
+                  : "none"),
+            );
+        });
+      document.addEventListener("keydown", (e) => {
+        if (
+          (e.ctrlKey || e.metaKey) &&
+          e.shiftKey &&
+          e.key.toLowerCase() === "p"
+        ) {
+          e.preventDefault();
+          openCommand();
+        } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
+          e.preventDefault();
+          toggleSidebar();
+        } else if ((e.ctrlKey || e.metaKey) && e.key === "`") {
+          e.preventDefault();
+          togglePanel();
+        } else if (e.key === "Escape") closeCommand();
+      });
+
+      // Mobile drawer
+      function toggleDrawer() {
+        document.getElementById("mobile-drawer").classList.toggle("open");
+        document.getElementById("drawer-overlay").classList.toggle("show");
+      }
+
+      // Mobile command palette
+      function toggleMobileCmd() {
+        document.getElementById("mobile-cmd").classList.toggle("show");
+      }
+
+      // Update phone time
+      function updatePhoneTime() {
+        const now = new Date();
+        const h = now.getHours();
+        const m = String(now.getMinutes()).padStart(2, "0");
+        document.getElementById("phone-time").textContent = `${h}:${m}`;
+      }
+      updatePhoneTime();
+      setInterval(updatePhoneTime, 30000);
+
+      // View switcher
+      document.querySelectorAll(".switcher-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".switcher-btn")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          const view = btn.dataset.view;
+          document.getElementById("desktop-view").style.display =
+            view === "desktop" ? "flex" : "none";
+          document
+            .getElementById("mobile-view")
+            .classList.toggle("active", view === "mobile");
+        });
+      });
+
+      // Initial render
+      renderFile("App.jsx");
+    </script>
+  </body>
+</html>

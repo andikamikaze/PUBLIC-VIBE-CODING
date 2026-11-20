@@ -1,0 +1,4648 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>Aplikasi Pengaduan Warga &amp; Layanan Publik Mandiri</title>
+    <meta
+      name="description"
+      content="Aplikasi pengaduan warga mandiri: laporkan jalan rusak, lampu PJU mati, dan sampah menumpuk dengan foto bukti dan titik lokasi peta, lacak status pengaduan, dan lihat papan transparansi publik."
+    />
+    <meta name="theme-color" content="#0f6cbd" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cpath%20fill='%230f6cbd'%20d='M12%2023s8-6.6%208-13a8%208%200%201%200-16%200c0%206.4%208%2013%208%2013z'/%3E%3Ccircle%20cx='12'%20cy='9.5'%20r='3.2'%20fill='%23fff'/%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
+    />
+    <style>
+      /* ============ RESET & VARIABEL ============ */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      :root {
+        --brand: #0f6cbd;
+        --brand-dark: #0a3a7a;
+        --brand-2: #12a5b0;
+        --ink: #10233f;
+        --muted: #5a6b80;
+        --line: #e2e9f2;
+        --bg: #f3f6fa;
+        --card: #fff;
+        --amber: #d97706;
+        --green: #178a4c;
+        --red: #d92d20;
+        --mono:
+          ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+        --shadow:
+          0 1px 2px rgba(16, 35, 63, 0.05), 0 10px 30px rgba(16, 35, 63, 0.07);
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family:
+          "Plus Jakarta Sans",
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          Arial,
+          sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      img {
+        display: block;
+        max-width: 100%;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+      }
+      ::selection {
+        background: #bcd9f5;
+      }
+      :focus-visible {
+        outline: 3px solid rgba(15, 108, 189, 0.45);
+        outline-offset: 2px;
+        border-radius: 6px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
+
+      .container {
+        max-width: 1140px;
+        margin: 0 auto;
+        padding: 0 22px;
+      }
+      .container-narrow {
+        max-width: 860px;
+      }
+      .ic {
+        width: 1.15em;
+        height: 1.15em;
+        flex: none;
+        vertical-align: -0.2em;
+      }
+
+      /* ============ TOMBOL / CHIP / PIL / BADGE ============ */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        padding: 11px 20px;
+        cursor: pointer;
+        transition: 0.18s;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, var(--brand), #1f83d6);
+        color: #fff;
+        box-shadow: 0 6px 18px rgba(15, 108, 189, 0.28);
+      }
+      .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 24px rgba(15, 108, 189, 0.38);
+      }
+      .btn-soft {
+        background: #e9f1fa;
+        color: #0b5da3;
+        border-color: #d3e3f5;
+      }
+      .btn-soft:hover {
+        background: #dcebfa;
+      }
+      .btn-light {
+        background: rgba(255, 255, 255, 0.14);
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.5);
+        backdrop-filter: blur(4px);
+      }
+      .btn-light:hover {
+        background: rgba(255, 255, 255, 0.26);
+      }
+      .btn-ghost {
+        background: #fff;
+        color: var(--ink);
+        border-color: var(--line);
+      }
+      .btn-ghost:hover {
+        border-color: #b9c8db;
+        background: #f7fafd;
+      }
+      .btn-lg {
+        padding: 14px 26px;
+        font-size: 1.02rem;
+        border-radius: 14px;
+      }
+      .btn-sm {
+        padding: 7px 13px;
+        font-size: 0.85rem;
+        border-radius: 9px;
+      }
+      .w100 {
+        width: 100%;
+      }
+
+      .chip-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .chip {
+        --c: var(--ink);
+        padding: 7px 14px;
+        border-radius: 99px;
+        border: 1.5px solid var(--line);
+        background: #fff;
+        font-weight: 700;
+        font-size: 0.83rem;
+        color: var(--muted);
+        cursor: pointer;
+        transition: 0.15s;
+      }
+      .chip:hover {
+        border-color: #b9c8db;
+        color: var(--ink);
+      }
+      .chip.on {
+        background: var(--c);
+        border-color: var(--c);
+        color: #fff;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 11px;
+        border-radius: 99px;
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.2px;
+      }
+      .pill::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: currentColor;
+        box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+      }
+      .st-dilaporkan {
+        background: #e8f1fb;
+        color: #0d5fa8;
+      }
+      .st-diproses {
+        background: #fdf1de;
+        color: #a15c07;
+      }
+      .st-selesai {
+        background: #e6f5ec;
+        color: #127a43;
+      }
+      .pill--solid {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+      }
+
+      .cat-chip {
+        --c: #64748b;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.78rem;
+        font-weight: 800;
+        color: var(--c);
+        background: color-mix(in srgb, var(--c) 10%, #fff);
+        padding: 4px 10px;
+        border-radius: 99px;
+      }
+      .cat-chip .ic {
+        width: 0.95em;
+        height: 0.95em;
+      }
+
+      /* ============ NAVBAR ============ */
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 500;
+        background: rgba(255, 255, 255, 0.93);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--line);
+        transition: 0.2s;
+      }
+      .nav.scrolled {
+        box-shadow: 0 4px 20px rgba(16, 35, 63, 0.09);
+      }
+      .nav-inner {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        height: 66px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .brand-logo {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--brand-dark), var(--brand-2));
+        display: grid;
+        place-items: center;
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(15, 108, 189, 0.35);
+      }
+      .brand-logo .ic {
+        width: 22px;
+        height: 22px;
+      }
+      .brand-text {
+        line-height: 1.15;
+      }
+      .brand-text strong {
+        font-size: 1.12rem;
+        font-weight: 800;
+        letter-spacing: -0.2px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .brand-text small {
+        display: block;
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 600;
+      }
+      .demo-pill {
+        font-style: normal;
+        font-size: 0.6rem;
+        font-weight: 800;
+        letter-spacing: 0.6px;
+        background: #fdf1de;
+        color: #a15c07;
+        border: 1px solid #f3ddb2;
+        padding: 1px 7px;
+        border-radius: 99px;
+      }
+      .nav-links {
+        display: flex;
+        gap: 4px;
+        margin-left: auto;
+      }
+      .nav-links a {
+        padding: 8px 14px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.93rem;
+        color: var(--muted);
+        cursor: pointer;
+        transition: 0.15s;
+      }
+      .nav-links a:hover {
+        color: var(--ink);
+        background: #eef3f9;
+      }
+      .nav-links a.active {
+        color: var(--brand);
+        background: #e9f1fa;
+      }
+      .nav-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .nav-burger {
+        display: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: #fff;
+        cursor: pointer;
+        place-items: center;
+        color: var(--ink);
+      }
+
+      /* ============ HERO ============ */
+      .hero {
+        background: linear-gradient(
+          125deg,
+          #0a2e6e 0%,
+          #0f6cbd 55%,
+          #12a5b0 135%
+        );
+        color: #fff;
+        padding: 74px 0 96px;
+        position: relative;
+        overflow: hidden;
+      }
+      .hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(
+            700px 300px at 85% 15%,
+            rgba(255, 255, 255, 0.14),
+            transparent 60%
+          ),
+          radial-gradient(
+            520px 280px at 8% 95%,
+            rgba(18, 165, 176, 0.28),
+            transparent 62%
+          );
+      }
+      .hero::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(
+          rgba(255, 255, 255, 0.16) 1px,
+          transparent 1px
+        );
+        background-size: 26px 26px;
+        opacity: 0.35;
+      }
+      .hero-grid {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: 56px;
+        align-items: center;
+      }
+      .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.13);
+        border: 1px solid rgba(255, 255, 255, 0.32);
+        padding: 7px 14px;
+        border-radius: 99px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        backdrop-filter: blur(4px);
+      }
+      .hero h1 {
+        font-size: clamp(30px, 4.6vw, 46px);
+        line-height: 1.14;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        margin: 18px 0 16px;
+      }
+      .grad-text {
+        background: linear-gradient(90deg, #ffe2a8, #9df0dd);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .hero p {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1.05rem;
+        max-width: 54ch;
+      }
+      .hero-cta {
+        display: flex;
+        gap: 12px;
+        margin: 26px 0 6px;
+        flex-wrap: wrap;
+      }
+      .hero-points {
+        list-style: none;
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        margin-top: 18px;
+      }
+      .hero-points li {
+        display: flex;
+        gap: 7px;
+        align-items: center;
+        font-size: 0.87rem;
+        color: rgba(255, 255, 255, 0.95);
+        font-weight: 600;
+      }
+      .hero-points .ic {
+        color: #9df0dd;
+        width: 1.2em;
+        height: 1.2em;
+      }
+      .hero-visual {
+        position: relative;
+        min-height: 400px;
+        z-index: 1;
+      }
+      .hero-card {
+        position: absolute;
+        top: 44px;
+        right: 6%;
+        width: min(340px, 100%);
+        background: #fff;
+        color: var(--ink);
+        border-radius: 18px;
+        box-shadow: 0 30px 60px rgba(4, 26, 58, 0.4);
+        padding: 18px;
+        animation: floaty 7s ease-in-out infinite;
+      }
+      .hc-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .hero-card h4 {
+        font-size: 0.98rem;
+        line-height: 1.35;
+        margin-bottom: 6px;
+      }
+      .hc-meta {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        color: var(--muted);
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-bottom: 12px;
+      }
+      .hc-tl {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 12px;
+      }
+      .hc-tl i {
+        flex: 1;
+        height: 6px;
+        border-radius: 99px;
+        background: #e2e9f2;
+      }
+      .hc-tl i.done {
+        background: linear-gradient(90deg, var(--brand), var(--brand-2));
+      }
+      .hc-tl i.done.ok {
+        background: var(--green);
+      }
+      .hc-resp {
+        display: flex;
+        gap: 8px;
+        background: #f2f7fd;
+        border: 1px solid #dbe8f7;
+        border-radius: 11px;
+        padding: 9px 11px;
+        font-size: 0.78rem;
+        color: #33506e;
+      }
+      .hc-resp .ic {
+        color: var(--brand);
+        margin-top: 2px;
+      }
+      .hero-float {
+        position: absolute;
+        display: flex;
+        gap: 9px;
+        align-items: center;
+        background: #fff;
+        color: var(--ink);
+        padding: 11px 15px;
+        border-radius: 14px;
+        box-shadow: 0 18px 40px rgba(4, 26, 58, 0.35);
+        font-size: 0.83rem;
+        font-weight: 700;
+      }
+      .hero-float .ic {
+        width: 1.3em;
+        height: 1.3em;
+      }
+      .hero-float.f1 {
+        left: 0;
+        top: 0;
+        animation: floaty 6s ease-in-out infinite;
+      }
+      .hero-float.f1 .ic {
+        color: var(--green);
+      }
+      .hero-float.f2 {
+        left: 10%;
+        bottom: 6px;
+        animation: floaty 8s ease-in-out infinite;
+      }
+      .hero-float.f2 .ic {
+        color: var(--brand);
+      }
+      @keyframes floaty {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-11px);
+        }
+      }
+
+      /* ============ STATISTIK / SEKSI / KATEGORI / ALUR ============ */
+      .stats-band {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        position: relative;
+        z-index: 5;
+      }
+      .stats-band.overlap {
+        margin-top: -52px;
+      }
+      .stat-card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 20px 22px;
+        box-shadow: var(--shadow);
+        display: flex;
+        gap: 14px;
+        align-items: center;
+      }
+      .stat-ic {
+        width: 46px;
+        height: 46px;
+        border-radius: 13px;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        flex: none;
+      }
+      .stat-ic .ic {
+        width: 22px;
+        height: 22px;
+      }
+      .stat-card b {
+        font-size: 1.55rem;
+        font-weight: 800;
+        display: block;
+        line-height: 1.15;
+      }
+      .stat-card span {
+        color: var(--muted);
+        font-size: 0.84rem;
+        font-weight: 600;
+      }
+      .sec-title {
+        font-size: 1.6rem;
+        font-weight: 800;
+        margin: 56px 0 6px;
+        letter-spacing: -0.3px;
+      }
+      .sec-sub {
+        color: var(--muted);
+        margin-bottom: 22px;
+        max-width: 66ch;
+      }
+      .sec-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        margin: 56px 0 18px;
+        flex-wrap: wrap;
+      }
+      .sec-head h2 {
+        font-size: 1.6rem;
+        font-weight: 800;
+        letter-spacing: -0.3px;
+      }
+      .linklike {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: none;
+        border: 0;
+        color: var(--brand);
+        font-weight: 800;
+        font-size: 0.9rem;
+        cursor: pointer;
+        padding: 4px 0;
+      }
+      .linklike:hover {
+        text-decoration: underline;
+      }
+      .cat-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+      }
+      .cat-card {
+        --c: #0f6cbd;
+        text-align: left;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 22px;
+        cursor: pointer;
+        transition: 0.2s;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        box-shadow: 0 1px 2px rgba(16, 35, 63, 0.04);
+      }
+      .cat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 14px 30px rgba(16, 35, 63, 0.13);
+        border-color: color-mix(in srgb, var(--c) 40%, var(--line));
+      }
+      .cat-ic {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        background: color-mix(in srgb, var(--c) 12%, #fff);
+        color: var(--c);
+        display: grid;
+        place-items: center;
+      }
+      .cat-ic .ic {
+        width: 24px;
+        height: 24px;
+      }
+      .cat-card h3 {
+        font-size: 1.04rem;
+      }
+      .cat-card p {
+        color: var(--muted);
+        font-size: 0.85rem;
+        flex: 1;
+      }
+      .cat-count {
+        font-size: 0.78rem;
+        color: var(--muted);
+        font-weight: 700;
+      }
+      .cat-cta {
+        color: var(--c);
+        font-weight: 800;
+        font-size: 0.9rem;
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .cat-cta .ic {
+        width: 1em;
+        height: 1em;
+        transition: 0.2s;
+      }
+      .cat-card:hover .cat-cta .ic {
+        transform: translateX(4px);
+      }
+      .flow-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin: 20px 0 8px;
+      }
+      .flow-step {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 20px;
+      }
+      .flow-no {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--brand), var(--brand-2));
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        margin-bottom: 10px;
+      }
+      .flow-no .ic {
+        width: 17px;
+        height: 17px;
+      }
+      .flow-step h4 {
+        font-size: 0.98rem;
+        margin-bottom: 4px;
+      }
+      .flow-step p {
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      /* ============ KARTU PENGADUAN (BOARD) ============ */
+      .page-head {
+        margin: 36px 0 22px;
+      }
+      .page-head h1 {
+        font-size: clamp(24px, 3.4vw, 34px);
+        font-weight: 800;
+        letter-spacing: -0.4px;
+      }
+      .page-head p {
+        color: var(--muted);
+        margin-top: 4px;
+        max-width: 72ch;
+      }
+      .page-head-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 18px;
+        flex-wrap: wrap;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+      }
+      .cards-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+        margin-bottom: 14px;
+      }
+      .bcard {
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        cursor: pointer;
+        transition: 0.2s;
+        padding: 0;
+      }
+      .bcard:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 34px rgba(16, 35, 63, 0.15);
+      }
+      .bcard-img {
+        position: relative;
+        height: 150px;
+        background: #e7edf4 center/cover;
+        display: grid;
+        place-items: center;
+        color: #93a6bd;
+      }
+      .bcard-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .bcard-img .ic {
+        width: 34px;
+        height: 34px;
+        opacity: 0.7;
+      }
+      .bcard-img .pill {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+      }
+      .bcard-body {
+        padding: 16px 18px 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .bcard-body h3 {
+        font-size: 1.02rem;
+        line-height: 1.35;
+      }
+      .bcard-desc {
+        color: var(--muted);
+        font-size: 0.87rem;
+        display: -webkit-box;
+        line-clamp: 2;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .bcard-meta {
+        display: flex;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 0.83rem;
+        align-items: flex-start;
+      }
+      .bcard-meta .ic {
+        margin-top: 3px;
+        color: #8a9bb0;
+      }
+      .bcard-foot {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 0.79rem;
+        font-weight: 600;
+        border-top: 1px dashed var(--line);
+        padding-top: 10px;
+        margin-top: auto;
+      }
+      .bcard-foot span {
+        display: inline-flex;
+        gap: 5px;
+        align-items: center;
+      }
+      .bcard-resp {
+        background: #f2f7fd;
+        border: 1px solid #dbe8f7;
+        border-radius: 10px;
+        padding: 8px 11px;
+        font-size: 0.8rem;
+        color: #33506e;
+        display: flex;
+        gap: 7px;
+      }
+      .bcard-resp .ic {
+        color: var(--brand);
+        margin-top: 2px;
+        flex: none;
+      }
+      .bcard-resp b {
+        color: #1c4f82;
+      }
+      .empty {
+        grid-column: 1/-1;
+        text-align: center;
+        padding: 48px 20px;
+        color: var(--muted);
+      }
+      .empty .ic {
+        width: 44px;
+        height: 44px;
+        color: #b6c4d6;
+        margin: 0 auto 8px;
+        display: block;
+      }
+      .empty h3 {
+        color: var(--ink);
+        font-size: 1.05rem;
+        margin-bottom: 4px;
+      }
+
+      /* ============ BOARD: KONTROL & PETA ============ */
+      .board-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+      .search-input {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #fff;
+        border: 1.5px solid var(--line);
+        border-radius: 13px;
+        padding: 0 15px;
+        flex: 1;
+        box-shadow: 0 1px 2px rgba(16, 35, 63, 0.04);
+      }
+      .search-input .ic {
+        color: #8a9bb0;
+      }
+      .search-input input {
+        border: 0;
+        outline: 0;
+        flex: 1;
+        font: inherit;
+        padding: 13px 0;
+        background: none;
+        color: var(--ink);
+        min-width: 0;
+      }
+      .board-stats {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .bstat {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 99px;
+        padding: 6px 13px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--muted);
+      }
+      .bstat b {
+        font-size: 0.95rem;
+        color: var(--ink);
+      }
+      .bstat.ok b {
+        color: var(--green);
+      }
+      .bstat.warn b {
+        color: var(--amber);
+      }
+      .map-panel {
+        padding: 16px 18px;
+        margin-bottom: 20px;
+      }
+      .map-panel-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+      }
+      .map-panel-head h3 {
+        font-size: 1.02rem;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .map-panel-head h3 .ic {
+        color: var(--brand);
+      }
+      .legend {
+        display: flex;
+        gap: 14px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: var(--muted);
+        flex-wrap: wrap;
+      }
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .legend i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .board-count {
+        color: var(--muted);
+        font-size: 0.84rem;
+        font-weight: 600;
+        margin: 0 2px 12px;
+      }
+      .map-box {
+        height: 300px;
+        border-radius: 14px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        position: relative;
+        z-index: 1;
+        background: #e7edf4;
+      }
+      .map-board {
+        height: 360px;
+      }
+      .map-fallback {
+        height: 100%;
+        display: grid;
+        place-items: center;
+        color: #7d8fa5;
+        font-size: 0.85rem;
+        font-weight: 600;
+        padding: 20px;
+        text-align: center;
+      }
+      .pin {
+        background: none;
+        border: none;
+      }
+      .pin svg {
+        filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.3));
+      }
+
+      /* ============ FORM LAPORAN ============ */
+      .report-grid {
+        display: grid;
+        grid-template-columns: 1fr 330px;
+        gap: 22px;
+        align-items: start;
+      }
+      .report-side {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .side-card {
+        padding: 20px;
+      }
+      .side-card h4 {
+        font-size: 0.98rem;
+        margin-bottom: 10px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .side-card h4 .ic {
+        color: var(--brand);
+      }
+      .side-card ul {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+      }
+      .side-card li {
+        display: flex;
+        gap: 8px;
+        font-size: 0.85rem;
+        color: #3b4d63;
+        line-height: 1.5;
+      }
+      .side-card li .ic {
+        color: var(--brand);
+        margin-top: 3px;
+        flex: none;
+      }
+      .form-card {
+        padding: 6px 26px 26px;
+      }
+      .form-section {
+        padding: 22px 0;
+        border-bottom: 1px dashed var(--line);
+      }
+      .form-section:last-of-type {
+        border-bottom: 0;
+      }
+      .form-section h3 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.06rem;
+        margin-bottom: 16px;
+      }
+      .form-section h3 small {
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 0.8rem;
+      }
+      .step-no {
+        width: 30px;
+        height: 30px;
+        border-radius: 10px;
+        background: #e9f1fa;
+        color: var(--brand);
+        display: grid;
+        place-items: center;
+        font-size: 0.9rem;
+        font-weight: 800;
+        flex: none;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 14px;
+        flex: 1;
+      }
+      .field label {
+        font-weight: 700;
+        font-size: 0.9rem;
+      }
+      .field label small {
+        color: var(--muted);
+        font-weight: 600;
+      }
+      .field input,
+      .field textarea,
+      .field select {
+        font: inherit;
+        border: 1.5px solid var(--line);
+        border-radius: 11px;
+        padding: 11px 14px;
+        background: #fbfdff;
+        transition: 0.15s;
+        color: var(--ink);
+        width: 100%;
+      }
+      .field input:focus,
+      .field textarea:focus,
+      .field select:focus {
+        outline: none;
+        border-color: var(--brand);
+        background: #fff;
+        box-shadow: 0 0 0 4px rgba(15, 108, 189, 0.12);
+      }
+      .field textarea {
+        resize: vertical;
+        min-height: 96px;
+      }
+      .field-row {
+        display: flex;
+        gap: 14px;
+      }
+      .invalid {
+        border-color: var(--red) !important;
+      }
+      .err {
+        color: var(--red);
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: none;
+      }
+      .err.show {
+        display: block;
+      }
+      .check {
+        display: flex;
+        gap: 9px;
+        align-items: flex-start;
+        font-size: 0.87rem;
+        color: #3b4d63;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .check input {
+        margin-top: 3px;
+        accent-color: var(--brand);
+        width: 16px;
+        height: 16px;
+        flex: none;
+      }
+      .radio-cards {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+      .rc {
+        --c: #64748b;
+        border: 1.5px solid var(--line);
+        border-radius: 13px;
+        padding: 12px;
+        display: flex;
+        gap: 11px;
+        align-items: center;
+        cursor: pointer;
+        transition: 0.15s;
+        background: #fff;
+      }
+      .rc:hover {
+        border-color: #b9c8db;
+      }
+      .rc.on {
+        border-color: var(--c);
+        background: color-mix(in srgb, var(--c) 7%, #fff);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 18%, transparent);
+      }
+      .rc-ic {
+        width: 38px;
+        height: 38px;
+        border-radius: 11px;
+        background: color-mix(in srgb, var(--c) 12%, #fff);
+        color: var(--c);
+        display: grid;
+        place-items: center;
+        flex: none;
+      }
+      .rc-ic .ic {
+        width: 19px;
+        height: 19px;
+      }
+      .rc b {
+        font-size: 0.9rem;
+        display: block;
+        line-height: 1.3;
+      }
+      .rc small {
+        color: var(--muted);
+        font-size: 0.75rem;
+        line-height: 1.35;
+        display: block;
+      }
+      .dropzone {
+        border: 2px dashed #c4d2e3;
+        border-radius: 14px;
+        padding: 24px;
+        text-align: center;
+        color: var(--muted);
+        cursor: pointer;
+        transition: 0.15s;
+        background: #fbfdff;
+      }
+      .dropzone:hover,
+      .dropzone.drag {
+        border-color: var(--brand);
+        background: #eef5fd;
+        color: var(--brand);
+      }
+      .dropzone .ic {
+        width: 28px;
+        height: 28px;
+        margin: 0 auto 6px;
+        display: block;
+      }
+      .dropzone b {
+        display: block;
+        font-size: 0.9rem;
+      }
+      .dropzone small {
+        font-size: 0.76rem;
+      }
+      .previews {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+      .ph {
+        position: relative;
+        width: 96px;
+        height: 96px;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+      }
+      .ph img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .ph button {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        width: 24px;
+        height: 24px;
+        border-radius: 8px;
+        background: rgba(13, 25, 42, 0.72);
+        color: #fff;
+        border: 0;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        padding: 0;
+      }
+      .ph button .ic {
+        width: 13px;
+        height: 13px;
+      }
+      .loc-tools {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin: 12px 0 14px;
+        flex-wrap: wrap;
+      }
+      .coords {
+        font-size: 0.83rem;
+        color: var(--muted);
+        font-weight: 600;
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .coords .ic {
+        color: var(--brand);
+      }
+      .coords .mono {
+        font-family: var(--mono);
+        color: #33506e;
+      }
+      .form-foot {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        padding-top: 20px;
+      }
+      .privacy-note {
+        display: flex;
+        gap: 8px;
+        font-size: 0.8rem;
+        color: var(--muted);
+        background: #f7fafd;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        padding: 10px 13px;
+      }
+      .privacy-note .ic {
+        color: #7a8ea5;
+        margin-top: 2px;
+        flex: none;
+      }
+
+      /* ============ SUKSES ============ */
+      .success-card {
+        padding: 42px 30px;
+        text-align: center;
+        max-width: 640px;
+        margin: 0 auto;
+        animation: pop 0.25s ease;
+      }
+      .succ-ic {
+        width: 84px;
+        height: 84px;
+        border-radius: 50%;
+        background: #e6f5ec;
+        color: var(--green);
+        display: grid;
+        place-items: center;
+        margin: 0 auto 18px;
+        animation: pulse 2.4s infinite;
+      }
+      .succ-ic .ic {
+        width: 40px;
+        height: 40px;
+      }
+      @keyframes pulse {
+        0% {
+          box-shadow: 0 0 0 0 rgba(23, 138, 76, 0.35);
+        }
+        70% {
+          box-shadow: 0 0 0 24px rgba(23, 138, 76, 0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(23, 138, 76, 0);
+        }
+      }
+      .success-card h2 {
+        font-size: 1.5rem;
+        letter-spacing: -0.3px;
+      }
+      .success-card > p {
+        color: var(--muted);
+        max-width: 48ch;
+        margin: 8px auto 0;
+      }
+      .ticket-box {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: #f4f8fd;
+        border: 1.5px dashed #9ec1e8;
+        border-radius: 14px;
+        padding: 12px 20px;
+        font-family: var(--mono);
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--brand-dark);
+        letter-spacing: 1px;
+        margin: 18px 0 4px;
+      }
+      .succ-note {
+        color: var(--muted);
+        font-size: 0.85rem;
+        max-width: 52ch;
+        margin: 6px auto 16px !important;
+      }
+      .succ-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 16px;
+      }
+      .mini-map {
+        height: 220px;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        margin-top: 10px;
+        background: #e7edf4;
+      }
+
+      /* ============ LACAK ============ */
+      .track-search {
+        display: flex;
+        gap: 10px;
+        padding: 12px;
+        margin-bottom: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .ts-ic {
+        color: #8a9bb0;
+        margin-left: 6px;
+        display: flex;
+      }
+      .track-search input {
+        flex: 1;
+        min-width: 200px;
+        font: inherit;
+        border: 1.5px solid var(--line);
+        border-radius: 11px;
+        padding: 12px 15px;
+        font-family: var(--mono);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background: #fbfdff;
+      }
+      .track-search input:focus {
+        outline: none;
+        border-color: var(--brand);
+        box-shadow: 0 0 0 4px rgba(15, 108, 189, 0.12);
+      }
+      .track-chips {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+      .tchip {
+        font-family: var(--mono);
+        font-size: 0.76rem;
+        font-weight: 800;
+        color: var(--brand);
+        background: #e9f1fa;
+        border: 1px solid #d3e3f5;
+        border-radius: 99px;
+        padding: 4px 12px;
+        cursor: pointer;
+      }
+      .tchip:hover {
+        background: #dcebfa;
+      }
+      .notfound {
+        text-align: center;
+        padding: 44px 26px;
+      }
+      .nf-ic {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: #fdeceb;
+        color: var(--red);
+        display: grid;
+        place-items: center;
+        margin: 0 auto 14px;
+      }
+      .nf-ic .ic {
+        width: 30px;
+        height: 30px;
+      }
+      .notfound h3 {
+        font-size: 1.2rem;
+        margin-bottom: 6px;
+      }
+      .notfound p {
+        color: var(--muted);
+        font-size: 0.9rem;
+        max-width: 44ch;
+        margin: 0 auto 18px;
+      }
+
+      /* ============ DETAIL / TIMELINE / TANGGAPAN ============ */
+      .det-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      .det-ticket {
+        font-family: var(--mono);
+        color: var(--brand);
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        font-size: 0.88rem;
+        display: inline-flex;
+        gap: 7px;
+        align-items: center;
+      }
+      .det h2 {
+        font-size: 1.28rem;
+        margin: 6px 0 10px;
+        letter-spacing: -0.3px;
+        line-height: 1.35;
+      }
+      .det-tags {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .tl {
+        position: relative;
+        margin: 18px 0;
+        padding-left: 36px;
+      }
+      .tl::before {
+        content: "";
+        position: absolute;
+        left: 11px;
+        top: 8px;
+        bottom: 8px;
+        width: 3px;
+        border-radius: 3px;
+        background: #e2e9f2;
+      }
+      .tl-step {
+        position: relative;
+        padding: 0 0 18px;
+      }
+      .tl-step:last-child {
+        padding-bottom: 2px;
+      }
+      .tl-dot {
+        position: absolute;
+        left: -36px;
+        top: 1px;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        background: #fff;
+        border: 3px solid #cbd7e5;
+        display: grid;
+        place-items: center;
+        color: #fff;
+      }
+      .tl-dot .ic {
+        width: 12px;
+        height: 12px;
+      }
+      .tl-step.done .tl-dot {
+        border-color: #0d5fa8;
+        background: #0d5fa8;
+      }
+      .tl-step.done.diproses .tl-dot {
+        border-color: var(--amber);
+        background: var(--amber);
+      }
+      .tl-step.done.selesai .tl-dot {
+        border-color: var(--green);
+        background: var(--green);
+      }
+      .tl-step b {
+        font-size: 0.95rem;
+      }
+      .tl-step small {
+        display: block;
+        color: var(--muted);
+        font-size: 0.79rem;
+        font-weight: 600;
+      }
+      .tl-step.pend {
+        opacity: 0.55;
+      }
+      .tl-step.cur b {
+        color: var(--brand);
+      }
+      .det-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin: 14px 0;
+      }
+      .det-item {
+        background: #f7fafd;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px 13px;
+        min-width: 0;
+      }
+      .det-item small {
+        display: block;
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        margin-bottom: 2px;
+      }
+      .det-item span {
+        font-size: 0.9rem;
+        font-weight: 600;
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        word-break: break-word;
+      }
+      .det-item span .ic {
+        color: #7a8ea5;
+      }
+      .det-desc {
+        color: #33455d;
+        font-size: 0.94rem;
+      }
+      .det-sec {
+        margin-top: 22px;
+      }
+      .det-sec h4 {
+        font-size: 1.04rem;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 12px;
+      }
+      .det-sec h4 .ic {
+        color: var(--brand);
+      }
+      .photos-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin: 12px 0 4px;
+      }
+      .photos-grid img {
+        width: 100%;
+        aspect-ratio: 4/3;
+        object-fit: cover;
+        border-radius: 11px;
+        cursor: zoom-in;
+        border: 1px solid var(--line);
+      }
+      .resp-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .resp {
+        background: #f4f8fd;
+        border: 1px solid #d9e6f5;
+        border-left: 4px solid var(--brand);
+        border-radius: 12px;
+        padding: 13px 16px;
+      }
+      .resp-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 5px;
+      }
+      .resp-head > div {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .resp b {
+        font-size: 0.92rem;
+      }
+      .resp-role {
+        color: var(--brand);
+        font-weight: 700;
+        font-size: 0.78rem;
+      }
+      .resp time {
+        color: var(--muted);
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+      .resp p {
+        font-size: 0.9rem;
+        color: #2c3f57;
+      }
+      .resp-official {
+        display: inline-flex;
+        gap: 5px;
+        align-items: center;
+        font-size: 0.66rem;
+        font-weight: 800;
+        color: #fff;
+        background: linear-gradient(135deg, var(--brand), var(--brand-2));
+        padding: 2px 9px;
+        border-radius: 99px;
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
+      }
+      .resp-official .ic {
+        width: 11px;
+        height: 11px;
+      }
+      .resp-none {
+        display: flex;
+        gap: 9px;
+        background: #f7fafd;
+        border: 1px dashed #ccd8e6;
+        border-radius: 12px;
+        padding: 14px 16px;
+        font-size: 0.86rem;
+        color: var(--muted);
+      }
+      .resp-none .ic {
+        flex: none;
+        margin-top: 2px;
+        color: #7a8ea5;
+      }
+
+      /* ============ PANEL ADMIN ============ */
+      .adm-box {
+        margin-top: 22px;
+        background: #fffaf0;
+        border: 1px solid #f0e0bd;
+        border-radius: 14px;
+        padding: 16px 18px;
+      }
+      .adm-box h4 {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 0.95rem;
+        margin-bottom: 12px;
+        color: #7c5407;
+      }
+      .adm-box h4 .ic {
+        color: #a15c07;
+      }
+      .adm-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .adm-row label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #7c5407;
+      }
+      .arow {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 15px 4px;
+        border-bottom: 1px solid var(--line);
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .arow:last-child {
+        border-bottom: 0;
+      }
+      .arow-main {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex: 1;
+        min-width: 250px;
+      }
+      .cat-dot {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: color-mix(in srgb, var(--c) 12%, #fff);
+        color: var(--c);
+        display: grid;
+        place-items: center;
+        flex: none;
+      }
+      .arow-main b {
+        font-size: 0.95rem;
+        display: block;
+        line-height: 1.3;
+      }
+      .arow-main small {
+        color: var(--muted);
+        font-size: 0.78rem;
+        display: block;
+      }
+      .arow-side {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .sel-status {
+        font-weight: 700;
+        font-size: 0.83rem;
+        border: 1.5px solid var(--line);
+        border-radius: 10px;
+        padding: 8px 10px;
+        background: #fff;
+        cursor: pointer;
+        color: var(--ink);
+      }
+      .sel-status.v-dilaporkan {
+        color: #0d5fa8;
+        border-color: #b7d2ee;
+        background: #eaf3fb;
+      }
+      .sel-status.v-diproses {
+        color: #a15c07;
+        border-color: #ecd3ac;
+        background: #fdf6e9;
+      }
+      .sel-status.v-selesai {
+        color: #127a43;
+        border-color: #b4dfc6;
+        background: #ecf7f0;
+      }
+      .admin-list {
+        padding: 8px 20px;
+      }
+      .admin-chips {
+        margin-bottom: 16px;
+      }
+      .admin-actions {
+        display: flex;
+        gap: 10px;
+      }
+      .arow-empty {
+        padding: 36px 16px;
+        text-align: center;
+        color: var(--muted);
+      }
+
+      /* ============ MODAL / LIGHTBOX / TOAST ============ */
+      .modal {
+        position: fixed;
+        inset: 0;
+        z-index: 900;
+        display: none;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 4vh 16px;
+        background: rgba(10, 22, 40, 0.55);
+        backdrop-filter: blur(3px);
+        overflow-y: auto;
+      }
+      .modal.open {
+        display: flex;
+      }
+      .modal-card {
+        background: #fff;
+        border-radius: 20px;
+        max-width: 720px;
+        width: 100%;
+        box-shadow: 0 40px 80px rgba(4, 15, 35, 0.4);
+        animation: pop 0.22s ease;
+        margin: auto;
+      }
+      .modal-card--sm {
+        max-width: 480px;
+      }
+      @keyframes pop {
+        from {
+          transform: translateY(14px) scale(0.98);
+          opacity: 0;
+        }
+      }
+      .modal-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 17px 24px;
+        border-bottom: 1px solid var(--line);
+        position: sticky;
+        top: 0;
+        background: #fff;
+        border-radius: 20px 20px 0 0;
+        z-index: 2;
+      }
+      .modal-head h3 {
+        font-size: 1.08rem;
+      }
+      .modal-body {
+        padding: 20px 24px 26px;
+      }
+      .icon-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: #fff;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        padding: 0;
+        flex: none;
+      }
+      .icon-btn:hover {
+        color: var(--ink);
+        border-color: #b9c8db;
+      }
+      .login-sub {
+        color: var(--muted);
+        font-size: 0.88rem;
+        margin-bottom: 16px;
+      }
+      .demo-hint {
+        display: flex;
+        gap: 8px;
+        margin-top: 14px;
+        font-size: 0.78rem;
+        color: var(--muted);
+        background: #f7fafd;
+        border: 1px dashed #ccd8e6;
+        border-radius: 11px;
+        padding: 10px 12px;
+      }
+      .demo-hint .ic {
+        flex: none;
+        margin-top: 2px;
+      }
+      .demo-hint b {
+        color: #3b4d63;
+      }
+      .resp-ctx {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        background: #f4f8fd;
+        border: 1px solid #d9e6f5;
+        border-radius: 11px;
+        padding: 10px 14px;
+        font-size: 0.85rem;
+        margin-bottom: 16px;
+        color: #33455d;
+        flex-wrap: wrap;
+      }
+      .resp-ctx b {
+        font-family: var(--mono);
+        color: var(--brand);
+      }
+      .shake {
+        animation: shake 0.4s;
+      }
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        20%,
+        60% {
+          transform: translateX(-9px);
+        }
+        40%,
+        80% {
+          transform: translateX(9px);
+        }
+      }
+      .lightbox {
+        position: fixed;
+        inset: 0;
+        z-index: 1300;
+        background: rgba(6, 14, 26, 0.92);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 28px;
+        cursor: zoom-out;
+      }
+      .lightbox.open {
+        display: flex;
+      }
+      .lightbox img {
+        max-width: 100%;
+        max-height: calc(100vh - 70px);
+        border-radius: 12px;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+      }
+      .lightbox .icon-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(255, 255, 255, 0.3);
+        color: #fff;
+      }
+      .toasts {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1400;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-width: min(380px, calc(100vw - 40px));
+      }
+      .toast {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        background: #0f2233;
+        color: #fff;
+        padding: 13px 16px;
+        border-radius: 13px;
+        box-shadow: 0 18px 40px rgba(4, 15, 35, 0.4);
+        font-size: 0.89rem;
+        font-weight: 600;
+        transform: translateY(12px);
+        opacity: 0;
+        transition: 0.25s;
+        cursor: pointer;
+      }
+      .toast.in {
+        transform: none;
+        opacity: 1;
+      }
+      .toast.out {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      .toast .ic {
+        margin-top: 2px;
+      }
+      .toast.success .ic {
+        color: #4ade80;
+      }
+      .toast.error .ic {
+        color: #f87171;
+      }
+      .toast.info .ic {
+        color: #7dd3fc;
+      }
+
+      /* ============ FOOTER ============ */
+      footer {
+        background: #0d1f33;
+        color: #c6d3e2;
+        margin-top: 72px;
+        padding: 48px 0 26px;
+      }
+      .foot-grid {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr 1.2fr;
+        gap: 34px;
+      }
+      .foot-brand {
+        display: flex;
+        gap: 11px;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .foot-brand strong {
+        color: #fff;
+        font-size: 1.1rem;
+      }
+      footer h4 {
+        color: #fff;
+        font-size: 0.95rem;
+        margin-bottom: 12px;
+      }
+      footer p,
+      footer li {
+        font-size: 0.86rem;
+        line-height: 1.7;
+      }
+      footer ul {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .flink {
+        display: inline-flex;
+        gap: 7px;
+        align-items: center;
+        background: none;
+        border: 0;
+        color: #9ec9f0;
+        font: inherit;
+        font-size: 0.86rem;
+        cursor: pointer;
+        padding: 2px 0;
+      }
+      .flink:hover {
+        color: #fff;
+        text-decoration: underline;
+      }
+      .foot-info {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .foot-info p {
+        display: flex;
+        gap: 8px;
+      }
+      .foot-info .ic {
+        flex: none;
+        margin-top: 3px;
+        color: #7a95b5;
+      }
+      .foot-bottom {
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        margin-top: 34px;
+        padding-top: 20px;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+        font-size: 0.79rem;
+        color: #8fa1b8;
+      }
+
+      /* ============ RESPONSIVE ============ */
+      @media (max-width: 1000px) {
+        .hero {
+          padding: 54px 0 84px;
+        }
+        .hero-grid {
+          grid-template-columns: 1fr;
+          gap: 36px;
+        }
+        .hero-visual {
+          min-height: 0;
+        }
+        .hero-card {
+          position: static;
+          width: min(360px, 100%);
+        }
+        .hero-float {
+          position: static;
+          display: inline-flex;
+          margin: 10px 10px 0 0;
+        }
+        .stats-band {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .stats-band.overlap {
+          margin-top: -40px;
+        }
+        .cat-grid,
+        .flow-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .cards-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .report-grid {
+          grid-template-columns: 1fr;
+        }
+        .report-side {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          align-items: start;
+        }
+        .foot-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 900px) {
+        .nav-links {
+          position: absolute;
+          top: 66px;
+          left: 0;
+          right: 0;
+          background: #fff;
+          flex-direction: column;
+          gap: 2px;
+          padding: 10px 22px 16px;
+          border-bottom: 1px solid var(--line);
+          box-shadow: 0 18px 30px rgba(16, 35, 63, 0.12);
+          display: none;
+        }
+        .nav-links.open {
+          display: flex;
+        }
+        .nav-links a {
+          padding: 12px 14px;
+          font-size: 1rem;
+        }
+        .nav-burger {
+          display: grid;
+        }
+      }
+      @media (max-width: 640px) {
+        .container {
+          padding: 0 16px;
+        }
+        .stats-band {
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+        }
+        .stat-card {
+          padding: 14px 15px;
+        }
+        .stat-ic {
+          width: 38px;
+          height: 38px;
+        }
+        .stat-card b {
+          font-size: 1.2rem;
+        }
+        .cat-grid,
+        .flow-grid,
+        .cards-grid {
+          grid-template-columns: 1fr;
+        }
+        .report-side {
+          grid-template-columns: 1fr;
+        }
+        .field-row {
+          flex-direction: column;
+          gap: 0;
+        }
+        .radio-cards {
+          grid-template-columns: 1fr;
+        }
+        .photos-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .det-grid {
+          grid-template-columns: 1fr;
+        }
+        .form-card {
+          padding: 4px 18px 20px;
+        }
+        .modal {
+          padding: 2vh 10px;
+        }
+        .modal-body {
+          padding: 16px 18px 22px;
+        }
+        .toasts {
+          left: 12px;
+          right: 12px;
+          bottom: 12px;
+          max-width: none;
+        }
+        .hero-cta .btn {
+          flex: 1;
+        }
+        .ticket-box {
+          font-size: 1.05rem;
+          padding: 10px 14px;
+        }
+        .bstat {
+          display: none;
+        }
+        .brand-text small {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="nav" id="topNav">
+      <div class="container nav-inner">
+        <a
+          class="brand"
+          data-view="home"
+          title="LaporWarga — kembali ke beranda"
+        >
+          <span class="brand-logo" data-ic="map-pin"></span>
+          <span class="brand-text">
+            <strong>LaporWarga <em class="demo-pill">DEMO</em></strong>
+            <small>Pengaduan &amp; Layanan Publik Mandiri</small>
+          </span>
+        </a>
+        <nav class="nav-links" id="navLinks" aria-label="Navigasi utama">
+          <a data-view="home" class="active">Beranda</a>
+          <a data-view="report">Buat Laporan</a>
+          <a data-view="track">Lacak Aduan</a>
+          <a data-view="board">Papan Publik</a>
+        </nav>
+        <div class="nav-actions">
+          <button class="btn btn-ghost btn-sm" id="btnAdmin">
+            <span data-ic="shield"></span
+            ><span id="btnAdminLabel">Masuk Pengurus</span>
+          </button>
+          <button
+            class="nav-burger"
+            id="btnBurger"
+            aria-label="Buka menu navigasi"
+          >
+            <span data-ic="menu"></span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- ================= BERANDA ================= -->
+      <section class="view" id="view-home">
+        <div class="hero">
+          <div class="container hero-grid">
+            <div class="hero-copy">
+              <span class="hero-badge"
+                ><span data-ic="map-pin"></span> Layanan Kelurahan Sukamaju ·
+                daring 24 jam</span
+              >
+              <h1>
+                Suara Warga untuk
+                <span class="grad-text">Fasilitas Publik</span> yang Lebih Baik.
+              </h1>
+              <p>
+                Laporkan jalan rusak, lampu PJU mati, hingga sampah menumpuk
+                hanya dalam 2 menit. Unggah foto bukti, tandai titik lokasi di
+                peta, lalu pantau statusnya sampai tuntas — semuanya transparan
+                bagi warga sekitar.
+              </p>
+              <div class="hero-cta">
+                <button class="btn btn-primary btn-lg" data-view="report">
+                  <span data-ic="edit"></span> Buat Pengaduan
+                </button>
+                <button class="btn btn-light btn-lg" data-view="board">
+                  <span data-ic="grid"></span> Papan Transparansi
+                </button>
+              </div>
+              <ul class="hero-points">
+                <li>
+                  <span data-ic="camera"></span> Unggah foto bukti kerusakan
+                </li>
+                <li>
+                  <span data-ic="navigation"></span> Titik lokasi peta otomatis
+                </li>
+                <li>
+                  <span data-ic="eye"></span> Pelacakan status &amp; tanggapan
+                  resmi
+                </li>
+              </ul>
+            </div>
+            <div class="hero-visual" aria-hidden="true">
+              <div class="hero-float f1">
+                <span data-ic="check-circle"></span> Lampu diperbaiki · 3 hari
+              </div>
+              <div class="hero-card">
+                <div class="hc-head">
+                  <span class="cat-chip" style="--c: #7c3aed"
+                    ><span data-ic="bulb"></span> Lampu PJU Mati</span
+                  >
+                  <span class="pill st-diproses">Diproses</span>
+                </div>
+                <h4>Lampu PJU mati di Jl. Sisingamangaraja</h4>
+                <div class="hc-meta">
+                  <span data-ic="map-pin"></span> Kebayoran Baru · 2 hari lalu
+                </div>
+                <div class="hc-tl">
+                  <i class="done"></i><i class="done"></i><i></i>
+                </div>
+                <div class="hc-resp">
+                  <span data-ic="shield"></span
+                  ><span
+                    ><b>Tanggapan resmi</b> — Penggantian lampu LED dijadwalkan
+                    pekan ini bersama tim perawatan PJU.</span
+                  >
+                </div>
+              </div>
+              <div class="hero-float f2">
+                <span data-ic="map-pin"></span> Titik lokasi tercatat otomatis
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="container">
+          <div class="stats-band overlap" id="homeStats"></div>
+
+          <h2 class="sec-title">Pilih jenis masalah yang ingin dilaporkan</h2>
+          <p class="sec-sub">
+            Pengaduan fasilitas umum yang paling sering masuk dari warga. Pilih
+            salah satu untuk langsung mulai mengisi form — lokasi dan foto bukti
+            ikut dilampirkan.
+          </p>
+          <div class="cat-grid" id="homeCats"></div>
+
+          <h2 class="sec-title">
+            Alur pengaduan — dari laporan warga sampai tuntas
+          </h2>
+          <p class="sec-sub">
+            Setiap aduan diproses dengan alur baku dan setiap perkembangan
+            statusnya dapat dipantau oleh pelapor maupun publik.
+          </p>
+          <div class="flow-grid">
+            <div class="flow-step">
+              <span class="flow-no"><span data-ic="edit"></span></span>
+              <h4>1 · Laporkan</h4>
+              <p>
+                Warga mengisi form, mengunggah foto bukti, dan menandai titik
+                lokasi di peta.
+              </p>
+            </div>
+            <div class="flow-step">
+              <span class="flow-no"><span data-ic="shield"></span></span>
+              <h4>2 · Verifikasi</h4>
+              <p>
+                Pengurus kelurahan memeriksa aduan dan memberikan tanggapan
+                resmi.
+              </p>
+            </div>
+            <div class="flow-step">
+              <span class="flow-no"><span data-ic="clock"></span></span>
+              <h4>3 · Diproses</h4>
+              <p>
+                Diteruskan ke unit teknis — status diperbarui hingga tindakan
+                selesai.
+              </p>
+            </div>
+            <div class="flow-step">
+              <span class="flow-no"><span data-ic="check-circle"></span></span>
+              <h4>4 · Selesai &amp; Transparan</h4>
+              <p>
+                Hasil dipublikasikan di papan transparansi untuk dapat dilihat
+                semua warga.
+              </p>
+            </div>
+          </div>
+
+          <div class="sec-head">
+            <h2>Pengaduan terbaru dari warga</h2>
+            <button class="linklike" data-view="board">
+              Lihat papan transparansi <span data-ic="arrow-right"></span>
+            </button>
+          </div>
+          <div class="cards-grid" id="homeLatest"></div>
+        </div>
+      </section>
+
+      <!-- ================= BUAT LAPORAN ================= -->
+      <section class="view" id="view-report" hidden>
+        <div class="container">
+          <div class="page-head">
+            <h1>Buat Pengaduan Baru</h1>
+            <p>
+              Lengkapi empat langkah singkat berikut. Semua isian hanya disimpan
+              di browser Anda (mode demo tanpa server) dan langsung tampil di
+              papan transparansi publik.
+            </p>
+          </div>
+
+          <div class="report-grid" id="reportGrid">
+            <form class="card form-card" id="reportForm" novalidate>
+              <div class="form-section">
+                <h3><span class="step-no">1</span> Data Pelapor</h3>
+                <div class="field-row">
+                  <div class="field">
+                    <label for="fNama">Nama lengkap</label>
+                    <input
+                      id="fNama"
+                      autocomplete="name"
+                      placeholder="cth: Budi Santoso"
+                    />
+                    <p class="err" data-err="nama"></p>
+                  </div>
+                  <div class="field">
+                    <label for="fTelepon"
+                      >Nomor HP / WhatsApp <small>(opsional)</small></label
+                    >
+                    <input
+                      id="fTelepon"
+                      inputmode="tel"
+                      autocomplete="tel"
+                      placeholder="cth: 0812-3456-7890"
+                    />
+                  </div>
+                </div>
+                <label class="check"
+                  ><input type="checkbox" id="fAnon" /><span
+                    >Sembunyikan nama saya di papan publik — kirim sebagai
+                    <b>&nbsp;pelapor anonim</b></span
+                  ></label
+                >
+              </div>
+
+              <div class="form-section">
+                <h3><span class="step-no">2</span> Detail Masalah</h3>
+                <div class="field">
+                  <label
+                    >Jenis masalah fasilitas umum <small>(wajib)</small></label
+                  >
+                  <div class="radio-cards" id="catCards"></div>
+                  <p class="err" data-err="cat"></p>
+                </div>
+                <div class="field">
+                  <label for="fJudul"
+                    >Judul laporan <small>(wajib)</small></label
+                  >
+                  <input
+                    id="fJudul"
+                    maxlength="80"
+                    placeholder="cth: Jalan berlubang besar di depan SDN 05"
+                  />
+                  <p class="err" data-err="judul"></p>
+                </div>
+                <div class="field">
+                  <label for="fDesc"
+                    >Deskripsi kejadian <small>(wajib)</small></label
+                  >
+                  <textarea
+                    id="fDesc"
+                    rows="4"
+                    placeholder="Jelaskan kronologi, sejak kapan terjadi, perkiraan ukuran/luas kerusakan, dan dampaknya bagi warga…"
+                  ></textarea>
+                  <p class="err" data-err="desc"></p>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <h3>
+                  <span class="step-no">3</span> Foto Bukti Kerusakan
+                  <small>(opsional, maks. 3 foto)</small>
+                </h3>
+                <div
+                  class="dropzone"
+                  id="dropzone"
+                  role="button"
+                  tabindex="0"
+                  aria-label="Unggah foto bukti"
+                >
+                  <span data-ic="camera"></span>
+                  <b>Klik atau seret foto ke area ini</b>
+                  <small
+                    >Foto otomatis dikompresi · JPG/PNG hingga 8 MB per
+                    foto</small
+                  >
+                </div>
+                <input
+                  type="file"
+                  id="fPhotos"
+                  accept="image/*"
+                  multiple
+                  hidden
+                />
+                <div class="previews" id="previews" hidden></div>
+              </div>
+
+              <div class="form-section">
+                <h3>
+                  <span class="step-no">4</span> Titik Lokasi Kejadian
+                  <small>(wajib)</small>
+                </h3>
+                <div class="map-box" id="mapReport"></div>
+                <div class="loc-tools">
+                  <button type="button" class="btn btn-soft btn-sm" id="btnGeo">
+                    <span data-ic="navigation"></span> Gunakan Lokasi Saya (GPS)
+                  </button>
+                  <span class="coords" id="coordsView"
+                    >Belum ada titik — klik peta untuk menandai</span
+                  >
+                </div>
+                <div class="field">
+                  <label for="fAlamat"
+                    >Alamat singkat
+                    <small
+                      >(terisi otomatis dari peta, dapat diubah)</small
+                    ></label
+                  >
+                  <input
+                    id="fAlamat"
+                    placeholder="Otomatis dari peta / ketik manual"
+                    autocomplete="off"
+                  />
+                </div>
+                <p class="err" data-err="loc"></p>
+              </div>
+
+              <div class="form-foot">
+                <p class="privacy-note">
+                  <span data-ic="info"></span
+                  ><span
+                    >Mode demo: data tersimpan lokal di browser Anda
+                    (localStorage), tidak dikirim ke server mana pun. Nama
+                    pelapor selalu disamarkan di papan publik.</span
+                  >
+                </p>
+                <button
+                  class="btn btn-primary btn-lg w100"
+                  type="submit"
+                  id="btnSubmit"
+                >
+                  <span data-ic="send"></span> Kirim Pengaduan
+                </button>
+              </div>
+            </form>
+
+            <aside class="report-side">
+              <div class="card side-card">
+                <h4><span data-ic="bulb"></span> Tips agar cepat ditindak</h4>
+                <ul>
+                  <li>
+                    <span data-ic="check"></span> Lampirkan foto terbaru yang
+                    jelas dan mendekati objek kerusakan.
+                  </li>
+                  <li>
+                    <span data-ic="check"></span> Tandai titik tepat di peta,
+                    bukan sekadar nama jalan.
+                  </li>
+                  <li>
+                    <span data-ic="check"></span> Satu laporan untuk satu
+                    masalah agar mudah dilacak.
+                  </li>
+                  <li>
+                    <span data-ic="check"></span> Simpan nomor tiket untuk
+                    memantau status aduan.
+                  </li>
+                </ul>
+              </div>
+              <div class="card side-card">
+                <h4><span data-ic="clock"></span> Makna tiap status</h4>
+                <ul>
+                  <li>
+                    <span data-ic="send"></span>
+                    <span
+                      ><b>Dilaporkan</b> — aduan masuk &amp; menunggu verifikasi
+                      pengurus.</span
+                    >
+                  </li>
+                  <li>
+                    <span data-ic="clock"></span>
+                    <span
+                      ><b>Diproses</b> — sedang ditindaklanjuti unit teknis
+                      terkait.</span
+                    >
+                  </li>
+                  <li>
+                    <span data-ic="check-circle"></span>
+                    <span
+                      ><b>Selesai</b> — perbaikan selesai &amp; hasil
+                      dipublikasikan.</span
+                    >
+                  </li>
+                </ul>
+              </div>
+            </aside>
+          </div>
+
+          <div class="card success-card" id="reportSuccess" hidden>
+            <div class="succ-ic"><span data-ic="check-circle"></span></div>
+            <h2>Pengaduan Berhasil Dikirim!</h2>
+            <p>
+              Terima kasih sudah berkontribusi memperbaiki lingkungan sekitar.
+              Simpan nomor tiket berikut untuk melacak status aduan Anda:
+            </p>
+            <div class="ticket-box">
+              <span id="succTicket">—</span
+              ><button
+                class="icon-btn"
+                id="btnCopyTicket"
+                data-copy=""
+                title="Salin nomor tiket"
+              >
+                <span data-ic="copy"></span>
+              </button>
+            </div>
+            <p class="succ-note">
+              Pengurus kelurahan akan memverifikasi laporan dan memberikan
+              tanggapan resmi. Titik lokasi Anda sudah tercatat pada peta di
+              bawah.
+            </p>
+            <div class="mini-map" id="succMap"></div>
+            <div class="succ-actions">
+              <button class="btn btn-primary" id="btnSuccTrack">
+                <span data-ic="search"></span> Lacak Aduan Ini
+              </button>
+              <button class="btn btn-soft" id="btnSuccBoard">
+                <span data-ic="grid"></span> Lihat Papan Publik
+              </button>
+              <button class="btn btn-ghost" id="btnSuccNew">
+                <span data-ic="plus"></span> Buat Laporan Lain
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= LACAK ADUAN ================= -->
+      <section class="view" id="view-track" hidden>
+        <div class="container container-narrow">
+          <div class="page-head">
+            <h1>Lacak Aduan</h1>
+            <p>
+              Masukkan nomor tiket pengaduan Anda (tertera setelah laporan
+              terkirim) untuk melihat status terkini, titik lokasi, dan
+              tanggapan resmi dari pengurus kelurahan.
+            </p>
+          </div>
+          <div class="card track-search">
+            <span class="ts-ic"><span data-ic="search"></span></span>
+            <input
+              id="trackInput"
+              placeholder="CONTOH: LPR-2026-0002"
+              autocomplete="off"
+            />
+            <button class="btn btn-primary" id="btnTrack">Lacak</button>
+          </div>
+          <div class="track-chips" id="trackChips"></div>
+          <div id="trackResult"></div>
+        </div>
+      </section>
+
+      <!-- ================= PAPAN TRANSPARANSI PUBLIK ================= -->
+      <section class="view" id="view-board" hidden>
+        <div class="container">
+          <div class="page-head page-head-row">
+            <div>
+              <h1>Papan Transparansi Publik</h1>
+              <p>
+                Semua pengaduan warga sekitar tampil terbuka: jenis masalah,
+                titik lokasi, status, hingga tanggapan resmi pengurus kelurahan.
+                Transparansi membangun kepercayaan.
+              </p>
+            </div>
+            <div class="board-stats" id="boardStats"></div>
+          </div>
+
+          <div class="board-controls">
+            <div class="search-input">
+              <span data-ic="search"></span
+              ><input
+                id="boardQ"
+                placeholder="Cari judul, lokasi, atau nomor tiket…"
+                autocomplete="off"
+              />
+            </div>
+            <div class="chip-row" id="statusChips"></div>
+            <div class="chip-row" id="catChips"></div>
+          </div>
+
+          <div class="card map-panel">
+            <div class="map-panel-head">
+              <h3>
+                <span data-ic="map-pin"></span> Peta sebaran pengaduan warga
+              </h3>
+              <div class="legend">
+                <span><i style="background: #0d5fa8"></i> Dilaporkan</span>
+                <span><i style="background: #d97706"></i> Diproses</span>
+                <span><i style="background: #16a34a"></i> Selesai</span>
+              </div>
+            </div>
+            <div class="map-box map-board" id="mapBoard"></div>
+          </div>
+
+          <p class="board-count" id="boardCount"></p>
+          <div class="cards-grid" id="boardGrid"></div>
+        </div>
+      </section>
+
+      <!-- ================= PANEL PENGURUS (ADMIN) ================= -->
+      <section class="view" id="view-admin" hidden>
+        <div class="container">
+          <div class="page-head page-head-row">
+            <div>
+              <h1>Panel Pengurus Kelurahan</h1>
+              <p>
+                Kelola seluruh aduan warga: perbarui status pemrosesan, beri
+                tanggapan resmi, dan pantau antrean pekerjaan — setiap perubahan
+                langsung tampil di papan publik.
+              </p>
+            </div>
+            <div class="admin-actions">
+              <button class="btn btn-ghost" id="btnLogout">
+                <span data-ic="logout"></span> Keluar
+              </button>
+            </div>
+          </div>
+          <div class="stats-band" id="adminStats"></div>
+          <div class="chip-row admin-chips" id="adminChips"></div>
+          <div class="card admin-list" id="adminList"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="container">
+        <div class="foot-grid">
+          <div>
+            <div class="foot-brand">
+              <span class="brand-logo" data-ic="map-pin"></span>
+              <strong>LaporWarga</strong>
+            </div>
+            <p>
+              Prototipe layanan pengaduan warga &amp; transparansi publik.
+              Seluruh fitur — form pelaporan, unggah foto, peta lokasi,
+              pelacakan status, papan publik, dan tanggapan resmi — berjalan
+              sepenuhnya di browser Anda, tanpa server dan tanpa akun.
+            </p>
+          </div>
+          <div>
+            <h4>Navigasi</h4>
+            <ul>
+              <li>
+                <button class="flink" data-view="home">
+                  <span data-ic="home"></span> Beranda
+                </button>
+              </li>
+              <li>
+                <button class="flink" data-view="report">
+                  <span data-ic="edit"></span> Buat Laporan
+                </button>
+              </li>
+              <li>
+                <button class="flink" data-view="track">
+                  <span data-ic="search"></span> Lacak Aduan
+                </button>
+              </li>
+              <li>
+                <button class="flink" data-view="board">
+                  <span data-ic="grid"></span> Papan Publik
+                </button>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4>Informasi</h4>
+            <div class="foot-info">
+              <p>
+                <span data-ic="info"></span
+                ><span
+                  >Mode demo — data tersimpan di localStorage browser dan dapat
+                  dimuat ulang kapan saja.</span
+                >
+              </p>
+              <p>
+                <span data-ic="map-pin"></span
+                ><span
+                  >Peta © OpenStreetMap contributors · memerlukan koneksi
+                  internet.</span
+                >
+              </p>
+              <button class="flink" id="btnReset">
+                <span data-ic="refresh"></span> Muat ulang data contoh
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="foot-bottom">
+          <span
+            >© 2026 LaporWarga · Dibuat untuk demonstrasi layanan publik
+            mandiri.</span
+          >
+          <span>Pengaduan darurat: 112</span>
+        </div>
+      </div>
+    </footer>
+
+    <!-- ================= MODAL DETAIL PENGADUAN ================= -->
+    <div
+      class="modal"
+      id="modalDetail"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Detail pengaduan"
+    >
+      <div class="modal-card">
+        <div class="modal-head">
+          <h3>Detail Pengaduan</h3>
+          <button class="icon-btn" data-close aria-label="Tutup">
+            <span data-ic="x"></span>
+          </button>
+        </div>
+        <div class="modal-body" id="mdBody"></div>
+      </div>
+    </div>
+
+    <!-- ================= MODAL LOGIN PENGURUS ================= -->
+    <div
+      class="modal"
+      id="modalLogin"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Masuk pengurus"
+    >
+      <div class="modal-card modal-card--sm">
+        <div class="modal-head">
+          <h3>Masuk Pengurus Kelurahan</h3>
+          <button class="icon-btn" data-close aria-label="Tutup">
+            <span data-ic="x"></span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p class="login-sub">
+            Area khusus pengurus/kelurahan untuk memverifikasi aduan,
+            memperbarui status, dan memberikan tanggapan resmi kepada warga.
+          </p>
+          <div class="field">
+            <label for="pinInput">Nomor PIN petugas</label>
+            <input
+              id="pinInput"
+              type="password"
+              inputmode="numeric"
+              maxlength="6"
+              placeholder="••••••"
+              autocomplete="off"
+            />
+            <p class="err" id="loginErr"></p>
+          </div>
+          <button class="btn btn-primary btn-lg w100" id="btnLogin">
+            <span data-ic="shield"></span> Masuk
+          </button>
+          <p class="demo-hint">
+            <span data-ic="info"></span
+            ><span
+              >Mode demo — PIN: <b>123456</b>. Pada implementasi nyata,
+              autentikasi harus divalidasi oleh server resmi kelurahan.</span
+            >
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= MODAL TANGGAPAN RESMI ================= -->
+    <div
+      class="modal"
+      id="modalRespond"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Beri tanggapan resmi"
+    >
+      <div class="modal-card modal-card--sm">
+        <div class="modal-head">
+          <h3>Beri Tanggapan Resmi</h3>
+          <button class="icon-btn" data-close aria-label="Tutup">
+            <span data-ic="x"></span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="resp-ctx" id="respCtx"></div>
+          <div class="field">
+            <label for="respWho">Ditandatangani oleh</label>
+            <select id="respWho"></select>
+          </div>
+          <div class="field">
+            <label for="respStatus">Status aduan setelah tanggapan ini</label>
+            <select id="respStatus"></select>
+          </div>
+          <div class="field">
+            <label for="respMsg"
+              >Isi tanggapan <small>(wajib, min. 10 karakter)</small></label
+            >
+            <textarea
+              id="respMsg"
+              rows="4"
+              placeholder="cth: Terima kasih atas laporannya. Tim telah melakukan pengecekan lapangan dan perbaikan dijadwalkan pada…"
+            ></textarea>
+          </div>
+          <button class="btn btn-primary btn-lg w100" id="btnSendResp">
+            <span data-ic="send"></span> Kirim &amp; Publikasikan Tanggapan
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="lightbox" id="lightbox">
+      <button class="icon-btn lb-close" aria-label="Tutup">
+        <span data-ic="x"></span></button
+      ><img id="lightboxImg" alt="Pratinjau foto bukti pengaduan" />
+    </div>
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script>
+      "use strict";
+      /* ================================================================
+   LaporWarga — Aplikasi Pengaduan Warga & Layanan Publik Mandiri
+   Berjalan penuh di browser (localStorage) · Peta: Leaflet + OSM
+   ================================================================ */
+
+      /* ---------- Konstanta ---------- */
+      const LS_REPORTS = "lw_reports_v1";
+      const LS_ADMIN = "lw_admin_v1";
+      const ADMIN_PIN = "123456";
+      const HAS_MAP = typeof L !== "undefined";
+      const DEFAULT_CENTER = [-6.248, 106.818]; // Jakarta Selatan
+      const DEFAULT_ZOOM = 13;
+
+      const CATS = {
+        jalan_rusak: {
+          label: "Jalan Rusak",
+          icon: "road",
+          color: "#c2410c",
+          hint: "Jalan berlubang, aspal pecah, trotoar rusak",
+        },
+        pju_mati: {
+          label: "Lampu PJU Mati",
+          icon: "bulb",
+          color: "#7c3aed",
+          hint: "Penerangan jalan umum mati atau redup",
+        },
+        sampah: {
+          label: "Sampah Menumpuk",
+          icon: "trash",
+          color: "#0d9488",
+          hint: "Tumpukan sampah, TPS meluap, saluran tersumbat",
+        },
+        lainnya: {
+          label: "Fasilitas Lainnya",
+          icon: "building",
+          color: "#64748b",
+          hint: "Taman, jembatan, air bersih, fasilitas umum lain",
+        },
+      };
+      const STATUSES = {
+        dilaporkan: { label: "Dilaporkan", color: "#0d5fa8", icon: "send" },
+        diproses: { label: "Diproses", color: "#d97706", icon: "clock" },
+        selesai: { label: "Selesai", color: "#16a34a", icon: "check-circle" },
+      };
+      const STATUS_ORDER = ["dilaporkan", "diproses", "selesai"];
+      const OFFICIALS = [
+        { name: "Drs. H. Bambang Sutrisno, M.Si", role: "Lurah Sukamaju" },
+        { name: "Ratna Puspita, S.Sos", role: "Sekretaris Kelurahan" },
+        { name: "Aminah Firdaus, S.T.", role: "Kasi Pelayanan" },
+        { name: "Joko Susilo", role: "Petugas Teknis — Dinas Bina Marga" },
+        { name: "Yusuf Hamdani", role: "Petugas Kebersihan" },
+      ];
+
+      /* ---------- Ikon SVG (gaya stroke) ---------- */
+      const ICONS = {
+        x: '<path d="M18 6 6 18M6 6l12 12"/>',
+        menu: '<path d="M3 12h18M3 6h18M3 18h18"/>',
+        "arrow-right": '<path d="M5 12h14M12 5l7 7-7 7"/>',
+        search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+        "map-pin":
+          '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
+        camera:
+          '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
+        check: '<path d="M20 6 9 17l-5-5"/>',
+        "check-circle":
+          '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m22 4-10 10.01-3-3"/>',
+        clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+        alert:
+          '<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/>',
+        info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
+        user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+        send: '<path d="m22 2-7 20-4-9-9-4 20-7z"/><path d="M22 2 11 13"/>',
+        shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+        copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+        phone:
+          '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>',
+        "file-text":
+          '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>',
+        grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>',
+        home: '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
+        edit: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>',
+        message:
+          '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+        plus: '<path d="M12 5v14M5 12h14"/>',
+        logout:
+          '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+        refresh:
+          '<path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>',
+        navigation: '<path d="m3 11 19-9-9 19-2-8-8-2z"/>',
+        road: '<path d="M4 21 8 3M20 21 16 3M12 5v3M12 12v3M12 19v2"/>',
+        bulb: '<path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4.9 12 4.6 4.6 0 0 1 1.4 2.5V18h7v-1.5A4.6 4.6 0 0 1 16.9 14 7 7 0 0 0 12 2z"/>',
+        trash:
+          '<path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6M14 11v6"/>',
+        building:
+          '<path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/><path d="M9 10h.01M12 10h.01M15 10h.01M9 13h.01M12 13h.01M15 13h.01"/>',
+        eye: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+      };
+
+      /* ---------- Util dasar ---------- */
+      const $ = (s) => document.querySelector(s);
+      const $$ = (s) => [...document.querySelectorAll(s)];
+      const esc = (s) =>
+        String(s ?? "").replace(
+          /[&<>"']/g,
+          (m) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[m],
+        );
+      function icon(name, cls = "") {
+        return `<svg class="ic ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ""}</svg>`;
+      }
+      function injectIcons() {
+        $$("[data-ic]").forEach((el) => {
+          el.innerHTML = icon(el.dataset.ic);
+        });
+      }
+      const fmtDate = (ts) =>
+        new Intl.DateTimeFormat("id-ID", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+          .format(new Date(ts))
+          .replace(".", "");
+      function timeAgo(ts) {
+        const s = Math.max(1, Math.floor((Date.now() - ts) / 1000));
+        if (s < 60) return "baru saja";
+        const m = Math.floor(s / 60);
+        if (m < 60) return `${m} menit lalu`;
+        const h = Math.floor(m / 60);
+        if (h < 24) return `${h} jam lalu`;
+        const d = Math.floor(h / 24);
+        if (d < 7) return `${d} hari lalu`;
+        const w = Math.floor(d / 7);
+        if (w < 5) return `${w} minggu lalu`;
+        return fmtDate(ts);
+      }
+      const truncate = (s, n) => (s.length > n ? s.slice(0, n - 1) + "…" : s);
+      const coordsStr = (r) => `${r.lat.toFixed(5)}, ${r.lng.toFixed(5)}`;
+      function maskName(r) {
+        if (r.anon || !r.name) return "Pelapor Anonim";
+        const p = r.name.trim().split(/\s+/);
+        return p.length > 1 ? `${p[0]} ${p[p.length - 1][0]}.` : p[0];
+      }
+      function toast(msg, type = "success") {
+        const el = document.createElement("div");
+        el.className = `toast ${type}`;
+        el.innerHTML =
+          icon(
+            type === "success"
+              ? "check-circle"
+              : type === "error"
+                ? "alert"
+                : "info",
+          ) + `<span>${esc(msg)}</span>`;
+        $("#toasts").appendChild(el);
+        requestAnimationFrame(() => el.classList.add("in"));
+        const kill = () => {
+          el.classList.add("out");
+          setTimeout(() => el.remove(), 280);
+        };
+        setTimeout(kill, 4000);
+        el.onclick = kill;
+      }
+
+      /* ---------- State ---------- */
+      const state = {
+        reports: [],
+        admin: false,
+        formCat: null,
+        formLatLng: null,
+        photos: [],
+        filters: { q: "", status: "semua", cat: "semua" },
+        adminFilter: "semua",
+        trackId: null,
+        openDetailId: null,
+        respondId: null,
+      };
+
+      /* ---------- Penyimpanan ---------- */
+      function loadReports() {
+        try {
+          return JSON.parse(localStorage.getItem(LS_REPORTS)) || null;
+        } catch {
+          return null;
+        }
+      }
+      function saveReports() {
+        try {
+          localStorage.setItem(LS_REPORTS, JSON.stringify(state.reports));
+          return true;
+        } catch (e) {
+          toast(
+            "Penyimpanan browser penuh — hapus beberapa foto lama lalu ulangi.",
+            "error",
+          );
+          return false;
+        }
+      }
+
+      /* ---------- Foto contoh (SVG data-URI, tanpa jaringan) ---------- */
+      function svgPhoto(label, sub, c1, c2, icPath) {
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><rect width="640" height="480" fill="url(#g)"/><g opacity=".22" stroke="#fff" stroke-width="2" fill="none"><circle cx="320" cy="200" r="88"/><circle cx="320" cy="200" r="124"/></g><g transform="translate(292,172) scale(2.3)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icPath}</g><text x="320" y="328" text-anchor="middle" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#fff">${label}</text><text x="320" y="360" text-anchor="middle" font-family="Arial,sans-serif" font-size="17" fill="rgba(255,255,255,.88)">${sub}</text><text x="320" y="452" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="rgba(255,255,255,.72)">Bukti foto — LaporWarga</text></svg>`;
+        return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+      }
+
+      /* ---------- Data contoh (seed) ---------- */
+      function seedReports() {
+        const now = Date.now(),
+          D = (d, h = 0) => now - d * 864e5 - h * 36e5,
+          P = svgPhoto;
+        return [
+          {
+            id: "LPR-2026-0001",
+            cat: "sampah",
+            title: "Sampah menumpuk dan berbau di TPS RW 05",
+            desc: "Tumpukan sampah di TPS RW 05 sudah tidak terangkut selama 4 hari dan menimbulkan bau tidak sedap. Beberapa warga mulai membakar sisa sampah yang berisiko mengganggu kesehatan anak-anak di sekitar.",
+            name: "Hendra Wijaya",
+            phone: "0812-7788-1020",
+            anon: false,
+            photos: [
+              P(
+                "TPS RW 05 — Kebayoran",
+                "Sampah menumpuk 4 hari",
+                "#2dd4bf",
+                "#0d9488",
+                ICONS.trash,
+              ),
+            ],
+            lat: -6.2427,
+            lng: 106.7812,
+            addr: "Jl. Taman Margasatwa, Kebayoran Baru",
+            status: "selesai",
+            createdAt: D(30),
+            updatedAt: D(22),
+            history: [
+              { s: "dilaporkan", at: D(30), by: "Sistem" },
+              {
+                s: "diproses",
+                at: D(27),
+                by: "Ratna Puspita — Sekretaris Kelurahan",
+              },
+              {
+                s: "selesai",
+                at: D(22),
+                by: "Yusuf Hamdani — Petugas Kebersihan",
+              },
+            ],
+            responses: [
+              {
+                by: "Ratna Puspita, S.Sos",
+                role: "Sekretaris Kelurahan",
+                at: D(27),
+                msg: "Terima kasih atas laporannya. Kami telah menghubungi pengelola TPS; pengangkutan tambahan akan dijadwalkan maksimal 2×24 jam dari sekarang.",
+              },
+              {
+                by: "Yusuf Hamdani",
+                role: "Petugas Kebersihan",
+                at: D(22),
+                msg: "Pengangkutan ekstra telah selesai dilakukan pukul 16.30 WIB. TPS RW 05 kini bersih dan jadwal angkut ditambah menjelang akhir pekan. Terima kasih atas kesabarannya.",
+              },
+            ],
+          },
+
+          {
+            id: "LPR-2026-0002",
+            cat: "jalan_rusak",
+            title: "Aspal jalan berlubak pasca penggalian PDAM",
+            desc: "Terdapat lubang memanjang ±6 meter di lajur kiri jalan akibat penggalian pipa PDAM yang belum ditutup sempurna. Sudah 2 minggu berlalu dan makin dalam saat hujan, sering hampar tergelincir pengendara motor.",
+            name: "Budi Santoso",
+            phone: "0813-2211-9087",
+            anon: false,
+            photos: [
+              P(
+                "Jl. Panglima Polim Raya",
+                "Lubang pasca galian PDAM",
+                "#fb923c",
+                "#c2410c",
+                ICONS.road,
+              ),
+            ],
+            lat: -6.2617,
+            lng: 106.8002,
+            addr: "Jl. Panglima Polim Raya No. 45, Kebayoran Baru",
+            status: "diproses",
+            createdAt: D(9),
+            updatedAt: D(7),
+            history: [
+              { s: "dilaporkan", at: D(9), by: "Sistem" },
+              {
+                s: "diproses",
+                at: D(7),
+                by: "Ratna Puspita — Sekretaris Kelurahan",
+              },
+            ],
+            responses: [
+              {
+                by: "Ratna Puspita, S.Sos",
+                role: "Sekretaris Kelurahan",
+                at: D(7),
+                msg: "Laporan diverifikasi dan diteruskan ke Dinas Bina Marga. Survei lapangan dijadwalkan pekan ini; penutupan lubang dengan aspal dingin menyusul hasil survei.",
+              },
+            ],
+          },
+
+          {
+            id: "LPR-2026-0003",
+            cat: "pju_mati",
+            title: "Tiga tiang lampu PJU mati di Jl. Sisingamangaraja",
+            desc: "Tiga tiang lampu penerangan jalan di depan ruko nomor 20–28 mati bergiliran sejak minggu lalu. Ruas jalan menjadi gelap total setelah pukul 18.00 dan rawan kejahatan serta kecelakaan.",
+            name: "Siti Rahmawati",
+            phone: "",
+            anon: false,
+            photos: [
+              P(
+                "Jl. Sisingamangaraja",
+                "3 titik PJU mati",
+                "#a78bfa",
+                "#6d28d9",
+                ICONS.bulb,
+              ),
+            ],
+            lat: -6.2417,
+            lng: 106.7995,
+            addr: "Jl. S. Sisingamangaraja, Kebayoran Baru",
+            status: "diproses",
+            createdAt: D(6),
+            updatedAt: D(4),
+            history: [
+              { s: "dilaporkan", at: D(6), by: "Sistem" },
+              {
+                s: "diproses",
+                at: D(4),
+                by: "Joko Susilo — Petugas Teknis PJU",
+              },
+            ],
+            responses: [
+              {
+                by: "Joko Susilo",
+                role: "Petugas Teknis — Dinas Bina Marga",
+                at: D(4),
+                msg: "Penggantian lampu LED 40 Watt untuk 3 titik dijadwalkan Kamis ini bersama tim perawatan PJU. Mohon tidak menempelkan poster di tiang selama pengerjaan berlangsung.",
+              },
+            ],
+          },
+
+          {
+            id: "LPR-2026-0004",
+            cat: "sampah",
+            title: "Sampah menumpuk di TPS Pasar Minggu",
+            desc: "Sampah dari pasar menumpuk meluber ke pinggir jalan hingga mengganggu lalu lintas pejalan kaki dan arus kendaraan pagi hari. Volume terus bertambah menjelang akhir pekan.",
+            name: "",
+            phone: "0857-9911-2345",
+            anon: true,
+            photos: [
+              P(
+                "TPS Pasar Minggu",
+                "Sampah meluber ke jalan",
+                "#2dd4bf",
+                "#0d9488",
+                ICONS.trash,
+              ),
+            ],
+            lat: -6.2845,
+            lng: 106.8466,
+            addr: "Jl. Warung Buncit, Pasar Minggu",
+            status: "selesai",
+            createdAt: D(14),
+            updatedAt: D(9),
+            history: [
+              { s: "dilaporkan", at: D(14), by: "Sistem" },
+              {
+                s: "diproses",
+                at: D(12),
+                by: "Ratna Puspita — Sekretaris Kelurahan",
+              },
+              {
+                s: "selesai",
+                at: D(9),
+                by: "Yusuf Hamdani — Petugas Kebersihan",
+              },
+            ],
+            responses: [
+              {
+                by: "Ratna Puspita, S.Sos",
+                role: "Sekretaris Kelurahan",
+                at: D(12),
+                msg: "Terima kasih. Petugas kebersihan akan melakukan pengangkutan tambahan hari ini pukul 16.00 WIB bersama pengecekan drainase di sekitar TPS.",
+              },
+              {
+                by: "Yusuf Hamdani",
+                role: "Petugas Kebersihan",
+                at: D(9),
+                msg: "Pengangkutan selesai dilakukan. TPS Pasar Minggu sudah bersih dan jadwal angkut ditambah dua kali menjelang akhir pekan. Terima kasih atas laporannya.",
+              },
+            ],
+          },
+
+          {
+            id: "LPR-2026-0005",
+            cat: "jalan_rusak",
+            title: "Jalan berlubang besar di depan SDN 05 Tebet",
+            desc: "Lubang berdiameter ±1 meter tepat di zebra cross depan sekolah dasar. Sangat berbahaya bagi anak-anak yang bersekolah pagi hari, apalagi bila tergenang air hujan dan tidak terlihat.",
+            name: "",
+            phone: "",
+            anon: true,
+            photos: [
+              P(
+                "Depan SDN 05 Tebet",
+                "Lubang ±1 meter",
+                "#fb923c",
+                "#c2410c",
+                ICONS.road,
+              ),
+            ],
+            lat: -6.2269,
+            lng: 106.855,
+            addr: "Jl. Tebet Timur Dalam I, Tebet",
+            status: "dilaporkan",
+            createdAt: D(2),
+            updatedAt: D(2),
+            history: [{ s: "dilaporkan", at: D(2), by: "Sistem" }],
+            responses: [],
+          },
+
+          {
+            id: "LPR-2026-0006",
+            cat: "sampah",
+            title: "Sampah menumpuk di pinggir Jl. Cipete Raya",
+            desc: "Tumpukan kantong sampah di trotoar dekat warung tenda menimbulkan bau dan lalat sejak 3 hari. Warga memohon penambahan tempat sampah dan pengangkutan lebih rutin di titik ini.",
+            name: "Dewi Lestari",
+            phone: "0819-3344-1212",
+            anon: false,
+            photos: [],
+            lat: -6.271,
+            lng: 106.8018,
+            addr: "Jl. Cipete Raya, Jakarta Selatan",
+            status: "dilaporkan",
+            createdAt: D(1, 3),
+            updatedAt: D(1, 3),
+            history: [{ s: "dilaporkan", at: D(1, 3), by: "Sistem" }],
+            responses: [],
+          },
+
+          {
+            id: "LPR-2026-0007",
+            cat: "pju_mati",
+            title: "Lampu PJU mati di sekitar halte Fatmawati",
+            desc: "Empat lampu PJU di sepanjang trotoar menuju halte mati sejak badai hujan Sabtu malam. Area halte menjadi sangat gelap saat jam pulang kerja.",
+            name: "Rina Marlina",
+            phone: "",
+            anon: false,
+            photos: [
+              P(
+                "Halte Fatmawati",
+                "4 titik gelap di trotoar",
+                "#a78bfa",
+                "#6d28d9",
+                ICONS.bulb,
+              ),
+            ],
+            lat: -6.282,
+            lng: 106.799,
+            addr: "Jl. RS. Fatmawati, Cilandak",
+            status: "dilaporkan",
+            createdAt: D(0, 6),
+            updatedAt: D(0, 6),
+            history: [{ s: "dilaporkan", at: D(0, 6), by: "Sistem" }],
+            responses: [],
+          },
+
+          {
+            id: "LPR-2026-0008",
+            cat: "jalan_rusak",
+            title: "Trotoar rusak & ubin terangkat di Jl. Kebon Sirih",
+            desc: "Ubin trotoar terangkat akar pohon di sepanjang 30 meter sehingga pejalan kaki tersandung, terutama lansia. Beberapa ubin sudah lepas dan berlubang.",
+            name: "Andi Pratama",
+            phone: "0812-1010-3030",
+            anon: false,
+            photos: [],
+            lat: -6.193,
+            lng: 106.833,
+            addr: "Jl. Kebon Sirih Raya, Menteng",
+            status: "dilaporkan",
+            createdAt: D(0, 1),
+            updatedAt: D(0, 1),
+            history: [{ s: "dilaporkan", at: D(0, 1), by: "Sistem" }],
+            responses: [],
+          },
+        ];
+      }
+
+      /* ---------- Nomor tiket ---------- */
+      function nextTicket() {
+        const year = new Date().getFullYear();
+        let max = 0;
+        state.reports.forEach((r) => {
+          const m = /^LPR-(\d{4})-(\d{4})$/.exec(r.id || "");
+          if (m && +m[1] === year) max = Math.max(max, +m[2]);
+        });
+        return `LPR-${year}-${String(max + 1).padStart(4, "0")}`;
+      }
+
+      /* ---------- Derivasi data ---------- */
+      const sortedReports = () =>
+        [...state.reports].sort((a, b) => b.createdAt - a.createdAt);
+      function counts() {
+        const c = {
+          total: state.reports.length,
+          dilaporkan: 0,
+          diproses: 0,
+          selesai: 0,
+        };
+        state.reports.forEach((r) => {
+          if (c[r.status] !== undefined) c[r.status]++;
+        });
+        return c;
+      }
+      function filteredReports() {
+        const { q = "", status = "semua", cat = "semua" } = state.filters;
+        const nq = q.trim().toLowerCase();
+        return sortedReports().filter(
+          (r) =>
+            (status === "semua" || r.status === status) &&
+            (cat === "semua" || r.cat === cat) &&
+            (!nq ||
+              `${r.title} ${r.desc} ${r.addr || ""} ${r.id}`
+                .toLowerCase()
+                .includes(nq)),
+        );
+      }
+      const findReport = (id) => state.reports.find((r) => r.id === id);
+      const statusColor = (s) => STATUSES[s].color;
+
+      /* ---------- Kartu pengaduan (board & beranda) ---------- */
+      function cardHTML(r) {
+        const cat = CATS[r.cat] || CATS.lainnya,
+          st = STATUSES[r.status];
+        const img =
+          r.photos && r.photos.length
+            ? `<img src="${esc(r.photos[0])}" alt="Foto bukti ${esc(cat.label)}" loading="lazy">`
+            : icon(cat.icon);
+        const lastResp =
+          r.responses && r.responses.length
+            ? r.responses[r.responses.length - 1]
+            : null;
+        return `<article class="bcard card" data-id="${esc(r.id)}" role="button" tabindex="0" aria-label="Buka detail pengaduan ${esc(r.title)}">
+    <div class="bcard-img">${img}<span class="pill pill--solid st-${r.status}">${st.label}</span></div>
+    <div class="bcard-body">
+      <span class="cat-chip" style="--c:${cat.color}">${icon(cat.icon)} ${cat.label}</span>
+      <h3>${esc(r.title)}</h3>
+      <p class="bcard-desc">${esc(r.desc)}</p>
+      <div class="bcard-meta">${icon("map-pin")}<span>${esc(r.addr || coordsStr(r))}</span></div>
+      <div class="bcard-foot">
+        <span>${icon("user")} ${esc(maskName(r))}</span>
+        <span>${icon("clock")} ${timeAgo(r.createdAt)}</span>
+      </div>
+      ${lastResp ? `<div class="bcard-resp">${icon("shield")}<span><b>Tanggapan resmi:</b> ${esc(truncate(lastResp.msg, 96))}</span></div>` : ""}
+    </div>
+  </article>`;
+      }
+
+      /* ---------- Render: beranda ---------- */
+      function statCardHTML(n, label, ic, color) {
+        return `<div class="stat-card"><span class="stat-ic" style="background:${color}">${icon(ic)}</span><div><b>${n}</b><span>${label}</span></div></div>`;
+      }
+      function renderHome() {
+        const c = counts();
+        $("#homeStats").innerHTML =
+          statCardHTML(
+            c.total,
+            "Total pengaduan",
+            "file-text",
+            "linear-gradient(135deg,#0a3a7a,#0f6cbd)",
+          ) +
+          statCardHTML(c.dilaporkan, "Baru dilaporkan", "send", "#0d5fa8") +
+          statCardHTML(c.diproses, "Sedang diproses", "clock", "#d97706") +
+          statCardHTML(c.selesai, "Selesai tuntas", "check-circle", "#178a4c");
+        const catCount = (k) => state.reports.filter((r) => r.cat === k).length;
+        $("#homeCats").innerHTML = Object.entries(CATS)
+          .map(
+            ([k, v]) => `
+    <button class="cat-card" data-cat="${k}" style="--c:${v.color}">
+      <span class="cat-ic">${icon(v.icon)}</span>
+      <h3>${v.label}</h3>
+      <p>${v.hint}</p>
+      <span class="cat-count">${catCount(k)} laporan warga</span>
+      <span class="cat-cta">Laporkan sekarang ${icon("arrow-right")}</span>
+    </button>`,
+          )
+          .join("");
+        $("#homeLatest").innerHTML = sortedReports()
+          .slice(0, 3)
+          .map(cardHTML)
+          .join("");
+      }
+
+      /* ---------- Render: papan publik ---------- */
+      function renderBoardStats() {
+        const c = counts();
+        $("#boardStats").innerHTML =
+          `<span class="bstat"><b>${c.total}</b>&nbsp;total</span>
+     <span class="bstat warn"><b>${c.dilaporkan + c.diproses}</b>&nbsp;aktif</span>
+     <span class="bstat ok"><b>${c.selesai}</b>&nbsp;tuntas</span>`;
+      }
+      function renderBoard() {
+        const list = filteredReports();
+        $("#boardCount").textContent =
+          `Menampilkan ${list.length} dari ${state.reports.length} pengaduan — urutan terbaru`;
+        $("#boardGrid").innerHTML = list.length
+          ? list.map(cardHTML).join("")
+          : `<div class="empty">${icon("search")}<h3>Tidak ada pengaduan yang cocok</h3><p>Coba ubah kata kunci atau reset filter status/jenis masalah.</p></div>`;
+        renderBoardStats();
+        refreshBoardMarkers(true);
+      }
+      function renderTrackChips() {
+        const rec = sortedReports().slice(0, 3);
+        $("#trackChips").innerHTML = rec.length
+          ? "<span>Coba nomor tiket:</span>" +
+            rec
+              .map(
+                (r) =>
+                  `<button class="tchip" data-ticket="${esc(r.id)}">${esc(r.id)}</button>`,
+              )
+              .join("")
+          : "";
+      }
+
+      /* ================= PETA (Leaflet) ================= */
+      function pinIcon(color) {
+        return L.divIcon({
+          className: "pin",
+          html: `<svg width="30" height="39" viewBox="0 0 30 39"><path d="M15 0C6.7 0 0 6.7 0 15c0 10.5 15 24 15 24s15-13.5 15-24C30 6.7 23.3 0 15 0z" fill="${color}" stroke="#fff" stroke-width="1.6"/><circle cx="15" cy="14.5" r="5.4" fill="#fff"/></svg>`,
+          iconSize: [30, 39],
+          iconAnchor: [15, 38],
+        });
+      }
+      function baseTiles(map) {
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        }).addTo(map);
+      }
+      function mapFallback(el, msg) {
+        if (el)
+          el.innerHTML = `<div class="map-fallback">${esc(msg || "Peta gagal dimuat — periksa koneksi internet Anda.")}</div>`;
+      }
+
+      /* --- Peta form laporan --- */
+      let formMap = null,
+        formMarker = null;
+      function ensureFormMap() {
+        const el = $("#mapReport");
+        if (!HAS_MAP) return mapFallback(el);
+        if (formMap) {
+          formMap.invalidateSize();
+          return;
+        }
+        formMap = L.map("mapReport").setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+        baseTiles(formMap);
+        formMap.on("click", (e) =>
+          setFormLocation(e.latlng.lat, e.latlng.lng, false),
+        );
+      }
+      function setFormLocation(lat, lng, fromGeo) {
+        state.formLatLng = { lat, lng };
+        if (!formMarker) {
+          formMarker = L.marker([lat, lng], {
+            draggable: true,
+            icon: pinIcon("#0f6cbd"),
+          }).addTo(formMap);
+          formMarker.on("dragend", () => {
+            const p = formMarker.getLatLng();
+            state.formLatLng = { lat: p.lat, lng: p.lng };
+            updateCoordsView();
+          });
+        } else formMarker.setLatLng([lat, lng]);
+        formMap.setView([lat, lng], Math.max(formMap.getZoom(), 16));
+        updateCoordsView();
+        reverseGeocode(lat, lng);
+        if (fromGeo)
+          toast("Lokasi GPS berhasil ditandai pada peta.", "success");
+      }
+      function updateCoordsView() {
+        const c = state.formLatLng;
+        $("#coordsView").innerHTML = c
+          ? `${icon("map-pin")} Titik terpilih: <span class="mono">${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}</span>`
+          : "Belum ada titik — klik peta untuk menandai";
+      }
+      async function reverseGeocode(lat, lng) {
+        const input = $("#fAlamat"),
+          token = Date.now();
+        input.dataset.geoToken = token;
+        input.placeholder = "Mengisi alamat otomatis…";
+        try {
+          const ctl = new AbortController();
+          const to = setTimeout(() => ctl.abort(), 6000);
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=id`,
+            { signal: ctl.signal },
+          );
+          clearTimeout(to);
+          const j = await res.json();
+          if (+input.dataset.geoToken !== token) return;
+          const a = j.address || {};
+          const parts = [
+            a.road || a.pedestrian,
+            a.neighbourhood || a.suburb || a.city_district,
+            a.city || a.state,
+          ].filter(Boolean);
+          if (
+            parts.length &&
+            (!input.value.trim() || input.dataset.auto === "1")
+          ) {
+            input.value = parts.join(", ");
+            input.dataset.auto = "1";
+          }
+        } catch {
+          /* offline / timeout: biarkan pengguna mengetik manual */
+        } finally {
+          input.placeholder = "Otomatis dari peta / ketik manual";
+        }
+      }
+
+      /* --- Peta papan publik --- */
+      let boardMap = null,
+        boardLayer = null;
+      function ensureBoardMap() {
+        const el = $("#mapBoard");
+        if (!HAS_MAP) return mapFallback(el);
+        if (boardMap) {
+          boardMap.invalidateSize();
+          refreshBoardMarkers(false);
+          return;
+        }
+        boardMap = L.map("mapBoard").setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+        baseTiles(boardMap);
+        boardLayer = L.layerGroup().addTo(boardMap);
+        refreshBoardMarkers(true);
+      }
+      function refreshBoardMarkers(fit) {
+        if (!boardLayer || !HAS_MAP) return;
+        boardLayer.clearLayers();
+        const list = filteredReports();
+        list.forEach((r) => {
+          L.marker([r.lat, r.lng], { icon: pinIcon(statusColor(r.status)) })
+            .on("click", () => openDetail(r.id))
+            .bindTooltip(
+              `<b>${esc(r.title)}</b><br>${STATUSES[r.status].label} · ${timeAgo(r.createdAt)}`,
+              { direction: "top", offset: [0, -40] },
+            )
+            .addTo(boardLayer);
+        });
+        if (fit && list.length && boardMap) {
+          try {
+            boardMap.fitBounds(
+              L.latLngBounds(list.map((r) => [r.lat, r.lng])).pad(0.25),
+              { maxZoom: 15 },
+            );
+          } catch {}
+        }
+      }
+
+      /* --- Peta mini (detail / lacak / sukses) --- */
+      let miniMapRef = null;
+      function buildMiniMap(elId, r) {
+        const el = document.getElementById(elId);
+        if (!el) return;
+        if (!HAS_MAP) return mapFallback(el);
+        if (miniMapRef) {
+          try {
+            miniMapRef.remove();
+          } catch {}
+          miniMapRef = null;
+        }
+        miniMapRef = L.map(elId, { scrollWheelZoom: false }).setView(
+          [r.lat, r.lng],
+          16,
+        );
+        baseTiles(miniMapRef);
+        L.marker([r.lat, r.lng], {
+          icon: pinIcon(statusColor(r.status)),
+        }).addTo(miniMapRef);
+        setTimeout(() => {
+          try {
+            miniMapRef.invalidateSize();
+          } catch {}
+        }, 80);
+      }
+
+      /* ================= FORM LAPORAN ================= */
+      function buildCatCards() {
+        $("#catCards").innerHTML = Object.entries(CATS)
+          .map(
+            ([k, v]) => `
+    <div class="rc" data-cat="${k}" style="--c:${v.color}" role="button" tabindex="0" aria-label="Pilih kategori ${v.label}">
+      <span class="rc-ic">${icon(v.icon)}</span>
+      <span><b>${v.label}</b><small>${v.hint}</small></span>
+    </div>`,
+          )
+          .join("");
+        $("#catCards").addEventListener("click", (e) => {
+          const c = e.target.closest(".rc");
+          if (c) selectCat(c.dataset.cat);
+        });
+        $("#catCards").addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            const c = e.target.closest(".rc");
+            if (c) {
+              e.preventDefault();
+              selectCat(c.dataset.cat);
+            }
+          }
+        });
+      }
+      function selectCat(k) {
+        state.formCat = k;
+        $$("#catCards .rc").forEach((el) =>
+          el.classList.toggle("on", el.dataset.cat === k),
+        );
+        const e = $('[data-err="cat"]');
+        if (e) e.classList.remove("show");
+      }
+      function startReport(cat) {
+        showView("report");
+        if (cat) selectCat(cat);
+      }
+
+      /* --- Foto bukti --- */
+      function compressImage(file) {
+        return new Promise((resolve, reject) => {
+          const url = URL.createObjectURL(file);
+          const img = new Image();
+          img.onload = () => {
+            const MAX = 900;
+            const sc = Math.min(1, MAX / Math.max(img.width, img.height));
+            const w = Math.max(1, Math.round(img.width * sc)),
+              h = Math.max(1, Math.round(img.height * sc));
+            const cv = document.createElement("canvas");
+            cv.width = w;
+            cv.height = h;
+            cv.getContext("2d").drawImage(img, 0, 0, w, h);
+            URL.revokeObjectURL(url);
+            resolve(cv.toDataURL("image/jpeg", 0.72));
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error("bad image"));
+          };
+          img.src = url;
+        });
+      }
+      async function handleFiles(list) {
+        const files = [...list].filter(
+          (f) => f.type && f.type.startsWith("image/"),
+        );
+        if (!files.length)
+          return toast("Berkas yang dipilih bukan gambar.", "error");
+        const slot = 3 - state.photos.length;
+        if (slot <= 0) return toast("Maksimal 3 foto per laporan.", "error");
+        if (files.length > slot)
+          toast(
+            `Hanya ${slot} foto pertama yang ditambahkan (maks. 3).`,
+            "info",
+          );
+        for (const f of files.slice(0, slot)) {
+          if (f.size > 8 * 1024 * 1024) {
+            toast(`"${f.name}" lebih dari 8 MB — dilewati.`, "error");
+            continue;
+          }
+          try {
+            state.photos.push(await compressImage(f));
+          } catch {
+            toast(`Gagal memproses "${f.name}".`, "error");
+          }
+        }
+        renderPreviews();
+      }
+      function renderPreviews() {
+        const p = $("#previews");
+        p.innerHTML = state.photos
+          .map(
+            (d, i) => `
+    <div class="ph"><img src="${d}" alt="Pratinjau foto bukti ${i + 1}">
+    <button type="button" data-rm="${i}" aria-label="Hapus foto ${i + 1}">${icon("x")}</button></div>`,
+          )
+          .join("");
+        p.hidden = !state.photos.length;
+      }
+
+      /* --- Validasi & kirim --- */
+      const FIELD_IDS = { nama: "fNama", judul: "fJudul", desc: "fDesc" };
+      function err(key, msg) {
+        const e = $(`[data-err="${key}"]`);
+        if (e) {
+          e.textContent = msg;
+          e.classList.add("show");
+        }
+        if (FIELD_IDS[key]) $("#" + FIELD_IDS[key]).classList.add("invalid");
+      }
+      function clearErrors() {
+        $$(".err").forEach((e) => e.classList.remove("show"));
+        $$(".invalid").forEach((e) => e.classList.remove("invalid"));
+      }
+      function submitReport(e) {
+        e.preventDefault();
+        clearErrors();
+        const anon = $("#fAnon").checked;
+        const name = $("#fNama").value.trim();
+        const phone = $("#fTelepon").value.trim();
+        const title = $("#fJudul").value.trim();
+        const desc = $("#fDesc").value.trim();
+        let ok = true;
+        if (!anon && name.length < 3) {
+          err(
+            "nama",
+            "Isi nama minimal 3 karakter — atau centang opsi lapor anonim.",
+          );
+          ok = false;
+        }
+        if (!state.formCat) {
+          err("cat", "Pilih salah satu jenis masalah fasilitas umum.");
+          ok = false;
+        }
+        if (title.length < 6) {
+          err("judul", "Judul laporan minimal 6 karakter.");
+          ok = false;
+        }
+        if (desc.length < 20) {
+          err(
+            "desc",
+            "Deskripsi minimal 20 karakter agar mudah diverifikasi pengurus.",
+          );
+          ok = false;
+        }
+        if (!state.formLatLng) {
+          err(
+            "loc",
+            'Tandai titik lokasi pada peta — klik peta atau gunakan tombol "Gunakan Lokasi Saya".',
+          );
+          ok = false;
+        }
+        if (!ok) {
+          toast("Periksa kembali isian yang ditandai merah.", "error");
+          const first = $(".err.show");
+          if (first)
+            first.scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
+        const now = Date.now();
+        const r = {
+          id: nextTicket(),
+          cat: state.formCat,
+          title,
+          desc,
+          name: anon ? "" : name,
+          phone,
+          anon,
+          photos: [...state.photos],
+          lat: state.formLatLng.lat,
+          lng: state.formLatLng.lng,
+          addr: $("#fAlamat").value.trim(),
+          status: "dilaporkan",
+          createdAt: now,
+          updatedAt: now,
+          history: [{ s: "dilaporkan", at: now, by: "Sistem" }],
+          responses: [],
+        };
+        state.reports.push(r);
+        if (!saveReports()) {
+          state.reports.pop();
+          return;
+        }
+        showSuccess(r);
+        renderAll();
+      }
+      function showSuccess(r) {
+        $("#reportGrid").hidden = true;
+        $("#reportSuccess").hidden = false;
+        $("#succTicket").textContent = r.id;
+        $("#btnCopyTicket").dataset.copy = r.id;
+        buildMiniMap("succMap", r);
+        $("#reportSuccess").scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+        toast(`Pengaduan ${r.id} terkirim. Terima kasih!`, "success");
+      }
+      function resetForm() {
+        $("#reportForm").reset();
+        state.photos = [];
+        renderPreviews();
+        selectCat(null);
+        state.formLatLng = null;
+        if (formMarker && formMap) {
+          formMap.removeLayer(formMarker);
+          formMarker = null;
+        }
+        updateCoordsView();
+        const a = $("#fAlamat");
+        a.value = "";
+        a.dataset.auto = "";
+        clearErrors();
+      }
+
+      /* ================= DETAIL PENGADUAN ================= */
+      function timelineHTML(r) {
+        const idx = STATUS_ORDER.indexOf(r.status);
+        const lastOf = (s) => {
+          const h = (r.history || []).filter((x) => x.s === s);
+          return h.length ? h[h.length - 1] : null;
+        };
+        const rows = STATUS_ORDER.map((s, i) => {
+          const h =
+            s === "dilaporkan"
+              ? { at: r.createdAt, by: "Pelapor (warga)" }
+              : lastOf(s);
+          const done = i <= idx,
+            cur = i === idx;
+          return `<div class="tl-step ${done ? "done " + s : "pend"} ${cur ? "cur" : ""}">
+      <span class="tl-dot">${done ? icon(STATUSES[s].icon) : ""}</span>
+      <b>${STATUSES[s].label}${cur ? " · status saat ini" : ""}</b>
+      <small>${h ? `${fmtDate(h.at)} · oleh ${esc(h.by || "Sistem")}` : "Menunggu tahapan sebelumnya…"}</small>
+    </div>`;
+        });
+        return `<div class="tl">${rows.join("")}</div>`;
+      }
+      function responsesHTML(r) {
+        if (!r.responses || !r.responses.length) {
+          return `<div class="resp-none">${icon("info")}<span>Belum ada tanggapan resmi. Pengaduan ini sedang dalam antrean verifikasi pengurus kelurahan.</span></div>`;
+        }
+        return `<div class="resp-list">${r.responses
+          .map(
+            (v) => `
+    <div class="resp">
+      <div class="resp-head">
+        <div><b>${esc(v.by)}</b> <span class="resp-official">${icon("shield")} Resmi</span><span class="resp-role">${esc(v.role)}</span></div>
+        <time>${fmtDate(v.at)}</time>
+      </div>
+      <p>${esc(v.msg)}</p>
+    </div>`,
+          )
+          .join("")}</div>`;
+      }
+      function detailHTML(r, opts = {}) {
+        const cat = CATS[r.cat] || CATS.lainnya,
+          st = STATUSES[r.status];
+        const infoItems = [
+          `<div class="det-item"><small>Pelapor</small><span>${icon("user")} ${esc(maskName(r))}</span></div>`,
+          `<div class="det-item"><small>Waktu lapor</small><span>${icon("clock")} ${fmtDate(r.createdAt)}</span></div>`,
+          `<div class="det-item"><small>Lokasi</small><span>${icon("map-pin")} ${esc(r.addr || coordsStr(r))}</span></div>`,
+          `<div class="det-item"><small>Pembaruan terakhir</small><span>${icon("refresh")} ${timeAgo(r.updatedAt || r.createdAt)}</span></div>`,
+        ];
+        if (opts.admin && r.phone)
+          infoItems.push(
+            `<div class="det-item"><small>Kontak pelapor</small><span>${icon("phone")} ${esc(r.phone)}</span></div>`,
+          );
+        return `
+    <div class="det det-wrap">
+      <div class="det-head">
+        <div>
+          <span class="det-ticket">${icon("file-text")} ${esc(r.id)}</span>
+          <h2>${esc(r.title)}</h2>
+          <div class="det-tags">
+            <span class="cat-chip" style="--c:${cat.color}">${icon(cat.icon)} ${cat.label}</span>
+            <span class="pill st-${r.status}">${st.label}</span>
+          </div>
+        </div>
+      </div>
+      ${timelineHTML(r)}
+      <div class="det-grid">${infoItems.join("")}</div>
+      <p class="det-desc">${esc(r.desc)}</p>
+      ${r.photos && r.photos.length ? `<div class="det-sec"><h4>${icon("camera")} Foto Bukti (${r.photos.length})</h4><div class="photos-grid">${r.photos.map((p) => `<img class="pv" src="${esc(p)}" alt="Foto bukti pengaduan" loading="lazy">`).join("")}</div></div>` : ""}
+      ${opts.mapId ? `<div class="det-sec"><h4>${icon("map-pin")} Titik Lokasi di Peta</h4><div class="mini-map" id="${opts.mapId}"></div></div>` : ""}
+      <div class="det-sec"><h4>${icon("message")} Tanggapan Resmi Pengurus / Kelurahan</h4>${responsesHTML(r)}</div>
+      ${opts.admin ? adminPanelHTML(r) : ""}
+    </div>`;
+      }
+      function adminPanelHTML(r) {
+        return `<div class="adm-box">
+    <h4>${icon("shield")} Panel Pengurus — tindak lanjut cepat</h4>
+    <div class="adm-row">
+      <label for="mdStatus">Ubah status:</label>
+      <select class="sel-status v-${r.status}" id="mdStatus">
+        ${STATUS_ORDER.map((s) => `<option value="${s}" ${s === r.status ? "selected" : ""}>${STATUSES[s].label}</option>`).join("")}
+      </select>
+      <button class="btn btn-soft btn-sm" id="mdRespond">${icon("message")} Tanggapi resmi</button>
+    </div>
+  </div>`;
+      }
+      function openDetail(id) {
+        const r = findReport(id);
+        if (!r) return;
+        state.openDetailId = id;
+        $("#mdBody").innerHTML = detailHTML(r, {
+          admin: state.admin,
+          mapId: "mdMap",
+        });
+        openModal($("#modalDetail"));
+        if (state.admin) {
+          $("#mdStatus").addEventListener("change", (e) => {
+            $("#mdStatus").className = "sel-status v-" + e.target.value;
+            updateReportStatus(id, e.target.value, "Panel Pengurus Kelurahan");
+          });
+          $("#mdRespond").addEventListener("click", () => openRespond(id));
+        }
+        setTimeout(() => buildMiniMap("mdMap", r), 150);
+      }
+
+      /* ================= LACAK ADUAN ================= */
+      function doTrack() {
+        const raw = ($("#trackInput").value || "").trim().toUpperCase();
+        if (!raw) return toast("Masukkan nomor tiket terlebih dahulu.", "info");
+        const norm = (s) => s.replace(/\s+/g, "");
+        let r = state.reports.find((x) => norm(x.id) === norm(raw));
+        if (!r)
+          r = state.reports.find((x) => norm(x.id) === "LPR-" + norm(raw));
+        const box = $("#trackResult");
+        if (!r) {
+          state.trackId = null;
+          box.innerHTML = `<div class="card notfound">
+      <div class="nf-ic">${icon("alert")}</div>
+      <h3>Tiket "${esc(raw)}" tidak ditemukan</h3>
+      <p>Periksa kembali penulisan nomor tiket Anda (format: LPR-TAHUN-NOMOR), atau lihat daftar nomor tiket terbaru di atas / di papan transparansi publik.</p>
+      <button class="btn btn-soft" data-view="board">${icon("grid")} Lihat Papan Publik</button>
+    </div>`;
+          return;
+        }
+        state.trackId = r.id;
+        box.innerHTML = `<div class="card" style="padding:24px 26px">${detailHTML(r, { admin: state.admin, mapId: "trackMap" })}</div>`;
+        setTimeout(() => {
+          if (state.trackId === r.id) buildMiniMap("trackMap", r);
+        }, 80);
+      }
+      function renderTrackIfActive() {
+        if (state.trackId) {
+          const r = findReport(state.trackId);
+          if (r) {
+            $("#trackInput").value = r.id;
+            doTrack();
+          }
+        }
+      }
+
+      /* ================= ADMIN (PENGURUS KELURUS) ================= */
+      function updateReportStatus(id, s, by) {
+        const r = findReport(id);
+        if (!r || r.status === s) return;
+        r.status = s;
+        r.updatedAt = Date.now();
+        r.history.push({ s, at: Date.now(), by });
+        if (saveReports()) {
+          toast(
+            `Status ${r.id} diperbarui menjadi "${STATUSES[s].label}".`,
+            "success",
+          );
+          renderAll();
+        }
+      }
+      function openRespond(id) {
+        const r = findReport(id);
+        if (!r) return;
+        state.respondId = id;
+        $("#respCtx").innerHTML =
+          `${icon("file-text")}<span><b>${esc(r.id)}</b> · ${esc(r.title)}</span>`;
+        $("#respStatus").value = r.status;
+        $("#respMsg").value = "";
+        openModal($("#modalRespond"));
+      }
+      function sendResponse() {
+        const r = findReport(state.respondId);
+        if (!r) return closeModal($("#modalRespond"));
+        const msg = $("#respMsg").value.trim();
+        if (msg.length < 10)
+          return toast("Isi tanggapan minimal 10 karakter.", "error");
+        const off = OFFICIALS[+$("#respWho").value] || OFFICIALS[0];
+        r.responses.push({ by: off.name, role: off.role, msg, at: Date.now() });
+        const ns = $("#respStatus").value;
+        if (ns !== r.status) {
+          r.status = ns;
+          r.history.push({
+            s: ns,
+            at: Date.now(),
+            by: `${off.name} — ${off.role}`,
+          });
+        }
+        r.updatedAt = Date.now();
+        if (saveReports()) {
+          closeModal($("#modalRespond"));
+          toast("Tanggapan resmi terkirim dan dipublikasikan.", "success");
+          renderAll();
+        }
+      }
+      function arowHTML(r) {
+        const cat = CATS[r.cat] || CATS.lainnya;
+        const contact = r.phone ? ` · ${icon("phone")} ${esc(r.phone)}` : "";
+        return `<div class="arow" data-id="${esc(r.id)}">
+    <div class="arow-main">
+      <span class="cat-dot" style="--c:${cat.color}">${icon(cat.icon)}</span>
+      <div>
+        <b>${esc(r.title)}</b>
+        <small><span style="font-family:var(--mono);color:var(--brand);font-weight:800">${esc(r.id)}</span> · ${esc(maskName(r))}${contact} · ${timeAgo(r.createdAt)}</small>
+        <small>${icon("map-pin")} ${esc(r.addr || coordsStr(r))}</small>
+      </div>
+    </div>
+    <div class="arow-side">
+      <select class="sel-status v-${r.status}" aria-label="Ubah status ${esc(r.id)}">
+        ${STATUS_ORDER.map((s) => `<option value="${s}" ${s === r.status ? "selected" : ""}>${STATUSES[s].label}</option>`).join("")}
+      </select>
+      <button class="btn btn-ghost btn-sm" data-act="detail">${icon("eye")} Detail</button>
+      <button class="btn btn-soft btn-sm" data-act="respond">${icon("message")} Tanggapi</button>
+    </div>
+  </div>`;
+      }
+      function renderAdmin() {
+        if (!state.admin) return;
+        const c = counts();
+        $("#adminStats").innerHTML =
+          statCardHTML(
+            c.total,
+            "Total aduan",
+            "file-text",
+            "linear-gradient(135deg,#0a3a7a,#0f6cbd)",
+          ) +
+          statCardHTML(
+            c.dilaporkan,
+            "Menunggu tindak lanjut",
+            "send",
+            "#0d5fa8",
+          ) +
+          statCardHTML(c.diproses, "Sedang diproses", "clock", "#d97706") +
+          statCardHTML(c.selesai, "Selesai", "check-circle", "#178a4c");
+        const list = sortedReports().filter(
+          (r) =>
+            state.adminFilter === "semua" || r.status === state.adminFilter,
+        );
+        $("#adminList").innerHTML = list.length
+          ? list.map(arowHTML).join("")
+          : `<div class="arow-empty">${icon("check-circle")}<h3>Tidak ada aduan pada filter ini</h3><p>Semua aduan pada kategori ini sudah tertangani.</p></div>`;
+      }
+      function updateAdminUI() {
+        $("#btnAdminLabel").textContent = state.admin
+          ? "Panel Pengurus"
+          : "Masuk Pengurus";
+      }
+      function doLogin() {
+        if ($("#pinInput").value === ADMIN_PIN) {
+          state.admin = true;
+          localStorage.setItem(LS_ADMIN, "1");
+          $("#pinInput").value = "";
+          $("#loginErr").classList.remove("show");
+          closeModal($("#modalLogin"));
+          updateAdminUI();
+          toast("Berhasil masuk. Selamat bertugas, Pengurus!", "success");
+          showView("admin");
+        } else {
+          $("#loginErr").textContent = "PIN salah — silakan coba lagi.";
+          $("#loginErr").classList.add("show");
+          const c = $("#modalLogin .modal-card");
+          c.classList.remove("shake");
+          void c.offsetWidth;
+          c.classList.add("shake");
+        }
+      }
+
+      /* ================= MODAL / LIGHTBOX / NAVIGASI ================= */
+      function openModal(m) {
+        m.classList.add("open");
+        document.body.style.overflow = "hidden";
+      }
+      function closeModal(m) {
+        m.classList.remove("open");
+        if (
+          !$$(".modal.open").length &&
+          !$("#lightbox").classList.contains("open")
+        )
+          document.body.style.overflow = "";
+      }
+      function closeMobileNav() {
+        $("#navLinks").classList.remove("open");
+      }
+      function showView(name) {
+        $$(".view").forEach((s) => {
+          s.hidden = s.id !== "view-" + name;
+        });
+        $$("#navLinks a").forEach((a) =>
+          a.classList.toggle("active", a.dataset.view === name),
+        );
+        closeMobileNav();
+        window.scrollTo({ top: 0 });
+        if (name === "board")
+          requestAnimationFrame(() => {
+            ensureBoardMap();
+            renderBoard();
+          });
+        if (name === "report") requestAnimationFrame(() => ensureFormMap());
+        if (name === "home") renderHome();
+        if (name === "admin") renderAdmin();
+      }
+      function renderAll() {
+        renderHome();
+        renderBoard();
+        renderTrackChips();
+        if (state.admin) renderAdmin();
+        if (!$("#view-track").hidden) renderTrackIfActive();
+        if ($("#modalDetail").classList.contains("open") && state.openDetailId)
+          openDetail(state.openDetailId);
+      }
+      async function copyText(t) {
+        try {
+          await navigator.clipboard.writeText(t);
+          toast(`Berhasil disalin: ${t}`, "success");
+        } catch {
+          const ta = document.createElement("textarea");
+          ta.value = t;
+          document.body.appendChild(ta);
+          ta.select();
+          try {
+            document.execCommand("copy");
+            toast(`Berhasil disalin: ${t}`, "success");
+          } catch {
+            toast(`Salin manual: ${t}`, "info");
+          }
+          ta.remove();
+        }
+      }
+
+      /* ================= INISIALISASI ================= */
+      function buildSelects() {
+        $("#respWho").innerHTML = OFFICIALS.map(
+          (o, i) =>
+            `<option value="${i}">${esc(o.name)} — ${esc(o.role)}</option>`,
+        ).join("");
+        $("#respStatus").innerHTML = STATUS_ORDER.map(
+          (s) => `<option value="${s}">${STATUSES[s].label}</option>`,
+        ).join("");
+      }
+      function buildChips() {
+        $("#statusChips").innerHTML =
+          `<button class="chip on" data-v="semua" style="--c:#10233f">Semua Status</button>` +
+          STATUS_ORDER.map(
+            (s) =>
+              `<button class="chip" data-v="${s}" style="--c:${STATUSES[s].color}">${STATUSES[s].label}</button>`,
+          ).join("");
+        $("#catChips").innerHTML =
+          `<button class="chip on" data-v="semua" style="--c:#10233f">Semua Jenis</button>` +
+          Object.entries(CATS)
+            .map(
+              ([k, v]) =>
+                `<button class="chip" data-v="${k}" style="--c:${v.color}">${v.label}</button>`,
+            )
+            .join("");
+        $("#adminChips").innerHTML =
+          `<button class="chip on" data-v="semua" style="--c:#10233f">Semua Status</button>` +
+          STATUS_ORDER.map(
+            (s) =>
+              `<button class="chip" data-v="${s}" style="--c:${STATUSES[s].color}">${STATUSES[s].label}</button>`,
+          ).join("");
+      }
+      function bindEvents() {
+        /* Navigasi umum (data-view) + salin (data-copy) */
+        document.addEventListener("click", (e) => {
+          const v = e.target.closest("[data-view]");
+          if (v) {
+            showView(v.dataset.view);
+            return;
+          }
+          const c = e.target.closest("[data-copy]");
+          if (c && c.dataset.copy) {
+            copyText(c.dataset.copy);
+          }
+        });
+        /* Burger + scroll shadow */
+        $("#btnBurger").addEventListener("click", () =>
+          $("#navLinks").classList.toggle("open"),
+        );
+        addEventListener(
+          "scroll",
+          () => $("#topNav").classList.toggle("scrolled", scrollY > 8),
+          { passive: true },
+        );
+        /* Beranda → kartu kategori */
+        $("#homeCats").addEventListener("click", (e) => {
+          const c = e.target.closest(".cat-card");
+          if (c) startReport(c.dataset.cat);
+        });
+        /* Grid papan publik → detail */
+        $("#boardGrid").addEventListener("click", (e) => {
+          const b = e.target.closest(".bcard");
+          if (b) openDetail(b.dataset.id);
+        });
+        $("#boardGrid").addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            const b = e.target.closest(".bcard");
+            if (b) openDetail(b.dataset.id);
+          }
+        });
+        /* Filter papan */
+        let qTimer = null;
+        $("#boardQ").addEventListener("input", (e) => {
+          clearTimeout(qTimer);
+          qTimer = setTimeout(() => {
+            state.filters.q = e.target.value;
+            renderBoard();
+          }, 220);
+        });
+        $("#statusChips").addEventListener("click", (e) => {
+          const c = e.target.closest(".chip");
+          if (!c) return;
+          state.filters.status = c.dataset.v;
+          $$("#statusChips .chip").forEach((x) =>
+            x.classList.toggle("on", x === c),
+          );
+          renderBoard();
+        });
+        $("#catChips").addEventListener("click", (e) => {
+          const c = e.target.closest(".chip");
+          if (!c) return;
+          state.filters.cat = c.dataset.v;
+          $$("#catChips .chip").forEach((x) =>
+            x.classList.toggle("on", x === c),
+          );
+          renderBoard();
+        });
+        $("#adminChips").addEventListener("click", (e) => {
+          const c = e.target.closest(".chip");
+          if (!c) return;
+          state.adminFilter = c.dataset.v;
+          $$("#adminChips .chip").forEach((x) =>
+            x.classList.toggle("on", x === c),
+          );
+          renderAdmin();
+        });
+        /* Form laporan */
+        $("#reportForm").addEventListener("submit", submitReport);
+        const dz = $("#dropzone"),
+          fi = $("#fPhotos");
+        dz.addEventListener("click", () => fi.click());
+        dz.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            fi.click();
+          }
+        });
+        dz.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          dz.classList.add("drag");
+        });
+        dz.addEventListener("dragleave", () => dz.classList.remove("drag"));
+        dz.addEventListener("drop", (e) => {
+          e.preventDefault();
+          dz.classList.remove("drag");
+          handleFiles(e.dataTransfer.files);
+        });
+        fi.addEventListener("change", () => {
+          handleFiles(fi.files);
+          fi.value = "";
+        });
+        $("#previews").addEventListener("click", (e) => {
+          const b = e.target.closest("button[data-rm]");
+          if (b) {
+            state.photos.splice(+b.dataset.rm, 1);
+            renderPreviews();
+          }
+        });
+        $("#btnGeo").addEventListener("click", () => {
+          if (!navigator.geolocation)
+            return toast("Perangkat Anda tidak mendukung geolokasi.", "error");
+          toast("Mencari lokasi GPS Anda…", "info");
+          navigator.geolocation.getCurrentPosition(
+            (p) => setFormLocation(p.coords.latitude, p.coords.longitude, true),
+            () =>
+              toast(
+                "Akses lokasi ditolak — klik peta untuk menandai manual.",
+                "error",
+              ),
+            { enableHighAccuracy: true, timeout: 10000 },
+          );
+        });
+        ["fNama", "fJudul", "fDesc"].forEach((id) =>
+          $("#" + id).addEventListener("input", (e) =>
+            e.target.classList.remove("invalid"),
+          ),
+        );
+        /* Tombol sukses */
+        $("#btnSuccTrack").addEventListener("click", () => {
+          showView("track");
+          $("#trackInput").value = $("#succTicket").textContent;
+          doTrack();
+        });
+        $("#btnSuccBoard").addEventListener("click", () => showView("board"));
+        $("#btnSuccNew").addEventListener("click", () => {
+          $("#reportSuccess").hidden = true;
+          $("#reportGrid").hidden = false;
+          resetForm();
+          ensureFormMap();
+        });
+        /* Lacak */
+        $("#btnTrack").addEventListener("click", doTrack);
+        $("#trackInput").addEventListener("keydown", (e) => {
+          if (e.key === "Enter") doTrack();
+        });
+        $("#trackChips").addEventListener("click", (e) => {
+          const t = e.target.closest(".tchip");
+          if (t) {
+            $("#trackInput").value = t.dataset.ticket;
+            doTrack();
+          }
+        });
+        /* Admin */
+        $("#btnAdmin").addEventListener("click", () => {
+          if (state.admin) showView("admin");
+          else {
+            openModal($("#modalLogin"));
+            setTimeout(() => $("#pinInput").focus(), 120);
+          }
+        });
+        $("#btnLogin").addEventListener("click", doLogin);
+        $("#pinInput").addEventListener("keydown", (e) => {
+          if (e.key === "Enter") doLogin();
+        });
+        $("#btnLogout").addEventListener("click", () => {
+          state.admin = false;
+          localStorage.removeItem(LS_ADMIN);
+          updateAdminUI();
+          showView("home");
+          toast("Anda telah keluar dari panel pengurus.", "info");
+        });
+        $("#btnSendResp").addEventListener("click", sendResponse);
+        $("#adminList").addEventListener("click", (e) => {
+          const row = e.target.closest(".arow");
+          if (!row) return;
+          const id = row.dataset.id;
+          if (e.target.closest('[data-act="respond"]')) openRespond(id);
+          else if (e.target.closest('[data-act="detail"]')) openDetail(id);
+        });
+        $("#adminList").addEventListener("change", (e) => {
+          if (!e.target.classList.contains("sel-status")) return;
+          const row = e.target.closest(".arow");
+          e.target.className = "sel-status v-" + e.target.value;
+          updateReportStatus(
+            row.dataset.id,
+            e.target.value,
+            "Panel Pengurus Kelurahan",
+          );
+        });
+        /* Modal tutup */
+        $$(".modal").forEach((m) => {
+          m.addEventListener("click", (e) => {
+            if (e.target === m) closeModal(m);
+          });
+        });
+        $$("[data-close]").forEach((b) =>
+          b.addEventListener("click", () => closeModal(b.closest(".modal"))),
+        );
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") {
+            const open = $$(".modal.open");
+            if ($("#lightbox").classList.contains("open"))
+              $("#lightbox").classList.remove("open");
+            else if (open.length) closeModal(open[open.length - 1]);
+            if (
+              !$$(".modal.open").length &&
+              !$("#lightbox").classList.contains("open")
+            )
+              document.body.style.overflow = "";
+          }
+        });
+        /* Lightbox foto */
+        document.addEventListener("click", (e) => {
+          const img = e.target.closest("img.pv");
+          if (img) {
+            $("#lightboxImg").src = img.src;
+            $("#lightbox").classList.add("open");
+            document.body.style.overflow = "hidden";
+          }
+        });
+        $("#lightbox").addEventListener("click", (e) => {
+          if (e.target.id === "lightbox" || e.target.closest(".lb-close")) {
+            $("#lightbox").classList.remove("open");
+            if (!$$(".modal.open").length) document.body.style.overflow = "";
+          }
+        });
+        /* Reset data contoh (konfirmasi dua langkah) */
+        let resetArmed = false,
+          resetTimer = null;
+        $("#btnReset").addEventListener("click", () => {
+          if (!resetArmed) {
+            resetArmed = true;
+            $("#btnReset").innerHTML =
+              `${icon("alert")} Klik sekali lagi untuk konfirmasi`;
+            resetTimer = setTimeout(() => {
+              resetArmed = false;
+              $("#btnReset").innerHTML =
+                `${icon("refresh")} Muat ulang data contoh`;
+            }, 4000);
+            return;
+          }
+          clearTimeout(resetTimer);
+          resetArmed = false;
+          $("#btnReset").innerHTML =
+            `${icon("refresh")} Muat ulang data contoh`;
+          state.reports = seedReports();
+          saveReports();
+          state.filters = { q: "", status: "semua", cat: "semua" };
+          $("#boardQ").value = "";
+          buildChips();
+          renderAll();
+          showView("home");
+          toast("Data contoh berhasil dimuat ulang.", "success");
+        });
+      }
+
+      function init() {
+        injectIcons();
+        const stored = loadReports();
+        if (stored === null) {
+          state.reports = seedReports();
+          saveReports();
+        } else state.reports = stored;
+        state.admin = localStorage.getItem(LS_ADMIN) === "1";
+        buildCatCards();
+        buildSelects();
+        buildChips();
+        bindEvents();
+        updateAdminUI();
+        renderHome();
+        renderBoard();
+        renderTrackChips();
+        if (!HAS_MAP)
+          toast(
+            "Peta tidak tersedia — pustaka Leaflet gagal dimuat. Periksa koneksi internet.",
+            "error",
+          );
+        showView("home");
+      }
+      init();
+    </script>
+  </body>
+</html>

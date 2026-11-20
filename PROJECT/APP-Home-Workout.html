@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aplikasi Latihan Rumahan Tanpa Alat</title>
+<style>
+:root{
+  --bg:#faf9f7; --surface:#ffffff; --ink:#1a1a1a; --muted:#6b6b6b;
+  --line:#e5e2dc; --accent:#0f766e; --accent-ink:#ffffff; --accent-soft:#e6f2f0;
+  --warn:#b45309; --danger:#b91c1c; --radius:14px;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.6}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font:inherit;color:inherit}
+svg{display:block}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+
+/* ---------- Layout ---------- */
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+header.top{border-bottom:1px solid var(--line);background:var(--surface);position:sticky;top:0;z-index:40}
+.topbar{display:flex;align-items:center;gap:10px;height:60px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.05rem;letter-spacing:-.02em}
+.logo .mark{width:34px;height:34px;border:2px solid var(--ink);border-radius:10px;display:grid;place-items:center}
+.logo .mark svg{width:20px;height:20px;stroke:var(--ink)}
+.top-profile{margin-left:auto;display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.85rem}
+.top-profile .pchip{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:4px 12px;background:var(--bg)}
+.top-profile svg{width:15px;height:15px}
+
+main{padding:24px 0 40px}
+.view{display:none}
+.view.active{display:block;animation:fade .18s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.page-head h1{font-size:1.5rem;letter-spacing:-.02em}
+.page-head p{color:var(--muted);font-size:.9rem;margin-top:2px}
+
+/* ---------- Bottom nav (mobile) + top nav ---------- */
+nav.tabs{display:none}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+.tabbar button{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.68rem;color:var(--muted);padding:4px 10px;border-radius:10px;min-width:64px}
+.tabbar button.on{color:var(--accent);font-weight:600}
+@media(min-width:760px){
+  .tabbar{display:none}
+  nav.tabs{display:flex;gap:4px;margin-left:18px}
+  nav.tabs button{padding:8px 14px;border-radius:10px;color:var(--muted);font-size:.92rem;display:flex;gap:7px;align-items:center}
+  nav.tabs button:hover{background:var(--bg);color:var(--ink)}
+  nav.tabs button.on{background:var(--ink);color:#fff}
+  .topbar{height:64px}
+  main{padding:32px 0 56px}
+}
+
+/* ---------- Cards / generic ---------- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+.grid{display:grid;gap:14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;border-radius:10px;font-weight:600;font-size:.92rem;border:1px solid var(--ink);background:var(--ink);color:#fff;transition:opacity .15s}
+.btn:hover{opacity:.85}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.acc{background:var(--accent);border-color:var(--accent)}
+.btn.sm{padding:7px 12px;font-size:.82rem}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.danger{border-color:var(--danger);color:var(--danger);background:transparent}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:.8rem;font-weight:600;color:var(--muted)}
+.field input,.field select{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);width:100%}
+.field input:focus,.field select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+.empty{border:1.5px dashed var(--line);border-radius:var(--radius);padding:36px 20px;text-align:center;color:var(--muted)}
+.empty svg{width:40px;height:40px;margin:0 auto 10px;stroke:var(--muted);opacity:.6}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.tag.gray{background:#f0efec;color:var(--muted)}
+.tag.warn{background:#fdf1e3;color:var(--warn)}
+
+/* ---------- Katalog ---------- */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.chip{padding:7px 14px;border-radius:999px;border:1px solid var(--line);font-size:.85rem;color:var(--muted);background:var(--surface)}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.mov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.mov-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:10px;transition:border-color .15s}
+.mov-card:hover{border-color:var(--ink)}
+.mov-fig{background:var(--bg);border-radius:10px;display:grid;place-items:center;padding:6px;height:120px}
+.mov-fig svg{height:104px;width:auto}
+.mov-name{font-weight:700;font-size:1rem}
+.mov-meta{display:flex;gap:6px;flex-wrap:wrap}
+.mov-desc{font-size:.84rem;color:var(--muted);flex:1}
+.mov-card .btn{margin-top:auto}
+
+/* ---------- Modal ---------- */
+.modal{position:fixed;inset:0;z-index:100;display:none;align-items:flex-end;justify-content:center;background:rgba(20,20,20,.45)}
+.modal.open{display:flex}
+.modal-box{background:var(--surface);width:100%;max-width:560px;max-height:88vh;overflow-y:auto;border-radius:18px 18px 0 0;padding:22px 22px 28px;animation:up .22s ease}
+@keyframes up{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+@media(min-width:760px){.modal{align-items:center}.modal-box{border-radius:18px}}
+.modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+.modal-head h2{font-size:1.25rem;letter-spacing:-.02em}
+.x{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;flex-shrink:0}
+.x:hover{background:var(--bg)}
+.x svg{width:16px;height:16px}
+.modal-fig{background:var(--bg);border-radius:12px;display:grid;place-items:center;padding:10px;margin-bottom:14px}
+.modal-fig svg{height:150px;width:auto}
+h3.sec{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:16px 0 8px}
+ol.steps{list-style:none;counter-reset:st}
+ol.steps li{counter-increment:st;display:flex;gap:12px;padding:7px 0;font-size:.92rem}
+ol.steps li::before{content:counter(st);width:24px;height:24px;flex-shrink:0;border:1.5px solid var(--ink);border-radius:50%;display:grid;place-items:center;font-size:.75rem;font-weight:700}
+ul.tips li{display:flex;gap:10px;padding:5px 0;font-size:.9rem;color:#444}
+ul.tips svg{width:16px;height:16px;margin-top:4px;stroke:var(--accent)}
+
+/* ---------- Rencana ---------- */
+.plan-layout{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+.plan-layout>*{min-width:0}
+@media(min-width:900px){.plan-layout{grid-template-columns:340px minmax(0,1fr);align-items:start}}
+.plan-list{display:flex;flex-direction:column;gap:10px;min-width:0}
+.plan-list>div{display:flex;gap:6px;min-width:0}
+.plan-item{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;text-align:left;width:100%}
+.plan-item:hover{border-color:var(--ink)}
+.plan-item.on{border-color:var(--accent);background:var(--accent-soft)}
+.plan-item .pi-ic{width:38px;height:38px;border-radius:10px;background:var(--bg);display:grid;place-items:center;flex-shrink:0}
+.plan-item .pi-ic svg{width:19px;height:19px}
+.plan-item .pi-body{flex:1;min-width:0}
+.plan-item .pi-name{font-weight:700;font-size:.95rem}
+.plan-item .pi-sub{font-size:.78rem;color:var(--muted)}
+.plan-item .pi-act{display:flex;gap:4px}
+.iconbtn{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--muted)}
+.iconbtn:hover{background:var(--bg);color:var(--ink)}
+.iconbtn svg{width:16px;height:16px}
+.plan-days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:14px}
+.daybtn{aspect-ratio:1;border:1px solid var(--line);border-radius:9px;display:grid;place-items:center;font-size:.75rem;font-weight:600;color:var(--muted);background:var(--surface)}
+.daybtn.has{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.daybtn.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.plan-summary{display:flex;gap:16px;flex-wrap:wrap;font-size:.85rem;color:var(--muted);margin-top:12px}
+.plan-summary b{color:var(--ink)}
+.line-items{display:flex;flex-direction:column;gap:8px}
+.line-item{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface)}
+.line-item .li-fig{width:52px;height:44px;border-radius:8px;background:var(--bg);display:grid;place-items:center;flex-shrink:0}
+.line-item .li-fig svg{height:38px;width:auto}
+.line-item .li-main{flex:1;min-width:0}
+.line-item .li-name{font-weight:600;font-size:.9rem}
+.line-item .li-sub{font-size:.76rem;color:var(--muted)}
+.li-dur{font-size:.8rem;font-weight:700;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 8px;min-width:64px;text-align:center;font-variant-numeric:tabular-nums}
+.li-dur input{width:44px;border:none;background:transparent;text-align:center;font:inherit;padding:0}
+.li-dur input:focus{outline:none;color:var(--accent)}
+.picker-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px;margin:10px 0}
+.picker-grid button{border:1px solid var(--line);border-radius:10px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:.72rem;font-weight:600;color:var(--muted);background:var(--surface)}
+.picker-grid button:hover{border-color:var(--ink);color:var(--ink)}
+.picker-grid svg{height:40px;width:auto}
+
+/* ---------- Timer ---------- */
+.timer-wrap{max-width:520px;margin:0 auto;text-align:center}
+.ring-box{position:relative;width:min(78vw,300px);margin:6px auto 18px}
+.ring-box svg{width:100%;height:auto;transform:rotate(-90deg)}
+.ring-bg{stroke:var(--line)}
+.ring-fg{stroke:var(--accent);transition:stroke-dashoffset .3s linear}
+.ring-txt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-txt .rt-time{font-size:clamp(2.4rem,10vw,3.4rem);font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1.1}
+.ring-txt .rt-label{font-size:.78rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.timer-top{display:flex;justify-content:space-between;font-size:.85rem;color:var(--muted);margin-bottom:8px}
+.timer-top b{color:var(--ink)}
+.timer-controls{display:flex;justify-content:center;gap:10px;margin:16px 0}
+.btn-round{width:56px;height:56px;border-radius:50%;border:1.5px solid var(--ink);display:grid;place-items:center;background:var(--surface)}
+.btn-round svg{width:22px;height:22px}
+.btn-round.main{background:var(--accent);border-color:var(--accent);color:#fff;width:68px;height:68px}
+.btn-round.main svg{width:26px;height:26px}
+.queue{display:flex;flex-direction:column;gap:6px;margin-top:18px;text-align:left}
+.q-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:.86rem;background:var(--surface)}
+.q-item.now{border-color:var(--accent);background:var(--accent-soft);font-weight:600}
+.q-item.done{opacity:.45}
+.q-item .q-dur{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:600;font-size:.8rem}
+.timer-note{font-size:.8rem;color:var(--muted);margin-top:14px}
+.phase-rest .ring-fg{stroke:var(--warn)}
+
+/* ---------- Kalkulator ---------- */
+.calc-grid{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+.calc-grid>*{min-width:0}
+@media(min-width:860px){.calc-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}}
+.kcalc{width:100%;height:auto;margin:0 auto;display:block}
+.calc-result{display:flex;flex-direction:column;gap:2px;align-items:center;justify-content:center;text-align:center;padding:10px 0 4px}
+.cr-num{font-size:clamp(2.6rem,9vw,3.6rem);font-weight:700;letter-spacing:-.03em;color:var(--accent);font-variant-numeric:tabular-nums;line-height:1.05}
+.cr-sub{font-size:.85rem;color:var(--muted)}
+.breakdown{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.bk{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.bk .bk-l{font-size:.72rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.bk .bk-v{font-weight:700;font-size:1.05rem;font-variant-numeric:tabular-nums}
+.ex-table{width:100%;border-collapse:collapse;font-size:.86rem}
+.ex-table th{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+.ex-table td{padding:9px 10px;border-bottom:1px solid var(--line)}
+.ex-table td:last-child,.ex-table th:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.ex-table tr.sel td{background:var(--accent-soft)}
+.ex-table tbody tr{cursor:pointer}
+.ex-table tbody tr:hover{background:var(--bg)}
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+/* ---------- Riwayat ---------- */
+.stat-row{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px}
+@media(min-width:760px){.stat-row{grid-template-columns:repeat(4,1fr)}}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.stat .st-l{font-size:.74rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.stat .st-v{font-size:1.45rem;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:2px}
+.stat .st-s{font-size:.75rem;color:var(--muted)}
+.chart-card{margin-bottom:16px}
+.chart-card h2{font-size:1rem;margin-bottom:4px}
+.chart-card .sub{font-size:.8rem;color:var(--muted);margin-bottom:12px}
+.chart-scroll{overflow-x:auto}
+.chart-scroll svg{min-width:560px;width:100%;height:auto}
+.legend{display:flex;gap:14px;font-size:.78rem;color:var(--muted);margin-top:8px;flex-wrap:wrap}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.log-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.log-form-grid .span2{grid-column:1/-1}
+@media(max-width:640px){.log-form-grid{grid-template-columns:1fr}}
+.hist-list{display:flex;flex-direction:column;gap:8px}
+.h-item{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:11px 14px;background:var(--surface)}
+.h-item .h-date{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;width:52px;flex-shrink:0;line-height:1.3}
+.h-item .h-date b{display:block;font-size:1.15rem;color:var(--ink)}
+.h-item .h-main{flex:1;min-width:0}
+.h-item .h-name{font-weight:600;font-size:.9rem}
+.h-item .h-sub{font-size:.76rem;color:var(--muted)}
+.h-item .h-kal{font-weight:700;font-variant-numeric:tabular-nums;font-size:.88rem;white-space:nowrap}
+.h-item .h-kal small{font-weight:500;color:var(--muted)}
+
+/* ---------- Toast ---------- */
+#toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:.86rem;opacity:0;pointer-events:none;transition:all .25s;z-index:200;max-width:88vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(min-width:760px){#toast{bottom:28px}}
+
+footer{border-top:1px solid var(--line);padding:22px 0 90px;color:var(--muted);font-size:.8rem;text-align:center}
+@media(min-width:760px){footer{padding-bottom:28px}}
+footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap topbar">
+    <div class="logo">
+      <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12c2.5-6 5-6 8 0s5.5 6 8 0" stroke="currentColor"/></svg></span>
+      RumahOlah
+    </div>
+    <nav class="tabs" id="tabs"></nav>
+    <div class="top-profile"><button class="pchip" id="profileChip"><svg class="ic" style="width:15px;height:15px" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.2-3.4 3.8-5 7-5s5.8 1.6 7 5"/></svg><span id="profileLabel">Profil</span></svg></button></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="view active" id="view-katalog"></section>
+  <section class="view" id="view-rencana"></section>
+  <section class="view" id="view-timer"></section>
+  <section class="view" id="view-kalkulator"></section>
+  <section class="view" id="view-riwayat"></section>
+</main>
+
+<footer>
+  <div class="wrap"><span>RumahOlah — panduan latihan rumahan tanpa alat</span><span>Estimasi kalori bersifat perkiraan (rumus MET)</span></div>
+</footer>
+
+<nav class="tabbar" id="tabbar"></nav>
+<div class="modal" id="modal"><div class="modal-box" id="modalBox"></div></div>
+<div id="toast"></div>
+<script>
+/* ================= DATA GERAKAN ================= */
+const MOVES = [
+{
+  id:'pushup', name:'Push-up', area:'Dada & Lengan', level:'Menengah', met:8.0, dur:45,
+  desc:'Latihan klasik untuk memperkuat dada, bahu, dan otot lengan tengah (trisep) hanya dengan berat badan.',
+  steps:[
+    'Posisikan tubuh telungkup, kedua telapak tangan di lantai sedikit lebih lebar dari bahu, kaki lurus ke belakang bertumpu di ujung jari kaki.',
+    'Kencangkan perut dan pantat agar tubuh membentuk garis lurus dari kepala hingga tumit.',
+    'Turunkan badan dengan menekuk siku sampai dada hampir menyentuh lantai, siku membentuk sudut sekitar 45° dari badan.',
+    'Dorong lantai hingga kembali ke posisi awal, lalu ulangi dengan tempo terkontrol.'
+  ],
+  tips:['Jaga pinggul tidak turun atau naik; bayangkan tubuh seperti papan kayu.','Turun 2 detik, naik 1 detik agar otot bekerja lebih maksimal.','Kalau terlalu berat, letakkan lutut di lantai (variasi knee push-up).'],
+  svg:`<svg viewBox="0 0 140 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 84 H125" opacity=".35"/><circle cx="32" cy="52" r="7.5"/><path d="M39 56 L106 72"/><path d="M39 56 L34 70 L30 82"/><path d="M106 72 L108 82"/><path d="M39 56 L58 60 L62 70" opacity="0"/><path d="M50 57 L46 70 L42 82" opacity=".55"/></svg>`
+},
+{
+  id:'squat', name:'Squat', area:'Kaki & Pantat', level:'Pemula', met:5.5, dur:45,
+  desc:'Raja latihan kaki: memperkuat paha depan, paha belakang, dan pantat serta melatih keseimbangan.',
+  steps:[
+    'Berdiri tegak dengan kaki dibuka selebar bahu, ujung kaki sedikit menghadap keluar, lengan lurus ke depan sebagai penyeimbang.',
+    'Tarik napas dan dorong pinggul ke belakang seperti hendak duduk di kursi.',
+    'Turunkan badan sampai paha hampir sejajar lantai, lutut tetap menghadap ke arah jari kaki.',
+    'Tekankan tumit dan berdiri kembali sambil menghembuskan napas.'
+  ],
+  tips:['Jaga dada tetap terangkat dan punggung lurus, jangan membungkuk.','Lutut tidak boleh melewati terlalu jauh di depan ujung kaki.','Mulai dari amplitudo yang nyaman, tambah dalam secara bertahap.'],
+  svg:`<svg viewBox="0 0 140 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 90 H125" opacity=".35"/><circle cx="66" cy="24" r="8"/><path d="M66 32 L64 50"/><path d="M64 50 L48 54 L52 78"/><path d="M64 50 L84 52 L86 78"/><path d="M66 38 L92 36"/><path d="M52 78 L44 78 M86 78 L94 78"/></svg>`
+},
+{
+  id:'plank', name:'Plank', area:'Perut & Inti', level:'Pemula', met:3.8, dur:30,
+  desc:'Latihan isometrik untuk menguatkan otot inti (core), memperbaiki postur, dan menstabilkan tulang belakang.',
+  steps:[
+    'Telungkup lalu angkat tubuh dengan bertumpu pada siku (tepat di bawah bahu) dan ujung jari kaki.',
+    'Luruskan kaki ke belakang, jarak kedua kaki selebar pinggul.',
+    'Kencangkan perut dan pantat, tahan pandangan ke lantai agar leher netral.',
+    'Tahan posisi ini sambil bernapas normal, jangan tahan napas.'
+  ],
+  tips:['Bayangkan pusar tertarik ke arah tulang belakang.','Kalau pinggul mulai turun, istirahat sejenak — bentuk lebih penting dari durasi.','Naikkan durasi 5–10 detik setiap pekan.'],
+  svg:`<svg viewBox="0 0 140 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 82 H125" opacity=".35"/><circle cx="30" cy="52" r="7.5"/><path d="M38 56 H110"/><path d="M38 56 L38 82"/><path d="M48 56 L48 82" opacity=".5"/><path d="M110 56 L114 82"/><path d="M52 50 L92 44" opacity="0"/></svg>`
+},
+{
+  id:'lunge', name:'Lunge', area:'Kaki & Pantat', level:'Menengah', met:6.0, dur:45,
+  desc:'Latihan satu kaki yang membangun kekuatan paha dan pantat sekaligus melatih keseimbangan antar sisi kiri-kanan.',
+  steps:[
+    'Berdiri tegak, kaki selebar pinggul, tangan di pinggang atau menyilang di dada.',
+    'Melangkah besar ke depan dengan satu kaki, tumit mendarat lebih dulu.',
+    'Turunkan badan sampai kedua lutut membentuk sudut 90°; lutut belakang mendekati lantai.',
+    'Dorong tumit kaki depan untuk kembali berdiri, ganti kaki secara bergantian.'
+  ],
+  tips:['Pastikan lutut depan tidak melewati jari kaki.','Jaga torso tetap tegak, jangan condong ke depan.','Pegang dinding/kursi bila keseimbangan masih goyah.'],
+  svg:`<svg viewBox="0 0 140 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 90 H125" opacity=".35"/><circle cx="60" cy="20" r="8"/><path d="M60 28 L58 52"/><path d="M58 52 L80 56 L82 84"/><path d="M58 52 L38 66 L36 84"/><path d="M60 34 L44 44"/><path d="M82 84 L74 84 M36 84 L28 84"/></svg>`
+},
+{
+  id:'bridge', name:'Glute Bridge', area:'Pantat & Punggung Bawah', level:'Pemula', met:4.8, dur:40,
+  desc:'Mengangkat pinggul dari posisi telentang untuk mengaktifkan otot pantat dan meredakan ketegangan punggung bawah.',
+  steps:[
+    'Telentang di lantai, lutut menekuk, telapak kaki menapak di lantai selebar pinggul, tangan di samping badan.',
+    'Dorong tumit ke lantai dan angkat pinggul hingga tubuh membentuk garis lurus dari bahu ke lutut.',
+    'Tahan 1–2 detik di titik tertinggi sambil merasakan otot pantat bekerja.',
+    'Turunkan pinggul perlahan tanpa menyentuh lantai sepenuhnya, lalu ulangi.'
+  ],
+  tips:['Jangan angkat pinggul terlalu tinggi sampai punggung melengkung berlebihan.','Tekankan tumit, bukan ujung kaki.','Pernapasan: hembuskan saat mengangkat, tarik saat menurunkan.'],
+  svg:`<svg viewBox="0 0 140 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 84 H125" opacity=".35"/><circle cx="30" cy="66" r="7"/><path d="M38 70 Q55 44 76 62"/><path d="M76 62 L96 58 L98 82"/><path d="M38 76 L38 84" opacity=".5"/><path d="M50 56 L54 44 L60 52" opacity=".6"/><path d="M38 70 L30 70"/></svg>`
+},
+{
+  id:'mclimber', name:'Mountain Climber', area:'Perut & Kardio', level:'Menengah', met:8.0, dur:35,
+  desc:'Gerakan plank dinamis yang membakar kalori sekaligus melatih otot perut bagian bawah dan daya tahan.',
+  steps:[
+    'Mulai dari posisi push-up tinggi: tangan lurus di bawah bahu, badan membentuk garis lurus.',
+    'Tarik satu lutut ke arah dada dengan cepat, kaki lain tetap lurus ke belakang.',
+    'Kembalikan kaki sambil langsung menukar dengan lutut kaki yang lain.',
+    'Pertahankan pinggul tetap rendah dan stabil, ulangi dengan ritme cepat.'
+  ],
+  tips:['Jangan biarkan pinggul naik ke atas; tetap rendah seperti plank.','Semakin cepat ritme, semakin besar pembakaran kalori.','Turunkan tempo bila bentuk mulai berantakan.'],
+  svg:`<svg viewBox="0 0 140 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 84 H125" opacity=".35"/><circle cx="30" cy="50" r="7.5"/><path d="M38 54 L110 66"/><path d="M38 54 L36 82"/><path d="M42 56 L52 68 L50 82" opacity=".9"/><path d="M110 66 L114 82"/><path d="M100 64 L92 82" opacity=".55"/></svg>`
+},
+{
+  id:'burpee', name:'Burpee', area:'Seluruh Badan', level:'Lanjut', met:9.0, dur:30,
+  desc:'Kombinasi squat, push-up, dan lompatan — pembakar kalori terbaik untuk latihan seluruh badan tanpa alat.',
+  steps:[
+    'Berdiri tegak, kaki selebar bahu, lalu jongkok dan letakkan kedua tangan di lantai.',
+    'Lompatkan kaki ke belakang hingga posisi plank, badan tetap lurus.',
+    'Opsional: lakukan satu push-up, lalu lompatkan kaki kembali ke depan tangan.',
+    'Berdiri sambil melompat setinggi mungkin dengan kedua tangan ke atas, lalu ulangi.'
+  ],
+  tips:['Ini gerakan berintensitas tinggi — mulai dari 20–30 detik dulu.','Jaga pendaratan lutut lembut (tekuk sedikit) untuk melindungi sendi.','Boleh skip lompatan di akhir bila ruangan sempit atau sendi terasa nyeri.'],
+  svg:`<svg viewBox="0 0 140 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 90 H125" opacity=".35"/><circle cx="72" cy="34" r="8"/><path d="M72 42 L70 62"/><path d="M70 62 L56 70 L58 88"/><path d="M70 62 L84 72 L86 88"/><path d="M72 30 L88 16 M72 30 L56 16"/><path d="M86 88 L80 88 M58 88 L64 88"/></svg>`
+},
+{
+  id:'crunch', name:'Sit-up / Crunch', area:'Perut', level:'Pemula', met:4.5, dur:40,
+  desc:'Latihan perut klasik dengan rentang gerak penuh untuk menguatkan otot perut bagian atas dan tengah.',
+  steps:[
+    'Telentang, lutut ditekuk, telapak kaki menapak lantai, kedua tangan bersandar di belakang kepala tanpa menarik leher.',
+    'Tarik napas lalu angkat bahu dan punggung atas dari lantai dengan kekuatan otot perut.',
+    'Tahan sejenak di posisi atas, rasakan otot perut berkontraksi.',
+    'Turunkan perlahan sampai bahu hampir menyentuh lantai, lalu ulangi tanpa melepas kontraksi total.'
+  ],
+  tips:['Jangan menarik leher dengan tangan — tangan hanya menopang kepala.','Ujung kaki bisa diungkit di bawah sofa bila sulit menstabilkan kaki.','EksHal saat naik, tarik napas saat turun.'],
+  svg:`<svg viewBox="0 0 140 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 84 H125" opacity=".35"/><circle cx="52" cy="50" r="8"/><path d="M60 55 Q72 66 88 70"/><path d="M88 70 L104 58 L108 82"/><path d="M60 60 Q52 74 40 78 L40 84" opacity=".8"/><path d="M46 46 L64 54" opacity=".55"/></svg>`
+},
+{
+  id:'jjack', name:'Jumping Jack', area:'Kardio', level:'Pemula', met:7.7, dur:40,
+  desc:'Pemanasan kardio sederhana yang menaikkan detak jantung dengan cepat dan menggerakkan seluruh badan.',
+  steps:[
+    'Berdiri tegak dengan kaki dirapatkan, kedua tangan lurus di samping badan.',
+    'Lompat sambil membuka kaki sedikit lebih lebar dari bahu dan angkat kedua lengan ke atas hingga di atas kepala.',
+    'Lompat kembali ke posisi awal dengan kaki rapat dan tangan turun ke samping.',
+    'Pertahankan ritme stabil dan pendaratan lembut di ujung kaki.'
+  ],
+  tips:['Gunakan ini sebagai pemanasan 1–2 menit sebelum latihan utama.','Jaga lutut sedikit menekut saat mendarat untuk meredam benturan.','Untuk versi rendah benturan, ganti lompatan dengan melangkah samping (step jack).'],
+  svg:`<svg viewBox="0 0 140 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 90 H125" opacity=".35"/><circle cx="70" cy="26" r="8"/><path d="M70 34 L70 60"/><path d="M70 42 L52 22 M70 42 L88 22"/><path d="M70 60 L54 86 M70 60 L86 86"/></svg>`
+},
+{
+  id:'highknees', name:'High Knees', area:'Kardio & Kaki', level:'Menengah', met:8.0, dur:35,
+  desc:'Berlari di tempat dengan lutut diangkat tinggi — melatih daya ledak kaki dan kardio dalam ruangan sempit.',
+  steps:[
+    'Berdiri tegak, siku menekuk 90° di samping badan.',
+    'Angkat satu lutut hingga sejajar pinggul atau lebih tinggi, lalu segera turunkan dan ganti kaki lain.',
+    'Ayunkan lengan berlawanan dengan kaki seperti saat berlari.',
+    'Tumpu pada ujung kaki dan jaga ritme cepat namun terkontrol.'
+  ],
+  tips:['Punggung tetap tegak, jangan condong ke belakang.','Tempatkan kaki di lantai pelan-pelan, jangan dibanting.','Lakukan 20 detik cepat + 10 detik jalan santai bila kehabisan napas.'],
+  svg:`<svg viewBox="0 0 140 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 90 H125" opacity=".35"/><circle cx="70" cy="24" r="8"/><path d="M70 32 L70 56"/><path d="M70 56 L58 66 L64 84"/><path d="M70 44 L58 52 L60 62"/><path d="M70 44 L84 38"/><path d="M64 84 L58 88"/></svg>`
+},
+{
+  id:'wallsit', name:'Wall Sit', area:'Kaki (Isometrik)', level:'Pemula', met:5.0, dur:40,
+  desc:'Duduk imajiner bersandar di dinding untuk membangun daya tahan otot paha tanpa perlu gerakan.',
+  steps:[
+    'Berdiri membelakangi dinding, punggung menempel rapat, kaki sekitar 2 telapak dari dinding.',
+    'Turunkan badan perlahan dengan meluncur di dinding sampai paha sejajar lantai, seperti duduk di kursi tak terlihat.',
+    'Letakkan tangan di paha atau samping badan, tahan pandangan lurus ke depan.',
+    'Tahan posisi ini sesuai target waktu, bernapas normal.'
+  ],
+  tips:['Pastikan sudut lutut 90° dan tumit menapak penuh.','Kalau terlalu berat, naik sedikit (sudut lebih dari 90°) dulu.','Akhiri dengan berjalan santai untuk merenggangkan otot.'],
+  svg:`<svg viewBox="0 0 140 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M28 12 V88" opacity=".6"/><path d="M15 90 H125" opacity=".35"/><path d="M28 46 L74 46 L76 84"/><circle cx="80" cy="30" r="8"/><path d="M74 44 L74 38"/><path d="M76 84 L68 84"/></svg>`
+},
+{
+  id:'superman', name:'Superman', area:'Punggung & Punggung Bawah', level:'Pemula', met:3.5, dur:35,
+  desc:'Menguatkan otot punggung bawah dan pantat dengan posisi telungkup — penyeimbang ideal untuk latihan perut.',
+  steps:[
+    'Telungkup di lantai, kedua lengan lurus ke depan sejajar telinga, kaki lurus ke belakang.',
+    'Tarik napas lalu angkat dada, kedua lengan, dan kedua kaki dari lantai secara bersamaan.',
+    'Tahan 2–3 detik di posisi tertinggi, pandangan ke lantai agar leher aman.',
+    'Turunkan perlahan dan ulangi.'
+  ],
+  tips:['Angkat secukupnya — tidak perlu tinggi, yang penting punggung terasa bekerja.','Gerakan ini cocok dipasangkan setelah plank atau sit-up.','Hindari menahan napas saat menahan posisi.'],
+  svg:`<svg viewBox="0 0 140 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 78 H125" opacity=".35"/><circle cx="104" cy="52" r="7.5"/><path d="M97 56 Q70 44 42 52"/><path d="M42 52 L20 40" opacity=".9"/><path d="M62 49 L44 60" opacity=".7"/><path d="M74 48 Q60 64 44 68" opacity=".9"/></svg>`
+}
+];
+
+const LEVELS = ['Semua','Pemula','Menengah','Lanjut'];
+const PRESETS = [
+  { id:'p1', name:'Pemula Bangun Semangat', days:[1,2,4,5],
+    items:[{id:'jjack',dur:60},{id:'squat',dur:40},{id:'crunch',dur:40},{id:'plank',dur:30},{id:'bridge',dur:40}] },
+  { id:'p2', name:'Full Body Menengah', days:[1,3,5],
+    items:[{id:'jjack',dur:60},{id:'pushup',dur:45},{id:'squat',dur:45},{id:'mclimber',dur:35},{id:'plank',dur:40},{id:'superman',dur:35}] },
+  { id:'p3', name:'Pembakar Kalori Intens', days:[2,4,6],
+    items:[{id:'burpee',dur:30},{id:'jjack',dur:45},{id:'highknees',dur:35},{id:'pushup',dur:45},{id:'mclimber',dur:35},{id:'wallsit',dur:40}] }
+];
+
+/* ================= STATE & UTIL ================= */
+const LS = { profile:'rumaholah.profile', plans:'rumaholah.plans', logs:'rumaholah.logs' };
+const $ = s => document.querySelector(s);
+const store = {
+  get(k, fb){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; }catch(e){ return fb; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+let profile = store.get(LS.profile, { name:'', weight:70, age:30, gender:'l' });
+let plans = store.get(LS.plans, null);
+let logs = store.get(LS.logs, []);
+let activePlanId = null, activeDay = new Date().getDay();
+if(!plans){ plans = JSON.parse(JSON.stringify(PRESETS)); store.set(LS.plans, plans); }
+
+const fmtMMSS = s => `${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,'0')}`;
+const fmtDate = iso => new Date(iso).toLocaleDateString('id-ID',{weekday:'short', day:'numeric', month:'short'});
+const fmtDateLong = iso => new Date(iso).toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'long', year:'numeric'});
+const byId = id => MOVES.find(m=>m.id===id);
+const moveById = byId;
+const toast = msg => { const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2200); };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function kcal(met, kg, sec){ return met * kg * (sec/3600); }
+function planDuration(p){ return p.items.reduce((a,i)=>a+i.dur+REST_SEC,0) - (p.items.length?REST_SEC:0); }
+function planKcal(p, kg){ return p.items.reduce((a,i)=>{ const m=byId(i.id); return a + (m?kcal(m.met,kg,i.dur):0); },0); }
+const REST_SEC = 20;
+const DAY_NAMES = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+
+/* ================= ICONS ================= */
+const ICON = {
+  catalog:'<path d="M4 5h16M4 12h16M4 19h10"/>',
+  plan:'<rect x="4" y="3" width="16" height="18" rx="2.5"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+  timer:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/>',
+  calc:'<rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M8.5 7.5h7M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 15.5h.01M12 15.5h.01M15.5 15.5h.01"/>',
+  history:'<path d="M4 19c2.5-6 5-6 8 0s5.5 6 8 0" transform="translate(0,-4)"/><path d="M3 12h4l2-3 2 5 2-4 2 2h6"/>',
+  play:'<path d="M7 4.5v15l13-7.5z" fill="currentColor" stroke="none"/>',
+  pause:'<rect x="6" y="4.5" width="4" height="15" rx="1.2" fill="currentColor" stroke="none"/><rect x="14" y="4.5" width="4" height="15" rx="1.2" fill="currentColor" stroke="none"/>',
+  skip:'<path d="M5 5l9 7-9 7V5z" fill="currentColor" stroke="none"/><path d="M18 5v14" />',
+  stop:'<rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  x:'<path d="M6 6l12 12M18 6L6 18"/>',
+  check:'<path d="M4 12.5l5 5L20 6.5"/>',
+  trash:'<path d="M4 7h16M9 7V5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5v2M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/>',
+  flame:'<path d="M12 3c1 3-3 4.5-3 8a3.5 3.5 0 0 0 7 0c0-2.5-1.5-3.5-1.5-5 1.5.8 2.5 2.4 2.5 4.6A4.9 4.9 0 0 1 12 20a5 5 0 0 1-5-5c0-4.5 4-6.5 5-12z"/>',
+  clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  edit:'<path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17l-1 4z"/><path d="M13.5 6.5l3 3"/>',
+  copy:'<rect x="8.5" y="8.5" width="12" height="12" rx="2.5"/><path d="M15.5 8.5v-3a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3"/>',
+  zap:'<path d="M13 2L4.5 13.5H11L9.5 22 18.5 10.5H12L13 2z"/>',
+  user:'<circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.2-3.4 3.8-5 7-5s5.8 1.6 7 5"/>',
+  chart:'<path d="M4 20h16"/><path d="M6.5 20v-6M11 20V8M15.5 20v-9M20 20V5" transform="translate(-1,0)"/>',
+  dumbbell:'<path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/>',
+  arrowdown:'<path d="M12 5v14M6 13l6 6 6-6"/>'
+};
+const icon = (n,cls='ic') => `<svg class="${cls}" viewBox="0 0 24 24">${ICON[n]}</svg>`;
+
+/* ================= NAV ================= */
+const VIEWS = [
+  {id:'katalog', label:'Katalog', ic:'catalog'},
+  {id:'rencana', label:'Rencana', ic:'plan'},
+  {id:'timer', label:'Timer', ic:'timer'},
+  {id:'kalkulator', label:'Kalori', ic:'calc'},
+  {id:'riwayat', label:'Riwayat', ic:'history'}
+];
+function buildNav(){
+  $('#tabs').innerHTML = VIEWS.map(v=>`<button data-view="${v.id}">${icon(v.ic)}<span>${v.label}</span></button>`).join('');
+  $('#tabbar').innerHTML = VIEWS.map(v=>`<button data-view="${v.id}">${icon(v.ic)}<span>${v.label}</span></button>`).join('');
+  document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.view)));
+}
+function go(view){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  $('#view-'+view).classList.add('active');
+  document.querySelectorAll('#tabs button,#tabbar button').forEach(b=>b.classList.toggle('on', b.dataset.view===view));
+  window.scrollTo({top:0});
+  if(view==='riwayat') renderRiwayat();
+  if(view==='kalkulator') renderKalkulator();
+  if(view==='timer') renderTimerView();
+  if(view==='rencana') renderRencana();
+}
+
+/* ================= MODAL ================= */
+function openModal(html){ $('#modalBox').innerHTML = html; $('#modal').classList.add('open'); document.body.style.overflow='hidden'; }
+function closeModal(){ $('#modal').classList.remove('open'); document.body.style.overflow=''; }
+$('#modal').addEventListener('click', e=>{ if(e.target.id==='modal') closeModal(); });
+
+/* ================= KATALOG ================= */
+let filterLevel = 'Semua';
+function renderKatalog(){
+  const list = MOVES.filter(m=>filterLevel==='Semua'||m.level===filterLevel);
+  $('#view-katalog').innerHTML = `
+  <div class="page-head">
+    <div><h1>Katalog Gerakan</h1><p>${MOVES.length} panduan gerakan rumahan tanpa alat — klik kartu untuk detail langkah</p></div>
+  </div>
+  <div class="filters">${LEVELS.map(l=>`<button class="chip ${l===filterLevel?'on':''}" data-lv="${l}">${l}</button>`).join('')}</div>
+  <div class="mov-grid">
+    ${list.map(m=>`
+    <article class="mov-card">
+      <div class="mov-fig">${m.svg}</div>
+      <div class="mov-name">${m.name}</div>
+      <div class="mov-meta">
+        <span class="tag gray">${m.area}</span>
+        <span class="tag ${m.level==='Lanjut'?'warn':''}">${m.level}</span>
+        <span class="tag">MET ${m.met}</span>
+      </div>
+      <p class="mov-desc">${m.desc}</p>
+      <button class="btn ghost sm" data-detail="${m.id}">Lihat Panduan</button>
+    </article>`).join('')}
+  </div>`;
+  $('#view-katalog').querySelectorAll('[data-lv]').forEach(b=>b.addEventListener('click',()=>{filterLevel=b.dataset.lv;renderKatalog();}));
+  $('#view-katalog').querySelectorAll('[data-detail]').forEach(b=>b.addEventListener('click',()=>openDetail(b.dataset.detail)));
+}
+function openDetail(id){
+  const m = byId(id); if(!m) return;
+  openModal(`
+  <div class="modal-head"><h2>${m.name}</h2><button class="x" onclick="closeModal()">${icon('x')}</button></div>
+  <div class="modal-fig">${m.svg}</div>
+  <div class="mov-meta" style="margin-bottom:6px">
+    <span class="tag gray">${m.area}</span><span class="tag ${m.level==='Lanjut'?'warn':''}">${m.level}</span><span class="tag">MET ${m.met}</span>
+  </div>
+  <p style="font-size:.92rem;color:#444">${m.desc}</p>
+  <h3 class="sec">Langkah-langkah</h3>
+  <ol class="steps">${m.steps.map(s=>`<li><span>${s}</span></li>`).join('')}</ol>
+  <h3 class="sec">Tips Aman</h3>
+  <ul class="tips">${m.tips.map(t=>`<li>${icon('check')}<span>${t}</span></li>`).join('')}</ul>
+  <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
+    <button class="btn acc" onclick="addFromDetail('${m.id}')">${icon('plus')} Tambah ke Rencana</button>
+    <button class="btn ghost" onclick="quickPlay('${m.id}')">${icon('play')} Latihan Sekarang</button>
+  </div>`);
+  window._detailId = id;
+}
+function addFromDetail(id){
+  if(!activePlanId) activePlanId = plans[0].id;
+  const p = plans.find(x=>x.id===activePlanId);
+  p.items.push({id, dur: byId(id).dur});
+  store.set(LS.plans, plans);
+  closeModal(); toast('Ditambahkan ke "'+p.name+'"'); go('rencana');
+}
+function quickPlay(id){
+  closeModal();
+  startSession({ name:'Latihan Kilat: '+byId(id).name, items:[{id, dur:byId(id).dur}] });
+}
+
+/* ================= RENCANA ================= */
+function renderRencana(){
+  const wrap = $('#view-rencana');
+  if(!activePlanId && plans.length) activePlanId = plans[0].id;
+  const p = plans.find(x=>x.id===activePlanId);
+  wrap.innerHTML = `
+  <div class="page-head">
+    <div><h1>Paket Rutinitas</h1><p>Susun jadwal latihan harianmu — tersimpan otomatis di perangkat</p></div>
+    <button class="btn sm" id="newPlanBtn">${icon('plus')} Paket Baru</button>
+  </div>
+  <div class="plan-layout">
+    <div>
+      <div class="plan-list" id="planList">
+        ${plans.map(pl=>`
+        <div style="display:flex;gap:6px;align-items:stretch">
+          <button class="plan-item ${pl.id===activePlanId?'on':''}" data-plan="${pl.id}" style="flex:1">
+            <span class="pi-ic">${icon('plan','')}</span>
+            <span class="pi-body">
+              <span class="pi-name">${esc(pl.name)}</span>
+              <span class="pi-sub">${pl.items.length} gerakan · ${fmtMMSS(planDuration(pl))} · ${pl.days.map(d=>DAY_NAMES[d]).join(', ')||'tanpa jadwal'}</span>
+            </span>
+          </button>
+          <button class="iconbtn" data-copy="${pl.id}" title="Duplikat">${icon('copy')}</button>
+          <button class="iconbtn" data-del="${pl.id}" title="Hapus">${icon('trash')}</button>
+        </div>`).join('')}
+      </div>
+      ${p ? `
+      <div class="card" style="margin-top:14px">
+        <div class="field" style="margin-bottom:4px">
+          <label>Nama Paket</label>
+          <input id="planName" value="${esc(p.name)}" maxlength="40">
+        </div>
+        <h3 class="sec">Jadwal Hari (mingguan)</h3>
+        <div class="plan-days" id="planDays">
+          ${DAY_NAMES.map((d,i)=>`<button class="daybtn ${p.days.includes(i)?'has':''} ${i===activeDay?'on':''}" data-day="${i}">${d}</button>`).join('')}
+        </div>
+        <div class="plan-summary">
+          <span>Durasi: <b>${fmtMMSS(planDuration(p))}</b></span>
+          <span>Estimasi: <b>${Math.round(planKcal(p, profile.weight))} kkal</b> (${profile.weight} kg)</span>
+        </div>
+        <button class="btn acc" id="playPlan" style="width:100%;margin-top:14px">${icon('play')} Mulai Latihan Hari Ini</button>
+      </div>` : ''}
+    </div>
+    <div class="card" id="planEditor">
+      ${p ? editorHTML(p) : `<div class="empty">${icon('plan')}<div>Belum ada paket terpilih. Buat paket baru dulu.</div></div>`}
+    </div>
+  </div>`;
+  bindRencana();
+}
+function editorHTML(p){
+  if(!p.items.length) return `<div class="empty">${icon('dumbbell')}<div>Belum ada gerakan. Tambahkan dari daftar di bawah.</div></div>
+    ${pickerHTML()}`;
+  return `
+  <div class="line-items">
+    ${p.items.map((it,idx)=>{
+      const m = byId(it.id); if(!m) return '';
+      return `<div class="line-item" data-idx="${idx}">
+        <span class="li-fig">${m.svg}</span>
+        <span class="li-main">
+          <div class="li-name">${m.name}</div>
+          <div class="li-sub">${m.area} · MET ${m.met}</div>
+        </span>
+        <span class="li-dur"><input type="number" min="10" max="600" step="5" value="${it.dur}" data-dur="${idx}"> dtk</span>
+        <button class="iconbtn" data-up="${idx}" title="Naik">${icon('chart')}</button>
+        <button class="iconbtn" data-rm="${idx}" title="Hapus">${icon('x')}</button>
+      </div>`;
+    }).join('')}
+  </div>
+  <div class="plan-summary" style="margin-top:10px">
+    <span>Total aktif: <b>${fmtMMSS(p.items.reduce((a,i)=>a+i.dur,0))}</b></span>
+    <span>+ istirahat ${REST_SEC} dtk/gerakan: <b>${fmtMMSS(planDuration(p))}</b></span>
+  </div>
+  ${pickerHTML()}`;
+}
+function pickerHTML(){
+  return `<h3 class="sec" style="margin-top:18px">Tambah Gerakan</h3>
+  <div class="picker-grid">
+    ${MOVES.map(m=>`<button data-add="${m.id}">${m.svg}<span>${m.name}</span></button>`).join('')}
+  </div>`;
+}
+function savePlans(){ store.set(LS.plans, plans); }
+function bindRencana(){
+  const wrap = $('#view-rencana');
+  wrap.querySelectorAll('[data-plan]').forEach(b=>b.addEventListener('click',()=>{activePlanId=b.dataset.plan;renderRencana();}));
+  wrap.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{
+    const id=b.dataset.del;
+    if(plans.length<=1){ toast('Minimal satu paket harus ada'); return; }
+    if(!confirm('Hapus paket ini?')) return;
+    plans = plans.filter(p=>p.id!==id);
+    if(activePlanId===id) activePlanId = plans[0].id;
+    savePlans(); renderRencana(); toast('Paket dihapus');
+  }));
+  wrap.querySelectorAll('[data-copy]').forEach(b=>b.addEventListener('click',()=>{
+    const src=plans.find(p=>p.id===b.dataset.copy);
+    const cp=JSON.parse(JSON.stringify(src));
+    cp.id='p'+Date.now(); cp.name=src.name+' (salinan)';
+    plans.push(cp); activePlanId=cp.id; savePlans(); renderRencana(); toast('Paket diduplikasi');
+  }));
+  const p = plans.find(x=>x.id===activePlanId); if(!p) return;
+  const nm = $('#planName');
+  if(nm) nm.addEventListener('change',()=>{ p.name = nm.value.trim()||'Tanpa Nama'; savePlans(); renderRencana(); });
+  wrap.querySelectorAll('[data-day]').forEach(b=>b.addEventListener('click',()=>{
+    const d=+b.dataset.day;
+    p.days = p.days.includes(d) ? p.days.filter(x=>x!==d) : [...p.days,d].sort((a,b)=>a-b);
+    savePlans(); renderRencana();
+  }));
+  const play = $('#playPlan');
+  if(play) play.addEventListener('click',()=>startSession(p));
+  wrap.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>{
+    p.items.push({id:b.dataset.add, dur:byId(b.dataset.add).dur}); savePlans(); renderRencana();
+  }));
+  wrap.querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click',()=>{
+    p.items.splice(+b.dataset.rm,1); savePlans(); renderRencana();
+  }));
+  wrap.querySelectorAll('[data-up]').forEach(b=>b.addEventListener('click',()=>{
+    const i=+b.dataset.up, j=i-1; if(j<0) return;
+    [p.items[i],p.items[j]]=[p.items[j],p.items[i]]; savePlans(); renderRencana();
+  }));
+  wrap.querySelectorAll('[data-dur]').forEach(inp=>inp.addEventListener('change',()=>{
+    const v=Math.max(10,Math.min(600,+inp.value||byId(p.items[+inp.dataset.dur].id).dur));
+    p.items[+inp.dataset.dur].dur=v; savePlans(); renderRencana();
+  }));
+  const np = $('#newPlanBtn');
+  if(np) np.addEventListener('click',()=>{
+    const pl={id:'p'+Date.now(), name:'Paket Baru '+(plans.length+1), days:[], items:[]};
+    plans.push(pl); activePlanId=pl.id; savePlans(); renderRencana();
+  });
+}
+
+/* ================= TIMER / SESI LATIHAN ================= */
+let session = null; // {name, items, queue:[{id,dur,rest}], idx, phase:'work|rest|done', left, total, running, tickRef, startedAt, elapsed}
+
+function startSession(plan){
+  go('timer');
+  const queue = [];
+  plan.items.forEach((it,i)=>{
+    const m = byId(it.id); if(!m) return;
+    queue.push({type:'work', id:it.id, dur:it.dur});
+    if(i < plan.items.length-1) queue.push({type:'rest', dur:REST_SEC});
+  });
+  if(!queue.length){ toast('Paket masih kosong'); return; }
+  session = {
+    name: plan.name, queue, idx:0, phase:'ready', left:queue[0].dur,
+    total:queue[0].dur, running:false, startedAt:null, elapsed:0, doneItems:[]
+  };
+  renderTimerView();
+}
+
+function renderTimerView(){
+  const wrap = $('#view-timer');
+  if(!session){
+    wrap.innerHTML = `
+    <div class="page-head"><div><h1>Timer Latihan</h1><p>Hitung mundur kerja & istirahat otomatis</p></div></div>
+    <div class="timer-wrap">
+      <div class="card" style="padding:36px 24px">
+        <div class="empty" style="border:none">
+          ${icon('timer')}
+          <div style="font-weight:600;color:var(--ink);margin-bottom:4px">Belum ada sesi aktif</div>
+          <div style="font-size:.86rem">Mulai dari paket rutinitas di tab Rencana,<br>atau pilih gerakan cepat di bawah.</div>
+        </div>
+        <div class="picker-grid" style="margin-top:18px">
+          ${MOVES.map(m=>`<button data-quick="${m.id}">${m.svg}<span>${m.name}</span></button>`).join('')}
+        </div>
+      </div>
+    </div>`;
+    wrap.querySelectorAll('[data-quick]').forEach(b=>b.addEventListener('click',()=>quickPlay(b.dataset.quick)));
+    return;
+  }
+  wrap.innerHTML = timerHTML();
+  bindTimer();
+}
+
+function timerHTML(){
+  const s = session;
+  const q = s.queue[s.idx];
+  const move = q && q.type==='work' ? byId(q.id) : null;
+  const C = 2*Math.PI*130;
+  const frac = s.total ? (s.total - s.left)/s.total : 0;
+  const doneCount = s.queue.filter(x=>x.type==='work' && s.queue.indexOf(x) < s.idx).length;
+  const totalWork = s.queue.filter(x=>x.type==='work').length;
+  const label = s.phase==='done' ? 'Selesai' : s.phase==='rest' ? 'Istirahat' : q.type==='rest' ? 'Bersiap' : move ? move.name : '';
+  return `
+  <div class="page-head">
+    <div><h1>${esc(s.name)}</h1><p>Gerakan ${Math.min(doneCount+ (s.phase==='done'?0:1), totalWork)} dari ${totalWork} · sisa otomatis tercatat di Riwayat</p></div>
+    ${s.phase!=='done' ? `<button class="btn danger sm" id="tStop">${icon('stop')} Akhiri</button>` : ''}
+  </div>
+  <div class="timer-wrap ${s.phase==='rest'?'phase-rest':''}">
+    <div class="timer-top">
+      <span>Gerakan: <b>${doneCount}/${totalWork}</b></span>
+      <span>Estimasi: <b>${Math.round(sessionKcal())} kkal</b></span>
+    </div>
+    <div class="ring-box">
+      <svg viewBox="0 0 300 300">
+        <circle class="ring-bg" cx="150" cy="150" r="130" stroke-width="14" fill="none"/>
+        <circle class="ring-fg" id="ringFg" cx="150" cy="150" r="130" stroke-width="14" fill="none"
+          stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-frac)).toFixed(1)}" stroke-linecap="round"/>
+      </svg>
+      <div class="ring-txt">
+        <div class="rt-label">${label}</div>
+        <div class="rt-time" id="ringTime">${fmtMMSS(s.phase==='done'?0:s.left)}</div>
+        ${move && s.phase==='work' ? `<div class="tag" style="margin-top:4px">${move.area}</div>` : ''}
+      </div>
+    </div>
+    ${s.phase==='done' ? `
+      <div class="card" style="text-align:left;margin-top:8px">
+        <h2 style="font-size:1.1rem;margin-bottom:8px">${icon('check')} Sesi Selesai — Kerja Bagus!</h2>
+        <div class="breakdown">
+          <div class="bk"><div class="bk-l">Durasi Aktif</div><div class="bk-v">${fmtMMSS(s.elapsed)}</div></div>
+          <div class="bk"><div class="bk-l">Kalori (est.)</div><div class="bk-v">${Math.round(sessionKcal())} kkal</div></div>
+          <div class="bk"><div class="bk-l">Gerakan</div><div class="bk-v">${s.doneItems.length}</div></div>
+          <div class="bk"><div class="bk-l">Tanggal</div><div class="bk-v" style="font-size:.9rem">${fmtDate(new Date().toISOString())}</div></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+          <button class="btn acc" id="tSave">${icon('check')} Simpan ke Riwayat</button>
+          <button class="btn ghost" id="tBack">Kembali ke Rencana</button>
+        </div>
+      </div>` : `
+      <div class="timer-controls">
+        ${s.running ? `<button class="btn-round" id="tPause">${icon('pause')}</button>`
+          : `<button class="btn-round main" id="tStart">${icon('play')}</button>`}
+        <button class="btn-round" id="tSkip" title="Lewati">${icon('skip')}</button>
+      </div>
+      <div class="queue" id="queueList">${queueHTML()}</div>
+      ${move && q.type==='work' ? `<p class="timer-note">${move.steps[0]}</p>` : `<p class="timer-note">Tarik napas, rilekskan otot. Gerakan berikutnya siap.</p>`}`}
+  </div>`;
+}
+function queueHTML(){
+  const s = session;
+  return s.queue.filter(x=>x.type==='work').map((w,i)=>{
+    const realIdx = s.queue.indexOf(w);
+    const cls = realIdx < s.idx ? 'done' : realIdx === s.idx && s.phase==='work' ? 'now' : '';
+    const m = byId(w.id);
+    return `<div class="q-item ${cls}"><span style="opacity:.6">${i+1}.</span> ${m.name}<span class="q-dur">${w.dur} dtk</span></div>`;
+  }).join('');
+}
+function sessionKcal(){
+  if(!session) return 0;
+  let sum = 0;
+  session.queue.forEach((q,i)=>{
+    if(q.type!=='work') return;
+    if(session.phase==='done' || i < session.idx) sum += kcal(byId(q.id).met, profile.weight, q.dur);
+    else if(i === session.idx) sum += kcal(byId(q.id).met, profile.weight, q.dur * (session.total-session.left)/session.total);
+  });
+  return sum;
+}
+function bindTimer(){
+  const s = session;
+  const start = $('#tStart'), pause = $('#tPause'), skip = $('#tSkip'), stop = $('#tStop'), save = $('#tSave'), back = $('#tBack');
+  if(start) start.addEventListener('click',()=>{ beginTick(); });
+  if(pause) pause.addEventListener('click',()=>{ pauseTick(); });
+  if(skip) skip.addEventListener('click',()=>{ nextPhase(true); });
+  if(stop) stop.addEventListener('click',()=>{ if(confirm('Akhiri sesi dan hitung hasil sejauh ini?')) finishSession(); });
+  if(save) save.addEventListener('click',()=>{ saveSessionLog(); session=null; renderTimerView(); go('riwayat'); });
+  if(back) back.addEventListener('click',()=>{ session=null; renderTimerView(); go('rencana'); });
+}
+function beginTick(){
+  if(!session || session.phase==='done') return;
+  if(!session.startedAt) session.startedAt = Date.now();
+  if(session.phase==='ready'){ session.phase = session.queue[0].type==='work' ? 'work':'rest'; }
+  session.running = true;
+  beep(880, .12);
+  clearInterval(session.tickRef);
+  session.tickRef = setInterval(tick, 250);
+  renderTimerView();
+}
+function pauseTick(){
+  if(!session) return;
+  session.running = false;
+  clearInterval(session.tickRef);
+  renderTimerView();
+}
+let lastWhole = null;
+function tick(){
+  const s = session;
+  if(!s || !s.running) return;
+  const now = Math.ceil(s.left);
+  s.left -= 0.25;
+  s.elapsed += 0.25;
+  const cur = Math.ceil(s.left);
+  if(cur !== now && cur >= 0 && cur <= 3) beep(cur===0?1100:700, .08);
+  const timeEl = $('#ringTime'), fg = $('#ringFg');
+  if(timeEl) timeEl.textContent = fmtMMSS(Math.max(0,s.left));
+  if(fg){
+    const C = 2*Math.PI*130;
+    const frac = s.total ? Math.min(1,(s.total - Math.max(0,s.left))/s.total) : 0;
+    fg.setAttribute('stroke-dashoffset', (C*(1-frac)).toFixed(1));
+  }
+  if(s.left <= 0) nextPhase(false);
+}
+function nextPhase(skipped){
+  const s = session;
+  if(!s) return;
+  if(s.queue[s.idx] && s.queue[s.idx].type==='work' && (s.phase==='work'||s.phase==='ready')) s.doneItems.push(s.queue[s.idx].id);
+  s.idx++;
+  if(s.idx >= s.queue.length){ finishSession(); return; }
+  const q = s.queue[s.idx];
+  s.phase = q.type==='rest' ? 'rest' : 'work';
+  s.left = q.dur; s.total = q.dur;
+  if(q.type==='work' && s.running){ beep(990,.15); }
+  renderTimerView();
+  if(s.running){ clearInterval(s.tickRef); s.tickRef = setInterval(tick,250); }
+}
+function finishSession(){
+  const s = session;
+  if(!s) return;
+  clearInterval(s.tickRef);
+  s.running = false; s.phase='done'; s.left=0;
+  beep(660,.12); setTimeout(()=>beep(880,.12),140); setTimeout(()=>beep(1100,.2),280);
+  renderTimerView();
+}
+function saveSessionLog(){
+  const s = session;
+  if(!s || !s.doneItems.length) { toast('Tidak ada gerakan selesai untuk dicatat'); return; }
+  const dur = Math.round(s.elapsed);
+  if(dur < 5){ toast('Durasi terlalu pendek untuk dicatat'); return; }
+  logs.unshift({
+    id:'l'+Date.now(), date:new Date().toISOString(),
+    name:s.name, items:s.doneItems.map(id=>({id, dur: s.queue.find(q=>q.id===id&&q.type==='work').dur})),
+    duration: dur, kcal: Math.round(sessionKcal()), auto:true
+  });
+  store.set(LS.logs, logs);
+  toast('Sesi tersimpan di Riwayat');
+}
+
+/* ================= BEEP (Web Audio) ================= */
+let audioCtx = null;
+function beep(freq, dur){
+  try{
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==='suspended') audioCtx.resume();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type='sine'; o.frequency.value=freq;
+    g.gain.setValueAtTime(0.001, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.22, audioCtx.currentTime+0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur);
+    o.connect(g).connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime+dur+0.02);
+  }catch(e){}
+}
+
+/* ================= KALKULATOR KALORI ================= */
+let calcState = { ex:'pushup', dur:15, weight:null };
+function renderKalkulator(){
+  const wrap = $('#view-kalkulator');
+  if(calcState.weight===null) calcState.weight = profile.weight || 70;
+  wrap.innerHTML = `
+  <div class="page-head">
+    <div><h1>Kalkulator Kalori</h1><p>Estimasi pembakaran berdasarkan nilai MET gerakan, berat badan, dan durasi</p></div>
+  </div>
+  <div class="calc-grid">
+    <div class="card">
+      <div class="field">
+        <label>Gerakan / Aktivitas</label>
+        <select id="calcEx">
+          ${MOVES.map(m=>`<option value="${m.id}" ${m.id===calcState.ex?'selected':''}>${m.name} (MET ${m.met})</option>`).join('')}
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+        <div class="field">
+          <label>Durasi (menit)</label>
+          <input type="number" id="calcDur" min="1" max="240" value="${calcState.dur}">
+        </div>
+        <div class="field">
+          <label>Berat Badan (kg)</label>
+          <input type="number" id="calcW" min="30" max="200" value="${calcState.weight}">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+        ${[5,10,15,20,30,45,60].map(m=>`<button class="chip ${m===calcState.dur?'on':''}" data-min="${m}">${m} mnt</button>`).join('')}
+      </div>
+      <div class="calc-result" style="margin-top:10px">
+        <div class="cr-num" id="calcNum">0</div>
+        <div class="cr-sub">kkal (kilokalori) — estimasi</div>
+      </div>
+      <svg viewBox="0 0 320 150" class="kcalc" id="calcBars" style="margin-top:8px"></svg>
+      <div class="breakdown">
+        <div class="bk"><div class="bk-l">Rumus</div><div class="bk-v" style="font-size:.82rem">MET × kg × jam</div></div>
+        <div class="bk"><div class="bk-l">Per menit</div><div class="bk-v" id="calcPerMin">0 kkal</div></div>
+        <div class="bk"><div class="bk-l">Ekuivalen</div><div class="bk-v" style="font-size:.82rem" id="calcEquiv">—</div></div>
+        <div class="bk"><div class="bk-l">Intensitas</div><div class="bk-v" style="font-size:.82rem" id="calcInt">—</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2 style="font-size:1rem;margin-bottom:4px">Perbandingan Semua Gerakan</h2>
+      <p class="sub" style="font-size:.8rem;color:var(--muted);margin-bottom:10px">Kalori per 15 menit pada berat ${calcState.weight} kg — klik baris untuk memilih</p>
+      <div class="tablewrap">
+      <table class="ex-table">
+        <thead><tr><th>Gerakan</th><th>Area</th><th>MET</th><th>kkal/15mnt</th></tr></thead>
+        <tbody>
+          ${MOVES.map(m=>{
+            const k = kcal(m.met, calcState.weight, 900);
+            return `<tr data-ex="${m.id}" class="${m.id===calcState.ex?'sel':''}"><td>${m.name}</td><td>${m.area}</td><td>${m.met.toFixed(1)}</td><td>${k.toFixed(0)}</td></tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+      </div>
+      <p style="font-size:.75rem;color:var(--muted);margin-top:10px">Nilai MET mengacu pada Compendium of Physical Activities. Angka aktual bergantung pada intensitas, usia, dan komposisi tubuh.</p>
+    </div>
+  </div>`;
+  const upd = ()=>{
+    const m = byId(calcState.ex);
+    const k = kcal(m.met, calcState.weight, calcState.dur*60);
+    $('#calcNum').textContent = k.toFixed(0);
+    $('#calcPerMin').textContent = (k/calcState.dur).toFixed(1)+' kkal';
+    const nasi = k/205; // satu porsi nasi putih ~205 kkal
+    $('#calcEquiv').textContent = nasi>=1 ? `≈ ${nasi.toFixed(1)} porsi nasi (205 kkal)` : `≈ ${(k/140).toFixed(0)}% roti tawar (140 kkal)`;
+    $('#calcInt').textContent = m.met>=8?'Tinggi (≈ lari)':m.met>=6?'Menengah–Tinggi':m.met>=4.5?'Menengah':'Rendah–Menengah';
+    drawCalcBars();
+  };
+  const drawCalcBars = ()=>{
+    const m = byId(calcState.ex);
+    const marks=[5,10,15,20,30,45,60];
+    const vals = marks.map(mi=>kcal(m.met,calcState.weight,mi*60));
+    const max = Math.max(...vals);
+    const W=320,H=150,bx=34,by=24,bw=(W-bx-10)/marks.length;
+    let bars = marks.map((mi,i)=>{
+      const h = (vals[i]/max)*(H-by-26);
+      const x = bx+i*bw+6, y = H-24-h;
+      const sel = mi===calcState.dur;
+      return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(bw-12).toFixed(1)}" height="${h.toFixed(1)}" rx="4" fill="${sel?'#0f766e':'#d8d4cc'}"/>
+      <text x="${(x+(bw-12)/2).toFixed(1)}" y="${(y-5).toFixed(1)}" font-size="9" text-anchor="middle" fill="${sel?'#0f766e':'#6b6b6b'}" font-weight="${sel?'700':'400'}">${vals[i].toFixed(0)}</text>
+      <text x="${(x+(bw-12)/2).toFixed(1)}" y="${H-10}" font-size="9" text-anchor="middle" fill="#6b6b6b">${mi}m</text>`;
+    }).join('');
+    $('#calcBars').innerHTML = `<line x1="${bx}" y1="${H-24}" x2="${W-8}" y2="${H-24}" stroke="#e5e2dc"/>${bars}`;
+  };
+  wrap.querySelector('#calcEx').addEventListener('change',e=>{calcState.ex=e.target.value;renderKalkulator();});
+  wrap.querySelector('#calcDur').addEventListener('change',e=>{calcState.dur=Math.max(1,Math.min(240,+e.target.value||15));renderKalkulator();});
+  wrap.querySelector('#calcW').addEventListener('change',e=>{calcState.weight=Math.max(30,Math.min(200,+e.target.value||70));renderKalkulator();});
+  wrap.querySelectorAll('[data-min]').forEach(b=>b.addEventListener('click',()=>{calcState.dur=+b.dataset.min;renderKalkulator();}));
+  wrap.querySelectorAll('[data-ex]').forEach(tr=>tr.addEventListener('click',()=>{calcState.ex=tr.dataset.ex;renderKalkulator();}));
+  upd();
+}
+
+/* ================= RIWAYAT & GRAFIK ================= */
+function logKcalOf(log){
+  if(log.kcal!=null) return log.kcal;
+  return Math.round(log.items.reduce((a,it)=>{const m=byId(it.id);return a+(m?kcal(m.met,profile.weight,it.dur):0);},0));
+}
+function renderRiwayat(){
+  const wrap = $('#view-riwayat');
+  const sorted = [...logs].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const last7 = sorted.slice(-7);
+  const totalKcal = logs.reduce((a,l)=>a+logKcalOf(l),0);
+  const totalMin = logs.reduce((a,l)=>a+l.duration,0)/60;
+  const avgKcal = logs.length ? totalKcal/logs.length : 0;
+  const streak = calcStreak();
+  wrap.innerHTML = `
+  <div class="page-head">
+    <div><h1>Riwayat Latihan</h1><p>Log otomatis dari sesi timer + catatan manual, dengan grafik kemajuan</p></div>
+    <button class="btn sm" id="openLogForm">${icon('plus')} Catat Manual</button>
+  </div>
+  <div class="stat-row">
+    <div class="stat"><div class="st-l">Total Sesi</div><div class="st-v">${logs.length}</div><div class="st-s">sesi tercatat</div></div>
+    <div class="stat"><div class="st-l">Total Durasi</div><div class="st-v">${Math.round(totalMin)}<span style="font-size:.9rem"> mnt</span></div><div class="st-s">${logs.length} catatan</div></div>
+    <div class="stat"><div class="st-l">Kalori Terbakar</div><div class="st-v">${Math.round(totalKcal)}<span style="font-size:.9rem"> kkal</span></div><div class="st-s">akumulatif</div></div>
+    <div class="stat"><div class="st-l">Streak</div><div class="st-v">${streak}<span style="font-size:.9rem"> hari</span></div><div class="st-s">berturut-turut</div></div>
+  </div>
+  <div class="card chart-card">
+    <h2>Peningkatan Durasi & Kalori</h2>
+    <div class="sub">7 catatan terakhir — batang: durasi (menit), garis: kalori</div>
+    <div class="chart-scroll" id="chartHost">${logs.length? chartSVG(last7) : `<div class="empty">${icon('chart')}<div>Belum ada data. Selesaikan sesi timer atau catat manual.</div></div>`}</div>
+    ${logs.length?`<div class="legend"><span><i style="background:#0f766e"></i> Durasi (mnt)</span><span><i style="background:#b45309"></i> Kalori (kkal)</span></div>`:''}
+  </div>
+  <div class="card chart-card">
+    <h2>Catatan Latihan</h2>
+    <div class="sub">Terbaru di atas</div>
+    ${logs.length ? `<div class="hist-list">
+      ${[...logs].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(l=>{
+        const d=new Date(l.date);
+        return `<div class="h-item">
+          <div class="h-date">${d.toLocaleDateString('id-ID',{month:'short'})}<b>${d.getDate()}</b></div>
+          <div class="h-main">
+            <div class="h-name">${esc(l.name)}</div>
+            <div class="h-sub">${l.items? l.items.map(it=>byId(it.id)?byId(it.id).name:'?').join(', ') : '—'} ${l.auto?'· otomatis':'· manual'}</div>
+          </div>
+          <div class="h-kal">${logKcalOf(l)} kkal<small> · ${Math.round(l.duration/60)} mnt</small></div>
+          <button class="iconbtn" data-dellog="${l.id}">${icon('trash')}</button>
+        </div>`;
+      }).join('')}
+    </div>` : `<div class="empty">${icon('history')}<div>Belum ada catatan latihan.</div></div>`}
+  </div>`;
+  const of = $('#openLogForm');
+  if(of) of.addEventListener('click',openLogForm);
+  wrap.querySelectorAll('[data-dellog]').forEach(b=>b.addEventListener('click',()=>{
+    if(!confirm('Hapus catatan ini?')) return;
+    logs = logs.filter(l=>l.id!==b.dataset.dellog);
+    store.set(LS.logs,logs); renderRiwayat(); toast('Catatan dihapus');
+  }));
+}
+function calcStreak(){
+  if(!logs.length) return 0;
+  const days = new Set(logs.map(l=>new Date(l.date).toDateString()));
+  let streak=0, d=new Date();
+  if(!days.has(d.toDateString())) d.setDate(d.getDate()-1); // boleh mulai kemarin
+  while(days.has(d.toDateString())){ streak++; d.setDate(d.getDate()-1); }
+  return streak;
+}
+function chartSVG(data){
+  const W=640,H=260,P={l:42,r:46,t:18,b:34};
+  const iw=W-P.l-P.r, ih=H-P.t-P.b;
+  const n=data.length;
+  const maxMin = Math.max(10, ...data.map(d=>d.duration/60));
+  const maxKcal = Math.max(50, ...data.map(d=>logKcalOf(d)));
+  const x=i=>P.l + (n===1? iw/2 : i*(iw/(n-1)));
+  const yMin=v=>P.t+ih-(v/maxMin)*ih;
+  const yKal=v=>P.t+ih-(v/maxKcal)*ih;
+  const bw=Math.min(34, iw/n*0.5);
+  // grid & sumbu kiri (menit)
+  let grid='';
+  for(let g=0;g<=4;g++){
+    const vv=maxMin*g/4, yy=yMin(vv);
+    grid+=`<line x1="${P.l}" y1="${yy}" x2="${W-P.r}" y2="${yy}" stroke="#eceae4"/>
+    <text x="${P.l-8}" y="${yy+3}" font-size="10" text-anchor="end" fill="#6b6b6b">${vv.toFixed(0)}</text>`;
+  }
+  // sumbu kanan (kkal)
+  let right='';
+  for(let g=0;g<=4;g++){
+    const vv=maxKcal*g/4, yy=yKal(vv);
+    right+=`<text x="${W-P.r+8}" y="${yy+3}" font-size="10" fill="#b45309">${vv.toFixed(0)}</text>`;
+  }
+  const bars = data.map((d,i)=>`<rect x="${x(i)-bw/2}" y="${yMin(d.duration/60)}" width="${bw}" height="${P.t+ih-yMin(d.duration/60)}" rx="4" fill="#0f766e"/>`).join('');
+  const pts = data.map((d,i)=>`${x(i)},${yKal(logKcalOf(d))}`).join(' ');
+  const dots = data.map((d,i)=>`<circle cx="${x(i)}" cy="${yKal(logKcalOf(d))}" r="4" fill="#fff" stroke="#b45309" stroke-width="2.5"/>`).join('');
+  const labels = data.map((d,i)=>{
+    const dt=new Date(d.date);
+    const t=`${dt.getDate()}/${dt.getMonth()+1}`;
+    return `<text x="${x(i)}" y="${H-10}" font-size="10" text-anchor="middle" fill="#6b6b6b">${t}</text>`;
+  }).join('');
+  const vals = data.map((d,i)=>`<text x="${x(i)}" y="${yMin(d.duration/60)-6}" font-size="10" text-anchor="middle" fill="#0f766e" font-weight="600">${(d.duration/60).toFixed(0)}m</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Grafik durasi dan kalori">
+    ${grid}${right}${bars}
+    <polyline points="${pts}" fill="none" stroke="#b45309" stroke-width="2.5" stroke-linejoin="round"/>
+    ${dots}${labels}${vals}
+  </svg>`;
+}
+function openLogForm(){
+  openModal(`
+  <div class="modal-head"><h2>Catat Latihan Manual</h2><button class="x" onclick="closeModal()">${icon('x')}</button></div>
+  <div class="log-form-grid">
+    <div class="field"><label>Nama Sesi</label><input id="lfName" value="Latihan Bebas" maxlength="40"></div>
+    <div class="field"><label>Tanggal</label><input type="date" id="lfDate" value="${new Date().toISOString().slice(0,10)}"></div>
+    <div class="field"><label>Durasi Total (menit)</label><input type="number" id="lfDur" min="1" max="300" value="20"></div>
+    <div class="field"><label>Estimasi Kalori</label><input type="number" id="lfKcal" min="0" max="3000" value="" placeholder="kosong = hitung otomatis"></div>
+    <div class="field span2"><label>Gerakan (boleh lebih dari satu)</label>
+      <div class="picker-grid" id="lfMoves" style="margin:8px 0 0">
+        ${MOVES.map(m=>`<button data-lm="${m.id}">${m.svg}<span>${m.name}</span></button>`).join('')}
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;margin-top:18px">
+    <button class="btn acc" id="lfSave" style="flex:1">${icon('check')} Simpan Catatan</button>
+  </div>`);
+  const picked = new Set();
+  $('#lfMoves').querySelectorAll('[data-lm]').forEach(b=>b.addEventListener('click',()=>{
+    const id=b.dataset.lm;
+    if(picked.has(id)){ picked.delete(id); b.style.borderColor=''; b.style.color=''; }
+    else { picked.add(id); b.style.borderColor='#0f766e'; b.style.color='#0f766e'; }
+  }));
+  $('#lfSave').addEventListener('click',()=>{
+    const name=$('#lfName').value.trim()||'Latihan Bebas';
+    const dur=Math.max(1,Math.min(300,+$('#lfDur').value||20));
+    const dateVal=$('#lfDate').value||new Date().toISOString().slice(0,10);
+    let k=$('#lfKcal').value.trim();
+    const items=[...picked].map(id=>({id,dur:Math.round(dur*60/Math.max(1,picked.size))}));
+    let kcalVal = k!=='' ? Math.max(0,+k) : null;
+    if(kcalVal===null){
+      if(items.length){ kcalVal=Math.round(items.reduce((a,it)=>{const m=byId(it.id);return a+kcal(m.met,profile.weight,it.dur);},0)); }
+      else kcalVal=Math.round(kcal(5.0,profile.weight,dur*60));
+    }
+    logs.unshift({id:'l'+Date.now(), date:new Date(dateVal+'T'+new Date().toTimeString().slice(0,8)).toISOString(), name, items, duration:dur*60, kcal:kcalVal, auto:false});
+    store.set(LS.logs,logs);
+    closeModal(); toast('Catatan tersimpan'); renderRiwayat();
+  });
+}
+
+/* ================= PROFIL ================= */
+function openProfile(){
+  openModal(`
+  <div class="modal-head"><h2>Profil Latihan</h2><button class="x" onclick="closeModal()">${icon('x')}</button></div>
+  <div class="log-form-grid">
+    <div class="field"><label>Nama</label><input id="pfName" value="${esc(profile.name)}" maxlength="30" placeholder="Namamu"></div>
+    <div class="field"><label>Berat Badan (kg)</label><input type="number" id="pfW" min="30" max="200" value="${profile.weight}"></div>
+    <div class="field"><label>Usia</label><input type="number" id="pfA" min="10" max="90" value="${profile.age}"></div>
+    <div class="field"><label>Jenis Kelamin</label><select id="pfG"><option value="l" ${profile.gender==='l'?'selected':''}>Laki-laki</option><option value="p" ${profile.gender==='p'?'selected':''}>Perempuan</option></select></div>
+  </div>
+  <p style="font-size:.78rem;color:var(--muted);margin-top:12px">Berat badan dipakai untuk estimasi kalori (rumus MET). Data tersimpan hanya di peramban ini.</p>
+  <button class="btn acc" id="pfSave" style="width:100%;margin-top:14px">${icon('check')} Simpan Profil</button>`);
+  $('#pfSave').addEventListener('click',()=>{
+    profile={ name:$('#pfName').value.trim(), weight:Math.max(30,Math.min(200,+$('#pfW').value||70)), age:Math.max(10,Math.min(90,+$('#pfA').value||30)), gender:$('#pfG').value };
+    store.set(LS.profile,profile);
+    updateProfileChip();
+    closeModal(); toast('Profil disimpan'); calcState.weight=profile.weight;
+  });
+}
+function updateProfileChip(){ $('#profileLabel').textContent = profile.name ? profile.name+' · '+profile.weight+' kg' : 'Profil'; }
+
+/* ================= INIT ================= */
+buildNav();
+updateProfileChip();
+renderKatalog();
+$('#profileChip').addEventListener('click', openProfile);
+
+window.closeModal=closeModal;window.quickPlay=quickPlay;
+</script>
+</body>
+</html>

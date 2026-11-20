@@ -1,0 +1,3350 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>Google Photos — Clone UI</title>
+    <style>
+      :root {
+        --bg: #fff;
+        --surface: #fff;
+        --surface-soft: #f8fafd;
+        --surface-hover: #f1f3f4;
+        --sidebar: #f8fafd;
+        --sidebar-active: #d3e3fd;
+        --text: #202124;
+        --muted: #5f6368;
+        --subtle: #80868b;
+        --line: #e8eaed;
+        --blue: #0b57d0;
+        --blue-dark: #0842a0;
+        --blue-soft: #e8f0fe;
+        --shadow: 0 2px 10px rgba(60, 64, 67, 0.15);
+        --radius: 18px;
+        --sidebar-width: 256px;
+        color-scheme: light;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        background: #f5f7fa;
+        color: var(--text);
+        font-family: "Google Sans", "Product Sans", Roboto, Arial, sans-serif;
+        letter-spacing: 0.01em;
+        overflow: hidden;
+      }
+      body.view-mode-desktop {
+        background: #f5f7fa;
+      }
+      body.view-mode-mobile {
+        background:
+          radial-gradient(
+            1200px 600px at 50% 100%,
+            #e3ecff 0%,
+            transparent 60%
+          ),
+          radial-gradient(900px 500px at 0% 0%, #ffe8f5 0%, transparent 55%),
+          linear-gradient(180deg, #eef1f6 0%, #f5f7fa 100%);
+        display: flex;
+        flex-direction: column;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      button {
+        color: inherit;
+      }
+
+      /* View Switcher */
+      .view-switcher {
+        position: fixed;
+        top: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 100;
+        background: #fff;
+        border: 1px solid #e5e8ec;
+        border-radius: 999px;
+        padding: 4px;
+        display: inline-flex;
+        gap: 2px;
+        box-shadow:
+          0 4px 16px rgba(60, 64, 67, 0.1),
+          0 1px 3px rgba(60, 64, 67, 0.08);
+        backdrop-filter: blur(10px);
+      }
+      .view-switcher button {
+        border: 0;
+        background: transparent;
+        height: 36px;
+        padding: 0 18px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #5f6368;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .view-switcher button:hover {
+        color: #202124;
+        background: #f1f3f4;
+      }
+      .view-switcher button.active {
+        background: #e8f0fe;
+        color: #0b57d0;
+      }
+      .view-switcher button svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      /* App stage */
+      .app-stage {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 70px 20px 20px;
+        transition: padding 0.4s ease;
+      }
+      body.view-mode-desktop .app-stage {
+        padding: 0;
+      }
+
+      .app {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      body.view-mode-desktop .app {
+        width: 100%;
+        height: 100%;
+      }
+      body.view-mode-mobile .app {
+        width: 380px;
+        height: 780px;
+        max-height: 100%;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      /* Pixel Phone Frame */
+      .pixel-frame {
+        position: relative;
+        background: #1a1a1a;
+        border-radius: 48px;
+        padding: 12px;
+        box-shadow:
+          0 50px 100px -20px rgba(0, 0, 0, 0.45),
+          0 30px 60px -20px rgba(0, 0, 0, 0.3),
+          inset 0 0 0 2px #2d2d2d,
+          inset 0 0 0 6px #0a0a0a;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      body.view-mode-desktop .pixel-frame {
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        background: transparent;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      body.view-mode-mobile .pixel-frame {
+        width: 404px;
+        height: 804px;
+        max-height: calc(100vh - 100px);
+      }
+
+      /* Pixel side buttons */
+      .pixel-frame::before,
+      .pixel-frame::after {
+        content: "";
+        position: absolute;
+        background: #0a0a0a;
+        border-radius: 2px;
+        pointer-events: none;
+      }
+      /* Volume buttons (left) */
+      .pixel-frame::before {
+        top: 140px;
+        left: -3px;
+        width: 4px;
+        height: 55px;
+        box-shadow: 0 70px 0 #0a0a0a;
+      }
+      /* Power button (right) */
+      .pixel-frame::after {
+        top: 170px;
+        right: -3px;
+        width: 4px;
+        height: 75px;
+      }
+      body.view-mode-desktop .pixel-frame::before,
+      body.view-mode-desktop .pixel-frame::after {
+        display: none;
+      }
+
+      .pixel-screen {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background: #fff;
+        border-radius: 40px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      body.view-mode-desktop .pixel-screen {
+        border-radius: 0;
+      }
+
+      /* Camera punch-hole */
+      .pixel-camera {
+        position: absolute;
+        top: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #0a0a0a;
+        z-index: 50;
+        box-shadow:
+          inset 0 0 0 2px #1a1a1a,
+          0 0 0 1px rgba(255, 255, 255, 0.08);
+        display: none;
+      }
+      body.view-mode-mobile .pixel-camera {
+        display: block;
+      }
+      .pixel-camera::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: #2a4a6b;
+        opacity: 0.6;
+      }
+
+      /* Home indicator */
+      .pixel-home-indicator {
+        position: absolute;
+        bottom: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 120px;
+        height: 4px;
+        background: #202124;
+        border-radius: 2px;
+        opacity: 0.35;
+        z-index: 50;
+        display: none;
+      }
+      body.view-mode-mobile .pixel-home-indicator {
+        display: block;
+      }
+
+      /* Status bar */
+      .status-bar {
+        height: 28px;
+        flex: 0 0 28px;
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+        color: #202124;
+        font-size: 13px;
+        font-weight: 500;
+        z-index: 40;
+      }
+      body.view-mode-mobile .status-bar {
+        display: flex;
+      }
+      .status-bar .time {
+        font-size: 13px;
+      }
+      .status-bar .icons {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .status-bar .icons svg {
+        width: 13px;
+        height: 13px;
+      }
+
+      /* Topbar */
+      .topbar {
+        height: 64px;
+        flex: 0 0 64px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 0 28px 0 22px;
+        background: #fff;
+        z-index: 20;
+        transition: all 0.3s ease;
+      }
+      body.view-mode-mobile .topbar {
+        height: 56px;
+        flex-basis: 56px;
+        padding: 0 16px;
+        gap: 12px;
+      }
+      .brand-area {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 226px;
+        flex: 0 0 226px;
+      }
+      body.view-mode-mobile .brand-area {
+        width: auto;
+        flex: 0 0 auto;
+        gap: 10px;
+      }
+      .icon-button {
+        width: 42px;
+        height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        cursor: pointer;
+        color: var(--muted);
+        transition:
+          background 0.16s ease,
+          color 0.16s ease;
+      }
+      .icon-button:hover {
+        background: var(--surface-hover);
+        color: var(--text);
+      }
+      body.view-mode-mobile .icon-button {
+        width: 38px;
+        height: 38px;
+      }
+      .icon-button svg {
+        width: 21px;
+        height: 21px;
+      }
+      body.view-mode-mobile .icon-button svg {
+        width: 20px;
+        height: 20px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        min-width: 0;
+      }
+      .brand-logo {
+        width: 31px;
+        height: 31px;
+        flex: 0 0 31px;
+      }
+      body.view-mode-mobile .brand-logo {
+        width: 28px;
+        height: 28px;
+        flex-basis: 28px;
+      }
+      .brand-name {
+        color: #5f6368;
+        font-size: 21px;
+        letter-spacing: -0.6px;
+        white-space: nowrap;
+        font-weight: 400;
+      }
+      body.view-mode-mobile .brand-name {
+        font-size: 19px;
+        color: #202124;
+        font-weight: 400;
+      }
+      .search-wrap {
+        height: 48px;
+        width: min(720px, 58vw);
+        position: relative;
+        margin-left: 4px;
+      }
+      body.view-mode-mobile .search-wrap {
+        display: none;
+      }
+      .search-box {
+        height: 48px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 16px;
+        background: #f1f3f4;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        transition: 0.18s ease;
+      }
+      .search-box:focus-within {
+        background: #fff;
+        border-color: #d0d7de;
+        box-shadow: 0 1px 4px rgba(60, 64, 67, 0.15);
+      }
+      .search-box svg {
+        width: 22px;
+        height: 22px;
+        color: #5f6368;
+        flex: 0 0 auto;
+      }
+      .search-box input {
+        border: 0;
+        outline: 0;
+        background: transparent;
+        width: 100%;
+        font-size: 16px;
+        color: var(--text);
+      }
+      .search-box input::placeholder {
+        color: #5f6368;
+        opacity: 1;
+      }
+      .search-clear {
+        display: none;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        width: 30px;
+        height: 30px;
+        align-items: center;
+        justify-content: center;
+      }
+      .top-actions {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      body.view-mode-mobile .top-actions {
+        margin-left: auto;
+        gap: 4px;
+      }
+      body.view-mode-desktop .top-actions .mobile-only {
+        display: none;
+      }
+      body.view-mode-mobile .top-actions .desktop-only {
+        display: none;
+      }
+      .top-action {
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: #5f6368;
+        cursor: pointer;
+      }
+      .top-action:hover {
+        background: #f1f3f4;
+      }
+      .top-action svg {
+        width: 21px;
+        height: 21px;
+      }
+      body.view-mode-mobile .top-action {
+        width: 38px;
+        height: 38px;
+      }
+      .avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(145deg, #8ab4f8, #c58af9);
+        color: #fff;
+        font-weight: 600;
+        font-size: 13px;
+        margin-left: 5px;
+        border: 3px solid #fff;
+        box-shadow: 0 0 0 1px #dadce0;
+        cursor: pointer;
+      }
+      body.view-mode-mobile .avatar {
+        width: 30px;
+        height: 30px;
+        font-size: 12px;
+        margin-left: 2px;
+      }
+      .body-row {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        position: relative;
+      }
+      .sidebar {
+        width: var(--sidebar-width);
+        flex: 0 0 var(--sidebar-width);
+        background: var(--sidebar);
+        padding: 10px 12px 22px 0;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        transition:
+          width 0.2s ease,
+          flex-basis 0.2s ease;
+      }
+      body.view-mode-mobile .sidebar {
+        position: absolute;
+        z-index: 40;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        transform: translateX(-102%);
+        transition: transform 0.22s ease;
+        width: 270px;
+        flex-basis: 270px;
+        box-shadow: 4px 0 22px rgba(0, 0, 0, 0.1);
+      }
+      body.view-mode-mobile .sidebar.mobile-open {
+        transform: translateX(0);
+      }
+      .side-create {
+        height: 56px;
+        padding: 0 22px;
+        margin: 8px 0 18px 8px;
+        border: 0;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        background: #fff;
+        box-shadow:
+          0 1px 3px rgba(60, 64, 67, 0.22),
+          0 1px 2px rgba(60, 64, 67, 0.12);
+        color: #3c4043;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        min-width: 166px;
+      }
+      .side-create:hover {
+        box-shadow: 0 2px 7px rgba(60, 64, 67, 0.24);
+        background: #fbfcff;
+      }
+      .side-create svg {
+        width: 23px;
+        height: 23px;
+        color: #5f6368;
+      }
+      .nav-list {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .nav-item {
+        width: calc(100% - 12px);
+        height: 46px;
+        margin-left: 0;
+        padding: 0 21px 0 27px;
+        border: 0;
+        background: transparent;
+        border-radius: 0 26px 26px 0;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        text-align: left;
+        cursor: pointer;
+        color: #444746;
+        font-size: 14px;
+        white-space: nowrap;
+      }
+      .nav-item:hover {
+        background: #eef1f5;
+      }
+      .nav-item.active {
+        background: var(--sidebar-active);
+        color: #041e49;
+        font-weight: 600;
+      }
+      .nav-item svg {
+        width: 20px;
+        height: 20px;
+        flex: 0 0 20px;
+        color: inherit;
+      }
+      .nav-divider {
+        height: 1px;
+        background: #e5e8ec;
+        margin: 15px 22px 13px 28px;
+      }
+      .nav-label {
+        padding: 5px 22px 7px 28px;
+        color: #5f6368;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+      }
+      .nav-count {
+        margin-left: auto;
+        color: #6f7479;
+        font-size: 12px;
+      }
+      .sidebar-bottom {
+        margin: 28px 24px 0 28px;
+        color: #747980;
+        font-size: 11px;
+        line-height: 1.75;
+      }
+      .sidebar-bottom a {
+        color: inherit;
+        text-decoration: none;
+      }
+      .sidebar-bottom a:hover {
+        text-decoration: underline;
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+        overflow-y: auto;
+        position: relative;
+        padding: 26px 34px 56px 34px;
+        scrollbar-width: thin;
+        background: #fff;
+      }
+      body.view-mode-mobile .main {
+        padding: 16px 0 90px 0;
+      }
+      .main-inner {
+        max-width: 1800px;
+        margin: 0 auto;
+      }
+      body.view-mode-mobile .main-inner {
+        padding: 0 16px;
+      }
+      .page-heading {
+        display: flex;
+        align-items: center;
+        min-height: 44px;
+        gap: 14px;
+        margin-bottom: 20px;
+      }
+      body.view-mode-mobile .page-heading {
+        margin-bottom: 12px;
+      }
+      .page-title {
+        font-size: 28px;
+        font-weight: 400;
+        letter-spacing: -0.5px;
+        margin: 0;
+      }
+      body.view-mode-mobile .page-title {
+        font-size: 24px;
+      }
+      .page-subtitle {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 6px;
+      }
+      body.view-mode-mobile .page-subtitle {
+        display: none;
+      }
+      .heading-spacer {
+        flex: 1;
+      }
+      .sort-label {
+        color: #5f6368;
+        font-size: 13px;
+        margin-right: 2px;
+      }
+      body.view-mode-mobile .sort-label {
+        display: none;
+      }
+      .sort-button,
+      .select-button {
+        height: 38px;
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        padding: 0 13px;
+        border: 1px solid #dadce0;
+        background: #fff;
+        color: #3c4043;
+        border-radius: 7px;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      body.view-mode-mobile .sort-button,
+      body.view-mode-mobile .select-button {
+        height: 34px;
+        padding: 0 10px;
+      }
+      .sort-button:hover,
+      .select-button:hover {
+        background: #f8fafd;
+      }
+      .sort-button svg,
+      .select-button svg {
+        width: 17px;
+        height: 17px;
+      }
+      .select-button {
+        border-color: transparent;
+        color: #5f6368;
+      }
+      .select-button.active {
+        color: var(--blue);
+        background: var(--blue-soft);
+      }
+      .memories-section {
+        margin: 4px 0 31px;
+      }
+      body.view-mode-mobile .memories-section {
+        margin: 4px 0 20px;
+      }
+      .section-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+      }
+      .section-heading h2 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 500;
+        letter-spacing: -0.1px;
+      }
+      .text-link {
+        border: 0;
+        background: transparent;
+        color: var(--blue);
+        font-size: 13px;
+        cursor: pointer;
+        padding: 8px 10px;
+        border-radius: 6px;
+      }
+      .text-link:hover {
+        background: #f3f7fe;
+      }
+      .memory-row {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+      }
+      body.view-mode-mobile .memory-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+      }
+      .memory-card {
+        height: 180px;
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        background: #dfe5ea;
+        isolation: isolate;
+      }
+      body.view-mode-mobile .memory-card {
+        height: 145px;
+      }
+      body.view-mode-mobile .memory-card:nth-child(n + 3) {
+        display: none;
+      }
+      .memory-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.35s ease;
+      }
+      .memory-card:hover img {
+        transform: scale(1.045);
+      }
+      .memory-card:after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          180deg,
+          transparent 28%,
+          rgba(0, 0, 0, 0.56)
+        );
+        z-index: 0;
+      }
+      .memory-copy {
+        position: absolute;
+        z-index: 1;
+        left: 15px;
+        right: 12px;
+        bottom: 13px;
+        color: #fff;
+      }
+      .memory-copy strong {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 4px;
+        text-shadow: 0 1px 4px #0006;
+      }
+      .memory-copy span {
+        font-size: 12px;
+        opacity: 0.92;
+        text-shadow: 0 1px 4px #0006;
+      }
+      .memory-play {
+        position: absolute;
+        right: 12px;
+        top: 12px;
+        z-index: 1;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #ffffffd9;
+        color: #3c4043;
+      }
+      .memory-play svg {
+        width: 15px;
+        height: 15px;
+      }
+      .photos-heading {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0 0 17px;
+      }
+      body.view-mode-mobile .photos-heading {
+        margin: 0 0 12px;
+      }
+      .photos-heading h2 {
+        font-size: 17px;
+        font-weight: 500;
+        margin: 0;
+      }
+      .photo-count {
+        color: #777d82;
+        font-size: 12px;
+      }
+      .day-group {
+        margin-bottom: 30px;
+      }
+      body.view-mode-mobile .day-group {
+        margin-bottom: 22px;
+      }
+      .day-heading {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .day-heading h3 {
+        margin: 0;
+        font-weight: 500;
+        font-size: 15px;
+      }
+      .day-heading span {
+        color: #7b8085;
+        font-size: 12px;
+      }
+      .photo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
+        grid-auto-rows: 112px;
+        grid-auto-flow: dense;
+        gap: 5px;
+      }
+      body.view-mode-mobile .photo-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-auto-rows: 105px;
+        gap: 3px;
+      }
+      .photo-card {
+        position: relative;
+        overflow: hidden;
+        border-radius: 5px;
+        background: #e8eaed;
+        cursor: pointer;
+        min-width: 0;
+      }
+      .photo-card.wide {
+        grid-column: span 2;
+      }
+      .photo-card.tall {
+        grid-row: span 2;
+      }
+      .photo-card.big {
+        grid-column: span 2;
+        grid-row: span 2;
+      }
+      .photo-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition:
+          transform 0.28s ease,
+          filter 0.2s ease;
+      }
+      .photo-card:hover img {
+        transform: scale(1.035);
+      }
+      body.view-mode-mobile .photo-card:hover img {
+        transform: none;
+      }
+      .photo-card:after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          180deg,
+          rgba(0, 0, 0, 0.18),
+          transparent 27%,
+          transparent 70%,
+          rgba(0, 0, 0, 0.12)
+        );
+        opacity: 0;
+        transition: opacity 0.15s ease;
+        pointer-events: none;
+      }
+      .photo-card:hover:after,
+      .photo-card.selected:after {
+        opacity: 1;
+      }
+      .photo-check {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        z-index: 2;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        background: #ffffff35;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        opacity: 0;
+        transition: opacity 0.15s ease;
+        box-shadow: 0 1px 3px #0005;
+      }
+      body.view-mode-mobile .photo-check {
+        top: 5px;
+        left: 5px;
+        width: 22px;
+        height: 22px;
+      }
+      .photo-card:hover .photo-check,
+      .photo-card.selected .photo-check,
+      .selection-mode .photo-check {
+        opacity: 1;
+      }
+      .photo-check svg {
+        width: 15px;
+        height: 15px;
+        stroke-width: 3;
+      }
+      .photo-card.selected {
+        outline: 3px solid #1a73e8;
+        outline-offset: -3px;
+      }
+      .photo-card.selected .photo-check {
+        background: #1a73e8;
+        border-color: #1a73e8;
+      }
+      .photo-fav {
+        position: absolute;
+        right: 9px;
+        top: 9px;
+        z-index: 2;
+        color: #fff;
+        filter: drop-shadow(0 1px 2px #0008);
+        opacity: 0;
+        transition: opacity 0.15s;
+      }
+      .photo-card:hover .photo-fav,
+      .photo-card.favorite .photo-fav {
+        opacity: 1;
+      }
+      .photo-fav svg {
+        width: 19px;
+        height: 19px;
+        fill: transparent;
+      }
+      .photo-card.favorite .photo-fav svg {
+        fill: #fff;
+      }
+      .selection-toolbar {
+        display: none;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        margin: -12px 0 18px;
+        padding: 10px 12px;
+        background: #e8f0fe;
+        border-radius: 8px;
+        align-items: center;
+        gap: 8px;
+      }
+      .selection-toolbar.visible {
+        display: flex;
+      }
+      .selection-toolbar .selected-count {
+        font-size: 14px;
+        color: #174ea6;
+        margin: 0 10px 0 5px;
+      }
+      .selection-toolbar button {
+        border: 0;
+        background: transparent;
+        color: #174ea6;
+        cursor: pointer;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+      }
+      .selection-toolbar button:hover {
+        background: #d2e3fc;
+      }
+      .selection-toolbar button svg {
+        width: 20px;
+        height: 20px;
+      }
+      .selection-toolbar .done {
+        margin-left: auto;
+        width: auto;
+        padding: 0 14px;
+        border-radius: 20px;
+        font-size: 13px;
+      }
+      .empty-state {
+        display: none;
+        padding: 90px 20px;
+        text-align: center;
+        color: #5f6368;
+      }
+      .empty-state.show {
+        display: block;
+      }
+      .empty-state svg {
+        width: 64px;
+        height: 64px;
+        color: #9aa0a6;
+        margin-bottom: 15px;
+      }
+      .empty-state h3 {
+        font-weight: 400;
+        color: #3c4043;
+        margin: 0 0 8px;
+        font-size: 20px;
+      }
+      .empty-state p {
+        margin: 0;
+        font-size: 14px;
+      }
+      .album-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+        gap: 22px 17px;
+      }
+      body.view-mode-mobile .album-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px 12px;
+      }
+      .album-card {
+        cursor: pointer;
+        min-width: 0;
+      }
+      .album-cover {
+        height: 150px;
+        border-radius: 10px;
+        background: #edf0f4;
+        overflow: hidden;
+        position: relative;
+      }
+      body.view-mode-mobile .album-cover {
+        height: 120px;
+      }
+      .album-cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.25s;
+      }
+      .album-card:hover img {
+        transform: scale(1.04);
+      }
+      .album-meta {
+        padding: 10px 2px 0;
+      }
+      .album-meta strong {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 4px;
+      }
+      .album-meta span {
+        font-size: 12px;
+        color: #777d82;
+      }
+      .album-stack {
+        position: absolute;
+        inset: 9px 9px auto auto;
+        width: 33px;
+        height: 33px;
+        border-radius: 50%;
+        background: #ffffffdf;
+        display: grid;
+        place-items: center;
+        color: #5f6368;
+      }
+      .album-stack svg {
+        width: 17px;
+        height: 17px;
+      }
+      .menu-popover {
+        display: none;
+        position: absolute;
+        z-index: 30;
+        top: 58px;
+        right: 0;
+        width: 220px;
+        padding: 7px;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow:
+          0 5px 20px #0002,
+          0 1px 4px #0001;
+      }
+      .menu-popover.show {
+        display: block;
+      }
+      .menu-item {
+        width: 100%;
+        height: 42px;
+        border: 0;
+        background: transparent;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 11px;
+        border-radius: 7px;
+        font-size: 13px;
+        color: #3c4043;
+        cursor: pointer;
+      }
+      .menu-item:hover {
+        background: #f1f3f4;
+      }
+      .menu-item svg {
+        width: 18px;
+        height: 18px;
+        color: #5f6368;
+      }
+      .create-wrap {
+        position: relative;
+      }
+      .mobile-overlay {
+        display: none;
+      }
+      body.view-mode-mobile .mobile-overlay.show {
+        display: block;
+        position: absolute;
+        inset: 0;
+        background: rgba(32, 33, 36, 0.33);
+        z-index: 35;
+      }
+
+      /* Mobile Bottom Navigation */
+      .mobile-bottom-nav {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 72px;
+        background: #fff;
+        border-top: 1px solid #e8eaed;
+        display: none;
+        align-items: stretch;
+        z-index: 25;
+        padding-bottom: 8px;
+      }
+      body.view-mode-mobile .mobile-bottom-nav {
+        display: flex;
+      }
+      .bottom-nav-item {
+        flex: 1;
+        border: 0;
+        background: transparent;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        color: #5f6368;
+        cursor: pointer;
+        padding: 6px 4px;
+        transition: color 0.15s;
+        position: relative;
+      }
+      .bottom-nav-item .nav-icon {
+        width: 56px;
+        height: 28px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        transition: background 0.2s;
+      }
+      .bottom-nav-item svg {
+        width: 22px;
+        height: 22px;
+      }
+      .bottom-nav-item .nav-label {
+        font-size: 11px;
+        font-weight: 500;
+        padding: 0;
+        letter-spacing: 0;
+        margin: 0;
+      }
+      .bottom-nav-item.active {
+        color: #0b57d0;
+      }
+      .bottom-nav-item.active .nav-icon {
+        background: #e8f0fe;
+      }
+
+      /* Mobile FAB */
+      .fab {
+        position: absolute;
+        bottom: 88px;
+        right: 16px;
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        background: #fff;
+        border: 0;
+        color: #0b57d0;
+        cursor: pointer;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        box-shadow:
+          0 2px 6px rgba(0, 0, 0, 0.1),
+          0 8px 20px rgba(0, 0, 0, 0.08);
+        z-index: 20;
+        transition: all 0.2s;
+      }
+      body.view-mode-mobile .fab {
+        display: grid;
+      }
+      .fab:hover {
+        box-shadow:
+          0 4px 12px rgba(0, 0, 0, 0.15),
+          0 12px 28px rgba(0, 0, 0, 0.1);
+        transform: translateY(-1px);
+      }
+      .fab:active {
+        transform: translateY(0);
+      }
+      .fab svg {
+        width: 24px;
+        height: 24px;
+      }
+
+      /* Photo viewer */
+      .viewer {
+        display: none;
+        position: absolute;
+        z-index: 60;
+        inset: 0;
+        background: rgba(32, 33, 36, 0.96);
+        color: #fff;
+        flex-direction: column;
+      }
+      .viewer.open {
+        display: flex;
+      }
+      .viewer-top {
+        height: 64px;
+        flex: 0 0 64px;
+        display: flex;
+        align-items: center;
+        padding: 0 18px;
+        gap: 8px;
+      }
+      body.view-mode-mobile .viewer-top {
+        height: 56px;
+        flex-basis: 56px;
+        padding: 0 10px;
+      }
+      .viewer-top .icon-button {
+        color: #fff;
+      }
+      .viewer-top .icon-button:hover {
+        background: #ffffff1a;
+      }
+      .viewer-title {
+        font-size: 14px;
+        margin-left: 7px;
+        color: #e8eaed;
+      }
+      .viewer-spacer {
+        flex: 1;
+      }
+      .viewer-meta {
+        color: #bdc1c6;
+        font-size: 12px;
+        margin-right: 12px;
+      }
+      .viewer-stage {
+        position: relative;
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 78px 22px;
+      }
+      body.view-mode-mobile .viewer-stage {
+        padding: 10px 48px;
+      }
+      .viewer-image {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        user-select: none;
+        box-shadow: 0 4px 25px #0003;
+      }
+      .viewer-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 48px;
+        height: 48px;
+        border: 0;
+        border-radius: 50%;
+        background: #ffffff1b;
+        color: #fff;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+      }
+      .viewer-arrow:hover {
+        background: #ffffff35;
+      }
+      .viewer-arrow svg {
+        width: 24px;
+        height: 24px;
+      }
+      .viewer-arrow.prev {
+        left: 18px;
+      }
+      .viewer-arrow.next {
+        right: 18px;
+      }
+      body.view-mode-mobile .viewer-arrow {
+        width: 38px;
+        height: 38px;
+      }
+      body.view-mode-mobile .viewer-arrow.prev {
+        left: 5px;
+      }
+      body.view-mode-mobile .viewer-arrow.next {
+        right: 5px;
+      }
+      .viewer-info {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 330px;
+        background: #292a2d;
+        padding: 27px 24px;
+        overflow: auto;
+      }
+      .viewer-info.open {
+        display: block;
+      }
+      .viewer-info h3 {
+        margin: 0 0 21px;
+        font-size: 16px;
+        font-weight: 500;
+      }
+      .info-row {
+        margin: 0 0 20px;
+        display: flex;
+        gap: 12px;
+        color: #e8eaed;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .info-row svg {
+        width: 19px;
+        height: 19px;
+        color: #bdc1c6;
+        flex: 0 0 auto;
+      }
+      .info-muted {
+        color: #bdc1c6;
+        font-size: 12px;
+      }
+      .viewer-bottom {
+        height: 52px;
+        flex: 0 0 52px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        color: #bdc1c6;
+        font-size: 12px;
+      }
+      .viewer-bottom .dot {
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: #8a8d91;
+      }
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 28px;
+        transform: translate(-50%, 18px);
+        z-index: 90;
+        padding: 12px 18px;
+        border-radius: 6px;
+        background: #303134;
+        color: #fff;
+        font-size: 13px;
+        box-shadow: 0 3px 12px #0003;
+        opacity: 0;
+        pointer-events: none;
+        transition: 0.2s;
+        white-space: nowrap;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      .upload-input {
+        display: none;
+      }
+
+      /* Mobile Search Overlay */
+      .mobile-search-overlay {
+        display: none;
+        position: absolute;
+        top: 28px;
+        left: 0;
+        right: 0;
+        z-index: 35;
+        padding: 8px 12px;
+        background: #fff;
+        border-bottom: 1px solid #e8eaed;
+      }
+      .mobile-search-overlay.show {
+        display: block;
+      }
+      .mobile-search-box {
+        height: 44px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 12px;
+        background: #f1f3f4;
+        border-radius: 22px;
+      }
+      .mobile-search-box svg {
+        width: 20px;
+        height: 20px;
+        color: #5f6368;
+      }
+      .mobile-search-box input {
+        border: 0;
+        outline: 0;
+        background: transparent;
+        flex: 1;
+        font-size: 15px;
+        color: #202124;
+      }
+      .mobile-search-back {
+        border: 0;
+        background: transparent;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: #5f6368;
+        cursor: pointer;
+      }
+      .mobile-search-back:hover {
+        background: #f1f3f4;
+      }
+
+      @media (min-width: 1500px) {
+        body.view-mode-desktop .photo-grid {
+          grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+          grid-auto-rows: 128px;
+        }
+        body.view-mode-desktop .memory-card {
+          height: 182px;
+        }
+      }
+      @media (max-width: 1100px) {
+        :root {
+          --sidebar-width: 220px;
+        }
+        body.view-mode-desktop .brand-area {
+          width: 205px;
+          flex-basis: 205px;
+        }
+        body.view-mode-desktop .main {
+          padding-left: 26px;
+          padding-right: 26px;
+        }
+        body.view-mode-desktop .memory-card {
+          height: 140px;
+        }
+        body.view-mode-desktop .photo-grid {
+          grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+          grid-auto-rows: 102px;
+        }
+      }
+      @media (max-width: 900px) {
+        body.view-mode-mobile .pixel-frame {
+          width: 100%;
+          max-width: 404px;
+        }
+      }
+      @media (max-width: 760px) {
+        .view-switcher {
+          top: 10px;
+          padding: 3px;
+        }
+        .view-switcher button {
+          height: 32px;
+          padding: 0 14px;
+          font-size: 12px;
+        }
+        body.view-mode-desktop .app-stage {
+          padding: 56px 0 0;
+        }
+        body.view-mode-desktop .topbar {
+          height: 62px;
+          flex-basis: 62px;
+          padding: 0 13px;
+          gap: 10px;
+        }
+        body.view-mode-desktop .brand-area {
+          width: auto;
+          flex: 0 0 auto;
+          gap: 7px;
+        }
+        body.view-mode-desktop #menuToggle {
+          width: 38px;
+          height: 38px;
+        }
+        body.view-mode-desktop .search-wrap {
+          position: absolute;
+          left: 12px;
+          right: 12px;
+          top: 68px;
+          width: auto;
+          margin: 0;
+          z-index: 10;
+        }
+        body.view-mode-desktop .search-box {
+          height: 44px;
+          border-radius: 24px;
+          box-shadow: 0 1px 4px #0001;
+        }
+        body.view-mode-desktop .main {
+          padding: 66px 16px 35px;
+        }
+      }
+    </style>
+  </head>
+  <body class="view-mode-desktop">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      style="position: absolute; width: 0; height: 0; overflow: hidden"
+      aria-hidden="true"
+    >
+      <symbol id="i-menu" viewBox="0 0 24 24">
+        <path
+          d="M4 6h16M4 12h16M4 18h16"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-search" viewBox="0 0 24 24">
+        <circle
+          cx="10.8"
+          cy="10.8"
+          r="6.8"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+        <path
+          d="m16 16 4.4 4.4"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-help" viewBox="0 0 24 24">
+        <circle
+          cx="12"
+          cy="12"
+          r="9"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+        <path
+          d="M9.7 9a2.4 2.4 0 1 1 4.4 1.3c-.9 1.1-2.1 1.4-2.1 3M12 16.8v.1"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24">
+        <circle
+          cx="12"
+          cy="12"
+          r="3"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+        <path
+          d="m19.4 13.5 1.1.9-1.1 1.9-1.4-.5a7.9 7.9 0 0 1-1.5.9l-.3 1.5h-2.2l-.3-1.5a7.9 7.9 0 0 1-1.7 0l-.3 1.5H9.5l-.3-1.5a7.9 7.9 0 0 1-1.5-.9l-1.4.5-1.1-1.9 1.1-.9a7.6 7.6 0 0 1 0-1.8l-1.1-.9 1.1-1.9 1.4.5a7.9 7.9 0 0 1 1.5-.9l.3-1.5h2.2l.3 1.5a7.9 7.9 0 0 1 1.7 0l.3-1.5h2.2l.3 1.5a7.9 7.9 0 0 1 1.5.9l1.4-.5 1.1 1.9-1.1.9a7.6 7.6 0 0 1 0 1.8Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.4"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24">
+        <path
+          d="M12 5v14M5 12h14"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-photos" viewBox="0 0 24 24">
+        <path
+          d="M12 3.2c2.5 0 4.4 2.5 3.2 4.8L12 14l-3.2-6c-1.2-2.3.7-4.8 3.2-4.8Z"
+          fill="#4285f4"
+        />
+        <path
+          d="M20.8 9.1c1.2 2.2-.2 5-2.8 5H11l3.3-6c1.2-2.2 5.3-1.3 6.5 1Z"
+          fill="#34a853"
+        />
+        <path
+          d="M18.1 20.8c-2.5 0-4.4-2.5-3.2-4.8l3.2-6 3.2 6c1.2 2.3-.7 4.8-3.2 4.8Z"
+          fill="#fbbc04"
+        />
+        <path
+          d="M3.2 14.9c-1.2-2.2.2-5 2.8-5H13l-3.3 6c-1.2 2.2-5.3 1.3-6.5-1Z"
+          fill="#ea4335"
+        />
+      </symbol>
+      <symbol id="i-home" viewBox="0 0 24 24">
+        <path
+          d="m3.5 10 8.5-7 8.5 7v10.5h-6v-6h-5v6h-6V10Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-collection" viewBox="0 0 24 24">
+        <rect
+          x="3.5"
+          y="4"
+          width="17"
+          height="16"
+          rx="2"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+        <path
+          d="M3.5 9h17M8 4v5"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+      </symbol>
+      <symbol id="i-sharing" viewBox="0 0 24 24">
+        <circle
+          cx="18"
+          cy="5"
+          r="2.5"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+        <circle
+          cx="6"
+          cy="12"
+          r="2.5"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+        <circle
+          cx="18"
+          cy="19"
+          r="2.5"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+        <path
+          d="m8.3 10.8 7.4-4.5M8.3 13.2l7.4 4.5"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+      </symbol>
+      <symbol id="i-favorite" viewBox="0 0 24 24">
+        <path
+          d="M20.8 8.7c0 5.2-8.8 11-8.8 11s-8.8-5.8-8.8-11A4.7 4.7 0 0 1 12 6.1a4.7 4.7 0 0 1 8.8 2.6Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-archive" viewBox="0 0 24 24">
+        <path
+          d="M4 7h16v13H4zM3 4h18v3H3zM9 11h6"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linejoin="round"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24">
+        <path
+          d="M4.5 7h15M9 7V4h6v3m3.5 0-.8 13H6.3L5.5 7M10 10v7m4-7v7"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24">
+        <circle
+          cx="12"
+          cy="12"
+          r="9"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+        <path
+          d="M12 7v5l3.5 2"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-person" viewBox="0 0 24 24">
+        <circle
+          cx="12"
+          cy="8"
+          r="3.5"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+        <path
+          d="M4.5 20c.5-4 3.1-6 7.5-6s7 2 7.5 6"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-place" viewBox="0 0 24 24">
+        <path
+          d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+        <circle
+          cx="12"
+          cy="10"
+          r="2.3"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+      </symbol>
+      <symbol id="i-album" viewBox="0 0 24 24">
+        <rect
+          x="4"
+          y="5"
+          width="16"
+          height="15"
+          rx="2"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+        <path
+          d="M4 9h16M8 5V3m8 2V3"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 24 24">
+        <path
+          d="m5 12.5 4.5 4.5L19 7"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2.4"
+        />
+      </symbol>
+      <symbol id="i-close" viewBox="0 0 24 24">
+        <path
+          d="m6 6 12 12M18 6 6 18"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-chevron-left" viewBox="0 0 24 24">
+        <path
+          d="m15 18-6-6 6-6"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-chevron-right" viewBox="0 0 24 24">
+        <path
+          d="m9 18 6-6-6-6"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-download" viewBox="0 0 24 24">
+        <path
+          d="M12 3v12m-4-4 4 4 4-4M4 19v2h16v-2"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-info" viewBox="0 0 24 24">
+        <circle
+          cx="12"
+          cy="12"
+          r="9"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+        <path
+          d="M12 11v5m0-8h.01"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.9"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-more" viewBox="0 0 24 24">
+        <circle cx="5" cy="12" r="1.6" fill="currentColor" />
+        <circle cx="12" cy="12" r="1.6" fill="currentColor" />
+        <circle cx="19" cy="12" r="1.6" fill="currentColor" />
+      </symbol>
+      <symbol id="i-share" viewBox="0 0 24 24">
+        <path
+          d="M12 15V3m-4 4 4-4 4 4M5 12v8h14v-8"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-play" viewBox="0 0 24 24">
+        <path d="m9 6 9 6-9 6V6Z" fill="currentColor" />
+      </symbol>
+      <symbol id="i-sort" viewBox="0 0 24 24">
+        <path
+          d="M8 5v14m-4-4 4 4 4-4M16 19V5m-4 4 4-4 4 4"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-cloud" viewBox="0 0 24 24">
+        <path
+          d="M7 18h10a4 4 0 0 0 .3-8A5.5 5.5 0 0 0 6.6 9 4.5 4.5 0 0 0 7 18Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-add-photo" viewBox="0 0 24 24">
+        <rect
+          x="3"
+          y="4"
+          width="18"
+          height="16"
+          rx="2"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+        <circle
+          cx="8.5"
+          cy="9"
+          r="1.5"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+        />
+        <path
+          d="m4 17 5-5 3.5 3 3.5-4 4 5"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-monitor" viewBox="0 0 24 24">
+        <rect
+          x="3"
+          y="4"
+          width="18"
+          height="13"
+          rx="2"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+        <path
+          d="M8 21h8M12 17v4"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-phone" viewBox="0 0 24 24">
+        <rect
+          x="6"
+          y="2"
+          width="12"
+          height="20"
+          rx="2.5"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+        <path
+          d="M11 18h2"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-library" viewBox="0 0 24 24">
+        <path
+          d="M4 4v16M8 4v16M12 4l8 16M20 4l-8 16"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-signal" viewBox="0 0 24 24">
+        <path
+          d="M4 19h3M9 15h3M14 11h3M19 7h3"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-wifi" viewBox="0 0 24 24">
+        <path
+          d="M12 18h.01M8 15a5.5 5.5 0 0 1 8 0M4.5 11.5a10.5 10.5 0 0 1 15 0"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-battery" viewBox="0 0 24 24">
+        <rect
+          x="3"
+          y="8"
+          width="16"
+          height="8"
+          rx="1.5"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+        />
+        <path d="M19 11v2h1.5v-2z" fill="currentColor" />
+        <rect
+          x="4.5"
+          y="9.5"
+          width="12"
+          height="5"
+          rx="0.5"
+          fill="currentColor"
+        />
+      </symbol>
+    </svg>
+
+    <!-- View Switcher -->
+    <div class="view-switcher" role="tablist" aria-label="Pilih tampilan">
+      <button class="active" data-mode="desktop" aria-selected="true">
+        <svg><use href="#i-monitor" /></svg>
+        Desktop
+      </button>
+      <button data-mode="mobile" aria-selected="false">
+        <svg><use href="#i-phone" /></svg>
+        Mobile
+      </button>
+    </div>
+
+    <div class="app-stage">
+      <div class="pixel-frame">
+        <div class="pixel-camera"></div>
+        <div class="pixel-home-indicator"></div>
+        <div class="app" id="app">
+          <div class="status-bar">
+            <span class="time" id="statusTime">9:41</span>
+            <div class="icons">
+              <svg><use href="#i-signal" /></svg>
+              <svg><use href="#i-wifi" /></svg>
+              <svg><use href="#i-battery" /></svg>
+            </div>
+          </div>
+
+          <header class="topbar">
+            <div class="brand-area">
+              <button
+                class="icon-button"
+                id="menuToggle"
+                aria-label="Buka menu"
+              >
+                <svg><use href="#i-menu" /></svg>
+              </button>
+              <div class="brand">
+                <svg
+                  class="brand-logo"
+                  viewBox="0 0 48 48"
+                  aria-label="Google Photos"
+                >
+                  <path
+                    d="M24 4.5c5.4 0 9.8 4.4 9.8 9.8v9.8H24c-5.4 0-9.8-4.4-9.8-9.8S18.6 4.5 24 4.5Z"
+                    fill="#4285F4"
+                  />
+                  <path
+                    d="M43.5 24c0 5.4-4.4 9.8-9.8 9.8h-9.8V24c0-5.4 4.4-9.8 9.8-9.8s9.8 4.4 9.8 9.8Z"
+                    fill="#34A853"
+                  />
+                  <path
+                    d="M24 43.5c-5.4 0-9.8-4.4-9.8-9.8v-9.8H24c5.4 0 9.8 4.4 9.8 9.8s-4.4 9.8-9.8 9.8Z"
+                    fill="#FBBC04"
+                  />
+                  <path
+                    d="M4.5 24c0-5.4 4.4-9.8 9.8-9.8h9.8V24c0 5.4-4.4 9.8-9.8 9.8S4.5 29.4 4.5 24Z"
+                    fill="#EA4335"
+                  />
+                  <circle cx="24" cy="24" r="6.4" fill="#fff" />
+                </svg>
+                <span class="brand-name">Photos</span>
+              </div>
+            </div>
+            <div class="search-wrap">
+              <label class="search-box">
+                <svg><use href="#i-search" /></svg>
+                <input
+                  id="searchInput"
+                  type="search"
+                  placeholder="Search your photos"
+                  autocomplete="off"
+                />
+                <button
+                  class="search-clear"
+                  id="clearSearch"
+                  aria-label="Hapus pencarian"
+                >
+                  <svg><use href="#i-close" /></svg>
+                </button>
+              </label>
+            </div>
+            <div class="top-actions">
+              <button
+                class="top-action mobile-only"
+                id="mobileSearchBtn"
+                title="Cari"
+              >
+                <svg><use href="#i-search" /></svg>
+              </button>
+              <button class="top-action desktop-only help" title="Bantuan">
+                <svg><use href="#i-help" /></svg>
+              </button>
+              <button class="top-action desktop-only" title="Setelan">
+                <svg><use href="#i-settings" /></svg>
+              </button>
+              <button class="top-action desktop-only" title="Google apps">
+                <svg viewBox="0 0 24 24">
+                  <g fill="currentColor">
+                    <circle cx="5" cy="5" r="1.7" />
+                    <circle cx="12" cy="5" r="1.7" />
+                    <circle cx="19" cy="5" r="1.7" />
+                    <circle cx="5" cy="12" r="1.7" />
+                    <circle cx="12" cy="12" r="1.7" />
+                    <circle cx="19" cy="12" r="1.7" />
+                    <circle cx="5" cy="19" r="1.7" />
+                    <circle cx="12" cy="19" r="1.7" />
+                    <circle cx="19" cy="19" r="1.7" />
+                  </g>
+                </svg>
+              </button>
+              <div class="avatar" title="Akun">A</div>
+            </div>
+          </header>
+
+          <div class="mobile-search-overlay" id="mobileSearchOverlay">
+            <div class="mobile-search-box">
+              <button class="mobile-search-back" id="closeMobileSearch">
+                <svg><use href="#i-chevron-left" /></svg>
+              </button>
+              <svg><use href="#i-search" /></svg>
+              <input
+                id="mobileSearchInput"
+                type="search"
+                placeholder="Cari di Photos"
+                autocomplete="off"
+              />
+              <button
+                class="search-clear"
+                id="clearMobileSearch"
+                aria-label="Hapus"
+              >
+                <svg><use href="#i-close" /></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="body-row">
+            <aside class="sidebar" id="sidebar">
+              <div class="create-wrap">
+                <button class="side-create" id="createButton">
+                  <svg><use href="#i-plus" /></svg> Buat
+                </button>
+                <div class="menu-popover" id="createMenu">
+                  <button class="menu-item" data-create="album">
+                    <svg><use href="#i-album" /></svg> Album baru
+                  </button>
+                  <button class="menu-item" data-create="collage">
+                    <svg><use href="#i-photos" /></svg> Kolase
+                  </button>
+                  <button class="menu-item" data-create="animation">
+                    <svg><use href="#i-play" /></svg> Animasi
+                  </button>
+                  <button class="menu-item" data-create="upload">
+                    <svg><use href="#i-add-photo" /></svg> Upload foto
+                  </button>
+                </div>
+              </div>
+              <nav class="nav-list" aria-label="Navigasi utama">
+                <button class="nav-item active" data-view="photos">
+                  <svg><use href="#i-home" /></svg><span>Foto</span>
+                </button>
+                <button class="nav-item" data-view="memories">
+                  <svg><use href="#i-clock" /></svg><span>Kenangan</span>
+                </button>
+                <button class="nav-item" data-view="sharing">
+                  <svg><use href="#i-sharing" /></svg><span>Berbagi</span>
+                </button>
+                <div class="nav-divider"></div>
+                <button class="nav-item" data-view="collections">
+                  <svg><use href="#i-collection" /></svg><span>Koleksi</span>
+                </button>
+                <div class="nav-label">KOLEKSI</div>
+                <button class="nav-item" data-view="favorites">
+                  <svg><use href="#i-favorite" /></svg><span>Favorit</span>
+                  <span class="nav-count" id="favoriteCount">0</span>
+                </button>
+                <button class="nav-item" data-view="albums">
+                  <svg><use href="#i-album" /></svg><span>Album</span>
+                </button>
+                <button class="nav-item" data-view="people">
+                  <svg><use href="#i-person" /></svg
+                  ><span>Orang & hewan peliharaan</span>
+                </button>
+                <button class="nav-item" data-view="places">
+                  <svg><use href="#i-place" /></svg><span>Tempat</span>
+                </button>
+                <div class="nav-divider"></div>
+                <button class="nav-item" data-view="archive">
+                  <svg><use href="#i-archive" /></svg><span>Arsip</span>
+                </button>
+                <button class="nav-item" data-view="trash">
+                  <svg><use href="#i-trash" /></svg><span>Sampah</span>
+                </button>
+              </nav>
+              <div class="sidebar-bottom">
+                Penyimpanan<br />
+                <div
+                  style="
+                    height: 5px;
+                    background: #dadce0;
+                    border-radius: 9px;
+                    margin: 8px 0 5px;
+                    overflow: hidden;
+                  "
+                >
+                  <div
+                    style="
+                      width: 34%;
+                      height: 100%;
+                      background: #4285f4;
+                      border-radius: 9px;
+                    "
+                  ></div>
+                </div>
+                <span>6,8 GB dari 15 GB digunakan</span><br />
+                <a href="#">Dapatkan penyimpanan</a><br /><br />
+                <a href="#">Persyaratan</a> · <a href="#">Privasi</a> ·
+                <a href="#">Kebijakan</a>
+              </div>
+            </aside>
+            <div class="mobile-overlay" id="mobileOverlay"></div>
+
+            <main class="main" id="mainContent">
+              <div class="main-inner">
+                <div class="selection-toolbar" id="selectionToolbar">
+                  <button id="cancelSelection" title="Batal">
+                    <svg><use href="#i-close" /></svg>
+                  </button>
+                  <span class="selected-count" id="selectedCount"
+                    >0 dipilih</span
+                  >
+                  <button id="bulkFavorite" title="Tambahkan ke favorit">
+                    <svg><use href="#i-favorite" /></svg>
+                  </button>
+                  <button id="bulkArchive" title="Arsipkan">
+                    <svg><use href="#i-archive" /></svg>
+                  </button>
+                  <button id="bulkDownload" title="Download">
+                    <svg><use href="#i-download" /></svg>
+                  </button>
+                  <button class="done" id="doneSelection">Selesai</button>
+                </div>
+                <section class="page-heading">
+                  <div>
+                    <h1 class="page-title" id="pageTitle">Foto</h1>
+                    <div class="page-subtitle" id="pageSubtitle">
+                      Semua momen Anda, di satu tempat
+                    </div>
+                  </div>
+                  <div class="heading-spacer"></div>
+                  <span class="sort-label">Urutkan</span>
+                  <button class="sort-button" id="sortButton">
+                    <svg><use href="#i-sort" /></svg> Terbaru
+                  </button>
+                  <button class="select-button" id="selectButton">
+                    <svg><use href="#i-check" /></svg> Pilih
+                  </button>
+                </section>
+
+                <section class="memories-section" id="memoriesSection">
+                  <div class="section-heading">
+                    <h2>Kenangan Anda</h2>
+                    <button class="text-link" id="allMemories">
+                      Lihat semua
+                    </button>
+                  </div>
+                  <div class="memory-row">
+                    <article
+                      class="memory-card"
+                      data-memory="Akhir pekan di alam"
+                    >
+                      <img
+                        src="https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=700&q=85"
+                        alt="Pegunungan dan danau"
+                      />
+                      <div class="memory-play">
+                        <svg><use href="#i-play" /></svg>
+                      </div>
+                      <div class="memory-copy">
+                        <strong>Akhir pekan di alam</strong
+                        ><span>Juni 2024 · 12 foto</span>
+                      </div>
+                    </article>
+                    <article class="memory-card" data-memory="Jelajah pantai">
+                      <img
+                        src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=700&q=85"
+                        alt="Pantai tropis"
+                      />
+                      <div class="memory-play">
+                        <svg><use href="#i-play" /></svg>
+                      </div>
+                      <div class="memory-copy">
+                        <strong>Jelajah pantai</strong
+                        ><span>Mei 2024 · 8 foto</span>
+                      </div>
+                    </article>
+                    <article class="memory-card" data-memory="Momen di kota">
+                      <img
+                        src="https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=700&q=85"
+                        alt="Pemandangan kota"
+                      />
+                      <div class="memory-play">
+                        <svg><use href="#i-play" /></svg>
+                      </div>
+                      <div class="memory-copy">
+                        <strong>Momen di kota</strong
+                        ><span>April 2024 · 16 foto</span>
+                      </div>
+                    </article>
+                    <article class="memory-card" data-memory="Hari yang cerah">
+                      <img
+                        src="https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=700&q=85"
+                        alt="Bunga berwarna-warni"
+                      />
+                      <div class="memory-play">
+                        <svg><use href="#i-play" /></svg>
+                      </div>
+                      <div class="memory-copy">
+                        <strong>Hari yang cerah</strong
+                        ><span>Maret 2024 · 9 foto</span>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+
+                <div class="photos-heading" id="photosHeading">
+                  <h2>Hari ini</h2>
+                  <span class="photo-count" id="photoCount">24 foto</span>
+                </div>
+                <div id="galleryRoot">
+                  <section class="day-group" data-day="today">
+                    <div class="day-heading">
+                      <h3>31 Oktober 2026</h3>
+                      <span>Hari ini</span>
+                    </div>
+                    <div class="photo-grid" id="todayGrid"></div>
+                  </section>
+                  <section class="day-group" data-day="yesterday">
+                    <div class="day-heading">
+                      <h3>30 Oktober 2026</h3>
+                      <span>Kemarin</span>
+                    </div>
+                    <div class="photo-grid" id="yesterdayGrid"></div>
+                  </section>
+                  <section class="day-group" data-day="older">
+                    <div class="day-heading">
+                      <h3>September 2026</h3>
+                      <span>30 foto</span>
+                    </div>
+                    <div class="photo-grid" id="olderGrid"></div>
+                  </section>
+                </div>
+                <div
+                  class="album-grid"
+                  id="albumGrid"
+                  style="display: none"
+                ></div>
+                <div class="empty-state" id="emptyState">
+                  <svg><use href="#i-search" /></svg>
+                  <h3>Tidak ada foto ditemukan</h3>
+                  <p>Coba kata kunci lain atau hapus filter pencarian.</p>
+                </div>
+              </div>
+            </main>
+
+            <!-- Mobile Bottom Navigation -->
+            <nav class="mobile-bottom-nav" aria-label="Navigasi mobile">
+              <button
+                class="bottom-nav-item active"
+                data-view="photos"
+                data-bnav="photos"
+              >
+                <span class="nav-icon"
+                  ><svg><use href="#i-photos" /></svg
+                ></span>
+                <span class="nav-label">Photos</span>
+              </button>
+              <button
+                class="bottom-nav-item"
+                data-view="search"
+                data-bnav="search"
+              >
+                <span class="nav-icon"
+                  ><svg><use href="#i-search" /></svg
+                ></span>
+                <span class="nav-label">Search</span>
+              </button>
+              <button
+                class="bottom-nav-item"
+                data-view="albums"
+                data-bnav="albums"
+              >
+                <span class="nav-icon"
+                  ><svg><use href="#i-library" /></svg
+                ></span>
+                <span class="nav-label">Library</span>
+              </button>
+              <button
+                class="bottom-nav-item"
+                data-view="sharing"
+                data-bnav="sharing"
+              >
+                <span class="nav-icon"
+                  ><svg><use href="#i-sharing" /></svg
+                ></span>
+                <span class="nav-label">Sharing</span>
+              </button>
+            </nav>
+
+            <!-- Mobile FAB -->
+            <button class="fab" id="fabUpload" aria-label="Upload foto">
+              <svg><use href="#i-plus" /></svg>
+            </button>
+          </div>
+
+          <div
+            class="viewer"
+            id="viewer"
+            aria-modal="true"
+            role="dialog"
+            aria-label="Penampil foto"
+          >
+            <div class="viewer-top">
+              <button class="icon-button" id="closeViewer" aria-label="Tutup">
+                <svg><use href="#i-close" /></svg>
+              </button>
+              <span class="viewer-title" id="viewerTitle">Foto</span>
+              <div class="viewer-spacer"></div>
+              <span class="viewer-meta" id="viewerMeta">31 Okt 2026</span>
+              <button class="icon-button" id="viewerFavorite" title="Favorit">
+                <svg><use href="#i-favorite" /></svg>
+              </button>
+              <button class="icon-button" id="viewerShare" title="Bagikan">
+                <svg><use href="#i-share" /></svg>
+              </button>
+              <button class="icon-button" id="viewerDownload" title="Download">
+                <svg><use href="#i-download" /></svg>
+              </button>
+              <button class="icon-button" id="viewerInfoButton" title="Info">
+                <svg><use href="#i-info" /></svg>
+              </button>
+              <button class="icon-button" id="viewerMore" title="Lainnya">
+                <svg><use href="#i-more" /></svg>
+              </button>
+            </div>
+            <div class="viewer-stage">
+              <button
+                class="viewer-arrow prev"
+                id="viewerPrev"
+                aria-label="Foto sebelumnya"
+              >
+                <svg><use href="#i-chevron-left" /></svg>
+              </button>
+              <img class="viewer-image" id="viewerImage" alt="Foto terpilih" />
+              <button
+                class="viewer-arrow next"
+                id="viewerNext"
+                aria-label="Foto berikutnya"
+              >
+                <svg><use href="#i-chevron-right" /></svg>
+              </button>
+              <aside class="viewer-info" id="viewerInfo">
+                <h3>Detail foto</h3>
+                <div class="info-row">
+                  <svg><use href="#i-clock" /></svg>
+                  <div>
+                    <div id="infoDate">31 Oktober 2026</div>
+                    <div class="info-muted">19.24 · Waktu lokal</div>
+                  </div>
+                </div>
+                <div class="info-row">
+                  <svg><use href="#i-place" /></svg>
+                  <div>
+                    <div id="infoPlace">Malang, Jawa Timur</div>
+                    <div class="info-muted">Lokasi perkiraan</div>
+                  </div>
+                </div>
+                <div class="info-row">
+                  <svg><use href="#i-add-photo" /></svg>
+                  <div>
+                    <div id="infoFilename">IMG_20261031.jpg</div>
+                    <div class="info-muted">Gambar · kualitas asli</div>
+                  </div>
+                </div>
+              </aside>
+            </div>
+            <div class="viewer-bottom">
+              <span id="viewerIndex">1 dari 24</span><span class="dot"></span
+              ><span>Disimpan di perangkat ini (demo)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <input
+      type="file"
+      id="uploadInput"
+      class="upload-input"
+      accept="image/*"
+      multiple
+    />
+    <div class="toast" id="toast"></div>
+
+    <script>
+      const photoSeed = [
+        {
+          id: 1,
+          day: "today",
+          title: "Kabut pagi di pegunungan",
+          place: "Bromo, Jawa Timur",
+          date: "31 Oktober 2026",
+          time: "07.14",
+          url: "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1100&q=88",
+          shape: "big",
+        },
+        {
+          id: 2,
+          day: "today",
+          title: "Jalan setapak di hutan",
+          place: "Malang, Jawa Timur",
+          date: "31 Oktober 2026",
+          time: "08.02",
+          url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=900&q=88",
+          shape: "tall",
+        },
+        {
+          id: 3,
+          day: "today",
+          title: "Laut biru",
+          place: "Banyuwangi, Jawa Timur",
+          date: "31 Oktober 2026",
+          time: "09.18",
+          url: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=900&q=88",
+          shape: "",
+        },
+        {
+          id: 4,
+          day: "today",
+          title: "Bunga di taman",
+          place: "Malang, Jawa Timur",
+          date: "31 Oktober 2026",
+          time: "10.30",
+          url: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=900&q=88",
+          shape: "",
+        },
+        {
+          id: 5,
+          day: "today",
+          title: "Danau saat senja",
+          place: "Jawa Timur",
+          date: "31 Oktober 2026",
+          time: "16.41",
+          url: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1100&q=88",
+          shape: "wide",
+        },
+        {
+          id: 6,
+          day: "today",
+          title: "Pemandangan dari atas",
+          place: "Batu, Jawa Timur",
+          date: "31 Oktober 2026",
+          time: "17.05",
+          url: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=88",
+          shape: "",
+        },
+        {
+          id: 7,
+          day: "today",
+          title: "Pegunungan berkabut",
+          place: "Jawa Timur",
+          date: "31 Oktober 2026",
+          time: "17.22",
+          url: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=900&q=88",
+          shape: "tall",
+        },
+        {
+          id: 8,
+          day: "today",
+          title: "Pantai tropis",
+          place: "Bali, Indonesia",
+          date: "31 Oktober 2026",
+          time: "17.45",
+          url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=88",
+          shape: "",
+        },
+        {
+          id: 9,
+          day: "yesterday",
+          title: "Jalanan kota di malam hari",
+          place: "Malang, Jawa Timur",
+          date: "30 Oktober 2026",
+          time: "20.15",
+          url: "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1000&q=88",
+          shape: "wide",
+        },
+        {
+          id: 10,
+          day: "yesterday",
+          title: "Cahaya matahari di hutan",
+          place: "Batu, Jawa Timur",
+          date: "30 Oktober 2026",
+          time: "15.33",
+          url: "https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=900&q=88",
+          shape: "tall",
+        },
+        {
+          id: 11,
+          day: "yesterday",
+          title: "Ombak dan pantai",
+          place: "Bali, Indonesia",
+          date: "30 Oktober 2026",
+          time: "13.20",
+          url: "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=900&q=88",
+          shape: "",
+        },
+        {
+          id: 12,
+          day: "yesterday",
+          title: "Langit biru",
+          place: "Jawa Timur",
+          date: "30 Oktober 2026",
+          time: "11.42",
+          url: "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=900&q=88",
+          shape: "",
+        },
+        {
+          id: 13,
+          day: "yesterday",
+          title: "Pohon pinus",
+          place: "Batu, Jawa Timur",
+          date: "30 Oktober 2026",
+          time: "10.16",
+          url: "https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&w=900&q=88",
+          shape: "wide",
+        },
+        {
+          id: 14,
+          day: "yesterday",
+          title: "Pemandangan hijau",
+          place: "Jawa Timur",
+          date: "30 Oktober 2026",
+          time: "09.10",
+          url: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&q=88",
+          shape: "",
+        },
+        {
+          id: 15,
+          day: "older",
+          title: "Bunga musim semi",
+          place: "Bandung, Jawa Barat",
+          date: "19 September 2026",
+          time: "10.11",
+          url: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=900&q=88",
+          shape: "tall",
+        },
+        {
+          id: 16,
+          day: "older",
+          title: "Kota dari ketinggian",
+          place: "Yogyakarta, Indonesia",
+          date: "18 September 2026",
+          time: "17.42",
+          url: "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=900&q=88",
+          shape: "wide",
+        },
+        {
+          id: 17,
+          day: "older",
+          title: "Pemandangan danau",
+          place: "Jawa Barat",
+          date: "16 September 2026",
+          time: "08.22",
+          url: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&q=88",
+          shape: "",
+        },
+        {
+          id: 18,
+          day: "older",
+          title: "Pesisir pantai",
+          place: "Lombok, Indonesia",
+          date: "14 September 2026",
+          time: "14.05",
+          url: "https://images.unsplash.com/photo-1473116763249-2faaef81ccda?auto=format&fit=crop&w=900&q=88",
+          shape: "",
+        },
+        {
+          id: 19,
+          day: "older",
+          title: "Langit malam berbintang",
+          place: "Jawa Timur",
+          date: "12 September 2026",
+          time: "21.34",
+          url: "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=900&q=88",
+          shape: "tall",
+        },
+        {
+          id: 20,
+          day: "older",
+          title: "Air terjun di hutan",
+          place: "Banyuwangi, Jawa Timur",
+          date: "10 September 2026",
+          time: "11.09",
+          url: "https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=900&q=88",
+          shape: "",
+        },
+        {
+          id: 21,
+          day: "older",
+          title: "Bukit hijau",
+          place: "Jawa Timur",
+          date: "8 September 2026",
+          time: "07.31",
+          url: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=900&q=88",
+          shape: "wide",
+        },
+        {
+          id: 22,
+          day: "older",
+          title: "Jalan di antara pepohonan",
+          place: "Malang, Jawa Timur",
+          date: "6 September 2026",
+          time: "16.12",
+          url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=900&q=88",
+          shape: "",
+        },
+        {
+          id: 23,
+          day: "older",
+          title: "Ombak biru",
+          place: "Bali, Indonesia",
+          date: "4 September 2026",
+          time: "12.48",
+          url: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=900&q=88",
+          shape: "",
+        },
+        {
+          id: 24,
+          day: "older",
+          title: "Pagi di pegunungan",
+          place: "Bromo, Jawa Timur",
+          date: "1 September 2026",
+          time: "06.50",
+          url: "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=900&q=88",
+          shape: "tall",
+        },
+      ];
+      let photos = photoSeed.map((p) => ({
+        ...p,
+        favorite: [2, 5, 15].includes(p.id),
+        archived: false,
+        trashed: false,
+        uploaded: false,
+      }));
+      let albums = [
+        { name: "Perjalanan", count: 48, cover: photoSeed[0].url },
+        { name: "Favorit", count: 3, cover: photoSeed[4].url },
+        { name: "Keluarga", count: 26, cover: photoSeed[3].url },
+        { name: "Alam & lanskap", count: 62, cover: photoSeed[6].url },
+        {
+          name: "Makanan",
+          count: 18,
+          cover:
+            "https://images.unsplash.com/photo-1546549032-9571cd6b27df?auto=format&fit=crop&w=900&q=85",
+        },
+        { name: "Jalan-jalan", count: 34, cover: photoSeed[7].url },
+      ];
+      let currentView = "photos";
+      let selected = new Set();
+      let selectionMode = false;
+      let viewerPhotoId = null;
+      let searchTerm = "";
+      let sortNewest = true;
+      let toastTimer;
+      let viewMode = "desktop";
+
+      const $ = (id) => document.getElementById(id);
+      const useIcon = (name) =>
+        `<svg aria-hidden="true"><use href="#i-${name}"/></svg>`;
+      const visiblePhotos = () =>
+        photos.filter(
+          (p) =>
+            !p.trashed &&
+            (currentView === "archive" ? p.archived : !p.archived),
+        );
+      const viewPhotos = () => {
+        let list = visiblePhotos();
+        if (currentView === "favorites") list = list.filter((p) => p.favorite);
+        if (currentView === "trash") list = photos.filter((p) => p.trashed);
+        if (currentView === "people") list = list.filter((p, i) => i % 3 === 0);
+        if (currentView === "places") list = list.filter((p) => p.place);
+        if (searchTerm)
+          list = list.filter((p) =>
+            `${p.title} ${p.place} ${p.date}`
+              .toLowerCase()
+              .includes(searchTerm),
+          );
+        const dayRank = { today: 0, yesterday: 1, older: 2 };
+        return list.sort((a, b) =>
+          sortNewest
+            ? dayRank[a.day] - dayRank[b.day] ||
+              b.time.localeCompare(a.time) ||
+              b.id - a.id
+            : dayRank[b.day] - dayRank[a.day] ||
+              a.time.localeCompare(b.time) ||
+              a.id - b.id,
+        );
+      };
+      function showToast(message) {
+        const toast = $("toast");
+        toast.textContent = message;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 2400);
+      }
+      function photoCard(p) {
+        return `<article class="photo-card ${p.shape || ""} ${p.favorite ? "favorite" : ""} ${selected.has(p.id) ? "selected" : ""}" data-photo-id="${p.id}" tabindex="0" aria-label="${p.title}">
+          <img src="${p.url}" alt="${p.title}" loading="lazy" />
+          <button class="photo-check" data-select-id="${p.id}" aria-label="Pilih foto">${useIcon("check")}</button>
+          <span class="photo-fav">${useIcon("favorite")}</span>
+        </article>`;
+      }
+      function renderGallery() {
+        const list = viewPhotos();
+        const root = $("galleryRoot");
+        $("albumGrid").style.display = "none";
+        $("emptyState").classList.toggle("show", list.length === 0);
+        root.style.display = list.length ? "block" : "none";
+        const groups = ["today", "yesterday", "older"];
+        groups.forEach((day) => {
+          const group = root.querySelector(`[data-day="${day}"]`);
+          const items = list.filter((p) => p.day === day);
+          group.style.display = items.length ? "block" : "none";
+          const grid = group.querySelector(".photo-grid");
+          grid.innerHTML = items.map(photoCard).join("");
+        });
+        const total = list.length;
+        $("photoCount").textContent = `${total} foto`;
+        $("favoriteCount").textContent = photos.filter(
+          (p) => p.favorite && !p.trashed,
+        ).length;
+        $("selectionToolbar").classList.toggle("visible", selectionMode);
+        $("selectedCount").textContent = `${selected.size} dipilih`;
+        document
+          .querySelectorAll(".photo-grid")
+          .forEach((g) => g.classList.toggle("selection-mode", selectionMode));
+        $("photosHeading").style.display = [
+          "albums",
+          "collections",
+          "sharing",
+          "memories",
+        ].includes(currentView)
+          ? "none"
+          : "flex";
+        if (searchTerm)
+          $("photosHeading").querySelector("h2").textContent =
+            "Hasil pencarian";
+        else
+          $("photosHeading").querySelector("h2").textContent =
+            currentView === "favorites"
+              ? "Foto favorit"
+              : currentView === "archive"
+                ? "Arsip"
+                : currentView === "trash"
+                  ? "Sampah"
+                  : "Hari ini";
+      }
+      function renderAlbums() {
+        $("galleryRoot").style.display = "none";
+        $("photosHeading").style.display = "none";
+        $("emptyState").classList.remove("show");
+        const grid = $("albumGrid");
+        grid.style.display = "grid";
+        grid.innerHTML = albums
+          .map(
+            (a) =>
+              `<article class="album-card"><div class="album-cover"><img src="${a.cover}" alt="${a.name}" loading="lazy"><span class="album-stack">${useIcon("album")}</span></div><div class="album-meta"><strong>${a.name}</strong><span>${a.count} foto</span></div></article>`,
+          )
+          .join("");
+      }
+      const viewLabels = {
+        photos: ["Foto", "Semua momen Anda, di satu tempat"],
+        memories: ["Kenangan", "Momen yang ingin Anda ingat kembali"],
+        sharing: ["Berbagi", "Foto dan album yang dibagikan kepada Anda"],
+        collections: ["Koleksi", "Semua koleksi Anda"],
+        favorites: ["Favorit", "Foto yang Anda tandai sebagai favorit"],
+        albums: ["Album", "Album foto Anda"],
+        people: [
+          "Orang & hewan peliharaan",
+          "Foto yang dikelompokkan berdasarkan wajah",
+        ],
+        places: ["Tempat", "Foto berdasarkan lokasi"],
+        archive: ["Arsip", "Foto yang Anda arsipkan"],
+        trash: ["Sampah", "Item yang dipindahkan ke sampah"],
+        search: ["Pencarian", "Cari foto berdasarkan orang, tempat, atau hal"],
+      };
+      function setView(view) {
+        currentView = view;
+        selected.clear();
+        selectionMode = false;
+        document
+          .querySelectorAll(".nav-item")
+          .forEach((el) =>
+            el.classList.toggle("active", el.dataset.view === view),
+          );
+        // Sync bottom nav
+        const bnavMap = {
+          photos: "photos",
+          favorites: "albums",
+          albums: "albums",
+          collections: "albums",
+          archive: "albums",
+          trash: "albums",
+          people: "albums",
+          places: "albums",
+          sharing: "sharing",
+          memories: "photos",
+          search: "search",
+        };
+        document
+          .querySelectorAll(".bottom-nav-item")
+          .forEach((el) =>
+            el.classList.toggle(
+              "active",
+              el.dataset.bnav === (bnavMap[view] || "photos"),
+            ),
+          );
+        $("pageTitle").textContent = viewLabels[view][0];
+        $("pageSubtitle").textContent = viewLabels[view][1];
+        $("memoriesSection").style.display = ["photos", "memories"].includes(
+          view,
+        )
+          ? "block"
+          : "none";
+        if (view === "albums" || view === "collections") renderAlbums();
+        else renderGallery();
+        if (view === "sharing") {
+          $("galleryRoot").style.display = "none";
+          $("emptyState").classList.add("show");
+          $("emptyState").querySelector("h3").textContent =
+            "Belum ada item yang dibagikan";
+          $("emptyState").querySelector("p").textContent =
+            "Foto dan album yang dibagikan akan muncul di sini.";
+        }
+        if (view === "memories") {
+          $("galleryRoot").style.display = "none";
+          $("photosHeading").style.display = "none";
+          $("emptyState").classList.add("show");
+          $("emptyState").querySelector("h3").textContent = "Kenangan Anda";
+          $("emptyState").querySelector("p").textContent =
+            "Pilih salah satu cerita di atas untuk melihat kembali momen tersebut.";
+        }
+        if (view === "search") {
+          $("galleryRoot").style.display = "none";
+          $("photosHeading").style.display = "none";
+          $("memoriesSection").style.display = "none";
+          $("emptyState").classList.add("show");
+          $("emptyState").querySelector("h3").textContent = "Cari di Photos";
+          $("emptyState").querySelector("p").textContent =
+            "Cari berdasarkan orang, tempat, tanggal, atau objek dalam foto Anda.";
+        }
+        $("sidebar").classList.remove("mobile-open");
+        $("mobileOverlay").classList.remove("show");
+      }
+      function enterSelection(id) {
+        selectionMode = true;
+        if (selected.has(id)) selected.delete(id);
+        else selected.add(id);
+        if (!selected.size) selectionMode = false;
+        renderGallery();
+      }
+      function openViewer(id) {
+        const p = photos.find((x) => x.id === id);
+        if (!p) return;
+        viewerPhotoId = id;
+        $("viewer").classList.add("open");
+        updateViewer();
+      }
+      function updateViewer() {
+        const p = photos.find((x) => x.id === viewerPhotoId);
+        if (!p) return;
+        const list = viewPhotos();
+        const idx = list.findIndex((x) => x.id === p.id);
+        $("viewerImage").src = p.url;
+        $("viewerTitle").textContent = p.title;
+        $("viewerMeta").textContent = `${p.date} · ${p.time}`;
+        $("viewerIndex").textContent =
+          `${Math.max(1, idx + 1)} dari ${list.length}`;
+        $("infoDate").textContent = `${p.date} · ${p.time}`;
+        $("infoPlace").textContent = p.place || "Lokasi tidak tersedia";
+        $("infoFilename").textContent = p.uploaded
+          ? p.title
+          : `IMG_${String(p.id).padStart(4, "0")}.jpg`;
+        $("viewerFavorite").style.color = p.favorite ? "#fbbc04" : "#fff";
+        $("viewerPrev").style.visibility = idx <= 0 ? "hidden" : "visible";
+        $("viewerNext").style.visibility =
+          idx >= list.length - 1 ? "hidden" : "visible";
+      }
+      function closeViewer() {
+        $("viewer").classList.remove("open");
+        $("viewerInfo").classList.remove("open");
+        viewerPhotoId = null;
+      }
+      function moveViewer(step) {
+        const list = viewPhotos();
+        const idx = list.findIndex((p) => p.id === viewerPhotoId);
+        const next = list[idx + step];
+        if (next) {
+          viewerPhotoId = next.id;
+          updateViewer();
+        }
+      }
+      function toggleFavorite(id) {
+        const p = photos.find((x) => x.id === id);
+        if (!p) return;
+        p.favorite = !p.favorite;
+        renderGallery();
+        if (viewerPhotoId === id) updateViewer();
+        showToast(
+          p.favorite ? "Ditambahkan ke favorit" : "Dihapus dari favorit",
+        );
+      }
+      function bulkAction(action) {
+        if (!selected.size) return;
+        const chosen = [...selected];
+        chosen.forEach((id) => {
+          const p = photos.find((x) => x.id === id);
+          if (!p) return;
+          if (action === "favorite") p.favorite = true;
+          if (action === "archive") p.archived = true;
+          if (action === "trash") p.trashed = true;
+        });
+        selected.clear();
+        selectionMode = false;
+        renderGallery();
+        showToast(
+          action === "favorite"
+            ? "Foto ditambahkan ke favorit"
+            : action === "archive"
+              ? "Foto diarsipkan"
+              : "Foto dipindahkan ke sampah",
+        );
+      }
+      function downloadPhoto(p) {
+        if (!p) return;
+        const a = document.createElement("a");
+        a.href = p.url;
+        a.download =
+          (p.title || "photo").replace(/[^a-z0-9-_]/gi, "-") + ".jpg";
+        a.target = "_blank";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        showToast("Download dimulai");
+      }
+      function applySearch(value) {
+        searchTerm = (value || "").trim().toLowerCase();
+        $("searchInput").value = value;
+        $("mobileSearchInput").value = value;
+        $("clearSearch").style.display = searchTerm ? "inline-flex" : "none";
+        $("clearMobileSearch").style.display = searchTerm
+          ? "inline-flex"
+          : "none";
+        if (currentView === "albums" || currentView === "collections")
+          setView("photos");
+        renderGallery();
+      }
+
+      // Status bar time
+      function updateStatusTime() {
+        const now = new Date();
+        const h = now.getHours();
+        const m = now.getMinutes().toString().padStart(2, "0");
+        $("statusTime").textContent = `${h}:${m}`;
+      }
+      updateStatusTime();
+      setInterval(updateStatusTime, 30000);
+
+      // View mode switcher
+      function setViewMode(mode) {
+        viewMode = mode;
+        document.body.classList.remove("view-mode-desktop", "view-mode-mobile");
+        document.body.classList.add(`view-mode-${mode}`);
+        document.querySelectorAll(".view-switcher button").forEach((btn) => {
+          const active = btn.dataset.mode === mode;
+          btn.classList.toggle("active", active);
+          btn.setAttribute("aria-selected", active);
+        });
+      }
+      document.querySelectorAll(".view-switcher button").forEach((btn) => {
+        btn.addEventListener("click", () => setViewMode(btn.dataset.mode));
+      });
+
+      // Initial render
+      renderGallery();
+
+      document
+        .querySelectorAll(".nav-item")
+        .forEach((btn) =>
+          btn.addEventListener("click", () => setView(btn.dataset.view)),
+        );
+      document
+        .querySelectorAll(".bottom-nav-item")
+        .forEach((btn) =>
+          btn.addEventListener("click", () => setView(btn.dataset.view)),
+        );
+      $("searchInput").addEventListener("input", (e) =>
+        applySearch(e.target.value),
+      );
+      $("mobileSearchInput").addEventListener("input", (e) =>
+        applySearch(e.target.value),
+      );
+      $("clearSearch").addEventListener("click", () => {
+        applySearch("");
+        $("searchInput").focus();
+      });
+      $("clearMobileSearch").addEventListener("click", () => {
+        applySearch("");
+        $("mobileSearchInput").focus();
+      });
+      $("selectButton").addEventListener("click", () => {
+        selectionMode = !selectionMode;
+        selected.clear();
+        renderGallery();
+        $("selectButton").classList.toggle("active", selectionMode);
+      });
+      $("cancelSelection").addEventListener("click", () => {
+        selectionMode = false;
+        selected.clear();
+        renderGallery();
+        $("selectButton").classList.remove("active");
+      });
+      $("doneSelection").addEventListener("click", () => {
+        selectionMode = false;
+        selected.clear();
+        renderGallery();
+        $("selectButton").classList.remove("active");
+      });
+      $("bulkFavorite").addEventListener("click", () => bulkAction("favorite"));
+      $("bulkArchive").addEventListener("click", () => bulkAction("archive"));
+      $("bulkDownload").addEventListener("click", () => {
+        const chosen = photos.filter((p) => selected.has(p.id));
+        chosen.forEach((p, i) => setTimeout(() => downloadPhoto(p), i * 250));
+      });
+      $("sortButton").addEventListener("click", () => {
+        sortNewest = !sortNewest;
+        $("sortButton").innerHTML =
+          `${useIcon("sort")} ${sortNewest ? "Terbaru" : "Terlama"}`;
+        renderGallery();
+      });
+      $("galleryRoot").addEventListener("click", (e) => {
+        const check = e.target.closest("[data-select-id]");
+        if (check) {
+          e.stopPropagation();
+          enterSelection(Number(check.dataset.selectId));
+          return;
+        }
+        const card = e.target.closest("[data-photo-id]");
+        if (!card) return;
+        const id = Number(card.dataset.photoId);
+        if (selectionMode) enterSelection(id);
+        else openViewer(id);
+      });
+      $("galleryRoot").addEventListener("keydown", (e) => {
+        if (
+          (e.key === "Enter" || e.key === " ") &&
+          e.target.matches("[data-photo-id]")
+        ) {
+          e.preventDefault();
+          openViewer(Number(e.target.dataset.photoId));
+        }
+      });
+      $("closeViewer").addEventListener("click", closeViewer);
+      $("viewerPrev").addEventListener("click", () => moveViewer(-1));
+      $("viewerNext").addEventListener("click", () => moveViewer(1));
+      $("viewerFavorite").addEventListener("click", () =>
+        toggleFavorite(viewerPhotoId),
+      );
+      $("viewerInfoButton").addEventListener("click", () =>
+        $("viewerInfo").classList.toggle("open"),
+      );
+      $("viewerDownload").addEventListener("click", () =>
+        downloadPhoto(photos.find((p) => p.id === viewerPhotoId)),
+      );
+      $("viewerShare").addEventListener("click", () =>
+        showToast("Fitur berbagi tersedia pada aplikasi lengkap"),
+      );
+      $("viewerMore").addEventListener("click", () =>
+        showToast("Opsi lainnya akan tersedia di sini"),
+      );
+      $("viewer").addEventListener("click", (e) => {
+        if (e.target === $("viewer")) closeViewer();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (!$("viewer").classList.contains("open")) return;
+        if (e.key === "Escape") closeViewer();
+        if (e.key === "ArrowLeft") moveViewer(-1);
+        if (e.key === "ArrowRight") moveViewer(1);
+      });
+      $("createButton").addEventListener("click", (e) => {
+        e.stopPropagation();
+        $("createMenu").classList.toggle("show");
+      });
+      document.querySelectorAll("[data-create]").forEach((item) =>
+        item.addEventListener("click", () => {
+          $("createMenu").classList.remove("show");
+          const action = item.dataset.create;
+          if (action === "upload") $("uploadInput").click();
+          else if (action === "album") {
+            const name = prompt("Nama album baru:");
+            if (name && name.trim()) {
+              albums.unshift({
+                name: name.trim(),
+                count: 0,
+                cover: photos[0].url,
+              });
+              setView("albums");
+              showToast("Album dibuat");
+            }
+          } else
+            showToast(
+              action === "collage"
+                ? "Pilih foto untuk membuat kolase"
+                : "Pilih foto untuk membuat animasi",
+            );
+        }),
+      );
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest(".create-wrap"))
+          $("createMenu").classList.remove("show");
+      });
+      $("uploadInput").addEventListener("change", (e) => {
+        const files = [...e.target.files].filter((f) =>
+          f.type.startsWith("image/"),
+        );
+        files.forEach((file) =>
+          photos.unshift({
+            id: Math.max(...photos.map((p) => p.id)) + 1,
+            day: "today",
+            title: file.name,
+            place: "Ditambahkan dari perangkat",
+            date: "9 November 2026",
+            time: new Date().toLocaleTimeString("id-ID", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            url: URL.createObjectURL(file),
+            shape: "",
+            favorite: false,
+            archived: false,
+            trashed: false,
+            uploaded: true,
+          }),
+        );
+        e.target.value = "";
+        setView("photos");
+        showToast(`${files.length} foto ditambahkan`);
+      });
+      $("fabUpload").addEventListener("click", () => {
+        $("uploadInput").click();
+      });
+      $("mobileSearchBtn").addEventListener("click", () => {
+        $("mobileSearchOverlay").classList.add("show");
+        setTimeout(() => $("mobileSearchInput").focus(), 100);
+      });
+      $("closeMobileSearch").addEventListener("click", () => {
+        $("mobileSearchOverlay").classList.remove("show");
+      });
+      $("menuToggle").addEventListener("click", () => {
+        if (viewMode === "mobile" || window.innerWidth <= 760) {
+          $("sidebar").classList.toggle("mobile-open");
+          $("mobileOverlay").classList.toggle("show");
+        } else {
+          document.body.classList.toggle("sidebar-hidden");
+        }
+      });
+      $("mobileOverlay").addEventListener("click", () => {
+        $("sidebar").classList.remove("mobile-open");
+        $("mobileOverlay").classList.remove("show");
+      });
+      $("allMemories").addEventListener("click", () => setView("memories"));
+      document.querySelectorAll(".memory-card").forEach((card, i) =>
+        card.addEventListener("click", () => {
+          const p = photos.find((x) => x.id === [1, 8, 9, 4][i]);
+          if (p) openViewer(p.id);
+          else showToast(card.dataset.memory);
+        }),
+      );
+
+      // Desktop collapse support
+      const collapseStyle = document.createElement("style");
+      collapseStyle.textContent =
+        "body.sidebar-hidden .sidebar{width:0;flex-basis:0;padding:0;overflow:hidden} body.sidebar-hidden .main{padding-left:38px}";
+      document.head.appendChild(collapseStyle);
+    </script>
+  </body>
+</html>

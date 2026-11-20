@@ -1,0 +1,1444 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#e60012" />
+    <title>PayPay — UI Demo</title>
+    <style>
+      :root {
+        --red: #e60012;
+        --red-dark: #c90010;
+        --ink: #202124;
+        --muted: #777b82;
+        --line: #eceef1;
+        --surface: #ffffff;
+        --canvas: #f4f5f7;
+        --blue: #1677e8;
+        --green: #169b62;
+        --shadow: 0 12px 35px rgba(20, 28, 40, 0.1);
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP",
+          "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+        color: var(--ink);
+        background: var(--canvas);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+      body {
+        min-height: 100vh;
+        background: #f2f3f5;
+      }
+      button {
+        font: inherit;
+        border: 0;
+        cursor: pointer;
+      }
+      button:focus-visible {
+        outline: 3px solid rgba(230, 0, 18, 0.25);
+        outline-offset: 3px;
+      }
+      .stage {
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 22px 12px;
+        background: radial-gradient(circle at 50% 0%, #fff 0, #f2f3f5 58%);
+      }
+      .phone {
+        width: min(100%, 430px);
+        min-height: min(920px, calc(100vh - 44px));
+        background: #f7f8fa;
+        border-radius: 28px;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 20px 65px rgba(21, 29, 41, 0.15);
+        border: 1px solid rgba(22, 29, 37, 0.07);
+        display: flex;
+        flex-direction: column;
+      }
+      .app-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding-bottom: 100px;
+        scrollbar-width: none;
+      }
+      .app-scroll::-webkit-scrollbar {
+        display: none;
+      }
+      .top-shell {
+        background: var(--red);
+        color: #fff;
+        padding: 15px 18px 17px;
+      }
+      .status-row {
+        height: 17px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 3px 7px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+      }
+      .status-right {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .status-right svg {
+        width: 13px;
+        height: 13px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2;
+      }
+      .appbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 1px 15px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-weight: 900;
+        font-size: 25px;
+        letter-spacing: -1.4px;
+      }
+      .brand-mark {
+        width: 25px;
+        height: 25px;
+        border: 3px solid #fff;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-size: 13px;
+        line-height: 1;
+        font-weight: 900;
+      }
+      .brand small {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        opacity: 0.84;
+        margin-left: 2px;
+        align-self: flex-end;
+        padding-bottom: 3px;
+      }
+      .head-actions {
+        display: flex;
+        gap: 10px;
+      }
+      .round-action {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        background: rgba(255, 255, 255, 0.16);
+        position: relative;
+      }
+      .round-action svg {
+        width: 19px;
+        height: 19px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .notice-dot {
+        width: 6px;
+        height: 6px;
+        background: #ffe66b;
+        border: 1px solid var(--red);
+        border-radius: 50%;
+        position: absolute;
+        top: 6px;
+        right: 7px;
+      }
+      .wallet-card {
+        color: var(--ink);
+        background: #fff;
+        border-radius: 17px;
+        overflow: hidden;
+        box-shadow: 0 5px 16px rgba(99, 0, 8, 0.12);
+      }
+      .wallet-tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+        background: #f7f7f8;
+        padding: 4px;
+      }
+      .wallet-tab {
+        background: transparent;
+        color: #73777e;
+        border-radius: 11px;
+        padding: 10px 8px;
+        font-size: 12px;
+        font-weight: 750;
+        transition: 0.18s;
+      }
+      .wallet-tab.active {
+        background: #fff;
+        color: var(--red);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      }
+      .wallet-main {
+        padding: 15px 17px 14px;
+      }
+      .balance-label {
+        color: #73777e;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        font-weight: 650;
+      }
+      .balance-label .tiny-mark {
+        color: var(--red);
+        font-size: 13px;
+        font-weight: 900;
+      }
+      .balance-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-top: 4px;
+      }
+      .balance-value {
+        font-size: 31px;
+        font-weight: 800;
+        letter-spacing: -1.2px;
+        line-height: 1.18;
+        font-variant-numeric: tabular-nums;
+      }
+      .balance-value .yen {
+        font-size: 20px;
+        margin-right: 2px;
+        vertical-align: 3px;
+      }
+      .balance-hide {
+        background: transparent;
+        color: #9a9da3;
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+      }
+      .balance-hide svg {
+        width: 19px;
+        height: 19px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+      }
+      .wallet-footer {
+        border-top: 1px solid #f0f0f0;
+        padding: 11px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .wallet-foot-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 10px;
+        color: #767b82;
+        white-space: nowrap;
+      }
+      .wallet-foot-item strong {
+        color: #25282c;
+        font-size: 12px;
+      }
+      .wallet-foot-item .gold {
+        color: #d69a00;
+        font-size: 15px;
+      }
+      .wallet-foot-item .blue {
+        color: #2785ed;
+        font-size: 14px;
+      }
+      .wallet-foot-link {
+        color: var(--red);
+        font-size: 10px;
+        font-weight: 750;
+        background: none;
+        white-space: nowrap;
+      }
+      .main-content {
+        padding: 13px 14px 0;
+      }
+      .quick-panel {
+        background: #fff;
+        border-radius: 16px;
+        padding: 15px 10px 13px;
+        box-shadow: 0 2px 10px rgba(28, 35, 43, 0.035);
+      }
+      .quick-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px 2px;
+      }
+      .quick-item {
+        background: transparent;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 7px;
+        color: #353940;
+        min-width: 0;
+        padding: 0 2px;
+      }
+      .quick-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 15px;
+        background: #fff0f1;
+        color: var(--red);
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+      .quick-icon svg {
+        width: 25px;
+        height: 25px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .quick-item:nth-child(2) .quick-icon {
+        background: #eff6ff;
+        color: #2879da;
+      }
+      .quick-item:nth-child(3) .quick-icon {
+        background: #f0f8f2;
+        color: #29965b;
+      }
+      .quick-item:nth-child(4) .quick-icon {
+        background: #fff7e9;
+        color: #d68b18;
+      }
+      .quick-item span:last-child {
+        font-size: 10px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 19px 3px 10px;
+      }
+      .section-head h2 {
+        font-size: 14px;
+        margin: 0;
+        font-weight: 800;
+        letter-spacing: -0.2px;
+      }
+      .text-link {
+        color: var(--red);
+        background: transparent;
+        font-size: 10px;
+        font-weight: 750;
+        padding: 5px 1px;
+      }
+      .service-strip {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+      }
+      .service-card {
+        background: #fff;
+        border-radius: 13px;
+        padding: 12px 5px 10px;
+        min-height: 77px;
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        gap: 7px;
+        box-shadow: 0 2px 8px rgba(28, 35, 43, 0.025);
+      }
+      .service-icon {
+        width: 29px;
+        height: 29px;
+        display: grid;
+        place-items: center;
+        color: #5d6067;
+      }
+      .service-icon svg {
+        width: 23px;
+        height: 23px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .service-card span {
+        font-size: 9px;
+        color: #555a62;
+        font-weight: 650;
+        text-align: center;
+      }
+      .promo {
+        margin-top: 16px;
+        background: linear-gradient(110deg, #fff4f1, #fff9f0);
+        border: 1px solid #ffebe6;
+        border-radius: 15px;
+        overflow: hidden;
+        min-height: 91px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 13px 15px;
+        position: relative;
+      }
+      .promo-copy {
+        position: relative;
+        z-index: 1;
+      }
+      .promo-kicker {
+        color: var(--red);
+        font-weight: 850;
+        font-size: 9px;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+      }
+      .promo-title {
+        font-size: 13px;
+        font-weight: 850;
+        line-height: 1.35;
+      }
+      .promo-sub {
+        font-size: 9px;
+        color: #79716d;
+        margin-top: 4px;
+      }
+      .promo-art {
+        width: 82px;
+        height: 63px;
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+      .promo-coin {
+        width: 53px;
+        height: 53px;
+        border-radius: 50%;
+        background: linear-gradient(145deg, #ffd76d, #ffad31);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-size: 24px;
+        font-weight: 900;
+        box-shadow: 0 5px 14px rgba(213, 138, 27, 0.2);
+        transform: rotate(-12deg);
+      }
+      .promo-star {
+        position: absolute;
+        color: #f2a22e;
+        font-size: 16px;
+      }
+      .promo-star.one {
+        top: 2px;
+        right: 4px;
+      }
+      .promo-star.two {
+        bottom: 2px;
+        left: 5px;
+        font-size: 12px;
+      }
+      .history-card {
+        background: #fff;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(28, 35, 43, 0.025);
+      }
+      .transaction {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 12px 13px;
+        border-top: 1px solid #f1f2f4;
+      }
+      .transaction:first-child {
+        border-top: 0;
+      }
+      .merchant-icon {
+        width: 37px;
+        height: 37px;
+        flex: 0 0 37px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        font-size: 15px;
+        font-weight: 850;
+      }
+      .merchant-icon.cafe {
+        background: #f4eee8;
+        color: #76553d;
+      }
+      .merchant-icon.store {
+        background: #edf4ff;
+        color: #3875c7;
+      }
+      .merchant-icon.market {
+        background: #f3f0fc;
+        color: #8060bc;
+      }
+      .tx-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .tx-name {
+        font-size: 11px;
+        font-weight: 750;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      .tx-date {
+        color: #989ca3;
+        font-size: 9px;
+        margin-top: 4px;
+      }
+      .tx-amount {
+        font-size: 11px;
+        font-weight: 800;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+      }
+      .tx-status {
+        color: #999da4;
+        font-size: 8px;
+        text-align: right;
+        margin-top: 3px;
+      }
+      .bottom-nav {
+        position: absolute;
+        z-index: 5;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        min-height: 76px;
+        padding: 9px 7px calc(9px + env(safe-area-inset-bottom));
+        background: rgba(255, 255, 255, 0.97);
+        border-top: 1px solid #e9eaed;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1.1fr 1fr 1fr;
+        align-items: end;
+        backdrop-filter: blur(14px);
+      }
+      .nav-item {
+        background: transparent;
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        gap: 4px;
+        color: #a0a4aa;
+        font-size: 9px;
+        font-weight: 650;
+        padding: 0 2px;
+      }
+      .nav-item svg {
+        width: 21px;
+        height: 21px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .nav-item.active {
+        color: var(--red);
+      }
+      .nav-pay {
+        align-self: center;
+        margin-top: -27px;
+        gap: 4px;
+        color: #797d83;
+      }
+      .pay-orb {
+        width: 53px;
+        height: 53px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: var(--red);
+        color: #fff;
+        border: 4px solid #fff;
+        box-shadow: 0 3px 13px rgba(230, 0, 18, 0.26);
+      }
+      .pay-orb svg {
+        width: 25px;
+        height: 25px;
+        stroke: #fff;
+      }
+      .demo-note {
+        text-align: center;
+        font-size: 8px;
+        color: #a1a4aa;
+        padding: 15px 0 2px;
+        letter-spacing: 0.2px;
+      }
+      .toast {
+        position: absolute;
+        z-index: 30;
+        bottom: 88px;
+        left: 50%;
+        transform: translate(-50%, 14px);
+        background: #24272c;
+        color: #fff;
+        border-radius: 22px;
+        font-size: 11px;
+        padding: 10px 15px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: 0.22s;
+        box-shadow: 0 5px 18px rgba(0, 0, 0, 0.18);
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      .modal-backdrop {
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+        background: rgba(20, 22, 27, 0.48);
+        display: none;
+        align-items: flex-end;
+        justify-content: center;
+        padding: 12px;
+      }
+      .modal-backdrop.open {
+        display: flex;
+      }
+      .modal {
+        width: 100%;
+        background: #fff;
+        border-radius: 23px;
+        padding: 18px 18px 22px;
+        box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+        animation: rise 0.22s ease-out;
+      }
+      @keyframes rise {
+        from {
+          transform: translateY(18px);
+          opacity: 0.7;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+      .modal-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 14px;
+      }
+      .modal-title {
+        font-size: 15px;
+        font-weight: 850;
+      }
+      .close-modal {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #f2f3f5;
+        color: #555;
+        display: grid;
+        place-items: center;
+        font-size: 19px;
+      }
+      .pay-preview {
+        border: 1px solid #eceef1;
+        border-radius: 15px;
+        padding: 17px;
+        text-align: center;
+      }
+      .pay-preview .demo-label {
+        color: var(--red);
+        font-size: 9px;
+        letter-spacing: 1px;
+        font-weight: 900;
+      }
+      .fake-qr {
+        width: 142px;
+        height: 142px;
+        margin: 13px auto 10px;
+        padding: 8px;
+        background: #fff;
+        border: 1px solid #e7e7e7;
+        border-radius: 7px;
+      }
+      .fake-qr svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .barcode {
+        height: 43px;
+        margin: 12px auto 7px;
+        width: 85%;
+        background: repeating-linear-gradient(
+          90deg,
+          #202124 0 2px,
+          transparent 2px 4px,
+          #202124 4px 5px,
+          transparent 5px 8px,
+          #202124 8px 11px,
+          transparent 11px 13px
+        );
+        opacity: 0.8;
+      }
+      .modal-caption {
+        color: #858991;
+        font-size: 10px;
+        line-height: 1.55;
+      }
+      .modal-primary {
+        margin-top: 14px;
+        width: 100%;
+        padding: 13px;
+        background: var(--red);
+        border-radius: 12px;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 800;
+      }
+      .action-detail {
+        color: #6e737b;
+        font-size: 11px;
+        line-height: 1.6;
+        margin: 0;
+      }
+      .tab-page {
+        display: none;
+        min-height: 450px;
+        padding: 24px 15px;
+      }
+      .tab-page.active {
+        display: block;
+      }
+      .tab-page h2 {
+        font-size: 18px;
+        margin: 4px 0 8px;
+      }
+      .tab-page p {
+        color: #858a92;
+        font-size: 11px;
+        line-height: 1.6;
+      }
+      .empty-state {
+        background: #fff;
+        border-radius: 16px;
+        padding: 30px 20px;
+        margin-top: 18px;
+        text-align: center;
+      }
+      .empty-icon {
+        width: 52px;
+        height: 52px;
+        margin: 0 auto 13px;
+        border-radius: 50%;
+        background: #fff0f1;
+        color: var(--red);
+        display: grid;
+        place-items: center;
+      }
+      .empty-icon svg {
+        width: 26px;
+        height: 26px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.7;
+      }
+      @media (max-width: 480px) {
+        .stage {
+          padding: 0;
+          background: #fff;
+        }
+        .phone {
+          width: 100%;
+          min-height: 100dvh;
+          border: 0;
+          border-radius: 0;
+          box-shadow: none;
+        }
+        .top-shell {
+          padding-top: max(12px, env(safe-area-inset-top));
+        }
+        .main-content {
+          padding-left: 12px;
+          padding-right: 12px;
+        }
+        .bottom-nav {
+          padding-bottom: max(9px, env(safe-area-inset-bottom));
+        }
+      }
+      @media (min-width: 700px) {
+        .phone {
+          min-height: 850px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <svg
+      aria-hidden="true"
+      style="position: absolute; width: 0; height: 0; overflow: hidden"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <symbol id="i-bell" viewBox="0 0 24 24">
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
+      </symbol>
+      <symbol id="i-user" viewBox="0 0 24 24">
+        <circle cx="12" cy="8" r="3.5" />
+        <path d="M5 20c.7-3.3 3.1-5 7-5s6.3 1.7 7 5" />
+      </symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24">
+        <path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z" />
+        <circle cx="12" cy="12" r="2.5" />
+      </symbol>
+      <symbol id="i-eye-off" viewBox="0 0 24 24">
+        <path
+          d="m3 3 18 18M10.6 6.2A10.8 10.8 0 0 1 12 6c6.1 0 9.5 6 9.5 6a15 15 0 0 1-3 3.7M6.2 6.2C3.8 7.8 2.5 12 2.5 12s3.4 6 9.5 6c1.2 0 2.3-.2 3.3-.6"
+        />
+        <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+      </symbol>
+      <symbol id="i-send" viewBox="0 0 24 24">
+        <path d="m21 3-7.2 18-3.9-7.9L2 9.2 21 3Z" />
+        <path d="M10 13 21 3" />
+      </symbol>
+      <symbol id="i-scan" viewBox="0 0 24 24">
+        <path
+          d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 12h10M12 7v10"
+        />
+      </symbol>
+      <symbol id="i-plus-wallet" viewBox="0 0 24 24">
+        <path
+          d="M4 6.5h15a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2h13"
+        />
+        <path d="M16 13h5M18.5 10.5v5" />
+      </symbol>
+      <symbol id="i-home" viewBox="0 0 24 24">
+        <path
+          d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z"
+        />
+      </symbol>
+      <symbol id="i-gift" viewBox="0 0 24 24">
+        <path
+          d="M3 10h18v11H3zM2 6h20v4H2zM12 6v15M12 6H8.5a2.5 2.5 0 1 1 2.4-3.2L12 6Zm0 0h3.5a2.5 2.5 0 1 0-2.4-3.2L12 6Z"
+        />
+      </symbol>
+      <symbol id="i-wallet" viewBox="0 0 24 24">
+        <path d="M4 5h16a2 2 0 0 1 2 2v12H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" />
+        <path d="M2 8h20M16 13h3" />
+      </symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="7" height="7" rx="1.5" />
+        <rect x="14" y="3" width="7" height="7" rx="1.5" />
+        <rect x="3" y="14" width="7" height="7" rx="1.5" />
+        <rect x="14" y="14" width="7" height="7" rx="1.5" />
+      </symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 2" />
+      </symbol>
+      <symbol id="i-card" viewBox="0 0 24 24">
+        <rect x="2.5" y="4.5" width="19" height="15" rx="2.5" />
+        <path d="M2.5 9h19M6 15h4" />
+      </symbol>
+      <symbol id="i-chart" viewBox="0 0 24 24">
+        <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
+      </symbol>
+      <symbol id="i-building" viewBox="0 0 24 24">
+        <path
+          d="M3 21h18M5 21V7l7-4 7 4v14M9 10h1M14 10h1M9 14h1M14 14h1M10 21v-3h4v3"
+        />
+      </symbol>
+      <symbol id="i-help" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <path
+          d="M9.7 9a2.4 2.4 0 1 1 4.4 1.3c-.9 1.2-2.1 1.4-2.1 3M12 17.5v.1"
+        />
+      </symbol>
+    </svg>
+
+    <div class="stage">
+      <main class="phone" aria-label="PayPay UI demo">
+        <div class="app-scroll" id="appScroll">
+          <section class="top-shell" id="homeHeader">
+            <div class="status-row">
+              <span>9:41</span
+              ><span class="status-right"
+                ><span>●●●</span
+                ><svg viewBox="0 0 24 24">
+                  <path
+                    d="M3 9a14 14 0 0 1 18 0M6 12a9 9 0 0 1 12 0M9.5 15a4 4 0 0 1 5 0M12 19h.01"
+                  /></svg
+                ><svg viewBox="0 0 24 24">
+                  <rect x="2" y="6" width="18" height="12" rx="2" />
+                  <path d="M22 10v4" />
+                  <path d="M5 9h11v6H5z" /></svg
+              ></span>
+            </div>
+            <div class="appbar">
+              <div class="brand">
+                <span class="brand-mark">P</span><span>PayPay</span
+                ><small>DEMO</small>
+              </div>
+              <div class="head-actions">
+                <button
+                  class="round-action"
+                  data-action="notifications"
+                  aria-label="Notifikasi"
+                >
+                  <svg><use href="#i-bell" /></svg><i class="notice-dot"></i>
+                </button>
+                <button
+                  class="round-action"
+                  data-action="profile"
+                  aria-label="Profil"
+                >
+                  <svg><use href="#i-user" /></svg>
+                </button>
+              </div>
+            </div>
+            <div class="wallet-card">
+              <div
+                class="wallet-tabs"
+                role="tablist"
+                aria-label="Metode pembayaran"
+              >
+                <button
+                  class="wallet-tab active"
+                  data-wallet="balance"
+                  role="tab"
+                  aria-selected="true"
+                >
+                  PayPay残高
+                </button>
+                <button
+                  class="wallet-tab"
+                  data-wallet="credit"
+                  role="tab"
+                  aria-selected="false"
+                >
+                  PayPayクレジット
+                </button>
+              </div>
+              <div class="wallet-main">
+                <div class="balance-label">
+                  <span class="tiny-mark">●</span
+                  ><span id="balanceLabel">PayPay残高</span>
+                </div>
+                <div class="balance-line">
+                  <div class="balance-value" id="balanceValue">
+                    <span class="yen">¥</span>32,480
+                  </div>
+                  <button
+                    class="balance-hide"
+                    id="toggleBalance"
+                    aria-label="Sembunyikan saldo"
+                  >
+                    <svg><use href="#i-eye" /></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="wallet-footer">
+                <div class="wallet-foot-item">
+                  <span class="gold">✦</span><span>ポイント</span
+                  ><strong id="pointsValue">1,248 pt</strong>
+                </div>
+                <div class="wallet-foot-item">
+                  <span class="blue">▣</span><span>利用可能額</span
+                  ><strong id="creditValue">¥100,000</strong>
+                </div>
+                <button class="wallet-foot-link" data-action="wallet">
+                  ウォレット詳細 ›
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section class="main-content" id="homeContent">
+            <div class="quick-panel">
+              <div class="quick-grid">
+                <button class="quick-item" data-action="pay">
+                  <span class="quick-icon"
+                    ><svg><use href="#i-card" /></svg></span
+                  ><span>支払う</span>
+                </button>
+                <button class="quick-item" data-action="scan">
+                  <span class="quick-icon"
+                    ><svg><use href="#i-scan" /></svg></span
+                  ><span>スキャン</span>
+                </button>
+                <button class="quick-item" data-action="send">
+                  <span class="quick-icon"
+                    ><svg><use href="#i-send" /></svg></span
+                  ><span>送る・受け取る</span>
+                </button>
+                <button class="quick-item" data-action="charge">
+                  <span class="quick-icon"
+                    ><svg><use href="#i-plus-wallet" /></svg></span
+                  ><span>チャージ</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="section-head">
+              <h2>お気に入り</h2>
+              <button class="text-link" data-action="all-services">
+                すべて見る ›
+              </button>
+            </div>
+            <div class="service-strip">
+              <button class="service-card" data-action="paypay-card">
+                <span class="service-icon"
+                  ><svg><use href="#i-card" /></svg></span
+                ><span>PayPayカード</span>
+              </button>
+              <button class="service-card" data-action="points">
+                <span class="service-icon"
+                  ><svg><use href="#i-gift" /></svg></span
+                ><span>ポイント運用</span>
+              </button>
+              <button class="service-card" data-action="investment">
+                <span class="service-icon"
+                  ><svg><use href="#i-chart" /></svg></span
+                ><span>資産運用</span>
+              </button>
+              <button class="service-card" data-action="bank">
+                <span class="service-icon"
+                  ><svg><use href="#i-building" /></svg></span
+                ><span>PayPay銀行</span>
+              </button>
+            </div>
+
+            <div
+              class="promo"
+              role="button"
+              tabindex="0"
+              data-action="campaign"
+            >
+              <div class="promo-copy">
+                <div class="promo-kicker">PAYPAY CAMPAIGN</div>
+                <div class="promo-title">
+                  おトクなキャンペーンを<br />チェックしよう！
+                </div>
+                <div class="promo-sub">特典・クーポンを確認する ›</div>
+              </div>
+              <div class="promo-art">
+                <span class="promo-star one">✦</span>
+                <div class="promo-coin">P</div>
+                <span class="promo-star two">✧</span>
+              </div>
+            </div>
+
+            <div class="section-head">
+              <h2>取引履歴</h2>
+              <button class="text-link" data-action="history">
+                すべて見る ›
+              </button>
+            </div>
+            <div class="history-card">
+              <div class="transaction">
+                <div class="merchant-icon cafe">珈</div>
+                <div class="tx-info">
+                  <div class="tx-name">カフェ・ド・クリエ</div>
+                  <div class="tx-date">今日 10:24 · PayPay残高</div>
+                </div>
+                <div>
+                  <div class="tx-amount">− ¥680</div>
+                  <div class="tx-status">支払い完了</div>
+                </div>
+              </div>
+              <div class="transaction">
+                <div class="merchant-icon store">7</div>
+                <div class="tx-info">
+                  <div class="tx-name">セブン-イレブン</div>
+                  <div class="tx-date">昨日 18:42 · PayPay残高</div>
+                </div>
+                <div>
+                  <div class="tx-amount">− ¥1,240</div>
+                  <div class="tx-status">支払い完了</div>
+                </div>
+              </div>
+              <div class="transaction">
+                <div class="merchant-icon market">M</div>
+                <div class="tx-info">
+                  <div class="tx-name">まいばすけっと</div>
+                  <div class="tx-date">10月29日 12:16 · PayPay残高</div>
+                </div>
+                <div>
+                  <div class="tx-amount">− ¥2,150</div>
+                  <div class="tx-status">支払い完了</div>
+                </div>
+              </div>
+            </div>
+            <div class="demo-note">
+              画面イメージ · UI DEMO · 実際の決済はできません
+            </div>
+          </section>
+
+          <section class="tab-page" id="page-deals">
+            <h2>おトク</h2>
+            <p>クーポンやキャンペーンをチェックできます。</p>
+            <div class="promo" data-action="campaign">
+              <div class="promo-copy">
+                <div class="promo-kicker">SPECIAL OFFER</div>
+                <div class="promo-title">PayPayのおトクな特典</div>
+                <div class="promo-sub">キャンペーン一覧を見る ›</div>
+              </div>
+              <div class="promo-art"><div class="promo-coin">P</div></div>
+            </div>
+            <div class="empty-state">
+              <div class="empty-icon">
+                <svg><use href="#i-gift" /></svg>
+              </div>
+              <strong>クーポン</strong>
+              <p>現在表示できるクーポンはありません（デモ画面）</p>
+            </div>
+          </section>
+          <section class="tab-page" id="page-wallet">
+            <h2>ウォレット</h2>
+            <p>残高・ポイント・利用可能額をまとめて確認。</p>
+            <div class="empty-state">
+              <div class="empty-icon">
+                <svg><use href="#i-wallet" /></svg>
+              </div>
+              <strong>PayPay残高　¥32,480</strong>
+              <p>ポイント 1,248 pt<br />利用可能額 ¥100,000</p>
+              <button class="modal-primary" data-action="wallet-detail">
+                ウォレット詳細を見る
+              </button>
+            </div>
+          </section>
+          <section class="tab-page" id="page-account">
+            <h2>アカウント</h2>
+            <p>プロフィールやアプリの設定を確認できます。</p>
+            <div class="history-card" style="margin-top: 18px">
+              <div class="transaction">
+                <div class="merchant-icon store">
+                  <svg
+                    style="
+                      width: 18px;
+                      height: 18px;
+                      stroke: currentColor;
+                      fill: none;
+                      stroke-width: 1.8;
+                    "
+                  >
+                    <use href="#i-user" />
+                  </svg>
+                </div>
+                <div class="tx-info">
+                  <div class="tx-name">プロフィール</div>
+                  <div class="tx-date">アカウント情報</div>
+                </div>
+                <b>›</b>
+              </div>
+              <div class="transaction">
+                <div class="merchant-icon market">
+                  <svg
+                    style="
+                      width: 18px;
+                      height: 18px;
+                      stroke: currentColor;
+                      fill: none;
+                      stroke-width: 1.8;
+                    "
+                  >
+                    <use href="#i-help" />
+                  </svg>
+                </div>
+                <div class="tx-info">
+                  <div class="tx-name">ヘルプ・お問い合わせ</div>
+                  <div class="tx-date">サポート</div>
+                </div>
+                <b>›</b>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <nav class="bottom-nav" aria-label="Navigasi utama">
+          <button class="nav-item active" data-tab="home">
+            <svg><use href="#i-home" /></svg><span>ホーム</span>
+          </button>
+          <button class="nav-item" data-tab="deals">
+            <svg><use href="#i-gift" /></svg><span>おトク</span>
+          </button>
+          <button class="nav-item nav-pay" data-action="pay">
+            <span class="pay-orb"
+              ><svg><use href="#i-scan" /></svg></span
+            ><span>支払う</span>
+          </button>
+          <button class="nav-item" data-tab="wallet">
+            <svg><use href="#i-wallet" /></svg><span>ウォレット</span>
+          </button>
+          <button class="nav-item" data-tab="account">
+            <svg><use href="#i-grid" /></svg><span>アカウント</span>
+          </button>
+        </nav>
+
+        <div class="toast" id="toast" role="status" aria-live="polite"></div>
+        <div
+          class="modal-backdrop"
+          id="modalBackdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modalTitle"
+        >
+          <div class="modal">
+            <div class="modal-top">
+              <div class="modal-title" id="modalTitle">PayPayで支払う</div>
+              <button class="close-modal" id="closeModal" aria-label="Tutup">
+                ×
+              </button>
+            </div>
+            <div id="modalBody"></div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      (() => {
+        const $ = (s, root = document) => root.querySelector(s);
+        const $$ = (s, root = document) => [...root.querySelectorAll(s)];
+        const toast = $("#toast");
+        const modal = $("#modalBackdrop");
+        const modalTitle = $("#modalTitle");
+        const modalBody = $("#modalBody");
+        let toastTimer;
+        let balanceVisible = true;
+        let walletMode = "balance";
+
+        function showToast(message) {
+          toast.textContent = message;
+          toast.classList.add("show");
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
+        }
+        function openModal(title, html) {
+          modalTitle.textContent = title;
+          modalBody.innerHTML = html;
+          modal.classList.add("open");
+        }
+        function closeModal() {
+          modal.classList.remove("open");
+        }
+        $("#closeModal").addEventListener("click", closeModal);
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) closeModal();
+        });
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") closeModal();
+        });
+
+        function switchWallet(mode) {
+          walletMode = mode;
+          $$(".wallet-tab").forEach((btn) => {
+            const active = btn.dataset.wallet === mode;
+            btn.classList.toggle("active", active);
+            btn.setAttribute("aria-selected", String(active));
+          });
+          $("#balanceLabel").textContent =
+            mode === "balance" ? "PayPay残高" : "PayPayクレジット";
+          $("#balanceValue").innerHTML =
+            mode === "balance"
+              ? '<span class="yen">¥</span>32,480'
+              : '<span class="yen">¥</span>100,000';
+          if (!balanceVisible)
+            $("#balanceValue").innerHTML = '<span class="yen">¥</span>••••••';
+        }
+        $$(".wallet-tab").forEach((btn) =>
+          btn.addEventListener("click", () => switchWallet(btn.dataset.wallet)),
+        );
+        $("#toggleBalance").addEventListener("click", () => {
+          balanceVisible = !balanceVisible;
+          const icon = balanceVisible ? "#i-eye" : "#i-eye-off";
+          $("#toggleBalance svg use").setAttribute("href", icon);
+          $("#toggleBalance").setAttribute(
+            "aria-label",
+            balanceVisible ? "Sembunyikan saldo" : "Tampilkan saldo",
+          );
+          const amount = walletMode === "balance" ? "32,480" : "100,000";
+          $("#balanceValue").innerHTML =
+            `<span class="yen">¥</span>${balanceVisible ? amount : "••••••"}`;
+        });
+
+        function qrSvg() {
+          // Decorative QR-like matrix for the UI preview only; it is not a valid payment code.
+          const size = 21;
+          let cells = "";
+          const inFinder = (x, y, ox, oy) =>
+            x >= ox && x < ox + 7 && y >= oy && y < oy + 7;
+          const finderOn = (x, y, ox, oy) => {
+            const dx = x - ox,
+              dy = y - oy;
+            return (
+              dx === 0 ||
+              dx === 6 ||
+              dy === 0 ||
+              dy === 6 ||
+              (dx >= 2 && dx <= 4 && dy >= 2 && dy <= 4)
+            );
+          };
+          for (let y = 0; y < size; y++)
+            for (let x = 0; x < size; x++) {
+              let on;
+              if (inFinder(x, y, 0, 0)) on = finderOn(x, y, 0, 0);
+              else if (inFinder(x, y, 14, 0)) on = finderOn(x, y, 14, 0);
+              else if (inFinder(x, y, 0, 14)) on = finderOn(x, y, 0, 14);
+              else on = (x * 7 + y * 11 + x * y * 3) % 9 < 4;
+              if (on) cells += `<rect x="${x}" y="${y}" width="1" height="1"/>`;
+            }
+          return `<svg viewBox="-1 -1 23 23" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="QR demo"><rect x="-1" y="-1" width="23" height="23" fill="white"/><g fill="#17191d">${cells}</g></svg>`;
+        }
+        function paymentModal() {
+          openModal(
+            "PayPayで支払う",
+            `<div class="pay-preview"><div class="demo-label">DEMO PAYMENT CODE</div><div class="fake-qr">${qrSvg()}</div><div style="font-size:11px;font-weight:800">PayPay残高　¥32,480</div><div class="barcode"></div><div class="modal-caption">これは画面デザイン確認用のダミーコードです。<br>実際の店舗・決済では使用できません。</div></div><button class="modal-primary" id="modalDone">閉じる</button>`,
+          );
+          $("#modalDone").addEventListener("click", closeModal);
+        }
+        function actionModal(action) {
+          const content = {
+            scan: [
+              "スキャン支払い",
+              "カメラや店舗QRコードの読み取りは、このUIデモでは利用できません。",
+            ],
+            send: [
+              "送る・受け取る",
+              "送金先の選択や受け取りリンクの作成を表示する想定の画面です。",
+            ],
+            charge: [
+              "チャージ",
+              "銀行口座やATMからのチャージ機能を想定したデモ画面です。",
+            ],
+            notifications: ["お知らせ", "新しいお知らせはありません。"],
+            profile: [
+              "アカウント",
+              "プロフィールとアカウント設定のデモ画面です。",
+            ],
+            wallet: [
+              "ウォレット詳細",
+              "PayPay残高　¥32,480<br>PayPayポイント　1,248 pt<br>クレジット利用可能額　¥100,000",
+            ],
+            "wallet-detail": [
+              "ウォレット詳細",
+              "残高とポイントの詳細を確認する画面です。すべてサンプルデータです。",
+            ],
+            "all-services": [
+              "すべての機能",
+              "支払い、送金、チャージ、カード、ポイント、資産運用、銀行サービスなどの機能一覧です。",
+            ],
+            history: [
+              "取引履歴",
+              "表示中の取引履歴は、レイアウト確認用のサンプルデータです。",
+            ],
+            "paypay-card": [
+              "PayPayカード",
+              "カード情報と利用可能額を表示するデモ画面です。",
+            ],
+            points: [
+              "ポイント運用",
+              "ポイント残高や運用状況を表示するデモ画面です。",
+            ],
+            investment: [
+              "資産運用",
+              "資産運用サービスへの導線を想定したデモ画面です。",
+            ],
+            bank: [
+              "PayPay銀行",
+              "銀行サービスへの導線を想定したデモ画面です。",
+            ],
+            campaign: [
+              "キャンペーン",
+              "開催中のキャンペーンやクーポンを表示するデモ画面です。",
+            ],
+          };
+          const [title, description] = content[action] || [
+            "PayPay",
+            "この機能はUIデモのみです。",
+          ];
+          openModal(
+            title,
+            `<p class="action-detail">${description}</p><button class="modal-primary" id="modalDone">閉じる</button>`,
+          );
+          $("#modalDone").addEventListener("click", closeModal);
+        }
+        function switchTab(tab) {
+          const home = tab === "home";
+          $("#homeHeader").style.display = home ? "" : "none";
+          $("#homeContent").style.display = home ? "" : "none";
+          $$(".tab-page").forEach((page) =>
+            page.classList.toggle("active", page.id === `page-${tab}`),
+          );
+          $$(".nav-item[data-tab]").forEach((btn) =>
+            btn.classList.toggle("active", btn.dataset.tab === tab),
+          );
+          $("#appScroll").scrollTo({ top: 0, behavior: "smooth" });
+        }
+        $$(".nav-item[data-tab]").forEach((btn) =>
+          btn.addEventListener("click", () => switchTab(btn.dataset.tab)),
+        );
+        document.addEventListener("click", (e) => {
+          const target = e.target.closest("[data-action]");
+          if (!target) return;
+          const action = target.dataset.action;
+          if (action === "pay") paymentModal();
+          else actionModal(action);
+        });
+        // Touch swipe on the wallet surface switches between Balance and Credit, like the app's card interaction.
+        const wallet = $(".wallet-card");
+        let touchX = null;
+        wallet.addEventListener(
+          "touchstart",
+          (e) => {
+            touchX = e.changedTouches[0].clientX;
+          },
+          { passive: true },
+        );
+        wallet.addEventListener(
+          "touchend",
+          (e) => {
+            if (touchX === null) return;
+            const dx = e.changedTouches[0].clientX - touchX;
+            if (Math.abs(dx) > 55) switchWallet(dx < 0 ? "credit" : "balance");
+            touchX = null;
+          },
+          { passive: true },
+        );
+      })();
+    </script>
+  </body>
+</html>

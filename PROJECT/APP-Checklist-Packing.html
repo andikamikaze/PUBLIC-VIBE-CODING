@@ -1,0 +1,1729 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aplikasi Checklist Packing</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231c1917' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M8 9V7a4 4 0 0 1 8 0v2'/><rect x='4' y='9' width='16' height='13' rx='3'/><rect x='8.5' y='14' width='7' height='4.5' rx='1.5'/></svg>"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      :root {
+        --bg: #fafaf9;
+        --surface: #ffffff;
+        --border: #e7e5e4;
+        --border-strong: #d6d3d1;
+        --text: #1c1917;
+        --muted: #79716b;
+        --faint: #a8a29e;
+        --ink: #1c1917;
+        --ink-hover: #292524;
+        --success: #15803d;
+        --success-soft: #f0fdf4;
+        --danger: #b91c1c;
+        --danger-soft: #fef2f2;
+        --r: 12px;
+        --r-sm: 8px;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          "Helvetica Neue",
+          Arial,
+          sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        font-size: 15px;
+        line-height: 1.55;
+        min-height: 100vh;
+      }
+      .wrap {
+        max-width: 880px;
+        margin: 0 auto;
+        padding: 36px 20px 80px;
+      }
+
+      /* ---------- header ---------- */
+      .header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 8px;
+      }
+      .logo {
+        width: 46px;
+        height: 46px;
+        border-radius: 13px;
+        background: var(--ink);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+      }
+      h1 {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+      }
+      .tagline {
+        color: var(--muted);
+        font-size: 14px;
+        margin: 4px 0 30px;
+      }
+
+      /* ---------- cards ---------- */
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        padding: 20px;
+        margin-bottom: 18px;
+      }
+      .card-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12.5px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--muted);
+        margin-bottom: 14px;
+      }
+      .card-title svg {
+        flex: none;
+      }
+
+      /* ---------- buttons ---------- */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border: 1px solid var(--border-strong);
+        background: var(--surface);
+        color: var(--text);
+        padding: 9px 14px;
+        border-radius: var(--r-sm);
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        font-family: inherit;
+        transition:
+          background 0.15s ease,
+          border-color 0.15s ease;
+        color: var(--text);
+      }
+      .btn:hover {
+        background: #f5f5f4;
+      }
+      .btn:active {
+        transform: translateY(1px);
+      }
+      .btn-dark {
+        background: var(--ink);
+        border-color: var(--ink);
+        color: #fff;
+      }
+      .btn-dark:hover {
+        background: var(--ink-hover);
+      }
+      .btn-danger {
+        color: var(--danger);
+        border-color: #fca5a5;
+      }
+      .btn-danger:hover {
+        background: var(--danger-soft);
+      }
+      .btn svg {
+        flex: none;
+      }
+
+      /* ---------- inputs ---------- */
+      input[type="text"],
+      input[type="number"],
+      select {
+        border: 1px solid var(--border-strong);
+        background: var(--surface);
+        border-radius: var(--r-sm);
+        padding: 9px 11px;
+        font: inherit;
+        color: var(--text);
+        outline: none;
+        min-width: 0;
+      }
+      input:focus,
+      select:focus {
+        border-color: var(--text);
+      }
+      input::placeholder {
+        color: var(--faint);
+      }
+      select {
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        padding-right: 30px;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="%2379706b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>');
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+      }
+      .trip-input {
+        width: 100%;
+        font-size: 16px;
+        font-weight: 500;
+        padding: 12px 14px;
+        border-radius: 10px;
+      }
+
+      /* ---------- template cards ---------- */
+      .tpl-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+        gap: 12px;
+      }
+      .tpl {
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 16px;
+        cursor: pointer;
+        text-align: left;
+        font-family: inherit;
+        color: var(--text);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        transition: border-color 0.15s ease;
+      }
+      .tpl:hover {
+        border-color: var(--ink);
+      }
+      .tpl.active {
+        border-color: var(--ink);
+        box-shadow: 0 0 0 1px var(--ink);
+      }
+      .tpl-ico {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: #f5f5f4;
+        color: #44403c;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+      }
+      .tpl-name {
+        font-weight: 600;
+        font-size: 15px;
+      }
+      .tpl-meta {
+        font-size: 12.5px;
+        color: var(--muted);
+      }
+
+      /* ---------- progress ---------- */
+      .progress-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 9px;
+      }
+      .progress-label {
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .progress-num {
+        color: var(--muted);
+        font-size: 13.5px;
+      }
+      .progress-done {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        color: var(--success);
+        font-weight: 600;
+      }
+      .bar {
+        height: 8px;
+        border-radius: 99px;
+        background: #eae8e6;
+        overflow: hidden;
+      }
+      .bar-fill {
+        height: 100%;
+        background: var(--success);
+        border-radius: 99px;
+        width: 0;
+        transition: width 0.35s ease;
+      }
+
+      /* ---------- filter tabs & pill ---------- */
+      .tabs {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin: 14px 0 12px;
+      }
+      .tab {
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: 99px;
+        padding: 6px 13px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--muted);
+        cursor: pointer;
+        font-family: inherit;
+        transition:
+          background 0.15s,
+          border-color 0.15s;
+      }
+      .tab:hover {
+        border-color: var(--border-strong);
+        color: var(--text);
+      }
+      .tab.active {
+        background: var(--ink);
+        border-color: var(--ink);
+        color: #fff;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        border: 1px solid var(--border);
+        border-radius: 99px;
+        padding: 5px 8px 5px 12px;
+        background: #f5f5f4;
+        font-size: 13px;
+        margin-bottom: 12px;
+      }
+      .pill svg {
+        color: var(--muted);
+      }
+
+      /* ---------- daftar barang ---------- */
+      .cat {
+        margin-bottom: 14px;
+      }
+      .cat:last-child {
+        margin-bottom: 0;
+      }
+      .cat-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 4px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .cat-head svg {
+        color: var(--muted);
+        flex: none;
+      }
+      .cat-count {
+        margin-left: auto;
+        color: var(--faint);
+        font-weight: 500;
+      }
+      .items {
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        background: var(--surface);
+        overflow: hidden;
+      }
+      .item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      .item:last-child {
+        border-bottom: none;
+      }
+      .chk {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 1.5px solid var(--border-strong);
+        background: var(--surface);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        flex: none;
+        color: #fff;
+        padding: 0;
+        transition:
+          background 0.15s,
+          border-color 0.15s;
+      }
+      .chk:hover {
+        border-color: var(--success);
+      }
+      .chk.on {
+        background: var(--success);
+        border-color: var(--success);
+      }
+      .chk svg {
+        opacity: 0;
+        transform: scale(0.4);
+        transition:
+          opacity 0.15s,
+          transform 0.15s;
+      }
+      .chk.on svg {
+        opacity: 1;
+        transform: scale(1);
+      }
+      .item-name {
+        flex: 1;
+        min-width: 140px;
+        font-weight: 500;
+        overflow-wrap: anywhere;
+      }
+      .item.done .item-name {
+        color: var(--muted);
+        text-decoration: line-through;
+      }
+      .qty {
+        display: inline-block;
+        margin-left: 6px;
+        color: var(--faint);
+        font-weight: 400;
+        font-size: 13px;
+      }
+      .assign {
+        max-width: 175px;
+        font-size: 13px;
+        padding: 6px 28px 6px 9px;
+        color: var(--muted);
+      }
+      .item-del {
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: none;
+        color: var(--faint);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        flex: none;
+        padding: 0;
+      }
+      .item-del:hover {
+        background: var(--danger-soft);
+        color: var(--danger);
+      }
+
+      /* ---------- tambah item ---------- */
+      .add-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px dashed var(--border-strong);
+      }
+      .add-form input[name="name"] {
+        flex: 1 1 210px;
+      }
+      .add-form input[name="qty"] {
+        width: 74px;
+        flex: none;
+      }
+      .add-form input[name="cat"] {
+        flex: 1 1 150px;
+      }
+      .add-form select {
+        flex: 1 1 170px;
+      }
+
+      /* ---------- anggota ---------- */
+      .member-form {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .member-form input {
+        flex: 1;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--border);
+        border-radius: 99px;
+        padding: 6px 8px 6px 13px;
+        background: var(--surface);
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 13.5px;
+        color: var(--text);
+        transition: border-color 0.15s;
+      }
+      .chip:hover {
+        border-color: var(--ink);
+      }
+      .chip.active {
+        border-color: var(--ink);
+        background: var(--ink);
+        color: #fff;
+      }
+      .chip.active .chip-meta {
+        color: #d6d3d1;
+      }
+      .chip-meta {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .chip-x {
+        width: 20px;
+        height: 20px;
+        border: none;
+        background: none;
+        color: var(--faint);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        cursor: pointer;
+        padding: 0;
+      }
+      .chip-x:hover {
+        background: rgba(0, 0, 0, 0.07);
+        color: var(--danger);
+      }
+      .chip.active .chip-x:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+      }
+      .hint {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 10px;
+      }
+
+      /* ---------- empty state ---------- */
+      .empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 42px 20px;
+        text-align: center;
+        color: var(--muted);
+        border: 1px dashed var(--border-strong);
+        border-radius: var(--r);
+      }
+      .empty svg {
+        color: var(--border-strong);
+        margin-bottom: 6px;
+      }
+      .empty strong {
+        color: var(--text);
+        font-weight: 600;
+        font-size: 15px;
+      }
+
+      /* ---------- aksi reset ---------- */
+      .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .footnote {
+        margin-top: 24px;
+        text-align: center;
+        color: var(--faint);
+        font-size: 13px;
+      }
+
+      /* ---------- modal ---------- */
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(28, 25, 23, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        z-index: 50;
+      }
+      .overlay.open {
+        display: flex;
+      }
+      .modal {
+        background: var(--surface);
+        border-radius: 14px;
+        max-width: 410px;
+        width: 100%;
+        padding: 24px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.14);
+      }
+      .modal h3 {
+        font-size: 17px;
+        margin-bottom: 8px;
+        letter-spacing: -0.01em;
+      }
+      .modal p {
+        color: var(--muted);
+        font-size: 14px;
+        margin-bottom: 18px;
+      }
+      .modal-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+      }
+
+      /* ---------- toast ---------- */
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 26px;
+        transform: translate(-50%, 12px);
+        background: var(--ink);
+        color: #fff;
+        padding: 10px 18px;
+        border-radius: 99px;
+        font-size: 13.5px;
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity 0.25s,
+          transform 0.25s;
+        z-index: 60;
+        max-width: min(90vw, 480px);
+        text-align: center;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+
+      /* ---------- responsif ---------- */
+      @media (max-width: 560px) {
+        .wrap {
+          padding-top: 26px;
+        }
+        .header {
+          gap: 12px;
+        }
+        .logo {
+          width: 40px;
+          height: 40px;
+          border-radius: 11px;
+        }
+        h1 {
+          font-size: 19px;
+        }
+        .card {
+          padding: 16px;
+        }
+        .item {
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+        .assign {
+          order: 5;
+          flex: 1 1 100%;
+          max-width: none;
+          margin: -2px 0 0 34px;
+        }
+        .item-name {
+          min-width: 100px;
+        }
+        .add-form .btn {
+          flex: 1 1 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="header">
+        <div class="logo" aria-hidden="true">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M8 9V7a4 4 0 0 1 8 0v2" />
+            <path
+              d="M4 9h16a1 1 0 0 1 1 1v9a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-9a1 1 0 0 1 1-1z"
+            />
+            <rect x="8.5" y="13.5" width="7" height="4.5" rx="1.5" />
+          </svg>
+        </div>
+        <div>
+          <h1>Checklist Packing</h1>
+        </div>
+      </header>
+      <p class="tagline">
+        Rencanakan barang bawaan, bagi tugas antar anggota, dan berangkat dengan
+        tenang.
+      </p>
+
+      <!-- ===== 1. Template & nama perjalanan ===== -->
+      <section class="card">
+        <div class="card-title">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z" />
+            <path d="M9 4v14" />
+            <path d="M15 6v14" />
+          </svg>
+          Rencana Perjalanan
+        </div>
+        <input
+          type="text"
+          id="tripName"
+          class="trip-input"
+          placeholder="Contoh: Liburan Bali — Desember 2026"
+          maxlength="60"
+        />
+        <div class="tpl-grid" id="tplGrid" style="margin-top: 14px"></div>
+      </section>
+
+      <!-- ===== 2. Progres ===== -->
+      <section class="card">
+        <div class="card-title">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M18 20V10" />
+            <path d="M12 20V4" />
+            <path d="M6 20v-6" />
+          </svg>
+          Progres Packing
+        </div>
+        <div class="progress-top">
+          <span class="progress-label" id="progLabel">Belum ada barang</span>
+          <span class="progress-num"
+            ><span class="progress-done" id="progDone">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span id="progDoneTxt">0 / 0</span></span
+            >
+            sudah masuk koper</span
+          >
+        </div>
+        <div class="bar"><div class="bar-fill" id="barFill"></div></div>
+      </section>
+
+      <!-- ===== 3. Daftar barang ===== -->
+      <section class="card">
+        <div class="card-title">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M8 6h13" />
+            <path d="M8 12h13" />
+            <path d="M8 18h13" />
+            <path d="M3 6h.01" />
+            <path d="M3 12h.01" />
+            <path d="M3 18h.01" />
+          </svg>
+          Daftar Barang
+        </div>
+        <div class="tabs" id="tabs" role="tablist">
+          <button class="tab active" data-filter="all">Semua</button>
+          <button class="tab" data-filter="todo">Belum dibawa</button>
+          <button class="tab" data-filter="done">Sudah dibawa</button>
+        </div>
+        <div id="listWrap"></div>
+
+        <!-- form tambah item kustom -->
+        <form class="add-form" id="addForm">
+          <input
+            type="text"
+            name="name"
+            placeholder="Nama barang kustom"
+            maxlength="60"
+            required
+          />
+          <input
+            type="number"
+            name="qty"
+            placeholder="Jml"
+            min="1"
+            max="99"
+            value="1"
+            title="Jumlah"
+          />
+          <input
+            type="text"
+            name="cat"
+            placeholder="Kategori"
+            maxlength="24"
+            list="catList"
+            title="Kategori barang"
+          />
+          <datalist id="catList"></datalist>
+          <select name="assign" title="Tugaskan ke anggota">
+            <option value="">— Tanpa penanggung jawab —</option>
+          </select>
+          <button type="submit" class="btn btn-dark">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Tambah Barang
+          </button>
+        </form>
+      </section>
+
+      <!-- ===== 4. Anggota rombongan ===== -->
+      <section class="card">
+        <div class="card-title">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+          Anggota Rombongan
+        </div>
+        <form class="member-form" id="memberForm">
+          <input
+            type="text"
+            name="member"
+            placeholder="Nama anggota, contoh: Ayah"
+            maxlength="30"
+            required
+          />
+          <button type="submit" class="btn">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <line x1="19" y1="8" x2="19" y2="14" />
+              <line x1="22" y1="11" x2="16" y2="11" />
+            </svg>
+            Tambah Anggota
+          </button>
+        </form>
+        <div class="chips" id="chips"></div>
+        <p class="hint">
+          Klik nama anggota untuk melihat barang yang menjadi tanggung jawabnya.
+          Tambahkan anggota sebelum menugaskan barang.
+        </p>
+      </section>
+
+      <!-- ===== 5. Reset ===== -->
+      <section class="card">
+        <div class="card-title">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+            <path d="M3 3v5h5" />
+          </svg>
+          Siapkan Perjalanan Berikutnya
+        </div>
+        <div class="actions">
+          <button class="btn" id="btnUncheck">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+              <path d="M3 3v5h5" />
+              <path d="M9 12l2 2 4-4" />
+            </svg>
+            Reset Centangan Saja
+          </button>
+          <button class="btn btn-danger" id="btnNewTrip">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="3 6 5 6 21 6" />
+              <path
+                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+              />
+            </svg>
+            Reset Total (Perjalanan Baru)
+          </button>
+        </div>
+        <p class="hint">
+          <b>Reset Centangan</b> mengosongkan semua tanda centang tetapi daftar
+          barang, anggota, dan penugasan tetap tersimpan — cocok dipakai
+          berulang untuk perjalanan serupa. <b>Reset Total</b> menghapus
+          semuanya dan mengembalikan aplikasi ke kondisi awal.
+        </p>
+      </section>
+
+      <p class="footnote">
+        Semua data tersimpan otomatis di browser ini (localStorage) — tanpa
+        akun, tanpa internet.
+      </p>
+    </div>
+
+    <!-- ===== modal konfirmasi reset total ===== -->
+    <div
+      class="overlay"
+      id="overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="mTitle"
+    >
+      <div class="modal">
+        <h3 id="mTitle">Mulai perjalanan baru?</h3>
+        <p id="mText">
+          Seluruh daftar barang, anggota, penugasan, dan centangan akan dihapus
+          permanen dari browser ini. Tindakan ini tidak bisa dibatalkan.
+        </p>
+        <div class="modal-actions">
+          <button class="btn" id="mCancel">Batal</button>
+          <button class="btn btn-danger" id="mConfirm">Ya, hapus semua</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script>
+      "use strict";
+
+      /* ================= DATA TEMPLATE ================= */
+      var TEMPLATES = {
+        pantai: {
+          name: "Pantai",
+          icon: "beach",
+          desc: "3 hari 2 malam",
+          items: [
+            ["Pakaian", "Baju santai", 4],
+            ["Pakaian", "Pakaian dalam", 4],
+            ["Pakaian", "Kaos kaki", 3],
+            ["Pakaian", "Baju renang", 1],
+            ["Pakaian", "Sandal jepit", 1],
+            ["Pakaian", "Peci/topi pantai", 1],
+            ["Perlengkapan", "Sunscreen SPF 30+", 1],
+            ["Perlengkapan", "Kacamata hitam", 1],
+            ["Perlengkapan", "Handuk pantai", 1],
+            ["Perlengkapan", "Kantong plastik (baju basah)", 5],
+            ["Perlengkapan", "Payung lipat", 1],
+            ["Perlengkapan", "Matras/tikar pantai", 1],
+            ["Perlengkapan", "Buku/hiburan", 1],
+            ["Kesehatan", "Obat pribadi", 1],
+            ["Kesehatan", "Minyak angin/balsem", 1],
+            ["Kesehatan", "Masker & hand sanitizer", 1],
+            ["Dokumen", "KTP/SIM", 1],
+            ["Dokumen", "Uang tunai & kartu", 1],
+            ["Dokumen", "Tiket/voucher booking", 1],
+            ["Elektronik", "HP & charger", 1],
+            ["Elektronik", "Power bank", 1],
+            ["Elektronik", "Kamera underwater/HP waterproof case", 1],
+            ["Snorkeling", "Masker snorkel", 1],
+            ["Snorkeling", "Fin/sirip", 1],
+          ],
+        },
+        gunung: {
+          name: "Gunung",
+          icon: "mountain",
+          desc: "pendakian 2 hari 1 malam",
+          items: [
+            ["Pakaian", "Jaket gunung/softshell", 1],
+            ["Pakaian", "Baju lapangan (quick dry)", 2],
+            ["Pakaian", "Celana pendakian", 1],
+            ["Pakaian", "Pakaian dalam", 3],
+            ["Pakaian", "Kaos kaki tebal", 3],
+            ["Pakaian", "Baju tidur/thermo", 1],
+            ["Pakaian", "Sarung tangan & buff", 1],
+            ["Pakaian", "Sepatu gunung", 1],
+            ["Pakaian", "Raincoat/ jas hujan", 1],
+            ["Pakaian", "Headlamp + baterai cadangan", 1],
+            ["Perlengkapan", "Carrier 30–40L", 1],
+            ["Perlengkapan", "Tenda + flysheet", 1],
+            ["Perlengkapan", "Sleeping bag", 1],
+            ["Perlengkapan", "Matras/guling lipat", 1],
+            ["Perlengkapan", "Kompor portable + gas", 1],
+            ["Perlengkapan", "Nesting & cutlery", 1],
+            ["Perlengkapan", "Korek api anti angin", 1],
+            ["Perlengkapan", "Botol minum 1L", 1],
+            ["Perlengkapan", "Pluit", 1],
+            ["Logistik", "Air minum 2L", 1],
+            ["Logistik", "Makanan instan", 5],
+            ["Logistik", "Snack/cokelat", 5],
+            ["Kesehatan", "P3K pribadi", 1],
+            ["Kesehatan", "Obat sakit kepala & diare", 1],
+            ["Kesehatan", "Salep nyeri otot", 1],
+            ["Dokumen", "KTP", 1],
+            ["Dokumen", "Izin pendakian/tiket", 1],
+            ["Dokumen", "Uang tunai", 1],
+            ["Elektronik", "HP & power bank", 1],
+          ],
+        },
+        dinas: {
+          name: "Dinas",
+          icon: "briefcase",
+          desc: "perjalanan bisnis 3 hari",
+          items: [
+            ["Pakaian", "Kemeja resmi", 3],
+            ["Pakaian", "Celana bahan/rok", 2],
+            ["Pakaian", "Jas/blazer", 1],
+            ["Pakaian", "Pakaian dalam", 4],
+            ["Pakaian", "Kaos kaki formal", 3],
+            ["Pakaian", "Sepatu formal", 1],
+            ["Pakaian", "Dasi/syal", 1],
+            ["Pakaian", "Sabuk", 1],
+            ["Perlengkapan", 'Koper kabin 20"', 1],
+            ["Perlengkapan", "Toiletries lengkap", 1],
+            ["Perlengkapan", "Dompet & kartu nama", 1],
+            ["Perlengkapan", "Payung lipat", 1],
+            ["Perlengkapan", "Plastik laundry", 3],
+            ["Kesehatan", "Obat pribadi", 1],
+            ["Kesehatan", "Masker & hand sanitizer", 1],
+            ["Dokumen", "KTP & kartu pegawai", 1],
+            ["Dokumen", "Tiket pesawat/KRL", 1],
+            ["Dokumen", "Buku nota/SPPD", 1],
+            ["Dokumen", "Surat tugas/undangan rapat", 1],
+            ["Dokumen", "Uang tunai", 1],
+            ["Elektronik", "Laptop & charger", 1],
+            ["Elektronik", "HP & charger", 1],
+            ["Elektronik", "Power bank", 1],
+            ["Elektronik", "Flashdisk/harddisk", 1],
+            ["Elektronik", "Kabel HDMI/presenter", 1],
+            ["Pekerjaan", "Dokumen kerja cetak", 1],
+            ["Pekerjaan", "Pulpen & buku catatan", 1],
+          ],
+        },
+        umrah: {
+          name: "Umrah",
+          icon: "kaaba",
+          desc: "9–12 hari",
+          items: [
+            ["Pakaian", "Ihram pria (2 lembar)", 2],
+            ["Pakaian", "Mukena/gamis wanita", 3],
+            ["Pakaian", "Baju kurta/thobe", 3],
+            ["Pakaian", "Pakaian dalam", 10],
+            ["Pakaian", "Kaos kaki", 7],
+            ["Pakaian", "Sandal", 1],
+            ["Pakaian", "Hijab/kerudung cadangan", 4],
+            ["Pakaian", "Peci", 1],
+            ["Pakaian", "Syal penutup (bekas cukur)", 1],
+            ["Perlengkapan", 'Koper besar 26–30"', 1],
+            ["Perlengkapan", "Tas sandal jepit jamaah", 1],
+            ["Perlengkapan", "Sabuk kulit jamaah", 1],
+            ["Perlengkapan", "Tas plastik hitam & label nama", 2],
+            ["Perlengkapan", "Gantungan koper/aksesoris penanda", 1],
+            ["Perlengkapan", "Tisu basah & kering", 2],
+            ["Perlengkapan", "Sikat & pasta gigi", 1],
+            ["Perlengkapan", "Sabun & sampo (travel size)", 1],
+            ["Perlengkapan", "Gunting kuku (bagasi)", 1],
+            ["Ibadah", "Al-Quran saku/mushaf kecil", 1],
+            ["Ibadah", "Buku doa & manasik", 1],
+            ["Ibadah", "Sajadah lipat", 1],
+            ["Ibadah", "Tasbih", 1],
+            ["Ibadah", "Air zamzam kontainer (untuk pulang)", 1],
+            ["Kesehatan", "Obat pribadi rutin", 1],
+            ["Kesehatan", "Vitamin & madu", 1],
+            ["Kesehatan", "Masker", 1],
+            ["Kesehatan", "Minyak zaitun/minyak angin", 1],
+            ["Kesehatan", "Salep/balsem", 1],
+            ["Dokumen", "Paspor (masa berlaku 6+ bulan)", 1],
+            ["Dokumen", "Visa Umrah", 1],
+            ["Dokumen", "Kartu vaksin meningitis", 1],
+            ["Dokumen", "Pas foto 4×6 & 3×4", 8],
+            ["Dokumen", "Surat keterangan sehat", 1],
+            ["Dokumen", "Buku manasik & jadwal", 1],
+            ["Dokumen", "Uang riyal & dollar", 1],
+            ["Dokumen", "Kartu ATM/debit berlogo", 1],
+            ["Elektronik", "HP & charger", 1],
+            ["Elektronik", "Adaptor plug internasional", 1],
+            ["Elektronik", "Power bank", 1],
+            ["Elektronik", "Earphone", 1],
+          ],
+        },
+      };
+
+      var ICONS = {
+        beach:
+          '<path d="M17 10c.7-2.5 2-4 3-5M12.6 8.5C11 5.7 8.5 4 5 4c0 6 3 9 9 10.5M5 20h16M6.5 15.5c-1 1.5-1.5 3-1.5 4.5"/>',
+        mountain:
+          '<path d="m3 20 6.5-11L13 15l2.5-4L21 20z"/><path d="m8 8 1.5-2.5L11 8"/>',
+        briefcase:
+          '<rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/>',
+        kaaba:
+          '<path d="M12 2 4 6v12l8 4 8-4V6z"/><path d="M12 22V10M4 6l8 4 8-4"/>',
+        clothes:
+          '<path d="M8 3l4 2 4-2 5 3-2.5 3.5L16 8v13H8V8l-2.5 1.5L3 6z"/>',
+        gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/>',
+        health:
+          '<path d="M12 21s-7-4.6-9.5-9C.7 8.6 2.6 5 6 5c2 0 3.4 1 4 2.2h4c.6-1.2 2-2.2 4-2.2 3.4 0 5.3 3.6 3.5 7-2.5 4.4-9.5 9-9.5 9z"/>',
+        docs: '<path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h6M9 13h6M9 17h6"/>',
+        plug: '<path d="M9 2v6M15 2v6M6 8h12v3a6 6 0 0 1-12 0zM12 17v5"/>',
+        food: '<path d="M4 3v7a2 2 0 0 0 2 2v9M8 3v7M14 3v7a2 2 0 0 0 2 2v9M14 3c2 0 4 1 4 4s-2 3-4 3"/>',
+        custom: '<circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/>',
+      };
+      var CAT_ICON = {
+        Pakaian: "clothes",
+        Perlengkapan: "gear",
+        Kesehatan: "health",
+        Dokumen: "docs",
+        Elektronik: "plug",
+        Logistik: "food",
+        Ibadah: "kaaba",
+        Snorkeling: "beach",
+        Pekerjaan: "briefcase",
+      };
+
+      /* ================= STATE ================= */
+      var LS_KEY = "checklistPacking.v1";
+      var state = {
+        tripName: "",
+        tpl: null,
+        items: [],
+        members: [],
+        filter: "all",
+        focusMember: null,
+      };
+      try {
+        var saved = JSON.parse(localStorage.getItem(LS_KEY) || "null");
+        if (saved && typeof saved === "object")
+          state = Object.assign(state, saved);
+      } catch (e) {}
+      state.filter = "all";
+      state.focusMember = null; // filter selalu reset saat load
+
+      function save() {
+        try {
+          localStorage.setItem(
+            LS_KEY,
+            JSON.stringify({
+              tripName: state.tripName,
+              tpl: state.tpl,
+              items: state.items,
+              members: state.members,
+            }),
+          );
+        } catch (e) {}
+      }
+
+      /* ================= HELPERS ================= */
+      function $(s) {
+        return document.querySelector(s);
+      }
+      function esc(s) {
+        return String(s).replace(/[&<>"']/g, function (c) {
+          return {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          }[c];
+        });
+      }
+      function icon(name, size) {
+        return (
+          '<svg width="' +
+          (size || 15) +
+          '" height="' +
+          (size || 15) +
+          '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+          (ICONS[name] || ICONS.custom) +
+          "</svg>"
+        );
+      }
+      function uid() {
+        return (
+          "i" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
+        );
+      }
+
+      var toastTimer = null;
+      function toast(msg) {
+        var t = $("#toast");
+        t.textContent = msg;
+        t.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () {
+          t.classList.remove("show");
+        }, 2200);
+      }
+
+      function stats() {
+        var total = state.items.length,
+          done = state.items.filter(function (i) {
+            return i.done;
+          }).length;
+        return {
+          total: total,
+          done: done,
+          pct: total ? Math.round((done / total) * 100) : 0,
+        };
+      }
+      /* ================= RENDER: TEMPLATE CARDS ================= */
+      function renderTemplates() {
+        var g = $("#tplGrid");
+        g.innerHTML = "";
+        Object.keys(TEMPLATES).forEach(function (key) {
+          var t = TEMPLATES[key];
+          var b = document.createElement("button");
+          b.type = "button";
+          b.className = "tpl" + (state.tpl === key ? " active" : "");
+          b.innerHTML =
+            '<span class="tpl-ico">' +
+            icon(t.icon, 20) +
+            "</span>" +
+            '<span class="tpl-name">' +
+            esc(t.name) +
+            "</span>" +
+            '<span class="tpl-meta">' +
+            t.items.length +
+            " barang · " +
+            esc(t.desc) +
+            "</span>";
+          b.addEventListener("click", function () {
+            applyTemplate(key);
+          });
+          g.appendChild(b);
+        });
+      }
+
+      function applyTemplate(key) {
+        if (state.items.length) {
+          if (
+            !confirm(
+              'Muat template "' +
+                TEMPLATES[key].name +
+                '"?\n\nDaftar barang saat ini akan diganti dengan isi template (item kustom yang sudah ada akan hilang). Anggota rombongan tetap tersimpan.',
+            )
+          )
+            return;
+        }
+        state.tpl = key;
+        // row[0]=kategori, row[1]=nama barang, row[2]=jumlah
+        state.items = TEMPLATES[key].items.map(function (row) {
+          return {
+            id: uid(),
+            name: row[1],
+            cat: row[0],
+            qty: row[2] || 1,
+            done: false,
+            assign: null,
+          };
+        });
+        save();
+        renderAll();
+        toast(
+          'Template "' +
+            TEMPLATES[key].name +
+            '" dimuat (' +
+            state.items.length +
+            " barang)",
+        );
+      }
+
+      /* ================= RENDER: LIST BARANG ================= */
+      function catOrder() {
+        var seen = [];
+        state.items.forEach(function (i) {
+          if (i.cat && seen.indexOf(i.cat) < 0) seen.push(i.cat);
+        });
+        return seen;
+      }
+
+      function renderList() {
+        var wrap = $("#listWrap");
+        wrap.innerHTML = "";
+        if (!state.items.length) {
+          wrap.innerHTML =
+            '<div class="empty">' +
+            icon("gear", 34) +
+            "<strong>Belum ada barang</strong><span>Pilih salah satu template di atas untuk memuat daftar siap pakai,<br>atau tambahkan barang kustom lewat formulir di bawah.</span></div>";
+          return;
+        }
+        var cats = catOrder();
+        var noCat = state.items.filter(function (i) {
+          return !i.cat;
+        });
+        cats.forEach(function (cat) {
+          var all = state.items.filter(function (i) {
+            return i.cat === cat;
+          });
+          var vis = all.filter(visible);
+          if (!vis.length) return;
+          var doneN = all.filter(function (i) {
+            return i.done;
+          }).length;
+          var d = document.createElement("div");
+          d.className = "cat";
+          d.innerHTML =
+            '<div class="cat-head">' +
+            icon(CAT_ICON[cat] || "custom", 14) +
+            "<span>" +
+            esc(cat) +
+            '</span><span class="cat-count">' +
+            doneN +
+            "/" +
+            all.length +
+            '</span></div><div class="items"></div>';
+          var box = d.querySelector(".items");
+          vis.forEach(function (it) {
+            box.appendChild(itemRow(it));
+          });
+          wrap.appendChild(d);
+        });
+        if (noCat.length) {
+          var vis = noCat.filter(visible);
+          if (vis.length) {
+            var d = document.createElement("div");
+            d.className = "cat";
+            d.innerHTML =
+              '<div class="cat-head">' +
+              icon("custom", 14) +
+              '<span>Kustom</span><span class="cat-count">' +
+              noCat.filter(function (i) {
+                return i.done;
+              }).length +
+              "/" +
+              noCat.length +
+              '</span></div><div class="items"></div>';
+            var box = d.querySelector(".items");
+            vis.forEach(function (it) {
+              box.appendChild(itemRow(it));
+            });
+            wrap.appendChild(d);
+          }
+        }
+      }
+
+      function visible(it) {
+        if (state.filter === "todo" && it.done) return false;
+        if (state.filter === "done" && !it.done) return false;
+        if (state.focusMember && it.assign !== state.focusMember) return false;
+        return true;
+      }
+
+      function itemRow(it) {
+        var row = document.createElement("div");
+        row.className = "item" + (it.done ? " done" : "");
+        row.innerHTML =
+          '<button class="chk' +
+          (it.done ? " on" : "") +
+          '" aria-label="Tandai sudah dibawa" title="' +
+          (it.done ? "Batalkan tanda" : "Sudah masuk koper") +
+          '">' +
+          '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
+          "</button>" +
+          '<span class="item-name">' +
+          esc(it.name) +
+          (it.qty > 1 ? '<span class="qty">× ' + it.qty + "</span>" : "") +
+          "</span>" +
+          '<select class="assign" aria-label="Penanggung jawab"></select>' +
+          '<button class="item-del" title="Hapus barang" aria-label="Hapus barang">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6M14 11v6"/></svg>' +
+          "</button>";
+        var chk = row.querySelector(".chk"),
+          sel = row.querySelector(".assign"),
+          del = row.querySelector(".item-del");
+
+        chk.addEventListener("click", function () {
+          it.done = !it.done;
+          save();
+          renderAll();
+        });
+
+        sel.innerHTML =
+          '<option value="">— Tanpa penanggung jawab —</option>' +
+          state.members
+            .map(function (m) {
+              return (
+                '<option value="' +
+                esc(m) +
+                '"' +
+                (it.assign === m ? " selected" : "") +
+                ">" +
+                esc(m) +
+                "</option>"
+              );
+            })
+            .join("");
+        if (!state.members.length) {
+          sel.disabled = true;
+          sel.innerHTML = '<option value="">Tambah anggota dulu</option>';
+        }
+        sel.addEventListener("change", function () {
+          it.assign = sel.value || null;
+          save();
+          renderAll();
+        });
+
+        del.addEventListener("click", function () {
+          state.items = state.items.filter(function (x) {
+            return x.id !== it.id;
+          });
+          save();
+          renderAll();
+          toast("Barang dihapus");
+        });
+        return row;
+      }
+      /* ================= RENDER: ANGGOTA ================= */
+      function renderMembers() {
+        var chips = $("#chips");
+        chips.innerHTML = "";
+        var selAdd = document.querySelector("#addForm select[name=assign]");
+        var mCount = state.members.length;
+
+        if (!mCount) {
+          chips.innerHTML =
+            '<span class="hint" style="margin:0">Belum ada anggota. Contoh pembagian: Ayah (koper besar & dokumen), Ibu (obat & toiletries), Anak 1 (tas snack & hiburan).</span>';
+        } else {
+          state.members.forEach(function (m) {
+            var own = state.items.filter(function (i) {
+              return i.assign === m;
+            });
+            var ownDone = own.filter(function (i) {
+              return i.done;
+            }).length;
+            var c = document.createElement("button");
+            c.type = "button";
+            c.className = "chip" + (state.focusMember === m ? " active" : "");
+            c.title = own.length
+              ? ownDone + "/" + own.length + " barang selesai"
+              : "Belum ada barang yang ditugaskan";
+            c.innerHTML =
+              "<span>" +
+              esc(m) +
+              '</span><span class="chip-meta">' +
+              (own.length ? ownDone + "/" + own.length : "0 barang") +
+              "</span>" +
+              '<span class="chip-x" role="button" title="Hapus anggota"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></span>';
+            c.addEventListener("click", function (ev) {
+              if (ev.target.closest(".chip-x")) {
+                removeMember(m);
+                return;
+              }
+              state.focusMember = state.focusMember === m ? null : m;
+              renderMembers();
+              renderList();
+            });
+            chips.appendChild(c);
+          });
+        }
+
+        // dropdown di form tambah item
+        selAdd.innerHTML =
+          '<option value="">— Tanpa penanggung jawab —</option>' +
+          state.members
+            .map(function (m) {
+              return '<option value="' + esc(m) + '">' + esc(m) + "</option>";
+            })
+            .join("");
+
+        // datalist kategori
+        var cats = catOrder()
+          .map(function (c) {
+            return '<option value="' + esc(c) + '">';
+          })
+          .join("");
+        $("#catList").innerHTML = cats;
+      }
+
+      function removeMember(m) {
+        if (
+          !confirm(
+            'Hapus anggota "' +
+              m +
+              '"?\nBarang yang ditugaskan kepadanya akan menjadi tanpa penanggung jawab.',
+          )
+        )
+          return;
+        state.members = state.members.filter(function (x) {
+          return x !== m;
+        });
+        state.items.forEach(function (i) {
+          if (i.assign === m) i.assign = null;
+        });
+        if (state.focusMember === m) state.focusMember = null;
+        save();
+        renderAll();
+      }
+
+      /* ================= RENDER: PROGRES & TABS ================= */
+      function renderProgress() {
+        var s = stats();
+        $("#progDoneTxt").textContent = s.done + " / " + s.total;
+        $("#barFill").style.width = s.pct + "%";
+        $("#progLabel").textContent = state.tripName
+          ? state.tripName
+          : s.total
+            ? "Siap berangkat?"
+            : "Belum ada barang";
+      }
+
+      function renderTabs() {
+        document.querySelectorAll("#tabs .tab").forEach(function (t) {
+          t.classList.toggle(
+            "active",
+            t.getAttribute("data-filter") === state.filter,
+          );
+        });
+        var s = stats();
+        var lbl = {
+          all: "Semua (" + s.total + ")",
+          todo: "Belum dibawa (" + (s.total - s.done) + ")",
+          done: "Sudah dibawa (" + s.done + ")",
+        };
+        document.querySelectorAll("#tabs .tab").forEach(function (t) {
+          t.textContent = lbl[t.getAttribute("data-filter")];
+        });
+      }
+
+      function renderAll() {
+        renderTemplates();
+        renderList();
+        renderMembers();
+        renderProgress();
+        renderTabs();
+      }
+
+      /* ================= EVENT: input nama, tabs, form tambah ================= */
+      $("#tripName").value = state.tripName;
+      $("#tripName").addEventListener("input", function () {
+        state.tripName = this.value;
+        save();
+        renderProgress();
+      });
+
+      document.querySelectorAll("#tabs .tab").forEach(function (t) {
+        t.addEventListener("click", function () {
+          state.filter = t.getAttribute("data-filter");
+          renderTabs();
+          renderList();
+        });
+      });
+
+      $("#addForm").addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        var f = this.elements;
+        var name = (f.name.value || "").trim();
+        if (!name) {
+          toast("Isi nama barang dulu");
+          return;
+        }
+        var qty = parseInt(f.qty.value, 10);
+        if (!qty || qty < 1) qty = 1;
+        if (qty > 99) qty = 99;
+        var cat = (f.cat.value || "").trim();
+        var assign = f.assign.value || null;
+        state.items.push({
+          id: uid(),
+          name: name,
+          cat: cat,
+          qty: qty,
+          done: false,
+          assign: assign,
+        });
+        save();
+        f.name.value = "";
+        f.qty.value = 1;
+        f.cat.value = "";
+        renderAll();
+        toast(
+          'Barang kustom "' +
+            name +
+            '" ditambahkan' +
+            (assign ? " — ditugaskan ke " + assign : ""),
+        );
+      });
+
+      $("#memberForm").addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        var inp = this.elements.member;
+        var name = (inp.value || "").trim();
+        if (!name) {
+          return;
+        }
+        var lower = name.toLowerCase();
+        if (
+          state.members.some(function (m) {
+            return m.toLowerCase() === lower;
+          })
+        ) {
+          toast('Anggota "' + name + '" sudah ada');
+          return;
+        }
+        state.members.push(name);
+        save();
+        inp.value = "";
+        renderAll();
+        toast('Anggota "' + name + '" ditambahkan');
+      });
+      /* ================= EVENT: RESET ================= */
+      $("#btnUncheck").addEventListener("click", function () {
+        var s = stats();
+        if (!s.total) {
+          toast("Belum ada barang untuk di-reset");
+          return;
+        }
+        if (s.done === 0) {
+          toast("Tidak ada centangan — semua sudah bersih");
+          return;
+        }
+        if (
+          !confirm(
+            "Hapus semua " +
+              s.done +
+              " centangan?\nDaftar barang, anggota, dan penugasan tetap tersimpan.",
+          )
+        )
+          return;
+        state.items.forEach(function (i) {
+          i.done = false;
+        });
+        save();
+        renderAll();
+        toast("Semua centangan dihapus — siap untuk perjalanan berikutnya");
+      });
+
+      var overlay = $("#overlay");
+      $("#btnNewTrip").addEventListener("click", function () {
+        overlay.classList.add("open");
+        $("#mConfirm").focus();
+      });
+      $("#mCancel").addEventListener("click", function () {
+        overlay.classList.remove("open");
+      });
+      overlay.addEventListener("click", function (ev) {
+        if (ev.target === overlay) overlay.classList.remove("open");
+      });
+      document.addEventListener("keydown", function (ev) {
+        if (ev.key === "Escape") overlay.classList.remove("open");
+      });
+      $("#mConfirm").addEventListener("click", function () {
+        overlay.classList.remove("open");
+        state.tripName = "";
+        state.tpl = null;
+        state.items = [];
+        state.members = [];
+        $("#tripName").value = "";
+        try {
+          localStorage.removeItem(LS_KEY);
+        } catch (e) {}
+        renderAll();
+        toast("Aplikasi kembali kosong — siap untuk perjalanan baru");
+      });
+
+      /* ================= INIT ================= */
+      renderAll();
+    </script>
+  </body>
+</html>

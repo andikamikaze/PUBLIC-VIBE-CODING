@@ -1,0 +1,1376 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta
+      name="theme-color"
+      content="#ffffff"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#09090b"
+      media="(prefers-color-scheme: dark)"
+    />
+    <title>Online Markdown</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #fafafa;
+        --surface: #ffffff;
+        --text: #18181b;
+        --muted: #71717a;
+        --line: #e4e4e7;
+        --accent: #18181b;
+        --accent-text: #ffffff;
+        --code-bg: #f4f4f5;
+        --radius: 8px;
+        --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+        --font-mono: "JetBrains Mono", ui-monospace, monospace;
+        --safe-top: env(safe-area-inset-top, 0px);
+        --safe-bottom: env(safe-area-inset-bottom, 0px);
+        --safe-left: env(safe-area-inset-left, 0px);
+        --safe-right: env(safe-area-inset-right, 0px);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #09090b;
+          --surface: #18181b;
+          --text: #fafafa;
+          --muted: #a1a1aa;
+          --line: #27272a;
+          --accent: #fafafa;
+          --accent-text: #09090b;
+          --code-bg: #27272a;
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font-sans);
+        font-size: 14px;
+        line-height: 1.5;
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      button,
+      textarea,
+      input {
+        font-family: inherit;
+        font-size: inherit;
+      }
+
+      button {
+        cursor: pointer;
+        border: none;
+        background: transparent;
+      }
+
+      button:focus-visible,
+      textarea:focus-visible,
+      input:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .app {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 calc(32px + var(--safe-right))
+          calc(32px + var(--safe-bottom)) calc(32px + var(--safe-left));
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Topbar */
+      .topbar {
+        height: calc(64px + var(--safe-top));
+        padding-top: var(--safe-top);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--line);
+        position: sticky;
+        top: 0;
+        background: var(--bg);
+        z-index: 10;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        font-size: 16px;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+
+      .brand svg {
+        width: 22px;
+        height: 22px;
+        color: var(--accent);
+      }
+
+      .top-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      /* Buttons & Touch Targets (min 44x44) */
+      .btn,
+      .toggle,
+      .btn-text,
+      .format-btn {
+        min-height: 44px;
+        min-width: 44px;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--text);
+        transition: all 0.15s ease;
+      }
+
+      .btn:hover {
+        background: var(--code-bg);
+        border-color: var(--muted);
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: var(--accent-text);
+        border-color: var(--accent);
+      }
+
+      .btn-primary:hover {
+        opacity: 0.9;
+      }
+
+      .btn svg {
+        width: 15px;
+        height: 15px;
+      }
+
+      .btn-text {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 500;
+        padding: 8px 12px;
+        border-radius: 6px;
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .btn-text:hover {
+        background: var(--code-bg);
+        color: var(--text);
+      }
+
+      /* Workspace */
+      .workspace {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding-top: 24px;
+      }
+
+      .doc-header {
+        padding-bottom: 20px;
+      }
+
+      .doc-name-input {
+        width: 100%;
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        border: none;
+        background: transparent;
+        color: var(--text);
+        outline: none;
+      }
+
+      .doc-name-input::placeholder {
+        color: var(--muted);
+        opacity: 0.5;
+      }
+
+      /* Toolbar */
+      .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 8px;
+      }
+
+      .view-toggles {
+        display: flex;
+        gap: 4px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 3px;
+      }
+
+      .toggle {
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--muted);
+        border-radius: 6px;
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .toggle:hover {
+        color: var(--text);
+      }
+
+      .toggle.active {
+        background: var(--accent);
+        color: var(--accent-text);
+      }
+
+      .tools {
+        display: flex;
+        gap: 4px;
+      }
+
+      /* Formatting Toolbar */
+      .formatting-toolbar {
+        display: flex;
+        gap: 6px;
+        padding: 12px 0;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 16px;
+      }
+      .formatting-toolbar::-webkit-scrollbar {
+        display: none;
+      }
+      .format-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--text);
+        transition: all 0.15s ease;
+        flex-shrink: 0;
+      }
+      .format-btn:hover,
+      .format-btn:focus-visible {
+        background: var(--code-bg);
+        border-color: var(--muted);
+        outline: none;
+      }
+      .format-btn svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      /* Panes */
+      .panes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        flex: 1;
+        min-height: 500px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        overflow: hidden;
+        background: var(--surface);
+      }
+
+      .panes[data-view="write"] .preview-pane,
+      .panes[data-view="preview"] .editor-pane {
+        display: none;
+      }
+
+      .panes[data-view="write"] .editor-pane,
+      .panes[data-view="preview"] .preview-pane {
+        grid-column: 1 / -1;
+      }
+
+      .pane {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .editor-pane {
+        border-right: 1px solid var(--line);
+      }
+
+      .pane-header {
+        height: 44px;
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        border-bottom: 1px solid var(--line);
+        background: var(--bg);
+      }
+
+      .editor-container {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+        background: var(--surface);
+      }
+
+      .gutter {
+        width: 56px;
+        flex-shrink: 0;
+        padding: 20px 12px 20px 0;
+        text-align: right;
+        color: var(--muted);
+        font-family: var(--font-mono);
+        font-size: 13px;
+        line-height: 1.6;
+        user-select: none;
+        border-right: 1px solid var(--line);
+        overflow: hidden;
+        white-space: pre;
+      }
+
+      #editor {
+        flex: 1;
+        border: none;
+        outline: none;
+        resize: none;
+        padding: 20px 24px;
+        font-family: var(--font-mono);
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--text);
+        background: transparent;
+        tab-size: 2;
+        white-space: pre;
+        overflow: auto;
+      }
+
+      .preview-container {
+        flex: 1;
+        overflow-y: auto;
+        background: var(--surface);
+      }
+
+      .rendered {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 32px 40px 64px;
+        font-size: 16px;
+        line-height: 1.75;
+        color: var(--text);
+      }
+
+      .rendered > :first-child {
+        margin-top: 0;
+      }
+
+      .rendered h1,
+      .rendered h2,
+      .rendered h3,
+      .rendered h4 {
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: var(--text);
+        margin-top: 2.5em;
+        margin-bottom: 0.75em;
+        line-height: 1.3;
+      }
+
+      .rendered h1 {
+        font-size: 32px;
+        margin-top: 0;
+      }
+      .rendered h2 {
+        font-size: 24px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--line);
+      }
+      .rendered h3 {
+        font-size: 20px;
+      }
+
+      .rendered p {
+        margin-bottom: 1.25em;
+        color: var(--text);
+        opacity: 0.9;
+      }
+
+      .rendered a {
+        color: var(--accent);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+
+      .rendered blockquote {
+        margin: 1.5em 0;
+        padding: 12px 20px;
+        border-left: 3px solid var(--accent);
+        background: var(--code-bg);
+        border-radius: 0 var(--radius) var(--radius) 0;
+        color: var(--text);
+        opacity: 0.9;
+      }
+
+      .rendered blockquote p {
+        margin-bottom: 0;
+      }
+
+      .rendered ul,
+      .rendered ol {
+        padding-left: 24px;
+        margin-bottom: 1.25em;
+        color: var(--text);
+        opacity: 0.9;
+      }
+
+      .rendered li {
+        margin-bottom: 6px;
+      }
+
+      .rendered code {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        background: var(--code-bg);
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: var(--accent);
+      }
+
+      .rendered pre {
+        background: var(--code-bg);
+        padding: 20px;
+        border-radius: var(--radius);
+        overflow-x: auto;
+        margin: 1.5em 0;
+        border: 1px solid var(--line);
+      }
+
+      .rendered pre code {
+        background: transparent;
+        padding: 0;
+        color: var(--text);
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .rendered hr {
+        border: 0;
+        border-top: 1px solid var(--line);
+        margin: 2.5em 0;
+      }
+
+      .rendered table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.5em 0;
+        font-size: 14px;
+      }
+
+      .rendered th,
+      .rendered td {
+        border: 1px solid var(--line);
+        padding: 10px 14px;
+        text-align: left;
+      }
+
+      .rendered th {
+        background: var(--bg);
+        font-weight: 600;
+      }
+
+      .rendered input[type="checkbox"] {
+        accent-color: var(--accent);
+        margin-right: 8px;
+      }
+
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        min-height: 300px;
+        color: var(--muted);
+        text-align: center;
+        padding: 40px;
+      }
+
+      .empty-state svg {
+        margin-bottom: 16px;
+        opacity: 0.4;
+      }
+
+      .empty-state p {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 6px;
+      }
+
+      .empty-state span {
+        font-size: 14px;
+      }
+
+      /* Statusbar */
+      .statusbar {
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        font-size: 12px;
+        color: var(--muted);
+        border-top: 1px solid var(--line);
+        margin-top: 16px;
+      }
+
+      .status-left,
+      .status-right {
+        display: flex;
+        gap: 20px;
+      }
+
+      .save-indicator {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .save-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #22c55e;
+        transition: background 0.3s ease;
+      }
+
+      .save-indicator.saving .save-dot {
+        background: #eab308;
+      }
+
+      .save-indicator.error .save-dot {
+        background: #ef4444;
+      }
+
+      /* Toast */
+      .toast {
+        position: fixed;
+        bottom: calc(24px + var(--safe-bottom));
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: var(--accent);
+        color: var(--accent-text);
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.2s ease;
+        z-index: 100;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .app {
+          padding: 0 calc(16px + var(--safe-right))
+            calc(24px + var(--safe-bottom)) calc(16px + var(--safe-left));
+        }
+        .topbar {
+          padding-top: var(--safe-top);
+          height: calc(64px + var(--safe-top));
+        }
+        .panes {
+          grid-template-columns: 1fr;
+          min-height: 60vh;
+        }
+        .panes[data-view="split"] .preview-pane {
+          display: none;
+        }
+        .panes[data-view="split"] .editor-pane {
+          grid-column: 1 / -1;
+        }
+        .toolbar {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 12px;
+        }
+        .view-toggles {
+          justify-content: space-between;
+        }
+        .tools {
+          width: 100%;
+          justify-content: space-between;
+        }
+        .doc-name-input {
+          font-size: 24px;
+        }
+        .rendered {
+          padding: 24px 20px 48px;
+        }
+        .top-actions .btn span {
+          display: none;
+        }
+        .top-actions .btn {
+          padding: 10px;
+          min-width: 44px;
+        }
+        .formatting-toolbar {
+          padding: 12px 0;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand" aria-label="Markdown Previewer">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+            ></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <span>Markdown Previewer</span>
+        </div>
+        <div class="top-actions">
+          <button
+            class="btn"
+            id="copyHtml"
+            title="Copy rendered HTML"
+            aria-label="Copy rendered HTML"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path
+                d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+              ></path>
+            </svg>
+            <span>Copy HTML</span>
+          </button>
+          <button
+            class="btn btn-primary"
+            id="exportMarkdown"
+            title="Export as .md file"
+            aria-label="Export as Markdown file"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>Export .md</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <div class="doc-header">
+          <input
+            type="text"
+            id="docName"
+            class="doc-name-input"
+            value="Untitled Document"
+            placeholder="Document Name"
+            spellcheck="false"
+            aria-label="Document name"
+            autocapitalize="words"
+          />
+        </div>
+
+        <div class="toolbar">
+          <div class="view-toggles" role="group" aria-label="Workspace view">
+            <button class="toggle active" data-view="split" aria-pressed="true">
+              Split
+            </button>
+            <button class="toggle" data-view="write" aria-pressed="false">
+              Write
+            </button>
+            <button class="toggle" data-view="preview" aria-pressed="false">
+              Preview
+            </button>
+          </div>
+          <div class="tools">
+            <button class="btn-text" id="loadExample">Load Example</button>
+            <button class="btn-text" id="clearDocument">Clear</button>
+          </div>
+        </div>
+
+        <div
+          class="formatting-toolbar"
+          role="group"
+          aria-label="Text formatting"
+        >
+          <button
+            class="format-btn"
+            data-action="h1"
+            aria-label="Heading 1"
+            title="Heading 1"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M4 12h8" />
+              <path d="M4 18V6" />
+              <path d="M12 18V6" />
+              <path d="m17 12 3-2v8" />
+            </svg>
+          </button>
+          <button
+            class="format-btn"
+            data-action="h2"
+            aria-label="Heading 2"
+            title="Heading 2"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M4 12h8" />
+              <path d="M4 18V6" />
+              <path d="M12 18V6" />
+              <path d="M21 18h-4c0-4 4-3 4-6 0-1.5-2-2.5-4-1" />
+            </svg>
+          </button>
+          <button
+            class="format-btn"
+            data-action="bold"
+            aria-label="Bold"
+            title="Bold (Ctrl+B)"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8"
+              />
+            </svg>
+          </button>
+          <button
+            class="format-btn"
+            data-action="italic"
+            aria-label="Italic"
+            title="Italic (Ctrl+I)"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="19" y1="4" x2="10" y2="4" />
+              <line x1="14" y1="20" x2="5" y2="20" />
+              <line x1="15" y1="4" x2="9" y2="20" />
+            </svg>
+          </button>
+          <button
+            class="format-btn"
+            data-action="ul"
+            aria-label="Unordered List"
+            title="Unordered List"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="8" y1="6" x2="21" y2="6" />
+              <line x1="8" y1="12" x2="21" y2="12" />
+              <line x1="8" y1="18" x2="21" y2="18" />
+              <line x1="3" y1="6" x2="3.01" y2="6" />
+              <line x1="3" y1="12" x2="3.01" y2="12" />
+              <line x1="3" y1="18" x2="3.01" y2="18" />
+            </svg>
+          </button>
+          <button
+            class="format-btn"
+            data-action="ol"
+            aria-label="Ordered List"
+            title="Ordered List"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="10" y1="6" x2="21" y2="6" />
+              <line x1="10" y1="12" x2="21" y2="12" />
+              <line x1="10" y1="18" x2="21" y2="18" />
+              <path d="M4 6h1v4" />
+              <path d="M4 10h2" />
+              <path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1" />
+            </svg>
+          </button>
+          <button
+            class="format-btn"
+            data-action="code"
+            aria-label="Code Block"
+            title="Code Block"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="16 18 22 12 16 6" />
+              <polyline points="8 6 2 12 8 18" />
+            </svg>
+          </button>
+          <button
+            class="format-btn"
+            data-action="link"
+            aria-label="Insert Link"
+            title="Insert Link (Ctrl+K)"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
+              />
+              <path
+                d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <div class="panes" id="panes" data-view="split">
+          <section class="pane editor-pane" aria-label="Markdown source editor">
+            <div class="pane-header">Markdown Source</div>
+            <div class="editor-container">
+              <div class="gutter" id="gutter" aria-hidden="true">1</div>
+              <textarea
+                id="editor"
+                aria-label="Markdown source"
+                spellcheck="false"
+                wrap="off"
+                autocomplete="off"
+                autocapitalize="off"
+                placeholder="# Mulai menulis Markdown di sini..."
+              ></textarea>
+            </div>
+          </section>
+
+          <section class="pane preview-pane" aria-label="Live preview">
+            <div class="pane-header">Live Preview</div>
+            <div class="preview-container">
+              <article
+                id="preview"
+                class="rendered"
+                aria-live="polite"
+              ></article>
+            </div>
+          </section>
+        </div>
+
+        <footer class="statusbar">
+          <div class="status-left">
+            <span id="wordCount">0 words</span>
+            <span id="charCount">0 characters</span>
+            <span id="lineCount">1 line</span>
+          </div>
+          <div class="status-right">
+            <span class="save-indicator" id="saveIndicator">
+              <span class="save-dot"></span>
+              <span id="saveStatus">Saved</span>
+            </span>
+          </div>
+        </footer>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      (() => {
+        "use strict";
+        const STORAGE_KEY = "markdown-previewer-draft-v3";
+        const editor = document.getElementById("editor");
+        const preview = document.getElementById("preview");
+        const gutter = document.getElementById("gutter");
+        const panes = document.getElementById("panes");
+        const saveStatus = document.getElementById("saveStatus");
+        const saveIndicator = document.getElementById("saveIndicator");
+        const docName = document.getElementById("docName");
+        const toast = document.getElementById("toast");
+
+        let toastTimer;
+        let saveTimeout;
+        let renderedHtml = "";
+
+        if (window.marked) {
+          marked.setOptions({ gfm: true, breaks: true });
+        }
+
+        const example = `# Welcome to Markdown Previewer
+
+A clean space for **clear thinking**. Write Markdown on the left and see the formatted result on the right.
+
+## Make your ideas readable
+
+- Write without distractions
+- Preview formatting as you type
+- Export your work whenever you need it
+
+> Good writing is clear thinking made visible.
+
+### Code belongs here, too
+
+\`\`\`javascript
+function greet(name) {
+  return \`Hello, \${name}!\`;
+}
+console.log(greet("world"));
+\`\`\`
+
+Try **bold text**, *italic text*, ~~strikethrough~~, or \`inline code\`.
+
+| Feature | Status |
+| --- | --- |
+| Live preview | Ready |
+| Local draft | Enabled |
+
+- [x] Start writing
+- [ ] Polish the details
+
+---
+
+Your next idea starts here.`;
+
+        function showToast(message) {
+          toast.textContent = message;
+          toast.classList.add("show");
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(() => toast.classList.remove("show"), 2400);
+        }
+
+        function getRendered(source) {
+          if (!source.trim()) {
+            return `<div class="empty-state">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              <p>Your preview will appear here</p>
+              <span>Type some Markdown in the editor to get started.</span>
+            </div>`;
+          }
+
+          if (window.marked && window.DOMPurify) {
+            const raw = marked.parse(source);
+            return DOMPurify.sanitize(raw, {
+              USE_PROFILES: { html: true },
+              FORBID_TAGS: [
+                "style",
+                "script",
+                "iframe",
+                "object",
+                "embed",
+                "form",
+              ],
+              FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover"],
+            });
+          }
+
+          return `<p>${source.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>")}</p>`;
+        }
+
+        function updateGutter() {
+          const lines = editor.value.split("\n").length;
+          gutter.textContent = Array.from(
+            { length: lines },
+            (_, i) => i + 1,
+          ).join("\n");
+        }
+
+        function update() {
+          const source = editor.value;
+          renderedHtml = getRendered(source);
+          preview.innerHTML = renderedHtml;
+
+          const trimmed = source.trim();
+          const words = trimmed ? trimmed.split(/\s+/u).length : 0;
+          const lines = source.split("\n").length;
+
+          document.getElementById("wordCount").textContent =
+            `${words} ${words === 1 ? "word" : "words"}`;
+          document.getElementById("charCount").textContent =
+            `${source.length.toLocaleString()} characters`;
+          document.getElementById("lineCount").textContent =
+            `${lines} ${lines === 1 ? "line" : "lines"}`;
+
+          updateGutter();
+        }
+
+        function scheduleSave() {
+          saveStatus.textContent = "Saving...";
+          saveIndicator.classList.add("saving");
+          saveIndicator.classList.remove("error");
+
+          clearTimeout(saveTimeout);
+          saveTimeout = setTimeout(() => {
+            try {
+              localStorage.setItem(
+                STORAGE_KEY,
+                JSON.stringify({
+                  content: editor.value,
+                  name: docName.value,
+                  timestamp: Date.now(),
+                }),
+              );
+              saveStatus.textContent = "Saved";
+              saveIndicator.classList.remove("saving");
+            } catch (e) {
+              saveStatus.textContent = "Save failed";
+              saveIndicator.classList.remove("saving");
+              saveIndicator.classList.add("error");
+              console.error("LocalStorage error:", e);
+              showToast("Failed to save draft locally");
+            }
+          }, 600);
+        }
+
+        function loadDraft() {
+          try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved !== null) {
+              const data = JSON.parse(saved);
+              if (data && typeof data === "object") {
+                editor.value =
+                  typeof data.content === "string" ? data.content : example;
+                docName.value =
+                  typeof data.name === "string" && data.name.trim()
+                    ? data.name
+                    : "Untitled Document";
+                return;
+              }
+            }
+          } catch (e) {
+            console.warn("Failed to load draft, clearing corrupted data:", e);
+            localStorage.removeItem(STORAGE_KEY);
+          }
+          editor.value = example;
+          docName.value = "Untitled Document";
+        }
+
+        function setView(view) {
+          panes.dataset.view = view;
+          document.querySelectorAll(".toggle").forEach((btn) => {
+            const isActive = btn.dataset.view === view;
+            btn.classList.toggle("active", isActive);
+            btn.setAttribute("aria-pressed", String(isActive));
+          });
+        }
+
+        function insertMarkdown(action) {
+          const start = editor.selectionStart;
+          const end = editor.selectionEnd;
+          const text = editor.value;
+          const selectedText = text.substring(start, end);
+          let replacement = "";
+
+          switch (action) {
+            case "bold":
+              replacement = `**${selectedText || "bold text"}**`;
+              break;
+            case "italic":
+              replacement = `*${selectedText || "italic text"}*`;
+              break;
+            case "h1":
+              replacement = `\n# ${selectedText || "Heading 1"}\n`;
+              break;
+            case "h2":
+              replacement = `\n## ${selectedText || "Heading 2"}\n`;
+              break;
+            case "ul":
+              replacement = `\n- ${selectedText || "List item"}`;
+              break;
+            case "ol":
+              replacement = `\n1. ${selectedText || "List item"}`;
+              break;
+            case "code":
+              if (selectedText.includes("\n")) {
+                replacement = `\n\`\`\`\n${selectedText || "code"}\n\`\`\`\n`;
+              } else {
+                replacement = `\`${selectedText || "code"}\``;
+              }
+              break;
+            case "link":
+              replacement = `[${selectedText || "link text"}](url)`;
+              break;
+          }
+
+          editor.setRangeText(replacement, start, end, "end");
+
+          if (!selectedText) {
+            const placeholders = {
+              bold: "bold text",
+              italic: "italic text",
+              h1: "Heading 1",
+              h2: "Heading 2",
+              ul: "List item",
+              ol: "List item",
+              code: "code",
+              link: "url",
+            };
+            const placeholder = placeholders[action] || "";
+            const idx = replacement.indexOf(placeholder);
+            editor.selectionStart = editor.selectionEnd =
+              start + (idx !== -1 ? idx : replacement.length);
+          } else {
+            editor.selectionStart = editor.selectionEnd =
+              start + replacement.length;
+          }
+
+          editor.focus();
+          update();
+          scheduleSave();
+        }
+
+        function exportMarkdown() {
+          const blob = new Blob([editor.value], {
+            type: "text/markdown;charset=utf-8",
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          const base =
+            (docName.value.trim() || "untitled")
+              .replace(/[<>:"/\\|?*\u0000-\u001F]/g, "-")
+              .replace(/\s+/g, "-")
+              .slice(0, 80) || "untitled";
+
+          a.href = url;
+          a.download = base.endsWith(".md") ? base : `${base}.md`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+          showToast("Markdown exported successfully");
+        }
+
+        // Event Listeners
+        editor.addEventListener("input", () => {
+          update();
+          scheduleSave();
+        });
+
+        editor.addEventListener("scroll", () => {
+          gutter.scrollTop = editor.scrollTop;
+        });
+
+        docName.addEventListener("input", scheduleSave);
+
+        editor.addEventListener("keydown", (event) => {
+          if (event.key === "Tab") {
+            event.preventDefault();
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            editor.setRangeText("  ", start, end, "end");
+            update();
+            scheduleSave();
+          }
+
+          // Keyboard shortcuts for formatting
+          if ((event.metaKey || event.ctrlKey) && !event.shiftKey) {
+            if (event.key.toLowerCase() === "b") {
+              event.preventDefault();
+              insertMarkdown("bold");
+            } else if (event.key.toLowerCase() === "i") {
+              event.preventDefault();
+              insertMarkdown("italic");
+            } else if (event.key.toLowerCase() === "k") {
+              event.preventDefault();
+              insertMarkdown("link");
+            }
+          }
+        });
+
+        document.querySelectorAll(".toggle").forEach((button) => {
+          button.addEventListener("click", () => setView(button.dataset.view));
+        });
+
+        document.querySelectorAll(".format-btn").forEach((button) => {
+          button.addEventListener("click", () =>
+            insertMarkdown(button.dataset.action),
+          );
+        });
+
+        document
+          .getElementById("copyHtml")
+          .addEventListener("click", async () => {
+            try {
+              if (!navigator.clipboard || !navigator.clipboard.writeText)
+                throw new Error("Clipboard unavailable");
+              await navigator.clipboard.writeText(renderedHtml);
+              showToast("Rendered HTML copied to clipboard");
+            } catch (_) {
+              showToast("Clipboard unavailable. Use a secure browser context.");
+            }
+          });
+
+        document
+          .getElementById("exportMarkdown")
+          .addEventListener("click", exportMarkdown);
+
+        document
+          .getElementById("clearDocument")
+          .addEventListener("click", () => {
+            if (
+              !editor.value ||
+              window.confirm(
+                "Clear the current document? This will replace the saved draft.",
+              )
+            ) {
+              editor.value = "";
+              docName.value = "Untitled Document";
+              update();
+              scheduleSave();
+              editor.focus();
+              showToast("Document cleared");
+            }
+          });
+
+        document.getElementById("loadExample").addEventListener("click", () => {
+          if (
+            !editor.value ||
+            window.confirm("Replace the current document with the example?")
+          ) {
+            editor.value = example;
+            docName.value = "Markdown Example";
+            update();
+            scheduleSave();
+            showToast("Example loaded");
+          }
+        });
+
+        document.addEventListener("keydown", (event) => {
+          if (
+            (event.metaKey || event.ctrlKey) &&
+            event.key.toLowerCase() === "s"
+          ) {
+            event.preventDefault();
+            exportMarkdown();
+          }
+        });
+
+        // Initialize
+        loadDraft();
+        update();
+      })();
+    </script>
+  </body>
+</html>

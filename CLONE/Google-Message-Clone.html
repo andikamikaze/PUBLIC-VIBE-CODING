@@ -1,0 +1,2716 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f8fafd" />
+    <title>Messages — Google Messages Clone</title>
+    <style>
+      :root {
+        --bg: #f8fafd;
+        --surface: #ffffff;
+        --surface-2: #f1f3f4;
+        --surface-3: #e9eef6;
+        --surface-hover: #f2f5fa;
+        --text: #1f1f1f;
+        --muted: #5f6368;
+        --subtle: #74777d;
+        --line: #e7e9ed;
+        --blue: #1a73e8;
+        --blue-strong: #0b57d0;
+        --blue-soft: #d3e3fd;
+        --blue-bubble: #1a73e8;
+        --incoming: #f0f1f3;
+        --green: #188038;
+        --shadow:
+          0 1px 2px rgba(60, 64, 67, 0.1), 0 1px 3px 1px rgba(60, 64, 67, 0.06);
+        --radius-xl: 28px;
+        --radius-lg: 20px;
+        --radius-md: 14px;
+        --stage-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Google Sans", Roboto, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        overflow: hidden;
+        transition: background 0.3s ease;
+      }
+      body.mobile-view {
+        background: var(--stage-bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      button {
+        color: inherit;
+      }
+
+      /* View Switcher */
+      .view-switcher {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 32px;
+        padding: 6px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+        display: flex;
+        gap: 4px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+      }
+      .view-switcher button {
+        border: 0;
+        background: transparent;
+        padding: 8px 18px;
+        border-radius: 26px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        transition: all 0.2s ease;
+      }
+      .view-switcher button.active {
+        background: var(--blue);
+        color: white;
+        box-shadow: 0 2px 8px rgba(26, 115, 232, 0.35);
+      }
+      .view-switcher button:hover:not(.active) {
+        background: var(--surface-3);
+        color: var(--text);
+      }
+      .view-switcher svg {
+        width: 16px;
+        height: 16px;
+      }
+      body.mobile-view .view-switcher {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.2);
+      }
+      body.mobile-view .view-switcher button {
+        color: rgba(255, 255, 255, 0.85);
+      }
+      body.mobile-view .view-switcher button.active {
+        background: white;
+        color: var(--blue);
+      }
+      body.mobile-view .view-switcher button:hover:not(.active) {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+      }
+
+      /* App Container */
+      .app {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        min-width: 320px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      body.mobile-view .app {
+        height: auto;
+      }
+
+      /* Pixel Phone Frame */
+      .mobile-preview {
+        display: none;
+        width: 100%;
+        height: 100%;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      body.mobile-view .mobile-preview {
+        display: flex;
+      }
+      body.mobile-view > .app {
+        display: none;
+      }
+
+      .pixel-phone {
+        width: 393px;
+        height: 852px;
+        background: #0a0a0a;
+        border-radius: 55px;
+        padding: 11px;
+        box-shadow:
+          0 0 0 2px #1a1a1a,
+          0 30px 60px rgba(0, 0, 0, 0.4),
+          0 15px 30px rgba(0, 0, 0, 0.3),
+          inset 0 0 0 2px rgba(255, 255, 255, 0.05);
+        position: relative;
+        flex-shrink: 0;
+        transform-origin: center;
+      }
+      .pixel-phone::before {
+        content: "";
+        position: absolute;
+        top: 21px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 11px;
+        height: 11px;
+        background: #1a1a1a;
+        border-radius: 50%;
+        z-index: 10;
+        box-shadow:
+          inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+          0 0 0 2px #000;
+      }
+      .pixel-phone::after {
+        content: "";
+        position: absolute;
+        top: 23px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 5px;
+        height: 5px;
+        background: radial-gradient(circle, #2a3a5a 0%, #0a0a0a 70%);
+        border-radius: 50%;
+        z-index: 11;
+      }
+      .pixel-screen {
+        width: 100%;
+        height: 100%;
+        background: var(--bg);
+        border-radius: 44px;
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Mobile Status Bar */
+      .status-bar {
+        height: 44px;
+        flex: 0 0 44px;
+        padding: 0 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        z-index: 5;
+        background: var(--bg);
+      }
+      .status-bar .time {
+        font-weight: 600;
+        font-size: 15px;
+      }
+      .status-icons {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .status-icons svg {
+        width: 16px;
+        height: 16px;
+      }
+      .battery {
+        width: 24px;
+        height: 12px;
+        border: 1px solid var(--text);
+        border-radius: 3px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        padding: 1px;
+      }
+      .battery::after {
+        content: "";
+        position: absolute;
+        right: -3px;
+        width: 2px;
+        height: 5px;
+        background: var(--text);
+        border-radius: 0 1px 1px 0;
+      }
+      .battery-fill {
+        width: 80%;
+        height: 100%;
+        background: var(--text);
+        border-radius: 1px;
+      }
+
+      /* Mobile Gesture Bar */
+      .gesture-bar {
+        position: absolute;
+        bottom: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 134px;
+        height: 5px;
+        background: var(--text);
+        border-radius: 3px;
+        z-index: 20;
+        opacity: 0.85;
+      }
+
+      /* Mobile App Layout */
+      .mobile-app {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+      }
+      .mobile-app .sidebar {
+        width: 100%;
+        flex: 1;
+        border-right: 0;
+      }
+      .mobile-app .sidebar-head {
+        padding: 8px 16px 10px;
+      }
+      .mobile-app .sidebar-title-row {
+        margin-bottom: 12px;
+      }
+      .mobile-app .sidebar-title {
+        font-size: 26px;
+      }
+      .mobile-app .new-message {
+        padding: 10px 14px;
+        font-size: 13px;
+      }
+      .mobile-app .filter-row {
+        padding: 0 2px;
+      }
+      .mobile-app .conversation-list {
+        padding: 0 6px 60px;
+      }
+      .mobile-app .conversation {
+        min-height: 70px;
+        padding: 10px;
+      }
+      .mobile-app .chat-panel {
+        position: absolute;
+        inset: 0;
+        display: none;
+        flex-direction: column;
+        background: var(--surface);
+        z-index: 5;
+      }
+      .mobile-app.chat-open .chat-panel {
+        display: flex;
+      }
+      .mobile-app .chat-header {
+        height: 64px;
+        flex: 0 0 64px;
+        padding: 0 8px;
+        gap: 8px;
+      }
+      .mobile-app .back-btn {
+        display: inline-grid !important;
+      }
+      .mobile-app .chat-body {
+        padding: 16px 12px 16px;
+      }
+      .mobile-app .bubble {
+        max-width: 82%;
+        font-size: 14px;
+        padding: 10px 14px;
+      }
+      .mobile-app .composer-wrap {
+        padding: 8px 12px 16px;
+      }
+      .mobile-app .composer {
+        min-height: 48px;
+        gap: 2px;
+        padding-left: 6px;
+      }
+      .mobile-app .composer-input {
+        font-size: 14px;
+      }
+      .mobile-app .composer-hint {
+        display: none;
+      }
+      .mobile-app .sidebar-footer {
+        display: none;
+      }
+      .mobile-app .hide-mobile {
+        display: none !important;
+      }
+      .mobile-app .chat-header .avatar {
+        width: 38px;
+        height: 38px;
+      }
+      .mobile-app .chat-header-actions .icon-btn {
+        width: 38px;
+        height: 38px;
+      }
+      .mobile-app .side-panel {
+        display: none !important;
+      }
+      .mobile-app .placeholder-icon {
+        width: 80px;
+        height: 80px;
+      }
+      .mobile-app .chat-placeholder h2 {
+        font-size: 18px;
+      }
+
+      /* Topbar (Desktop) */
+      .topbar {
+        height: 72px;
+        flex: 0 0 72px;
+        display: flex;
+        align-items: center;
+        padding: 0 28px;
+        gap: 26px;
+        background: var(--bg);
+        z-index: 5;
+      }
+      body.mobile-view .topbar {
+        display: none;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 278px;
+      }
+      .brand-mark {
+        width: 37px;
+        height: 37px;
+        display: grid;
+        place-items: center;
+      }
+      .brand-name {
+        font-size: 22px;
+        font-weight: 500;
+        letter-spacing: -0.5px;
+        color: #3c4043;
+      }
+      .search-wrap {
+        height: 48px;
+        width: min(680px, 54vw);
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        padding: 0 17px;
+        border-radius: 28px;
+        background: #eaf0f8;
+        color: var(--muted);
+        transition:
+          background 0.18s,
+          box-shadow 0.18s;
+      }
+      .search-wrap:focus-within {
+        background: var(--surface);
+        box-shadow: 0 1px 3px rgba(60, 64, 67, 0.18);
+      }
+      .search-wrap input {
+        flex: 1;
+        min-width: 0;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: var(--text);
+        font-size: 15px;
+      }
+      .search-wrap input::placeholder {
+        color: #5f6368;
+        opacity: 1;
+      }
+      .top-actions {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-right: 140px;
+      }
+      .icon-btn {
+        width: 42px;
+        height: 42px;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--muted);
+        display: inline-grid;
+        place-items: center;
+        cursor: pointer;
+        transition:
+          background 0.16s,
+          color 0.16s;
+      }
+      .icon-btn:hover {
+        background: var(--surface-3);
+        color: var(--text);
+      }
+      .profile {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        margin-left: 10px;
+        display: grid;
+        place-items: center;
+        background: #d7e8ff;
+        color: #174ea6;
+        font-size: 13px;
+        font-weight: 600;
+        border: 2px solid var(--bg);
+        cursor: pointer;
+      }
+      .main {
+        flex: 1;
+        min-height: 0;
+        padding: 0 20px 20px;
+        display: flex;
+      }
+      body.mobile-view .main {
+        display: none;
+      }
+      .workspace {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        overflow: hidden;
+        border-radius: 22px;
+        background: var(--surface);
+        box-shadow:
+          0 1px 2px rgba(60, 64, 67, 0.08),
+          0 1px 3px rgba(60, 64, 67, 0.05);
+        border: 1px solid rgba(218, 220, 224, 0.55);
+      }
+      .sidebar {
+        width: 372px;
+        flex: 0 0 372px;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        border-right: 1px solid var(--line);
+        background: var(--surface);
+      }
+      .sidebar-head {
+        padding: 23px 20px 14px;
+      }
+      .sidebar-title-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 19px;
+      }
+      .sidebar-title {
+        font-size: 22px;
+        font-weight: 500;
+        letter-spacing: -0.35px;
+      }
+      .new-message {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 18px;
+        border: 0;
+        border-radius: 16px;
+        background: var(--blue-soft);
+        color: #0842a0;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 1px 2px rgba(60, 64, 67, 0.1);
+        transition:
+          box-shadow 0.18s,
+          background 0.18s;
+      }
+      .new-message:hover {
+        background: #c5d9f8;
+        box-shadow: 0 2px 5px rgba(60, 64, 67, 0.18);
+      }
+      .filter-row {
+        display: flex;
+        gap: 7px;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .filter-row::-webkit-scrollbar {
+        display: none;
+      }
+      .filter-chip {
+        flex: 0 0 auto;
+        border: 1px solid #dfe3eb;
+        background: var(--surface);
+        color: #45474b;
+        padding: 7px 13px;
+        border-radius: 20px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .filter-chip.active {
+        background: #e8f0fe;
+        color: #0842a0;
+        border-color: transparent;
+        font-weight: 600;
+      }
+      .conversation-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 2px 9px 14px;
+        scrollbar-width: thin;
+        scrollbar-color: #dadce0 transparent;
+      }
+      .conversation {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        min-height: 78px;
+        padding: 11px 12px;
+        border-radius: 15px;
+        cursor: pointer;
+        transition: background 0.14s;
+        position: relative;
+      }
+      .conversation:hover {
+        background: var(--surface-hover);
+      }
+      .conversation.active {
+        background: #e8f0fe;
+      }
+      .avatar {
+        width: 47px;
+        height: 47px;
+        flex: 0 0 47px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-size: 15px;
+        font-weight: 600;
+        color: #174ea6;
+        position: relative;
+        overflow: hidden;
+      }
+      .avatar.small {
+        width: 42px;
+        height: 42px;
+        flex-basis: 42px;
+      }
+      .avatar .online {
+        width: 10px;
+        height: 10px;
+        background: #1e8e3e;
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        border: 2px solid white;
+        border-radius: 50%;
+      }
+      .conversation-main {
+        flex: 1;
+        min-width: 0;
+        align-self: center;
+      }
+      .conversation-top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .conversation-name {
+        font-size: 14px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .conversation-time {
+        margin-left: auto;
+        flex: 0 0 auto;
+        font-size: 11px;
+        color: var(--subtle);
+      }
+      .conversation-bottom {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-top: 5px;
+      }
+      .conversation-preview {
+        min-width: 0;
+        color: var(--muted);
+        font-size: 12.5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .unread-dot {
+        width: 8px;
+        height: 8px;
+        flex: 0 0 8px;
+        border-radius: 50%;
+        background: var(--blue);
+      }
+      .list-empty {
+        text-align: center;
+        color: var(--muted);
+        font-size: 13px;
+        padding: 42px 22px;
+        line-height: 1.6;
+      }
+      .sidebar-footer {
+        padding: 12px 19px 15px;
+        color: #777b80;
+        font-size: 11px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid #f1f2f4;
+      }
+      .footer-link {
+        color: #5f6368;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .footer-link:hover {
+        text-decoration: underline;
+      }
+      .chat-panel {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        background: var(--surface);
+        position: relative;
+      }
+      .chat-header {
+        height: 76px;
+        flex: 0 0 76px;
+        padding: 0 25px;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid #f0f1f3;
+        gap: 14px;
+      }
+      .back-btn {
+        display: none;
+      }
+      .chat-person {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+      .chat-person-copy {
+        min-width: 0;
+      }
+      .chat-person-name {
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.35;
+      }
+      .chat-person-sub {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 3px;
+      }
+      .chat-header-actions {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+      }
+      .chat-body {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 24px clamp(20px, 6vw, 88px) 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        scrollbar-width: thin;
+        scrollbar-color: #dadce0 transparent;
+      }
+      .date-divider {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 3px 0 20px;
+        color: #777b80;
+        font-size: 11px;
+      }
+      .date-divider span {
+        padding: 5px 11px;
+        border-radius: 14px;
+        background: #f7f8fa;
+      }
+      .encryption-note {
+        align-self: center;
+        max-width: 390px;
+        text-align: center;
+        color: #74777d;
+        font-size: 11px;
+        line-height: 1.55;
+        margin: 0 auto 16px;
+      }
+      .encryption-note svg {
+        vertical-align: -3px;
+        margin-right: 4px;
+      }
+      .message-row {
+        width: 100%;
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+      }
+      .message-row.outgoing {
+        justify-content: flex-end;
+      }
+      .bubble {
+        max-width: min(68%, 520px);
+        padding: 11px 15px;
+        border-radius: 18px 18px 18px 5px;
+        background: var(--incoming);
+        color: #202124;
+        font-size: 14px;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+      }
+      .outgoing .bubble {
+        border-radius: 18px 18px 5px 18px;
+        background: var(--blue-bubble);
+        color: white;
+      }
+      .bubble-meta {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 5px;
+        font-size: 10px;
+        color: #777b80;
+      }
+      .outgoing .bubble-meta {
+        justify-content: flex-end;
+        color: rgba(255, 255, 255, 0.8);
+      }
+      .message-status {
+        display: inline-flex;
+        color: rgba(255, 255, 255, 0.85);
+      }
+      .message-attachment {
+        min-width: 220px;
+        max-width: 280px;
+        border-radius: 15px;
+        overflow: hidden;
+        background: #e2e8f0;
+      }
+      .attachment-art {
+        height: 116px;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, #dce8fc, #c2d4ef);
+        color: #4269a6;
+      }
+      .attachment-info {
+        background: #fff;
+        color: #303134;
+        padding: 10px 12px;
+        font-size: 11px;
+      }
+      .attachment-info b {
+        display: block;
+        font-size: 12px;
+        margin-bottom: 3px;
+      }
+      .typing-indicator {
+        display: none;
+        align-self: flex-start;
+        background: var(--incoming);
+        padding: 14px 16px;
+        border-radius: 17px 17px 17px 5px;
+        gap: 4px;
+      }
+      .typing-indicator.show {
+        display: flex;
+      }
+      .typing-indicator span {
+        width: 6px;
+        height: 6px;
+        background: #777;
+        border-radius: 50%;
+        animation: pulse 1.3s infinite ease-in-out;
+      }
+      .typing-indicator span:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .typing-indicator span:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+      @keyframes pulse {
+        0%,
+        60%,
+        100% {
+          transform: translateY(0);
+          opacity: 0.45;
+        }
+        30% {
+          transform: translateY(-5px);
+          opacity: 1;
+        }
+      }
+      .composer-wrap {
+        padding: 12px clamp(16px, 5vw, 76px) 19px;
+        background: var(--surface);
+      }
+      .composer {
+        min-height: 54px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        border: 1px solid #dfe3eb;
+        border-radius: 29px;
+        background: #f8fafd;
+        padding: 5px 7px 5px 12px;
+        transition:
+          border 0.16s,
+          box-shadow 0.16s;
+      }
+      .composer:focus-within {
+        border-color: #a8c7fa;
+        box-shadow: 0 0 0 1px #a8c7fa;
+        background: #fff;
+      }
+      .composer .icon-btn {
+        width: 38px;
+        height: 38px;
+        flex: 0 0 38px;
+      }
+      .composer-input {
+        flex: 1;
+        min-width: 0;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        padding: 0 6px;
+        font-size: 14px;
+        color: var(--text);
+      }
+      .composer-input::placeholder {
+        color: #777b80;
+      }
+      .send-btn {
+        width: 42px;
+        height: 42px;
+        border: 0;
+        border-radius: 50%;
+        background: var(--blue);
+        color: white;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        transition:
+          background 0.16s,
+          transform 0.16s;
+      }
+      .send-btn:hover {
+        background: var(--blue-strong);
+        transform: scale(1.03);
+      }
+      .send-btn:disabled {
+        background: #dfe3eb;
+        color: #9aa0a6;
+        cursor: default;
+        transform: none;
+      }
+      .composer-hint {
+        text-align: center;
+        font-size: 10px;
+        color: #898d92;
+        margin-top: 9px;
+      }
+      .chat-placeholder {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 30px;
+        color: var(--muted);
+      }
+      .placeholder-icon {
+        width: 92px;
+        height: 92px;
+        border-radius: 28px;
+        display: grid;
+        place-items: center;
+        background: #eef3fb;
+        margin-bottom: 20px;
+      }
+      .chat-placeholder h2 {
+        color: #3c4043;
+        font-size: 20px;
+        font-weight: 500;
+        margin: 0 0 8px;
+      }
+      .chat-placeholder p {
+        max-width: 330px;
+        font-size: 13px;
+        line-height: 1.6;
+        margin: 0 0 20px;
+      }
+      .placeholder-button {
+        border: 0;
+        border-radius: 20px;
+        color: #0842a0;
+        background: #e8f0fe;
+        padding: 10px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .side-panel {
+        width: 286px;
+        flex: 0 0 286px;
+        border-left: 1px solid var(--line);
+        padding: 27px 21px;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        background: var(--surface);
+        overflow-y: auto;
+      }
+      .side-panel.open {
+        display: flex;
+      }
+      .side-panel .avatar {
+        width: 82px;
+        height: 82px;
+        font-size: 25px;
+        margin: 8px 0 14px;
+      }
+      .side-name {
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .side-number {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 6px;
+      }
+      .side-actions {
+        display: flex;
+        gap: 18px;
+        margin: 22px 0 25px;
+      }
+      .side-action {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 7px;
+        color: var(--blue);
+        font-size: 10px;
+      }
+      .side-action .icon-btn {
+        background: #eef3fb;
+        color: #174ea6;
+      }
+      .side-section {
+        width: 100%;
+        border-top: 1px solid var(--line);
+        padding: 17px 0;
+      }
+      .side-section-title {
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 12px;
+      }
+      .side-setting {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #4e5155;
+        font-size: 12px;
+        padding: 8px 0;
+      }
+      .toggle {
+        width: 34px;
+        height: 19px;
+        border-radius: 20px;
+        background: #dadce0;
+        position: relative;
+      }
+      .toggle:after {
+        content: "";
+        position: absolute;
+        width: 15px;
+        height: 15px;
+        left: 2px;
+        top: 2px;
+        background: white;
+        border-radius: 50%;
+        box-shadow: 0 1px 2px #aaa;
+      }
+      .toggle.on {
+        background: #a8c7fa;
+      }
+      .toggle.on:after {
+        left: 17px;
+        background: #0b57d0;
+      }
+      .toast {
+        position: fixed;
+        bottom: 26px;
+        left: 50%;
+        transform: translate(-50%, 20px);
+        opacity: 0;
+        pointer-events: none;
+        background: #303134;
+        color: white;
+        padding: 11px 17px;
+        border-radius: 8px;
+        font-size: 12px;
+        box-shadow: var(--shadow);
+        transition: all 0.22s;
+        z-index: 30;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(32, 33, 36, 0.32);
+        z-index: 20;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .modal-backdrop.show {
+        display: flex;
+      }
+      .modal {
+        width: min(440px, 100%);
+        background: var(--surface);
+        border-radius: 24px;
+        padding: 25px;
+        box-shadow: 0 8px 28px rgba(32, 33, 36, 0.2);
+      }
+      .modal h3 {
+        margin: 0 0 8px;
+        font-size: 20px;
+        font-weight: 500;
+      }
+      .modal p {
+        margin: 0 0 20px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+      .modal-input {
+        width: 100%;
+        height: 48px;
+        outline: 0;
+        border: 1px solid #c7cbd1;
+        border-radius: 8px;
+        padding: 0 13px;
+        font-size: 14px;
+      }
+      .modal-input:focus {
+        border: 2px solid var(--blue);
+        padding-left: 12px;
+      }
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 24px;
+      }
+      .text-button {
+        border: 0;
+        padding: 10px 14px;
+        border-radius: 20px;
+        color: var(--blue);
+        background: transparent;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .text-button.primary {
+        background: #e8f0fe;
+      }
+      .emoji-popover,
+      .attach-popover {
+        position: absolute;
+        bottom: 78px;
+        left: 0;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        box-shadow: 0 4px 18px rgba(60, 64, 67, 0.18);
+        border-radius: 14px;
+        padding: 10px;
+        display: none;
+        z-index: 10;
+      }
+      .emoji-popover.show,
+      .attach-popover.show {
+        display: grid;
+      }
+      .emoji-popover {
+        grid-template-columns: repeat(6, 34px);
+        gap: 3px;
+      }
+      .emoji-popover button {
+        border: 0;
+        background: transparent;
+        border-radius: 8px;
+        font-size: 20px;
+        width: 34px;
+        height: 34px;
+        cursor: pointer;
+      }
+      .emoji-popover button:hover,
+      .attach-popover button:hover {
+        background: var(--surface-hover);
+      }
+      .attach-popover {
+        left: 42px;
+        width: 190px;
+        gap: 2px;
+        padding: 7px;
+      }
+      .attach-popover button {
+        border: 0;
+        background: transparent;
+        border-radius: 8px;
+        text-align: left;
+        padding: 10px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .composer-area {
+        position: relative;
+      }
+      .dark {
+        --bg: #17191c;
+        --surface: #202124;
+        --surface-2: #292b2f;
+        --surface-3: #34373c;
+        --surface-hover: #2a2d32;
+        --text: #e8eaed;
+        --muted: #bdc1c6;
+        --subtle: #9aa0a6;
+        --line: #383b40;
+        --incoming: #30343a;
+        --blue-bubble: #0b57d0;
+      }
+      .dark .brand-name,
+      .dark .chat-placeholder h2 {
+        color: #e8eaed;
+      }
+      .dark .bubble {
+        color: #e8eaed;
+      }
+      .dark .outgoing .bubble {
+        color: white;
+      }
+      .dark .conversation.active {
+        background: #26364d;
+      }
+      .dark .filter-chip {
+        background: #202124;
+        border-color: #484b50;
+        color: #e8eaed;
+      }
+      .dark .filter-chip.active {
+        background: #26364d;
+        color: #a8c7fa;
+        border-color: transparent;
+      }
+      .dark .search-wrap {
+        background: #292d32;
+      }
+      .dark .search-wrap input {
+        color: #e8eaed;
+      }
+      .dark .composer {
+        background: #292d32;
+        border-color: #484b50;
+      }
+      .dark .composer:focus-within {
+        background: #202124;
+      }
+      .dark .profile {
+        border-color: #17191c;
+      }
+      .dark .date-divider span {
+        background: #292d32;
+      }
+      .dark .sidebar-footer {
+        border-color: #383b40;
+      }
+      .dark .side-action .icon-btn {
+        background: #303a49;
+      }
+      .dark .attachment-info {
+        background: #292b2f;
+        color: #e8eaed;
+      }
+      .dark .modal-input {
+        background: #202124;
+        color: #e8eaed;
+        border-color: #55595f;
+      }
+      .dark .typing-indicator {
+        background: #30343a;
+      }
+      .dark .typing-indicator span {
+        background: #9aa0a6;
+      }
+      .dark .status-bar {
+        color: #e8eaed;
+      }
+      .dark .battery {
+        border-color: #e8eaed;
+      }
+      .dark .battery::after {
+        background: #e8eaed;
+      }
+      .dark .battery-fill {
+        background: #e8eaed;
+      }
+      .dark .gesture-bar {
+        background: #e8eaed;
+      }
+
+      @media (max-width: 980px) {
+        .topbar {
+          padding: 0 18px;
+          gap: 16px;
+        }
+        .brand {
+          min-width: 220px;
+        }
+        .sidebar {
+          width: 330px;
+          flex-basis: 330px;
+        }
+        .side-panel {
+          display: none !important;
+        }
+        .chat-body {
+          padding-left: 32px;
+          padding-right: 32px;
+        }
+      }
+      @media (max-width: 700px) and (min-width: 421px) {
+        .pixel-phone {
+          transform: scale(0.92);
+        }
+      }
+      @media (max-width: 420px) {
+        .pixel-phone {
+          transform: scale(0.8);
+        }
+      }
+      @media (max-width: 380px) {
+        .pixel-phone {
+          transform: scale(0.7);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      style="position: absolute; width: 0; height: 0; overflow: hidden"
+      aria-hidden="true"
+    >
+      <symbol id="i-search" viewBox="0 0 24 24">
+        <circle
+          cx="10.8"
+          cy="10.8"
+          r="6.8"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+        <path
+          d="m16 16 5 5"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-help" viewBox="0 0 24 24">
+        <circle
+          cx="12"
+          cy="12"
+          r="9"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+        <path
+          d="M9.6 9a2.5 2.5 0 1 1 4.3 1.7c-1.2 1.1-1.9 1.4-1.9 3"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+        />
+        <circle cx="12" cy="17.2" r=".9" fill="currentColor" />
+      </symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24">
+        <path
+          d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+        <path
+          d="m19.3 13.4 1.1.8-1.5 2.6-1.3-.5a7.8 7.8 0 0 1-1.6.9l-.2 1.4h-3l-.3-1.4a7.8 7.8 0 0 1-1.7-.9l-1.3.5L8 14.2l1.1-.8a7.5 7.5 0 0 1 0-1.9L8 10.7l1.5-2.6 1.3.5a7.8 7.8 0 0 1 1.7-.9l.3-1.4h3l.2 1.4a7.8 7.8 0 0 1 1.6.9l1.3-.5 1.5 2.6-1.1.8a7.5 7.5 0 0 1 0 1.9Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.35"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-more" viewBox="0 0 24 24">
+        <circle cx="5" cy="12" r="1.6" fill="currentColor" />
+        <circle cx="12" cy="12" r="1.6" fill="currentColor" />
+        <circle cx="19" cy="12" r="1.6" fill="currentColor" />
+      </symbol>
+      <symbol id="i-add" viewBox="0 0 24 24">
+        <path
+          d="M12 5v14M5 12h14"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-video" viewBox="0 0 24 24">
+        <rect
+          x="3"
+          y="6"
+          width="12"
+          height="12"
+          rx="2"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+        <path
+          d="m15 10 6-3v10l-6-3"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-phone" viewBox="0 0 24 24">
+        <path
+          d="M7 3.5 4.5 5c-.8.5-.7 2.5.2 4.5 1.7 3.9 5.9 8.1 9.8 9.8 2 .9 4 .9 4.5.2l1.5-2.5-4.1-3-2 2c-2.2-1-4.4-3.2-5.4-5.4l2-2-3-4.1Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-info" viewBox="0 0 24 24">
+        <circle
+          cx="12"
+          cy="12"
+          r="9"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+        <path
+          d="M12 11v5M12 7.5v.2"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-back" viewBox="0 0 24 24">
+        <path
+          d="m15 5-7 7 7 7"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.9"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-send" viewBox="0 0 24 24">
+        <path d="m3 20 18-8L3 4l2 7 9 1-9 1-2 7Z" fill="currentColor" />
+      </symbol>
+      <symbol id="i-emoji" viewBox="0 0 24 24">
+        <circle
+          cx="12"
+          cy="12"
+          r="9"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+        <path
+          d="M8 14s1.4 2.3 4 2.3 4-2.3 4-2.3M9 9.5h.01M15 9.5h.01"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-attach" viewBox="0 0 24 24">
+        <path
+          d="m8.5 12.5 6.8-6.8a3.2 3.2 0 0 1 4.5 4.5l-8.6 8.6a5 5 0 0 1-7.1-7.1l8.2-8.2"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24">
+        <rect
+          x="5"
+          y="10"
+          width="14"
+          height="11"
+          rx="2"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+        />
+        <path
+          d="M8 10V7a4 4 0 0 1 8 0v3"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+        />
+        <circle cx="12" cy="15" r="1" fill="currentColor" />
+      </symbol>
+      <symbol id="i-photo" viewBox="0 0 24 24">
+        <rect
+          x="3"
+          y="4"
+          width="18"
+          height="16"
+          rx="2"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+        />
+        <circle
+          cx="8.5"
+          cy="9"
+          r="1.5"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.4"
+        />
+        <path
+          d="m4 17 5-5 3 3 3-4 5 6"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linejoin="round"
+        />
+      </symbol>
+      <symbol id="i-file" viewBox="0 0 24 24">
+        <path
+          d="M6 3.5h8l4 4V20H6V3.5Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+        />
+        <path
+          d="M14 3.5V8h4M9 12h6M9 15.5h6"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-pin" viewBox="0 0 24 24">
+        <path
+          d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+        />
+        <circle
+          cx="12"
+          cy="9"
+          r="2.3"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+        />
+      </symbol>
+      <symbol id="i-messages" viewBox="0 0 48 48">
+        <path
+          d="M8 9.5A5.5 5.5 0 0 1 13.5 4h21A5.5 5.5 0 0 1 40 9.5v15a5.5 5.5 0 0 1-5.5 5.5H23l-9 8v-8h-.5A5.5 5.5 0 0 1 8 24.5v-15Z"
+          fill="#1a73e8"
+        />
+        <path
+          d="M15 14h18M15 20h12"
+          stroke="white"
+          stroke-width="3"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-desktop" viewBox="0 0 24 24">
+        <rect
+          x="2"
+          y="3"
+          width="20"
+          height="14"
+          rx="2"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+        <path
+          d="M8 21h8M12 17v4"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-mobile" viewBox="0 0 24 24">
+        <rect
+          x="6"
+          y="2"
+          width="12"
+          height="20"
+          rx="2.5"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+        <path
+          d="M11 18h2"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </symbol>
+      <symbol id="i-signal" viewBox="0 0 24 24">
+        <path
+          d="M3 20h2v-4H3zm4 0h2v-8H7zm4 0h2V8h-2zm4 0h2V4h-2z"
+          fill="currentColor"
+        />
+      </symbol>
+      <symbol id="i-wifi" viewBox="0 0 24 24">
+        <path
+          d="M12 3C8.5 3 5.2 4.3 2.6 6.6l1.4 1.4C6.3 6.1 9.1 5 12 5s5.7 1.1 8 3l1.4-1.4C18.8 4.3 15.5 3 12 3zm0 4c-2.3 0-4.5.8-6.2 2.2l1.4 1.4C8.7 9.5 10.3 9 12 9s3.3.5 4.8 1.6l1.4-1.4C16.5 7.8 14.3 7 12 7zm0 4c-1.2 0-2.3.4-3.2 1.1l1.4 1.4c.5-.3 1.1-.5 1.8-.5s1.3.2 1.8.5l1.4-1.4C14.3 11.4 13.2 11 12 11zm0 4-2 2 2 2 2-2-2-2z"
+          fill="currentColor"
+        />
+      </symbol>
+    </svg>
+
+    <!-- View Switcher -->
+    <div class="view-switcher" id="viewSwitcher">
+      <button class="active" data-view="desktop">
+        <svg><use href="#i-desktop"></use></svg>
+        Desktop
+      </button>
+      <button data-view="mobile">
+        <svg><use href="#i-mobile"></use></svg>
+        Mobile
+      </button>
+    </div>
+
+    <!-- Desktop App -->
+    <div class="app" id="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark">
+            <svg width="37" height="37" viewBox="0 0 48 48">
+              <use href="#i-messages"></use>
+            </svg>
+          </div>
+          <div class="brand-name">Messages</div>
+        </div>
+        <label class="search-wrap" aria-label="Cari percakapan">
+          <svg width="21" height="21"><use href="#i-search"></use></svg>
+          <input
+            id="searchInput"
+            type="search"
+            placeholder="Telusuri percakapan"
+            autocomplete="off"
+          />
+        </label>
+        <div class="top-actions">
+          <button
+            class="icon-btn"
+            title="Bantuan"
+            aria-label="Bantuan"
+            id="helpBtn"
+          >
+            <svg width="21" height="21"><use href="#i-help"></use></svg>
+          </button>
+          <button
+            class="icon-btn"
+            title="Setelan"
+            aria-label="Setelan"
+            id="themeBtn"
+          >
+            <svg width="21" height="21"><use href="#i-settings"></use></svg>
+          </button>
+          <div class="profile" title="Akun Google">A</div>
+        </div>
+      </header>
+
+      <main class="main">
+        <div class="workspace" id="workspace">
+          <aside class="sidebar">
+            <div class="sidebar-head">
+              <div class="sidebar-title-row">
+                <div class="sidebar-title">Pesan</div>
+                <button class="new-message" id="newMessageBtn">
+                  <svg width="18" height="18"><use href="#i-add"></use></svg>
+                  Pesan baru
+                </button>
+              </div>
+              <div class="filter-row" id="filterRow">
+                <button class="filter-chip active" data-filter="all">
+                  Semua
+                </button>
+                <button class="filter-chip" data-filter="unread">
+                  Belum dibaca
+                </button>
+                <button class="filter-chip" data-filter="personal">
+                  Pribadi
+                </button>
+              </div>
+            </div>
+            <div class="conversation-list" id="conversationList"></div>
+            <div class="sidebar-footer">
+              <span>Messages untuk web</span>
+              <a class="footer-link" href="#" id="privacyLink"
+                >Privasi &amp; persyaratan</a
+              >
+            </div>
+          </aside>
+
+          <section class="chat-panel" id="chatPanel">
+            <div class="chat-placeholder" id="placeholder">
+              <div class="placeholder-icon">
+                <svg width="58" height="58" viewBox="0 0 48 48">
+                  <use href="#i-messages"></use>
+                </svg>
+              </div>
+              <h2>Kirim pesan dari komputer</h2>
+              <p>
+                Pilih percakapan untuk mulai berkirim pesan, atau buat pesan
+                baru untuk memulai chat.
+              </p>
+              <button class="placeholder-button" id="placeholderNew">
+                Mulai percakapan
+              </button>
+            </div>
+            <div
+              id="activeChat"
+              style="
+                display: none;
+                min-height: 0;
+                flex: 1;
+                flex-direction: column;
+              "
+            >
+              <div class="chat-header">
+                <button
+                  class="icon-btn back-btn"
+                  id="backBtn"
+                  aria-label="Kembali"
+                >
+                  <svg width="22" height="22"><use href="#i-back"></use></svg>
+                </button>
+                <div class="chat-person" id="chatPerson"></div>
+                <div class="chat-header-actions">
+                  <button
+                    class="icon-btn"
+                    title="Panggilan video"
+                    id="videoBtn"
+                  >
+                    <svg width="20" height="20">
+                      <use href="#i-video"></use>
+                    </svg>
+                  </button>
+                  <button
+                    class="icon-btn"
+                    title="Panggilan suara"
+                    id="phoneBtn"
+                  >
+                    <svg width="20" height="20">
+                      <use href="#i-phone"></use>
+                    </svg>
+                  </button>
+                  <button
+                    class="icon-btn hide-mobile"
+                    title="Detail"
+                    id="detailBtn"
+                  >
+                    <svg width="20" height="20"><use href="#i-info"></use></svg>
+                  </button>
+                  <button class="icon-btn" title="Lainnya" id="moreBtn">
+                    <svg width="20" height="20"><use href="#i-more"></use></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="chat-body" id="chatBody"></div>
+              <div class="composer-wrap">
+                <div class="composer-area">
+                  <div class="emoji-popover" id="emojiPopover">
+                    <button>😀</button><button>😂</button><button>🥰</button
+                    ><button>😍</button><button>😉</button><button>😊</button>
+                    <button>👍</button><button>❤️</button><button>🎉</button
+                    ><button>🙏</button><button>🔥</button><button>🙌</button>
+                  </div>
+                  <div class="attach-popover" id="attachPopover">
+                    <button data-attach="Foto">
+                      <svg width="18" height="18">
+                        <use href="#i-photo"></use>
+                      </svg>
+                      Foto dan video
+                    </button>
+                    <button data-attach="File">
+                      <svg width="18" height="18">
+                        <use href="#i-file"></use>
+                      </svg>
+                      File
+                    </button>
+                    <button data-attach="Lokasi">
+                      <svg width="18" height="18">
+                        <use href="#i-pin"></use>
+                      </svg>
+                      Lokasi
+                    </button>
+                  </div>
+                  <form class="composer" id="messageForm">
+                    <button
+                      type="button"
+                      class="icon-btn"
+                      id="attachBtn"
+                      aria-label="Lampirkan"
+                    >
+                      <svg width="20" height="20">
+                        <use href="#i-attach"></use>
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-btn hide-mobile"
+                      id="emojiBtn"
+                      aria-label="Emoji"
+                    >
+                      <svg width="20" height="20">
+                        <use href="#i-emoji"></use>
+                      </svg>
+                    </button>
+                    <input
+                      class="composer-input"
+                      id="messageInput"
+                      placeholder="Pesan teks"
+                      autocomplete="off"
+                    />
+                    <button
+                      class="send-btn"
+                      id="sendBtn"
+                      type="submit"
+                      aria-label="Kirim"
+                      disabled
+                    >
+                      <svg width="19" height="19">
+                        <use href="#i-send"></use>
+                      </svg>
+                    </button>
+                  </form>
+                </div>
+                <div class="composer-hint">
+                  SMS / RCS · Pesan ini hanya simulasi tampilan
+                </div>
+              </div>
+            </div>
+          </section>
+          <aside class="side-panel" id="sidePanel"></aside>
+        </div>
+      </main>
+    </div>
+
+    <!-- Mobile Preview (Pixel Phone) -->
+    <div class="mobile-preview">
+      <div class="pixel-phone">
+        <div class="pixel-screen">
+          <div class="status-bar">
+            <span class="time" id="mobileTime">9:41</span>
+            <div class="status-icons">
+              <svg><use href="#i-signal"></use></svg>
+              <svg><use href="#i-wifi"></use></svg>
+              <div class="battery">
+                <div class="battery-fill"></div>
+              </div>
+            </div>
+          </div>
+          <div class="mobile-app" id="mobileApp">
+            <aside class="sidebar">
+              <div class="sidebar-head">
+                <div class="sidebar-title-row">
+                  <div class="sidebar-title">Pesan</div>
+                  <button class="new-message" id="mobileNewBtn">
+                    <svg width="16" height="16"><use href="#i-add"></use></svg>
+                    Pesan baru
+                  </button>
+                </div>
+                <div class="filter-row" id="mobileFilterRow">
+                  <button class="filter-chip active" data-filter="all">
+                    Semua
+                  </button>
+                  <button class="filter-chip" data-filter="unread">
+                    Belum dibaca
+                  </button>
+                  <button class="filter-chip" data-filter="personal">
+                    Pribadi
+                  </button>
+                </div>
+              </div>
+              <div class="conversation-list" id="mobileConversationList"></div>
+            </aside>
+            <section class="chat-panel" id="mobileChatPanel">
+              <div class="chat-placeholder" id="mobilePlaceholder">
+                <div class="placeholder-icon">
+                  <svg width="48" height="48" viewBox="0 0 48 48">
+                    <use href="#i-messages"></use>
+                  </svg>
+                </div>
+                <h2>Pilih percakapan</h2>
+                <p>Pilih chat untuk mulai berkirim pesan.</p>
+              </div>
+              <div
+                id="mobileActiveChat"
+                style="
+                  display: none;
+                  min-height: 0;
+                  flex: 1;
+                  flex-direction: column;
+                "
+              >
+                <div class="chat-header">
+                  <button
+                    class="icon-btn back-btn"
+                    id="mobileBackBtn"
+                    aria-label="Kembali"
+                  >
+                    <svg width="22" height="22"><use href="#i-back"></use></svg>
+                  </button>
+                  <div class="chat-person" id="mobileChatPerson"></div>
+                  <div class="chat-header-actions">
+                    <button
+                      class="icon-btn"
+                      title="Panggilan video"
+                      id="mobileVideoBtn"
+                    >
+                      <svg width="20" height="20">
+                        <use href="#i-video"></use>
+                      </svg>
+                    </button>
+                    <button
+                      class="icon-btn"
+                      title="Panggilan suara"
+                      id="mobilePhoneBtn"
+                    >
+                      <svg width="20" height="20">
+                        <use href="#i-phone"></use>
+                      </svg>
+                    </button>
+                    <button class="icon-btn" title="Lainnya" id="mobileMoreBtn">
+                      <svg width="20" height="20">
+                        <use href="#i-more"></use>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="chat-body" id="mobileChatBody"></div>
+                <div class="composer-wrap">
+                  <div class="composer-area">
+                    <div class="emoji-popover" id="mobileEmojiPopover">
+                      <button>😀</button><button>😂</button><button>🥰</button
+                      ><button>😍</button><button>😉</button><button>😊</button>
+                      <button>👍</button><button>❤️</button><button>🎉</button
+                      ><button>🙏</button><button>🔥</button><button>🙌</button>
+                    </div>
+                    <form class="composer" id="mobileMessageForm">
+                      <button
+                        type="button"
+                        class="icon-btn"
+                        id="mobileAttachBtn"
+                        aria-label="Lampirkan"
+                      >
+                        <svg width="20" height="20">
+                          <use href="#i-attach"></use>
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        class="icon-btn"
+                        id="mobileEmojiBtn"
+                        aria-label="Emoji"
+                      >
+                        <svg width="20" height="20">
+                          <use href="#i-emoji"></use>
+                        </svg>
+                      </button>
+                      <input
+                        class="composer-input"
+                        id="mobileMessageInput"
+                        placeholder="Pesan teks"
+                        autocomplete="off"
+                      />
+                      <button
+                        class="send-btn"
+                        id="mobileSendBtn"
+                        type="submit"
+                        aria-label="Kirim"
+                        disabled
+                      >
+                        <svg width="19" height="19">
+                          <use href="#i-send"></use>
+                        </svg>
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+          <div class="gesture-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <div class="modal-backdrop" id="newChatModal">
+      <div
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modalTitle"
+      >
+        <h3 id="modalTitle">Pesan baru</h3>
+        <p>Masukkan nama kontak untuk memulai percakapan demo.</p>
+        <input
+          class="modal-input"
+          id="contactInput"
+          placeholder="Nama atau nomor telepon"
+          autocomplete="off"
+        />
+        <div class="modal-actions">
+          <button class="text-button" id="cancelModal">Batal</button>
+          <button class="text-button primary" id="startChatBtn">Mulai</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const conversations = [
+        {
+          id: 1,
+          name: "Nadia Putri",
+          initials: "NP",
+          color: "#f9d9de",
+          textColor: "#8c2940",
+          phone: "+62 812-3456-7890",
+          time: "19.06",
+          preview: "Oke, nanti aku kabari lagi ya!",
+          unread: true,
+          category: "personal",
+          online: true,
+          messages: [
+            {
+              from: "them",
+              text: "Hai! Jadi besok kita jadi ketemu?",
+              time: "18.42",
+            },
+            {
+              from: "me",
+              text: "Jadi dong. Kita ketemu seperti biasa jam 10?",
+              time: "18.45",
+            },
+            {
+              from: "them",
+              text: "Boleh banget. Aku sudah catat di kalender.",
+              time: "18.48",
+            },
+            {
+              from: "them",
+              text: "Tempatnya di kafe dekat taman, kan?",
+              time: "18.49",
+            },
+            {
+              from: "me",
+              text: "Iya, betul. Aku kirim lokasinya nanti malam.",
+              time: "18.53",
+            },
+            {
+              from: "them",
+              text: "Oke, nanti aku kabari lagi ya!",
+              time: "19.06",
+            },
+          ],
+        },
+        {
+          id: 2,
+          name: "Raka Pratama",
+          initials: "RP",
+          color: "#dce8fc",
+          textColor: "#174ea6",
+          phone: "+62 813-2200-1188",
+          time: "18.32",
+          preview: "Sip, makasih banyak!",
+          unread: false,
+          category: "personal",
+          messages: [
+            {
+              from: "them",
+              text: "Bro, file yang kemarin sudah aku cek.",
+              time: "18.20",
+            },
+            { from: "me", text: "Ada yang perlu direvisi?", time: "18.25" },
+            {
+              from: "them",
+              text: "Sejauh ini sudah oke. Tinggal bagian terakhir sedikit.",
+              time: "18.29",
+            },
+            { from: "them", text: "Sip, makasih banyak!", time: "18.32" },
+          ],
+        },
+        {
+          id: 3,
+          name: "Mama",
+          initials: "M",
+          color: "#fce8cf",
+          textColor: "#8d4b12",
+          phone: "+62 856-9000-1100",
+          time: "17.51",
+          preview: "Jangan lupa makan ya nak ❤️",
+          unread: true,
+          category: "personal",
+          online: true,
+          messages: [
+            { from: "them", text: "Kamu sudah sampai rumah?", time: "17.42" },
+            { from: "me", text: "Sudah Ma, baru saja sampai.", time: "17.47" },
+            {
+              from: "them",
+              text: "Jangan lupa makan ya nak ❤️",
+              time: "17.51",
+            },
+          ],
+        },
+        {
+          id: 4,
+          name: "Tim Project",
+          initials: "TP",
+          color: "#e4def8",
+          textColor: "#59418d",
+          phone: "Grup · 5 anggota",
+          time: "16.24",
+          preview: "Dimas: Meeting dipindah ke jam 3.",
+          unread: false,
+          category: "personal",
+          group: true,
+          messages: [
+            {
+              from: "them",
+              sender: "Dimas",
+              text: "Teman-teman, meeting dipindah ke jam 3 sore ya.",
+              time: "16.18",
+            },
+            { from: "me", text: "Noted, terima kasih infonya.", time: "16.20" },
+            {
+              from: "them",
+              sender: "Sinta",
+              text: "Siap, aku sesuaikan jadwal.",
+              time: "16.24",
+            },
+          ],
+        },
+        {
+          id: 5,
+          name: "Budi Santoso",
+          initials: "BS",
+          color: "#d7eee6",
+          textColor: "#176b50",
+          phone: "+62 878-1122-3344",
+          time: "Kemarin",
+          preview: "Foto-fotonya bagus banget!",
+          unread: false,
+          category: "personal",
+          messages: [
+            {
+              from: "them",
+              text: "Makasih sudah kirim fotonya.",
+              time: "Kemarin",
+            },
+            {
+              from: "me",
+              text: "Sama-sama! Pilih yang paling bagus ya.",
+              time: "Kemarin",
+            },
+            {
+              from: "them",
+              text: "Foto-fotonya bagus banget!",
+              time: "Kemarin",
+            },
+          ],
+        },
+        {
+          id: 6,
+          name: "Dina Maharani",
+          initials: "DM",
+          color: "#f4e2c7",
+          textColor: "#82571f",
+          phone: "+62 857-4400-9988",
+          time: "Kemarin",
+          preview: "Besok aku transfer ya.",
+          unread: false,
+          category: "personal",
+          messages: [
+            {
+              from: "me",
+              text: "Untuk patungan kemarin totalnya 85 ribu ya.",
+              time: "Kemarin",
+            },
+            {
+              from: "them",
+              text: "Oke, besok aku transfer ya.",
+              time: "Kemarin",
+            },
+          ],
+        },
+        {
+          id: 7,
+          name: "Kurir Paket",
+          initials: "KP",
+          color: "#e1e8ef",
+          textColor: "#465a70",
+          phone: "Notifikasi",
+          time: "Sen",
+          preview: "Paket Anda sedang dalam perjalanan.",
+          unread: false,
+          category: "other",
+          messages: [
+            {
+              from: "them",
+              text: "Paket Anda sedang dalam perjalanan dan akan segera tiba.",
+              time: "Senin",
+            },
+            {
+              from: "them",
+              text: "Terima kasih telah menggunakan layanan kami.",
+              time: "Senin",
+            },
+          ],
+        },
+      ];
+      let activeId = null;
+      let mobileActiveId = null;
+      let currentFilter = "all";
+      let mobileCurrentFilter = "all";
+      let nextId = 8;
+      const $ = (id) => document.getElementById(id);
+      const esc = (str = "") =>
+        String(str).replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+
+      function avatarMarkup(chat, small = false) {
+        return `<div class="avatar ${small ? "small" : ""}" style="background:${chat.color};color:${chat.textColor}">${esc(chat.initials)}${chat.online ? '<i class="online"></i>' : ""}</div>`;
+      }
+
+      function renderConversations(isMobile = false) {
+        const searchId = isMobile ? "mobileSearchInput" : "searchInput";
+        const listId = isMobile ? "mobileConversationList" : "conversationList";
+        const filter = isMobile ? mobileCurrentFilter : currentFilter;
+        const activeChat = isMobile ? mobileActiveId : activeId;
+        const searchEl = $(searchId);
+        const query = searchEl ? searchEl.value.trim().toLowerCase() : "";
+
+        let list = conversations.filter((c) => {
+          const matchesQuery =
+            !query ||
+            c.name.toLowerCase().includes(query) ||
+            c.preview.toLowerCase().includes(query) ||
+            (c.phone || "").toLowerCase().includes(query);
+          const matchesFilter =
+            filter === "all" ||
+            (filter === "unread"
+              ? c.unread
+              : filter === "personal"
+                ? c.category === "personal"
+                : true);
+          return matchesQuery && matchesFilter;
+        });
+
+        $(listId).innerHTML = list.length
+          ? list
+              .map(
+                (c) => `
+        <div class="conversation ${activeChat === c.id ? "active" : ""}" data-id="${c.id}" tabindex="0" role="button" aria-label="Buka percakapan ${esc(c.name)}">
+          ${avatarMarkup(c)}
+          <div class="conversation-main">
+            <div class="conversation-top"><span class="conversation-name">${esc(c.name)}</span><span class="conversation-time">${esc(c.time)}</span></div>
+            <div class="conversation-bottom"><span class="conversation-preview">${esc(c.preview)}</span>${c.unread ? '<i class="unread-dot"></i>' : ""}</div>
+          </div>
+        </div>`,
+              )
+              .join("")
+          : `<div class="list-empty">Tidak ada percakapan yang cocok.<br/>Coba kata kunci lain.</div>`;
+
+        $(listId)
+          .querySelectorAll(".conversation")
+          .forEach((el) => {
+            el.addEventListener("click", () => {
+              if (isMobile) {
+                openChat(Number(el.dataset.id), true);
+              } else {
+                openChat(Number(el.dataset.id), false);
+              }
+            });
+            el.addEventListener("keydown", (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                if (isMobile) openChat(Number(el.dataset.id), true);
+                else openChat(Number(el.dataset.id), false);
+              }
+            });
+          });
+      }
+
+      function openChat(id, isMobile) {
+        const chat = conversations.find((c) => c.id === id);
+        if (!chat) return;
+
+        if (isMobile) {
+          mobileActiveId = id;
+          chat.unread = false;
+          $("mobilePlaceholder").style.display = "none";
+          $("mobileActiveChat").style.display = "flex";
+          $("mobileApp").classList.add("chat-open");
+          $("mobileChatPerson").innerHTML =
+            `${avatarMarkup(chat, true)}<div class="chat-person-copy"><div class="chat-person-name">${esc(chat.name)}</div><div class="chat-person-sub">${esc(chat.group ? "Grup" : chat.phone)}</div></div>`;
+          renderMessages(true);
+          renderConversations(true);
+          $("mobileMessageInput").focus({ preventScroll: true });
+        } else {
+          activeId = id;
+          chat.unread = false;
+          $("placeholder").style.display = "none";
+          $("activeChat").style.display = "flex";
+          $("workspace").classList.add("chat-open");
+          $("chatPerson").innerHTML =
+            `${avatarMarkup(chat, true)}<div class="chat-person-copy"><div class="chat-person-name">${esc(chat.name)}</div><div class="chat-person-sub">${esc(chat.group ? "Grup" : chat.phone)}</div></div>`;
+          renderMessages(false);
+          renderConversations(false);
+          renderDetails();
+          $("messageInput").focus({ preventScroll: true });
+        }
+      }
+
+      function renderMessages(isMobile) {
+        const activeChatId = isMobile ? mobileActiveId : activeId;
+        const chat = conversations.find((c) => c.id === activeChatId);
+        if (!chat) return;
+        const bodyId = isMobile ? "mobileChatBody" : "chatBody";
+        const body = $(bodyId);
+        body.innerHTML =
+          `<div class="date-divider"><span>Hari ini</span></div><div class="encryption-note"><svg width="12" height="12"><use href="#i-lock"></use></svg> Pesan dan panggilan dilindungi dengan enkripsi. <a href="#" style="color:inherit">Pelajari lebih lanjut</a></div>` +
+          chat.messages
+            .map((m) => {
+              const outgoing = m.from === "me";
+              const sender =
+                m.sender && !outgoing
+                  ? `<div style="font-size:10px;color:#74777d;margin:0 0 4px 3px">${esc(m.sender)}</div>`
+                  : "";
+              return `<div class="message-row ${outgoing ? "outgoing" : ""}"><div>${sender}<div class="bubble">${esc(m.text).replace(/\n/g, "<br>")}<div class="bubble-meta">${esc(m.time)} ${outgoing ? '<span class="message-status">✓✓</span>' : ""}</div></div></div></div>`;
+            })
+            .join("");
+        body.scrollTop = body.scrollHeight;
+      }
+
+      function renderDetails() {
+        const chat = conversations.find((c) => c.id === activeId);
+        if (!chat) return;
+        $("sidePanel").innerHTML =
+          `${avatarMarkup(chat)}<div class="side-name">${esc(chat.name)}</div><div class="side-number">${esc(chat.phone)}</div>
+        <div class="side-actions"><div class="side-action"><button class="icon-btn"><svg width="19" height="19"><use href="#i-video"></use></svg></button>Video</div><div class="side-action"><button class="icon-btn"><svg width="19" height="19"><use href="#i-phone"></use></svg></button>Telepon</div><div class="side-action"><button class="icon-btn"><svg width="19" height="19"><use href="#i-search"></use></svg></button>Cari</div></div>
+        <div class="side-section"><div class="side-section-title">Info kontak</div><div class="side-setting"><span>${esc(chat.phone)}</span><span>⋮</span></div></div>
+        <div class="side-section"><div class="side-section-title">Opsi</div><div class="side-setting"><span>Notifikasi</span><i class="toggle on"></i></div><div class="side-setting"><span>Sematkan percakapan</span><i class="toggle"></i></div><div class="side-setting"><span>Blokir &amp; laporkan</span><span>›</span></div></div>`;
+      }
+
+      function sendMessage(text, isMobile) {
+        const activeChatId = isMobile ? mobileActiveId : activeId;
+        const chat = conversations.find((c) => c.id === activeChatId);
+        if (!chat || !text.trim()) return;
+        const now = new Date();
+        const time = now.toLocaleTimeString("id-ID", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        });
+        chat.messages.push({ from: "me", text: text.trim(), time });
+        chat.preview = text.trim();
+        chat.time = time;
+        chat.unread = false;
+
+        if (isMobile) {
+          $("mobileMessageInput").value = "";
+          $("mobileSendBtn").disabled = true;
+          closePopovers(true);
+          renderMessages(true);
+          renderConversations(true);
+
+          // Simulate typing and reply
+          setTimeout(() => {
+            const typingEl = document.createElement("div");
+            typingEl.className = "typing-indicator show";
+            typingEl.innerHTML = "<span></span><span></span><span></span>";
+            $("mobileChatBody").appendChild(typingEl);
+            $("mobileChatBody").scrollTop = $("mobileChatBody").scrollHeight;
+
+            setTimeout(() => {
+              typingEl.remove();
+              const replies = [
+                "Oke, siap!",
+                "Wah, menarik!",
+                "Baik, aku catat ya.",
+                "Noted!",
+                "Sip, terima kasih!",
+              ];
+              const reply = replies[Math.floor(Math.random() * replies.length)];
+              chat.messages.push({ from: "them", text: reply, time });
+              chat.preview = reply;
+              renderMessages(true);
+              renderConversations(true);
+            }, 1800);
+          }, 600);
+        } else {
+          $("messageInput").value = "";
+          $("sendBtn").disabled = true;
+          closePopovers(false);
+          renderMessages(false);
+          renderConversations(false);
+
+          // Simulate typing and reply
+          setTimeout(() => {
+            const typingEl = document.createElement("div");
+            typingEl.className = "typing-indicator show";
+            typingEl.innerHTML = "<span></span><span></span><span></span>";
+            $("chatBody").appendChild(typingEl);
+            $("chatBody").scrollTop = $("chatBody").scrollHeight;
+
+            setTimeout(() => {
+              typingEl.remove();
+              const replies = [
+                "Oke, siap!",
+                "Wah, menarik!",
+                "Baik, aku catat ya.",
+                "Noted!",
+                "Sip, terima kasih!",
+              ];
+              const reply = replies[Math.floor(Math.random() * replies.length)];
+              chat.messages.push({ from: "them", text: reply, time });
+              chat.preview = reply;
+              renderMessages(false);
+              renderConversations(false);
+            }, 1800);
+          }, 600);
+        }
+      }
+
+      function showToast(message) {
+        const toast = $("toast");
+        toast.textContent = message;
+        toast.classList.add("show");
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(
+          () => toast.classList.remove("show"),
+          2300,
+        );
+      }
+
+      function closePopovers(isMobile) {
+        if (isMobile) {
+          $("mobileEmojiPopover").classList.remove("show");
+        } else {
+          $("emojiPopover").classList.remove("show");
+          $("attachPopover").classList.remove("show");
+        }
+      }
+
+      function openModal() {
+        $("newChatModal").classList.add("show");
+        $("contactInput").value = "";
+        setTimeout(() => $("contactInput").focus(), 50);
+      }
+
+      function createChat() {
+        const name = $("contactInput").value.trim();
+        if (!name) {
+          $("contactInput").focus();
+          return;
+        }
+        let chat = conversations.find(
+          (c) => c.name.toLowerCase() === name.toLowerCase(),
+        );
+        if (!chat) {
+          const palette = [
+            ["#dce8fc", "#174ea6"],
+            ["#f9d9de", "#8c2940"],
+            ["#d7eee6", "#176b50"],
+            ["#e4def8", "#59418d"],
+            ["#fce8cf", "#8d4b12"],
+          ];
+          const colors = palette[nextId % palette.length];
+          chat = {
+            id: nextId++,
+            name,
+            initials: name
+              .split(/\s+/)
+              .slice(0, 2)
+              .map((x) => x[0])
+              .join("")
+              .toUpperCase(),
+            color: colors[0],
+            textColor: colors[1],
+            phone: "Kontak baru",
+            time: "Sekarang",
+            preview: "Mulai percakapan",
+            unread: false,
+            category: "personal",
+            messages: [],
+          };
+          conversations.unshift(chat);
+        }
+        $("newChatModal").classList.remove("show");
+
+        const isMobile = document.body.classList.contains("mobile-view");
+        openChat(chat.id, isMobile);
+      }
+
+      // Desktop event listeners
+      $("searchInput").addEventListener("input", () =>
+        renderConversations(false),
+      );
+      $("filterRow").addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-filter]");
+        if (!btn) return;
+        currentFilter = btn.dataset.filter;
+        $("filterRow")
+          .querySelectorAll(".filter-chip")
+          .forEach((b) => b.classList.toggle("active", b === btn));
+        renderConversations(false);
+      });
+      $("newMessageBtn").addEventListener("click", openModal);
+      $("placeholderNew").addEventListener("click", openModal);
+      $("messageInput").addEventListener(
+        "input",
+        () => ($("sendBtn").disabled = !$("messageInput").value.trim()),
+      );
+      $("messageForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        sendMessage($("messageInput").value, false);
+      });
+      $("emojiBtn").addEventListener("click", () => {
+        $("attachPopover").classList.remove("show");
+        $("emojiPopover").classList.toggle("show");
+      });
+      $("attachBtn").addEventListener("click", () => {
+        $("emojiPopover").classList.remove("show");
+        $("attachPopover").classList.toggle("show");
+      });
+      $("emojiPopover").addEventListener("click", (e) => {
+        if (e.target.tagName === "BUTTON") {
+          $("messageInput").value += e.target.textContent;
+          $("sendBtn").disabled = false;
+          $("messageInput").focus();
+          $("emojiPopover").classList.remove("show");
+        }
+      });
+      $("attachPopover").addEventListener("click", (e) => {
+        const b = e.target.closest("[data-attach]");
+        if (b) {
+          showToast(`${b.dataset.attach} — fitur demo frontend`);
+          closePopovers(false);
+        }
+      });
+      $("backBtn").addEventListener("click", () =>
+        $("workspace").classList.remove("chat-open"),
+      );
+      $("detailBtn").addEventListener("click", () =>
+        $("sidePanel").classList.toggle("open"),
+      );
+      $("moreBtn").addEventListener("click", () =>
+        showToast("Menu percakapan demo"),
+      );
+      $("videoBtn").addEventListener("click", () =>
+        showToast("Panggilan video tidak tersedia dalam demo"),
+      );
+      $("phoneBtn").addEventListener("click", () =>
+        showToast("Panggilan suara tidak tersedia dalam demo"),
+      );
+      $("helpBtn").addEventListener("click", () =>
+        showToast("Google Messages Clone · Demo frontend"),
+      );
+      $("privacyLink").addEventListener("click", (e) => {
+        e.preventDefault();
+        showToast("Tampilan ini tidak mengirim data ke server.");
+      });
+
+      // Mobile event listeners
+      $("mobileFilterRow").addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-filter]");
+        if (!btn) return;
+        mobileCurrentFilter = btn.dataset.filter;
+        $("mobileFilterRow")
+          .querySelectorAll(".filter-chip")
+          .forEach((b) => b.classList.toggle("active", b === btn));
+        renderConversations(true);
+      });
+      $("mobileNewBtn").addEventListener("click", openModal);
+      $("mobileMessageInput").addEventListener(
+        "input",
+        () =>
+          ($("mobileSendBtn").disabled = !$("mobileMessageInput").value.trim()),
+      );
+      $("mobileMessageForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        sendMessage($("mobileMessageInput").value, true);
+      });
+      $("mobileEmojiBtn").addEventListener("click", () => {
+        $("mobileEmojiPopover").classList.toggle("show");
+      });
+      $("mobileEmojiPopover").addEventListener("click", (e) => {
+        if (e.target.tagName === "BUTTON") {
+          $("mobileMessageInput").value += e.target.textContent;
+          $("mobileSendBtn").disabled = false;
+          $("mobileMessageInput").focus();
+          $("mobileEmojiPopover").classList.remove("show");
+        }
+      });
+      $("mobileAttachBtn").addEventListener("click", () =>
+        showToast("Fitur lampiran demo"),
+      );
+      $("mobileBackBtn").addEventListener("click", () =>
+        $("mobileApp").classList.remove("chat-open"),
+      );
+      $("mobileMoreBtn").addEventListener("click", () =>
+        showToast("Menu percakapan demo"),
+      );
+      $("mobileVideoBtn").addEventListener("click", () =>
+        showToast("Panggilan video tidak tersedia"),
+      );
+      $("mobilePhoneBtn").addEventListener("click", () =>
+        showToast("Panggilan suara tidak tersedia"),
+      );
+
+      // Modal
+      $("cancelModal").addEventListener("click", () =>
+        $("newChatModal").classList.remove("show"),
+      );
+      $("startChatBtn").addEventListener("click", createChat);
+      $("contactInput").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") createChat();
+        if (e.key === "Escape") $("newChatModal").classList.remove("show");
+      });
+      $("newChatModal").addEventListener("click", (e) => {
+        if (e.target === $("newChatModal"))
+          $("newChatModal").classList.remove("show");
+      });
+
+      // Theme toggle
+      $("themeBtn").addEventListener("click", () =>
+        document.body.classList.toggle("dark"),
+      );
+
+      // View switcher
+      $("viewSwitcher").addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-view]");
+        if (!btn) return;
+        const view = btn.dataset.view;
+        $("viewSwitcher")
+          .querySelectorAll("button")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        if (view === "mobile") {
+          document.body.classList.add("mobile-view");
+          renderConversations(true);
+          if (mobileActiveId) {
+            renderMessages(true);
+          }
+        } else {
+          document.body.classList.remove("mobile-view");
+          renderConversations(false);
+          if (activeId) {
+            renderMessages(false);
+            renderDetails();
+          }
+        }
+      });
+
+      // Close popovers on outside click
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest(".composer-area")) {
+          closePopovers(false);
+          closePopovers(true);
+        }
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          closePopovers(false);
+          closePopovers(true);
+          $("sidePanel").classList.remove("open");
+        }
+      });
+
+      // Update mobile time
+      function updateMobileTime() {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString("id-ID", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        });
+        $("mobileTime").textContent = timeStr;
+      }
+      updateMobileTime();
+      setInterval(updateMobileTime, 60000);
+
+      // Initial render
+      renderConversations(false);
+      renderConversations(true);
+    </script>
+  </body>
+</html>

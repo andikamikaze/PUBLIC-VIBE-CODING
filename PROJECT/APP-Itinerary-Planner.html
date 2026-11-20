@@ -1,0 +1,5827 @@
+<!doctype html>
+<html lang="id" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aplikasi Perencana Itinerary Liburan</title>
+    <meta
+      name="description"
+      content="Aplikasi perencana itinerary liburan: jadwal harian, estimasi anggaran, daftar bawaan, dokumen perjalanan, dan kolaborasi bersama keluarga atau teman."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      /* Terapkan tema sebelum render agar tidak berkedip */
+      (function () {
+        try {
+          var t = localStorage.getItem("jelajah-theme");
+          if (!t) {
+            t =
+              window.matchMedia &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light";
+          }
+          document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
+    <style>
+      /* ============ DESIGN TOKENS (flat, tanpa gradient) ============ */
+      :root {
+        --bg: #fafaf9;
+        --card: #ffffff;
+        --border: #e7e5e4;
+        --border-2: #d6d3d1;
+        --text: #1c1917;
+        --muted: #78716c;
+        --faint: #a8a29e;
+        --accent: #0d9488;
+        --accent-hover: #0f766e;
+        --accent-ink: #ffffff;
+        --accent-soft: #f0fdfa;
+        --accent-border: #99f6e4;
+        --danger: #dc2626;
+        --danger-soft: #fef2f2;
+        --danger-border: #fecaca;
+        --ring: #ccfbf1;
+        --shadow: 0 1px 2px rgba(28, 25, 24, 0.05);
+        --cat-transportasi: #1d4ed8;
+        --cat-hotel: #6d28d9;
+        --cat-kuliner: #b45309;
+        --cat-tiket: #be123c;
+        --cat-wisata: #0d9488;
+        --cat-belanja: #be185d;
+        --cat-lainnya: #57534e;
+      }
+      [data-theme="dark"] {
+        --bg: #0c0a09;
+        --card: #1c1917;
+        --border: #292524;
+        --border-2: #44403c;
+        --text: #fafaf9;
+        --muted: #a8a29e;
+        --faint: #78716c;
+        --accent: #2dd4bf;
+        --accent-hover: #5eead4;
+        --accent-ink: #042f2e;
+        --accent-soft: #0f2e2a;
+        --accent-border: #134e4a;
+        --danger: #f87171;
+        --danger-soft: #2a1212;
+        --danger-border: #5b2121;
+        --ring: #134e4a;
+        --shadow: none;
+        --cat-transportasi: #93c5fd;
+        --cat-hotel: #c4b5fd;
+        --cat-kuliner: #fbbf24;
+        --cat-tiket: #fda4af;
+        --cat-wisata: #5eead4;
+        --cat-belanja: #f9a8d4;
+        --cat-lainnya: #a8a29e;
+      }
+
+      /* Kelas warna kategori (ikon & aksen flat per kategori) */
+      .cat-transportasi {
+        --cat: var(--cat-transportasi);
+      }
+      .cat-hotel {
+        --cat: var(--cat-hotel);
+      }
+      .cat-kuliner {
+        --cat: var(--cat-kuliner);
+      }
+      .cat-tiket {
+        --cat: var(--cat-tiket);
+      }
+      .cat-wisata {
+        --cat: var(--cat-wisata);
+      }
+      .cat-belanja {
+        --cat: var(--cat-belanja);
+      }
+      .cat-lainnya {
+        --cat: var(--cat-lainnya);
+      }
+
+      /* ============ DASAR ============ */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family:
+          "Inter",
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          "Helvetica Neue",
+          Arial,
+          sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        font-size: 15px;
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+      }
+      .container {
+        max-width: 1060px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+      h1 {
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h2 {
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      h3 {
+        font-size: 15px;
+        font-weight: 600;
+      }
+      p {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      small {
+        font-size: 12.5px;
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      hr {
+        border: 0;
+        border-top: 1px solid var(--border);
+        margin: 16px 0;
+      }
+
+      /* ============ IKON ============ */
+      .ic {
+        width: 18px;
+        height: 18px;
+        flex: none;
+        display: inline-block;
+        vertical-align: -3px;
+      }
+      .ic-sm {
+        width: 14px;
+        height: 14px;
+        vertical-align: -2px;
+      }
+      .ic-lg {
+        width: 24px;
+        height: 24px;
+        vertical-align: -5px;
+      }
+
+      /* ============ HEADER ============ */
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: var(--card);
+        border-bottom: 1px solid var(--border);
+      }
+      .topbar-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 62px;
+        gap: 12px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+      .brand-mark {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: var(--accent);
+        color: var(--accent-ink);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .brand-name {
+        font-size: 17px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+      }
+      .brand-tag {
+        font-size: 11.5px;
+        color: var(--muted);
+        line-height: 1.2;
+        white-space: nowrap;
+      }
+      .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .chip-user {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        border-radius: 999px;
+        padding: 4px 12px 4px 4px;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+        cursor: pointer;
+      }
+      .chip-user:hover {
+        border-color: var(--border-2);
+      }
+      .avatar {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: var(--accent-ink);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      /* ============ TAB NAV ============ */
+      .tabs {
+        position: sticky;
+        top: 62px;
+        z-index: 40;
+        background: var(--card);
+        border-bottom: 1px solid var(--border);
+      }
+      .tabs-inner {
+        display: flex;
+        gap: 4px;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .tabs-inner::-webkit-scrollbar {
+        display: none;
+      }
+      .tab {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 14px;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--muted);
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        white-space: nowrap;
+        margin-bottom: -1px;
+      }
+      .tab:hover {
+        color: var(--text);
+      }
+      .tab.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+      }
+
+      /* ============ PANEL ============ */
+      main {
+        padding: 26px 0 60px;
+      }
+      .tab-panel {
+        display: none;
+      }
+      .tab-panel.active {
+        display: block;
+        animation: fadeIn 0.18s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      .page-head {
+        margin-bottom: 18px;
+      }
+      .page-head h1 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .page-head p {
+        margin-top: 4px;
+        max-width: 640px;
+      }
+
+      /* ============ KARTU & GRID ============ */
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 20px;
+        box-shadow: var(--shadow);
+      }
+      .card + .card {
+        margin-top: 20px;
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      .grid-2 > .card + .card {
+        margin-top: 0;
+      }
+      .card h2 {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+      .card-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+      .card-head h2 {
+        margin-bottom: 2px;
+      }
+      .card-sub {
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 12px;
+      }
+
+      /* ============ FORM ============ */
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 14px;
+      }
+      .field label {
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .field .hint {
+        font-size: 12px;
+        color: var(--faint);
+      }
+      input[type="text"],
+      input[type="number"],
+      input[type="date"],
+      input[type="time"],
+      select,
+      textarea {
+        font: inherit;
+        font-size: 14px;
+        color: var(--text);
+        background: var(--card);
+        border: 1px solid var(--border-2);
+        border-radius: 8px;
+        padding: 9px 12px;
+        width: 100%;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: 3px solid var(--ring);
+        border-color: var(--accent);
+      }
+      input::placeholder {
+        color: var(--faint);
+      }
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      .form-row-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 14px;
+      }
+      .inline-form {
+        display: grid;
+        grid-template-columns: 1fr 130px;
+        gap: 10px;
+        align-items: end;
+      }
+      .inline-form .field {
+        margin-bottom: 0;
+      }
+      select {
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2378716C' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 34px;
+      }
+
+      /* ============ TOMBOL ============ */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: 9px 16px;
+        border: 1px solid transparent;
+        cursor: pointer;
+        transition:
+          background 0.12s,
+          border-color 0.12s;
+      }
+      .btn:active {
+        transform: translateY(1px);
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: var(--accent-ink);
+      }
+      .btn-primary:hover {
+        background: var(--accent-hover);
+      }
+      .btn-ghost {
+        background: transparent;
+        color: var(--text);
+        border-color: var(--border-2);
+      }
+      .btn-ghost:hover {
+        border-color: var(--muted);
+      }
+      .btn-danger {
+        background: transparent;
+        color: var(--danger);
+        border-color: var(--danger-border);
+      }
+      .btn-danger:hover {
+        background: var(--danger-soft);
+      }
+      .btn-sm {
+        padding: 5px 10px;
+        font-size: 13px;
+        border-radius: 7px;
+      }
+      .btn-icon {
+        padding: 8px;
+        border-radius: 8px;
+      }
+      .btn-block {
+        width: 100%;
+        justify-content: center;
+      }
+      .btn[disabled] {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      /* ============ RINGKASAN ============ */
+      .sum-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 11px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .sum-row:last-child {
+        border-bottom: none;
+      }
+      .sum-row .ic {
+        color: var(--accent);
+        margin-top: 2px;
+      }
+      .sum-row .k {
+        font-size: 12.5px;
+        color: var(--muted);
+        line-height: 1.3;
+      }
+      .sum-row .v {
+        font-size: 14.5px;
+        font-weight: 600;
+        line-height: 1.35;
+      }
+      .sum-total {
+        background: var(--accent-soft);
+        border: 1px solid var(--accent-border);
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin-top: 14px;
+      }
+      .sum-total .k {
+        font-size: 12.5px;
+        color: var(--muted);
+      }
+      .sum-total .v {
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      .sum-total .v small {
+        font-size: 13px;
+        color: var(--muted);
+        font-weight: 500;
+      }
+
+      /* ============ TEMPLATE DESTINASI ============ */
+      .tpl-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 14px;
+      }
+      .tpl-card {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        background: var(--bg);
+      }
+      .tpl-card .tpl-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .tpl-badge {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--accent);
+        background: var(--accent-soft);
+        border: 1px solid var(--accent-border);
+        border-radius: 999px;
+        padding: 3px 10px;
+      }
+      .tpl-card h3 {
+        font-size: 15.5px;
+        letter-spacing: -0.01em;
+      }
+      .tpl-card .tpl-sub {
+        font-size: 12.5px;
+        color: var(--muted);
+      }
+      .tpl-card .tpl-line {
+        display: flex;
+        gap: 8px;
+        font-size: 12.5px;
+        color: var(--muted);
+        align-items: flex-start;
+      }
+      .tpl-card .tpl-line .ic-sm {
+        margin-top: 2px;
+        color: var(--faint);
+      }
+      .tpl-card .btn {
+        margin-top: 6px;
+      }
+
+      /* ============ CHIP HARI ============ */
+      .day-chips {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding: 2px 2px 10px;
+        scrollbar-width: thin;
+      }
+      .day-chip {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1px;
+        border: 1px solid var(--border-2);
+        border-radius: 10px;
+        background: var(--card);
+        color: var(--text);
+        padding: 8px 14px;
+        font: inherit;
+        cursor: pointer;
+        min-width: 86px;
+        flex: none;
+      }
+      .day-chip .d1 {
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .day-chip .d2 {
+        font-size: 11.5px;
+        color: var(--muted);
+      }
+      .day-chip:hover {
+        border-color: var(--muted);
+      }
+      .day-chip.active {
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+      .day-chip.active .d1 {
+        color: var(--accent-ink);
+      }
+      .day-chip.active .d2 {
+        color: var(--accent-ink);
+        opacity: 0.85;
+      }
+
+      /* ============ TIMELINE ============ */
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 14px 0 6px;
+        flex-wrap: wrap;
+      }
+      .toolbar .day-sum {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .tl {
+        position: relative;
+        margin-top: 8px;
+      }
+      .tl::before {
+        content: "";
+        position: absolute;
+        left: 64px;
+        top: 14px;
+        bottom: 14px;
+        width: 2px;
+        background: var(--border);
+      }
+      .tl-item {
+        position: relative;
+        display: grid;
+        grid-template-columns: 52px 30px 1fr;
+        gap: 0 14px;
+        padding: 0 0 14px;
+      }
+      .tl-time {
+        font-size: 12.5px;
+        font-weight: 700;
+        color: var(--muted);
+        text-align: right;
+        padding-top: 11px;
+        font-variant-numeric: tabular-nums;
+      }
+      .tl-node {
+        width: 30px;
+        height: 30px;
+        border-radius: 9px;
+        border: 1px solid var(--border);
+        background: var(--card);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 4px;
+        position: relative;
+        z-index: 1;
+        color: var(--cat, var(--muted));
+      }
+      .tl-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 11px 14px;
+        box-shadow: var(--shadow);
+      }
+      .tl-card .tl-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .tl-card .tl-title b {
+        font-size: 14.5px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .cat-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        border-radius: 999px;
+        padding: 2px 9px;
+        color: var(--cat);
+        background: color-mix(in srgb, var(--cat) 12%, transparent);
+        border: 1px solid color-mix(in srgb, var(--cat) 32%, transparent);
+      }
+      .tl-card .tl-note {
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 3px;
+      }
+      .tl-card .tl-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 8px;
+        flex-wrap: wrap;
+      }
+      .tl-cost {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--cat-kuliner);
+      }
+      .tl-actions {
+        display: flex;
+        gap: 4px;
+        margin-left: auto;
+      }
+      .icon-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--faint);
+        cursor: pointer;
+      }
+      .icon-btn:hover {
+        background: var(--bg);
+        color: var(--text);
+        border-color: var(--border);
+      }
+      .icon-btn.danger:hover {
+        color: var(--danger);
+        border-color: var(--danger-border);
+        background: var(--danger-soft);
+      }
+
+      /* ============ TABEL ANGGARAN ============ */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 560px;
+      }
+      th {
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--muted);
+        text-align: left;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--border-2);
+      }
+      td {
+        padding: 9px 10px;
+        border-bottom: 1px solid var(--border);
+        font-size: 14px;
+        vertical-align: middle;
+      }
+      tr.cat-head td {
+        background: var(--bg);
+        padding-top: 14px;
+      }
+      tr.cat-head .cat-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 700;
+        font-size: 13.5px;
+        color: var(--cat);
+      }
+      tr.cat-head .cat-sub {
+        margin-left: auto;
+      }
+      tr.cat-head td {
+        border-bottom: 1px solid var(--border);
+      }
+      td.num,
+      th.num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      td .cell-input {
+        border: 1px solid transparent;
+        background: transparent;
+        border-radius: 6px;
+        padding: 5px 7px;
+        font-size: 13.5px;
+        width: 100%;
+        color: var(--text);
+      }
+      td .cell-input:hover {
+        border-color: var(--border);
+      }
+      td .cell-input:focus {
+        border-color: var(--accent);
+        outline: 2px solid var(--ring);
+        background: var(--card);
+      }
+      td input.cell-input[type="number"] {
+        text-align: right;
+        width: 74px;
+      }
+      td .lbl-input {
+        min-width: 160px;
+      }
+      tr.total-row td {
+        border-bottom: none;
+        padding-top: 14px;
+      }
+      .total-big {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+        background: var(--accent-soft);
+        border: 1px solid var(--accent-border);
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin-top: 16px;
+      }
+      .total-big .t {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .total-big .n {
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      .total-big .per {
+        font-size: 13px;
+        color: var(--muted);
+        font-weight: 500;
+      }
+
+      /* ============ PROGRESS ============ */
+      .prog {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 4px 0 14px;
+      }
+      .prog-track {
+        flex: 1;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--border);
+        overflow: hidden;
+      }
+      .prog-fill {
+        height: 100%;
+        border-radius: 999px;
+        background: var(--accent);
+      }
+      .prog-label {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--muted);
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* ============ CHECKLIST ============ */
+      .check-list {
+        display: flex;
+        flex-direction: column;
+      }
+      .check-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 9px 8px;
+        border-radius: 9px;
+      }
+      .check-item:hover {
+        background: var(--bg);
+      }
+      .check-item + .check-item {
+        margin-top: 2px;
+      }
+      .cbox {
+        position: relative;
+        flex: none;
+        margin-top: 2px;
+      }
+      .cbox input {
+        position: absolute;
+        opacity: 0;
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+      }
+      .cbox .box {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        border-radius: 5px;
+        border: 1.5px solid var(--border-2);
+        background: var(--card);
+        color: transparent;
+        transition: all 0.1s;
+      }
+      .cbox input:checked + .box {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--accent-ink);
+      }
+      .cbox .box .ic {
+        width: 12px;
+        height: 12px;
+        vertical-align: 0;
+      }
+      .check-item .txt {
+        flex: 1;
+        min-width: 0;
+        font-size: 14px;
+      }
+      .check-item.done .txt {
+        text-decoration: line-through;
+        color: var(--faint);
+      }
+      .check-item .txt .note {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        text-decoration: none;
+      }
+      .check-item .tools {
+        display: flex;
+        gap: 2px;
+        opacity: 0;
+        transition: opacity 0.12s;
+      }
+      .check-item:hover .tools {
+        opacity: 1;
+      }
+      .tag-mini {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--muted);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 1px 8px;
+        white-space: nowrap;
+        margin-top: 2px;
+      }
+      @media (hover: none) {
+        .check-item .tools {
+          opacity: 1;
+        }
+      }
+
+      /* ============ INFO NEGARA ============ */
+      .info-card {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+      }
+      .info-item {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+      }
+      .info-item .ic {
+        color: var(--accent);
+        margin-top: 2px;
+      }
+      .info-item .k {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      .info-item .v {
+        font-size: 13.5px;
+        line-height: 1.5;
+      }
+      .info-src {
+        grid-column: 1/-1;
+        font-size: 12px;
+        color: var(--faint);
+        border-top: 1px dashed var(--border);
+        padding-top: 10px;
+      }
+      .note-amber {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        font-size: 13px;
+        color: var(--muted);
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 14px;
+        margin-top: 14px;
+      }
+      .note-amber .ic {
+        color: var(--cat-kuliner);
+        margin-top: 1px;
+        flex: none;
+      }
+
+      /* ============ KOLOABORASI ============ */
+      .member {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 8px;
+        border-radius: 10px;
+      }
+      .member:hover {
+        background: var(--bg);
+      }
+      .member .avatar {
+        width: 34px;
+        height: 34px;
+        font-size: 13px;
+      }
+      .member .m-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .member .m-name {
+        font-size: 14.5px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .member .m-role {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .role-badge {
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        border-radius: 999px;
+        padding: 2px 8px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        border: 1px solid var(--accent-border);
+      }
+      .you-badge {
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        border-radius: 999px;
+        padding: 2px 8px;
+        background: var(--bg);
+        color: var(--muted);
+        border: 1px solid var(--border-2);
+      }
+      .share-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .share-item {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 14px;
+        background: var(--card);
+        color: var(--text);
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+      }
+      .share-item:hover {
+        border-color: var(--accent);
+      }
+      .share-item .ic {
+        color: var(--accent);
+      }
+      .share-item b {
+        font-size: 14px;
+      }
+      .share-item span {
+        font-size: 12.5px;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+      .log-list {
+        display: flex;
+        flex-direction: column;
+        max-height: 340px;
+        overflow-y: auto;
+      }
+      .log-item {
+        display: flex;
+        gap: 10px;
+        padding: 9px 4px;
+        border-bottom: 1px dashed var(--border);
+        font-size: 13px;
+      }
+      .log-item:last-child {
+        border-bottom: none;
+      }
+      .log-item .log-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--accent);
+        margin-top: 7px;
+        flex: none;
+      }
+      .log-item b {
+        font-weight: 600;
+      }
+      .log-item .log-time {
+        display: block;
+        font-size: 11.5px;
+        color: var(--faint);
+        margin-top: 1px;
+      }
+
+      /* ============ MODAL ============ */
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(28, 25, 24, 0.55);
+        z-index: 100;
+        display: none;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 24px 16px;
+        overflow-y: auto;
+      }
+      .overlay.open {
+        display: flex;
+      }
+      .modal {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        width: min(500px, 100%);
+        margin-top: 8vh;
+        box-shadow: 0 20px 40px rgba(28, 25, 24, 0.25);
+        animation: slideUp 0.18s ease;
+      }
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      .modal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border);
+      }
+      .modal-head h2 {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 16px;
+      }
+      .modal-body {
+        padding: 20px;
+      }
+      .modal-foot {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 14px 20px;
+        border-top: 1px solid var(--border);
+      }
+
+      /* ============ TOAST ============ */
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 28px;
+        transform: translate(-50%, 12px);
+        background: var(--text);
+        color: var(--bg);
+        font-size: 13.5px;
+        font-weight: 600;
+        border-radius: 10px;
+        padding: 11px 18px;
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.2s ease;
+        z-index: 200;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        max-width: calc(100vw - 40px);
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      .toast .ic {
+        color: var(--accent);
+      }
+
+      /* ============ EMPTY STATE ============ */
+      .empty {
+        text-align: center;
+        padding: 36px 16px;
+        color: var(--muted);
+      }
+      .empty .ic-lg {
+        color: var(--faint);
+      }
+      .empty p {
+        margin-top: 8px;
+        font-size: 13.5px;
+      }
+
+      /* ============ FOOTER ============ */
+      .foot-note {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 34px;
+        font-size: 12.5px;
+        color: var(--faint);
+        text-align: center;
+        flex-wrap: wrap;
+      }
+
+      /* ============ RESPONSIVE ============ */
+      @media (max-width: 880px) {
+        .tpl-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .info-card {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (max-width: 720px) {
+        .grid-2,
+        .form-row,
+        .form-row-3,
+        .share-grid {
+          grid-template-columns: 1fr;
+        }
+        .tpl-grid {
+          grid-template-columns: 1fr;
+        }
+        .inline-form {
+          grid-template-columns: 1fr;
+        }
+        .brand-tag {
+          display: none;
+        }
+        .tabs {
+          top: 62px;
+        }
+        .tl::before {
+          left: 62px;
+        }
+        .tl-item {
+          grid-template-columns: 50px 30px 1fr;
+          gap: 0 10px;
+        }
+      }
+
+      /* ============ PRINT ============ */
+      .print-head {
+        display: none;
+      }
+      @media print {
+        @page {
+          margin: 14mm;
+        }
+        body {
+          background: #fff;
+          color: #000;
+          font-size: 12.5px;
+        }
+        .topbar,
+        .tabs,
+        .no-print,
+        .toast,
+        .overlay,
+        .icon-btn,
+        .btn,
+        .day-chips {
+          display: none !important;
+        }
+        .tab-panel {
+          display: block !important;
+          page-break-before: always;
+        }
+        .tab-panel:first-of-type {
+          page-break-before: avoid;
+        }
+        .card {
+          border-color: #ddd;
+          box-shadow: none;
+          page-break-inside: avoid;
+          border-radius: 0;
+        }
+        .card + .card {
+          margin-top: 10px;
+        }
+        .print-head {
+          display: block;
+          margin-bottom: 16px;
+          border-bottom: 2px solid #000;
+          padding-bottom: 8px;
+        }
+        .print-head h1 {
+          font-size: 20px;
+        }
+        .print-head p {
+          color: #444;
+        }
+        .tl-card,
+        .check-item {
+          border: 1px solid #ddd;
+        }
+        .check-item:hover {
+          background: none;
+        }
+        .empty {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ================= SPRITE IKON SVG (tanpa emoji) ================= -->
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      style="display: none"
+      aria-hidden="true"
+    >
+      <symbol
+        id="i-compass"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <polygon
+          points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"
+        />
+      </symbol>
+      <symbol
+        id="i-map-pin"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+        <circle cx="12" cy="10" r="3" />
+      </symbol>
+      <symbol
+        id="i-calendar"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M8 2v4" />
+        <path d="M16 2v4" />
+        <rect x="3" y="4" width="18" height="18" rx="2" />
+        <path d="M3 10h18" />
+      </symbol>
+      <symbol
+        id="i-clock"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+      </symbol>
+      <symbol
+        id="i-plane"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path
+          d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"
+        />
+      </symbol>
+      <symbol
+        id="i-bed"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M2 4v16" />
+        <path d="M2 8h18a2 2 0 0 1 2 2v10" />
+        <path d="M2 17h20" />
+        <path d="M6 8v9" />
+      </symbol>
+      <symbol
+        id="i-utensils"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
+        <path d="M7 2v20" />
+        <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
+      </symbol>
+      <symbol
+        id="i-ticket"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path
+          d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"
+        />
+        <path d="M13 5v2" />
+        <path d="M13 17v2" />
+        <path d="M13 11v2" />
+      </symbol>
+      <symbol
+        id="i-landmark"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <line x1="3" x2="21" y1="22" y2="22" />
+        <line x1="6" x2="6" y1="18" y2="11" />
+        <line x1="10" x2="10" y1="18" y2="11" />
+        <line x1="14" x2="14" y1="18" y2="11" />
+        <line x1="18" x2="18" y1="18" y2="11" />
+        <polygon points="12 2 20 7 4 7" />
+      </symbol>
+      <symbol
+        id="i-bag"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+        <line x1="3" x2="21" y1="6" y2="6" />
+        <path d="M16 10a4 4 0 0 1-8 0" />
+      </symbol>
+      <symbol
+        id="i-tag"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path
+          d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"
+        />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+      </symbol>
+      <symbol
+        id="i-wallet"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
+        <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
+        <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
+      </symbol>
+      <symbol
+        id="i-banknote"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <rect x="2" y="6" width="20" height="12" rx="2" />
+        <circle cx="12" cy="12" r="2" />
+        <path d="M6 12h.01" />
+        <path d="M18 12h.01" />
+      </symbol>
+      <symbol
+        id="i-suitcase"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <rect x="4" y="7" width="16" height="13" rx="2" />
+        <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+        <path d="M4 13h16" />
+      </symbol>
+      <symbol
+        id="i-file"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+        <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+        <path d="M16 13H8" />
+        <path d="M16 17H8" />
+        <path d="M10 9H8" />
+      </symbol>
+      <symbol
+        id="i-shield"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path
+          d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+        />
+        <path d="m9 12 2 2 4-4" />
+      </symbol>
+      <symbol
+        id="i-users"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </symbol>
+      <symbol
+        id="i-user-plus"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <line x1="19" x2="19" y1="8" y2="14" />
+        <line x1="22" x2="16" y1="11" y2="11" />
+      </symbol>
+      <symbol
+        id="i-link"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+        <path
+          d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
+        />
+      </symbol>
+      <symbol
+        id="i-copy"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <rect x="9" y="9" width="13" height="13" rx="2" />
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+      </symbol>
+      <symbol
+        id="i-download"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="7 10 12 15 17 10" />
+        <line x1="12" x2="12" y1="15" y2="3" />
+      </symbol>
+      <symbol
+        id="i-upload"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="17 8 12 3 7 8" />
+        <line x1="12" x2="12" y1="3" y2="15" />
+      </symbol>
+      <symbol
+        id="i-printer"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <polyline points="6 9 6 2 18 2 18 9" />
+        <path
+          d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
+        />
+        <rect x="6" y="14" width="12" height="8" />
+      </symbol>
+      <symbol
+        id="i-share"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="18" cy="5" r="3" />
+        <circle cx="6" cy="12" r="3" />
+        <circle cx="18" cy="19" r="3" />
+        <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" />
+        <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
+      </symbol>
+      <symbol
+        id="i-sun"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2" />
+        <path d="M12 20v2" />
+        <path d="m4.93 4.93 1.41 1.41" />
+        <path d="m17.66 17.66 1.41 1.41" />
+        <path d="M2 12h2" />
+        <path d="M20 12h2" />
+        <path d="m6.34 17.66-1.41 1.41" />
+        <path d="m19.07 4.93-1.41 1.41" />
+      </symbol>
+      <symbol
+        id="i-moon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+      </symbol>
+      <symbol
+        id="i-plus"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M5 12h14" />
+        <path d="M12 5v14" />
+      </symbol>
+      <symbol
+        id="i-trash"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M3 6h18" />
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+        <line x1="10" x2="10" y1="11" y2="17" />
+        <line x1="14" x2="14" y1="11" y2="17" />
+      </symbol>
+      <symbol
+        id="i-pencil"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+      </symbol>
+      <symbol
+        id="i-check"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M20 6 9 17l-5-5" />
+      </symbol>
+      <symbol
+        id="i-x"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M18 6 6 18" />
+        <path d="m6 6 12 12" />
+      </symbol>
+      <symbol
+        id="i-left"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="m15 18-6-6 6-6" />
+      </symbol>
+      <symbol
+        id="i-right"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="m9 18 6-6-6-6" />
+      </symbol>
+      <symbol
+        id="i-info"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 16v-4" />
+        <path d="M12 8h.01" />
+      </symbol>
+      <symbol
+        id="i-alert"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path
+          d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
+        />
+        <path d="M12 9v4" />
+        <path d="M12 17h.01" />
+      </symbol>
+      <symbol
+        id="i-globe"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+        <path d="M2 12h20" />
+      </symbol>
+    </svg>
+
+    <!-- ================= HEADER ================= -->
+    <header class="topbar no-print">
+      <div class="container topbar-inner">
+        <div class="brand">
+          <span class="brand-mark"
+            ><svg class="ic"><use href="#i-compass" /></svg
+          ></span>
+          <div>
+            <div class="brand-name">Jelajah</div>
+            <div class="brand-tag">Perencana Itinerary Liburan</div>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <button
+            class="chip-user"
+            id="collabChip"
+            title="Editor aktif — kelola di tab Kolaborasi"
+          >
+            <span class="avatar" id="collabChipAvatar">A</span>
+            <span id="collabChipName">Anda</span>
+          </button>
+          <button
+            class="btn btn-ghost btn-icon"
+            id="themeToggle"
+            title="Ganti tema terang / gelap"
+            aria-label="Ganti tema"
+          >
+            <svg class="ic" id="iconSun"><use href="#i-sun" /></svg>
+            <svg class="ic" id="iconMoon" style="display: none">
+              <use href="#i-moon" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ================= NAVIGASI TAB ================= -->
+    <nav class="tabs no-print" aria-label="Navigasi bagian">
+      <div class="container tabs-inner">
+        <button class="tab active" data-tab="perjalanan">
+          <svg class="ic"><use href="#i-map-pin" /></svg>Perjalanan
+        </button>
+        <button class="tab" data-tab="jadwal">
+          <svg class="ic"><use href="#i-calendar" /></svg>Jadwal
+        </button>
+        <button class="tab" data-tab="anggaran">
+          <svg class="ic"><use href="#i-wallet" /></svg>Anggaran
+        </button>
+        <button class="tab" data-tab="persiapan">
+          <svg class="ic"><use href="#i-suitcase" /></svg>Persiapan
+        </button>
+        <button class="tab" data-tab="kolaborasi">
+          <svg class="ic"><use href="#i-users" /></svg>Kolaborasi
+        </button>
+      </div>
+    </nav>
+
+    <!-- ================= KONTEN ================= -->
+    <main class="container">
+      <div class="print-head" id="printHead"></div>
+
+      <!-- TAB 1: PERJALANAN -->
+      <section class="tab-panel active" id="tab-perjalanan">
+        <div class="page-head">
+          <h1>
+            <svg class="ic-lg"><use href="#i-map-pin" /></svg>Rencana Perjalanan
+          </h1>
+          <p>
+            Tentukan destinasi dan tanggal liburan Anda, lalu kelola jadwal,
+            anggaran, dan persiapan dari satu tempat.
+          </p>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h2>
+                  <svg class="ic"><use href="#i-pencil" /></svg>Data Perjalanan
+                </h2>
+                <p class="card-sub">
+                  Ubah lalu tekan simpan — jadwal harian menyesuaikan tanggal
+                  otomatis.
+                </p>
+              </div>
+            </div>
+            <form id="tripForm" autocomplete="off">
+              <div class="field">
+                <label for="fName">Nama perjalanan</label>
+                <input
+                  type="text"
+                  id="fName"
+                  placeholder="cth. Liburan Keluarga Akhir Tahun"
+                  maxlength="60"
+                />
+              </div>
+              <div class="form-row">
+                <div class="field">
+                  <label for="fDest">Destinasi (kota)</label>
+                  <input
+                    type="text"
+                    id="fDest"
+                    placeholder="cth. Tokyo"
+                    maxlength="40"
+                  />
+                </div>
+                <div class="field">
+                  <label for="fCountry">Negara</label>
+                  <select id="fCountry"></select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="field">
+                  <label for="fStart">Tanggal mulai</label>
+                  <input type="date" id="fStart" />
+                </div>
+                <div class="field">
+                  <label for="fEnd">Tanggal selesai</label>
+                  <input type="date" id="fEnd" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="field">
+                  <label for="fTravelers">Jumlah wisatawan</label>
+                  <input
+                    type="number"
+                    id="fTravelers"
+                    min="1"
+                    max="30"
+                    value="2"
+                  />
+                </div>
+                <div class="field" style="justify-content: flex-end">
+                  <label>&nbsp;</label>
+                  <div style="display: flex; gap: 10px">
+                    <button
+                      type="submit"
+                      class="btn btn-primary"
+                      style="flex: 1"
+                    >
+                      <svg class="ic-sm"><use href="#i-check" /></svg>Simpan
+                      Perjalanan
+                    </button>
+                    <button type="button" class="btn btn-ghost" id="btnNewTrip">
+                      <svg class="ic-sm"><use href="#i-plus" /></svg>Baru
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="card" id="sumCard">
+            <div class="card-head">
+              <div>
+                <h2>
+                  <svg class="ic"><use href="#i-compass" /></svg>Ringkasan
+                </h2>
+                <p class="card-sub">
+                  Gambaran singkat perjalanan Anda saat ini.
+                </p>
+              </div>
+            </div>
+            <div id="sumBox"></div>
+          </div>
+        </div>
+        <div class="card" style="margin-top: 20px">
+          <div class="card-head">
+            <div>
+              <h2>
+                <svg class="ic"><use href="#i-globe" /></svg>Mulai dari Template
+                Destinasi
+              </h2>
+              <p class="card-sub">
+                Muat itinerary contoh lengkap dengan jadwal, estimasi anggaran,
+                daftar bawaan, dan dokumen — lalu edit sesukanya. Estimasi biaya
+                &amp; aturan visa diperbarui per November 2026.
+              </p>
+            </div>
+          </div>
+          <div class="tpl-grid" id="tplGrid"></div>
+        </div>
+      </section>
+
+      <!-- TAB 2: JADWAL -->
+      <section class="tab-panel" id="tab-jadwal">
+        <div class="page-head">
+          <h1>
+            <svg class="ic-lg"><use href="#i-calendar" /></svg>Jadwal Harian
+          </h1>
+          <p>
+            Timeline aktivitas per jam untuk setiap hari liburan. Pilih hari,
+            lalu tambahkan atau sunting aktivitas.
+          </p>
+        </div>
+        <div class="day-chips" id="dayChips"></div>
+        <div class="card">
+          <div class="toolbar">
+            <div class="day-sum" id="daySum"></div>
+            <button class="btn btn-primary no-print" id="btnAddAct">
+              <svg class="ic-sm"><use href="#i-plus" /></svg>Tambah Aktivitas
+            </button>
+          </div>
+          <div class="tl" id="tlList"></div>
+        </div>
+      </section>
+
+      <!-- TAB 3: ANGGARAN -->
+      <section class="tab-panel" id="tab-anggaran">
+        <div class="page-head">
+          <h1>
+            <svg class="ic-lg"><use href="#i-wallet" /></svg>Estimasi Anggaran
+          </h1>
+          <p>
+            Rincian biaya per kategori — transportasi, hotel, kuliner, tiket
+            masuk, dan lainnya. Semua angka adalah estimasi yang bisa Anda ubah
+            kapan saja.
+          </p>
+        </div>
+        <div class="card">
+          <div class="table-wrap" id="budgetWrap"></div>
+          <div class="note-amber">
+            <svg class="ic-sm"><use href="#i-info" /></svg
+            ><span
+              >Klik langsung pada kolom keterangan, jumlah, atau biaya satuan
+              untuk mengubahnya. Subtotal &amp; total dihitung ulang otomatis.
+              Perbarui angka sesuai harga terkini sebelum berangkat.</span
+            >
+          </div>
+          <hr />
+          <form
+            class="inline-form no-print"
+            id="budgetAddForm"
+            autocomplete="off"
+          >
+            <div class="field">
+              <label for="biLabel">Keterangan biaya baru</label
+              ><input
+                type="text"
+                id="biLabel"
+                placeholder="cth. Sewa WiFi portable"
+                maxlength="60"
+              />
+            </div>
+            <div class="field">
+              <label for="biCat">Kategori</label>
+              <select id="biCat"></select>
+            </div>
+            <div
+              class="field"
+              style="
+                grid-column: 1/-1;
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr auto;
+                gap: 10px;
+                align-items: end;
+              "
+            >
+              <div>
+                <label
+                  for="biQty"
+                  class="hint"
+                  style="display: block; margin-bottom: 6px"
+                  >Jumlah</label
+                ><input type="number" id="biQty" min="1" max="99" value="2" />
+              </div>
+              <div>
+                <label
+                  for="biUnit"
+                  class="hint"
+                  style="display: block; margin-bottom: 6px"
+                  >Biaya satuan (Rp)</label
+                ><input
+                  type="number"
+                  id="biUnit"
+                  min="0"
+                  step="1000"
+                  placeholder="150000"
+                />
+              </div>
+              <div></div>
+              <button
+                type="submit"
+                class="btn btn-primary"
+                style="height: 38px"
+              >
+                <svg class="ic-sm"><use href="#i-plus" /></svg>Tambah
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- TAB 4: PERSIAPAN -->
+      <section class="tab-panel" id="tab-persiapan">
+        <div class="page-head">
+          <h1>
+            <svg class="ic-lg"><use href="#i-suitcase" /></svg>Persiapan &amp;
+            Dokumen
+          </h1>
+          <p>
+            Daftar bawaan dan dokumen penting yang harus disiapkan, lengkap
+            dengan info visa &amp; aturan masuk negara tujuan.
+          </p>
+        </div>
+        <div class="card" id="infoCard">
+          <div class="card-head">
+            <div>
+              <h2>
+                <svg class="ic"><use href="#i-shield" /></svg>Syarat Masuk &amp;
+                Info Destinasi
+              </h2>
+              <p class="card-sub" id="infoSub"></p>
+            </div>
+          </div>
+          <div id="infoBox"></div>
+        </div>
+        <div class="grid-2" style="margin-top: 20px">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h2>
+                  <svg class="ic"><use href="#i-suitcase" /></svg>Daftar Bawaan
+                </h2>
+                <p class="card-sub">Centang barang yang sudah masuk koper.</p>
+              </div>
+            </div>
+            <div class="prog">
+              <div class="prog-track">
+                <div class="prog-fill" id="packFill" style="width: 0%"></div>
+              </div>
+              <span class="prog-label" id="packLabel">0/0</span>
+            </div>
+            <div class="check-list" id="packList"></div>
+            <hr />
+            <form
+              class="inline-form no-print"
+              id="packAddForm"
+              autocomplete="off"
+            >
+              <div class="field">
+                <label for="pkText">Barang baru</label
+                ><input
+                  type="text"
+                  id="pkText"
+                  placeholder="cth. Kamera &amp; memory card"
+                  maxlength="60"
+                />
+              </div>
+              <div class="field">
+                <label for="pkCat">Kategori</label>
+                <select id="pkCat">
+                  <option value="pakaian">Pakaian</option>
+                  <option value="elektronik">Elektronik</option>
+                  <option value="toiletries">Toiletries &amp; Kesehatan</option>
+                  <option value="lainnya">Lainnya</option>
+                </select>
+              </div>
+              <div class="field" style="grid-column: 1/-1">
+                <button type="submit" class="btn btn-ghost btn-block">
+                  <svg class="ic-sm"><use href="#i-plus" /></svg>Tambah ke
+                  Daftar
+                </button>
+              </div>
+            </form>
+          </div>
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h2>
+                  <svg class="ic"><use href="#i-file" /></svg>Dokumen Penting
+                </h2>
+                <p class="card-sub">
+                  Paspor, visa, hingga bukti booking — centang yang sudah beres.
+                </p>
+              </div>
+            </div>
+            <div class="prog">
+              <div class="prog-track">
+                <div class="prog-fill" id="docFill" style="width: 0%"></div>
+              </div>
+              <span class="prog-label" id="docLabel">0/0</span>
+            </div>
+            <div class="check-list" id="docList"></div>
+            <hr />
+            <form
+              class="inline-form no-print"
+              id="docAddForm"
+              autocomplete="off"
+            >
+              <div class="field">
+                <label for="dcText">Dokumen baru</label
+                ><input
+                  type="text"
+                  id="dcText"
+                  placeholder="cth. Surat izin cuti"
+                  maxlength="60"
+                />
+              </div>
+              <div class="field">
+                <label for="dcNote">Catatan (opsional)</label
+                ><input
+                  type="text"
+                  id="dcNote"
+                  placeholder="cth. Berlaku 6 bulan"
+                  maxlength="80"
+                />
+              </div>
+              <div class="field" style="grid-column: 1/-1">
+                <button type="submit" class="btn btn-ghost btn-block">
+                  <svg class="ic-sm"><use href="#i-plus" /></svg>Tambah Dokumen
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: KOLABORASI -->
+      <section class="tab-panel" id="tab-kolaborasi">
+        <div class="page-head">
+          <h1>
+            <svg class="ic-lg"><use href="#i-users" /></svg>Kolaborasi
+          </h1>
+          <p>
+            Rencanakan bersama keluarga atau teman: bagikan tautan atau file
+            itinerary, lalu kumpulkan kembali hasil editnya dari anggota mana
+            pun.
+          </p>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h2>
+                  <svg class="ic"><use href="#i-users" /></svg>Anggota
+                  Perjalanan
+                </h2>
+                <p class="card-sub">
+                  Pilih editor aktif — setiap perubahan dicatat atas nama
+                  anggota tersebut.
+                </p>
+              </div>
+            </div>
+            <div id="memberList"></div>
+            <hr />
+            <form
+              class="inline-form no-print"
+              id="memberAddForm"
+              autocomplete="off"
+            >
+              <div class="field">
+                <label for="mbName">Nama anggota baru</label
+                ><input
+                  type="text"
+                  id="mbName"
+                  placeholder="cth. Rina"
+                  maxlength="30"
+                />
+              </div>
+              <div class="field">
+                <label>&nbsp;</label>
+                <button type="submit" class="btn btn-primary btn-block">
+                  <svg class="ic-sm"><use href="#i-user-plus" /></svg>Ajak
+                </button>
+              </div>
+            </form>
+          </div>
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h2>
+                  <svg class="ic"><use href="#i-share" /></svg>Bagikan &amp;
+                  Sinkronkan
+                </h2>
+                <p class="card-sub">
+                  Karena berjalan tanpa server, berbagi dilakukan lewat tautan
+                  dan file.
+                </p>
+              </div>
+            </div>
+            <div class="share-grid">
+              <button
+                class="share-item"
+                id="btnCopyLink"
+                style="cursor: pointer; text-align: left"
+              >
+                <svg class="ic"><use href="#i-link" /></svg
+                ><b>Tautan Berbagi</b>
+                <span
+                  >Sandikan seluruh itinerary ke dalam satu tautan — siapa pun
+                  yang membukanya mendapat salinan lengkap untuk diedit.</span
+                >
+              </button>
+              <button
+                class="share-item"
+                id="btnCopyText"
+                style="cursor: pointer; text-align: left"
+              >
+                <svg class="ic"><use href="#i-copy" /></svg
+                ><b>Salin sebagai Teks</b>
+                <span
+                  >Format ringkas siap tempel ke WhatsApp, email, atau dokumen
+                  keluarga.</span
+                >
+              </button>
+              <button
+                class="share-item"
+                id="btnExport"
+                style="cursor: pointer; text-align: left"
+              >
+                <svg class="ic"><use href="#i-download" /></svg
+                ><b>Ekspor File</b>
+                <span
+                  >Unduh itinerary sebagai file .json untuk dikirim ke anggota
+                  lain.</span
+                >
+              </button>
+              <button
+                class="share-item"
+                id="btnImport"
+                style="cursor: pointer; text-align: left"
+              >
+                <svg class="ic"><use href="#i-upload" /></svg><b>Impor File</b>
+                <span
+                  >Muat kembali hasil editan anggota keluarga / teman (.json
+                  atau tautan).</span
+                >
+              </button>
+              <button
+                class="share-item"
+                id="btnPrint"
+                style="cursor: pointer; text-align: left"
+              >
+                <svg class="ic"><use href="#i-printer" /></svg
+                ><b>Cetak / Simpan PDF</b>
+                <span
+                  >Cetak seluruh itinerary — jadwal, anggaran, dan checklist —
+                  untuk dibawa.</span
+                >
+              </button>
+            </div>
+            <input
+              type="file"
+              id="importFile"
+              accept=".json,application/json"
+              style="display: none"
+            />
+          </div>
+        </div>
+        <div class="card" style="margin-top: 20px">
+          <div class="card-head">
+            <div>
+              <h2>
+                <svg class="ic"><use href="#i-clock" /></svg>Riwayat Perubahan
+              </h2>
+              <p class="card-sub">
+                Semua aktivitas edit tercatat di perangkat ini, lengkap dengan
+                siapa pelakunya.
+              </p>
+            </div>
+          </div>
+          <div class="log-list" id="logList"></div>
+        </div>
+      </section>
+
+      <div class="foot-note">
+        <svg class="ic-sm"><use href="#i-info" /></svg>
+        <span
+          >Seluruh data tersimpan otomatis di browser perangkat ini — tidak
+          dikirim ke server mana pun.</span
+        >
+      </div>
+    </main>
+
+    <!-- ================= MODAL: TAMBAH/EDIT AKTIVITAS ================= -->
+    <div
+      class="overlay"
+      id="actModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="amTitle"
+    >
+      <div class="modal">
+        <div class="modal-head">
+          <h2>
+            <svg class="ic"><use href="#i-clock" /></svg
+            ><span id="amTitle">Tambah Aktivitas</span>
+          </h2>
+          <button class="icon-btn" data-close="actModal" aria-label="Tutup">
+            <svg class="ic"><use href="#i-x" /></svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="amId" />
+          <div class="form-row">
+            <div class="field">
+              <label for="amTime">Jam</label>
+              <input type="time" id="amTime" value="09:00" required />
+            </div>
+            <div class="field">
+              <label for="amCat">Kategori</label>
+              <select id="amCat"></select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="amTitle2">Nama aktivitas</label>
+            <input
+              type="text"
+              id="amTitle2"
+              placeholder="cth. Kunjungi Senso-ji Temple"
+              maxlength="70"
+              required
+            />
+          </div>
+          <div class="field">
+            <label for="amNote"
+              >Lokasi / catatan <span class="hint">(opsional)</span></label
+            >
+            <input
+              type="text"
+              id="amNote"
+              placeholder="cth. Naik turun kereta, beli tiket online"
+              maxlength="90"
+            />
+          </div>
+          <div class="field">
+            <label for="amCost"
+              >Estimasi biaya
+              <span class="hint"
+                >(opsional, Rp — total untuk rombongan)</span
+              ></label
+            >
+            <input
+              type="number"
+              id="amCost"
+              min="0"
+              step="1000"
+              placeholder="0"
+            />
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost" data-close="actModal">Batal</button>
+          <button class="btn btn-primary" id="btnSaveAct">
+            <svg class="ic-sm"><use href="#i-check" /></svg>Simpan
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= MODAL: KONFIRMASI ================= -->
+    <div
+      class="overlay"
+      id="confirmModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="cmTitle"
+    >
+      <div class="modal" style="width: min(420px, 100%)">
+        <div class="modal-head">
+          <h2>
+            <svg class="ic"><use href="#i-alert" /></svg
+            ><span id="cmTitle">Konfirmasi</span>
+          </h2>
+          <button class="icon-btn" data-close="confirmModal" aria-label="Tutup">
+            <svg class="ic"><use href="#i-x" /></svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p id="cmText" style="font-size: 14px; color: var(--text)"></p>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost" data-close="confirmModal">Batal</button>
+          <button class="btn btn-danger" id="cmYes">Ya, Lanjutkan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= MODAL: TAUTAN MANUAL ================= -->
+    <div
+      class="overlay"
+      id="linkModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="lmTitle"
+    >
+      <div class="modal" style="width: min(520px, 100%)">
+        <div class="modal-head">
+          <h2>
+            <svg class="ic"><use href="#i-link" /></svg
+            ><span id="lmTitle">Tautan Berbagi</span>
+          </h2>
+          <button class="icon-btn" data-close="linkModal" aria-label="Tutup">
+            <svg class="ic"><use href="#i-x" /></svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p class="card-sub" style="margin-bottom: 10px">
+            Salin tautan di bawah ini dan kirimkan ke keluarga atau teman Anda:
+          </p>
+          <textarea
+            id="linkText"
+            rows="5"
+            readonly
+            style="font-size: 12px; word-break: break-all"
+          ></textarea>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost" data-close="linkModal">Tutup</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= TOAST ================= -->
+    <div class="toast" id="toast">
+      <svg class="ic-sm"><use href="#i-check" /></svg
+      ><span id="toastText"></span>
+    </div>
+    <script>
+      /* ============================================================
+   JELAJAH — Perencana Itinerary Liburan
+   Satu file HTML mandiri. Tanpa server, tanpa dependensi.
+   ============================================================ */
+
+      /* ---------- Utilitas ---------- */
+      var $ = function (s) {
+        return document.querySelector(s);
+      };
+      var $$ = function (s) {
+        return Array.prototype.slice.call(document.querySelectorAll(s));
+      };
+      function uid() {
+        return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      }
+      function esc(s) {
+        return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+          return {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          }[c];
+        });
+      }
+      function fmtIDR(n) {
+        n = Number(n) || 0;
+        return "Rp " + Math.round(n).toLocaleString("id-ID");
+      }
+      function fmtJt(n) {
+        n = Number(n) || 0;
+        return (
+          (n / 1000000).toFixed(n % 1000000 === 0 ? 0 : 1).replace(".", ",") +
+          " jt"
+        );
+      }
+      function todayStr() {
+        var d = new Date();
+        return (
+          d.getFullYear() +
+          "-" +
+          String(d.getMonth() + 1).padStart(2, "0") +
+          "-" +
+          String(d.getDate()).padStart(2, "0")
+        );
+      }
+      function plusDays(dateStr, n) {
+        var d = new Date(dateStr + "T12:00:00");
+        d.setDate(d.getDate() + n);
+        return (
+          d.getFullYear() +
+          "-" +
+          String(d.getMonth() + 1).padStart(2, "0") +
+          "-" +
+          String(d.getDate()).padStart(2, "0")
+        );
+      }
+      function daysBetween(a, b) {
+        var d1 = new Date(a + "T12:00:00"),
+          d2 = new Date(b + "T12:00:00");
+        return Math.round((d2 - d1) / 86400000);
+      }
+      function parseDate(dateStr) {
+        return new Date(dateStr + "T12:00:00");
+      }
+      function fmtLong(dateStr) {
+        return new Intl.DateTimeFormat("id-ID", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }).format(parseDate(dateStr));
+      }
+      function fmtShort(dateStr) {
+        return new Intl.DateTimeFormat("id-ID", {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+        }).format(parseDate(dateStr));
+      }
+      function fmtRange(a, b) {
+        return (
+          new Intl.DateTimeFormat("id-ID", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          }).format(parseDate(a)) +
+          " – " +
+          new Intl.DateTimeFormat("id-ID", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          }).format(parseDate(b))
+        );
+      }
+      function fmtTs(ts) {
+        var d = new Date(ts);
+        return (
+          new Intl.DateTimeFormat("id-ID", {
+            day: "numeric",
+            month: "short",
+          }).format(d) +
+          " · " +
+          String(d.getHours()).padStart(2, "0") +
+          "." +
+          String(d.getMinutes()).padStart(2, "0")
+        );
+      }
+      function icon(name, cls) {
+        return (
+          '<svg class="' +
+          (cls || "ic") +
+          '"><use href="#i-' +
+          name +
+          '"/></svg>'
+        );
+      }
+
+      /* ---------- Kategori ---------- */
+      var ACT_CATS = {
+        transportasi: { label: "Transportasi", icon: "plane" },
+        hotel: { label: "Hotel", icon: "bed" },
+        kuliner: { label: "Kuliner", icon: "utensils" },
+        wisata: { label: "Wisata", icon: "landmark" },
+        belanja: { label: "Belanja", icon: "bag" },
+        lainnya: { label: "Lainnya", icon: "tag" },
+      };
+      var BUD_CATS = {
+        transportasi: { label: "Transportasi", icon: "plane" },
+        hotel: { label: "Hotel", icon: "bed" },
+        kuliner: { label: "Kuliner", icon: "utensils" },
+        tiket: { label: "Tiket Masuk", icon: "ticket" },
+        lainnya: { label: "Lainnya", icon: "wallet" },
+      };
+      var PACK_CATS = {
+        pakaian: "Pakaian",
+        elektronik: "Elektronik",
+        toiletries: "Toiletries & Kesehatan",
+        lainnya: "Lainnya",
+      };
+      var AVATAR_COLORS = [
+        "#0D9488",
+        "#2563EB",
+        "#B45309",
+        "#BE185D",
+        "#6D28D9",
+        "#DC2626",
+        "#4F46E5",
+        "#0F766E",
+        "#7C3AED",
+        "#475569",
+      ];
+
+      /* ---------- Info negara (diverifikasi November 2026) ---------- */
+      var COUNTRY_INFO = {
+        id: {
+          name: "Indonesia",
+          currency: "Rupiah (IDR)",
+          plug: "Tipe C/F · 220V",
+          best: "April–Oktober (musim kemarau)",
+          visa: "Perjalanan domestik — cukup membawa KTP atau paspor, tanpa visa.",
+          tips: "Pesan tiket & hotel lebih awal di musim liburan; siapkan bukti booking untuk check-in mudah.",
+          src: "Perjalanan domestik — tanpa syarat visa.",
+        },
+        uk: {
+          name: "United Kingdom",
+          currency: "Pound sterling (£)",
+          plug: "Tipe G (3 pin) · 230V — perlu adaptor",
+          best: "Mei–September",
+          visa: "Standard Visitor visa £135 (±Rp 2,9 jt /orang) untuk tinggal hingga 6 bulan.",
+          tips: "Ajukan visa paling cepat 3 bulan sebelum berangkat di gov.uk. Museum besar (British Museum, National Gallery) gratis; siapkan Oyster card atau kartu bank tanpa kontak untuk transportasi.",
+          src: "Sumber: gov.uk/standard-visitor (biaya £135) & visa-fees.homeoffice.gov.uk — diverifikasi Nov 2026, kurs ±Rp 21.500/£.",
+        },
+        us: {
+          name: "Amerika Serikat",
+          currency: "Dolar AS ($)",
+          plug: "Tipe A/B · 120V — perlu adaptor",
+          best: "April–Juni & September–November",
+          visa: "Visa B1/B2: biaya MRV $185 ditambah Visa Integrity Fee $250 (total ±Rp 7 jt /orang).",
+          tips: "Visa Integrity Fee berlaku sejak tahun anggaran 2026 dengan penerapan bertahap per konsulat — pantau travel.state.gov dan id.usembassy.gov saat mendaftar. Budaya tip 15–20% berlaku di restoran dan taksi.",
+          src: "Sumber: travel.state.gov (MRV $185) & kebijakan Visa Integrity Fee $250 FY2026 (kpmg.com, ellis.com) — diverifikasi Nov 2026, kurs ±Rp 15.700/$.",
+        },
+        cn: {
+          name: "Tiongkok (China)",
+          currency: "Yuan (¥ / CNY)",
+          plug: "Tipe A/C/I · 220V",
+          best: "Maret–Mei & September–November",
+          visa: "Wisata biasa: visa L (±Rp 0,7–1 jt via agen). Transit: bebas visa 240 jam (10 hari) bila melanjutkan ke negara ketiga melalui pintu masuk resmi.",
+          tips: "Hampir semua pembayaran memakai WeChat Pay / Alipay — pasang aplikasi dan tautkan kartu sebelum berangkat. Layanan Google, Instagram, dan WhatsApp diblokir; siapkan alternatif dan eSIM. Power bank wajib dibawa di kabin.",
+          src: "Sumber: id.china-embassy.gov.cn — bebas visa transit 240 jam untuk WNI sejak 12 Juni 2025 — diverifikasi Nov 2026.",
+        },
+        jp: {
+          name: "Jepang",
+          currency: "Yen (¥)",
+          plug: "Tipe A/B · 100V — colokan 2 pin umumnya cocok",
+          best: "Maret–April (sakura) & Oktober–November (momiji)",
+          visa: "E-paspor terdaftar: bebas visa hingga 15 hari (registrasi gratis, berlaku 3 tahun). Tanpa registrasi: visa single entry ¥15.000 (±Rp 1,65 jt /orang).",
+          tips: "Registrasi visa waiver untuk e-paspor WNI diajukan di kedutaan/online dan diproses 2–4 hari kerja. Gunakan IC card (Suica/Monoca) di ponsel untuk kereta & bus; banyak restoran kecil hanya menerima tunai.",
+          src: "Sumber: id.emb-japan.go.jp — biaya visa single entry Rp 1.650.000 (naik dari Rp 330.000) & registrasi visa waiver e-paspor — diverifikasi Sep 2026.",
+        },
+        kr: {
+          name: "Korea Selatan",
+          currency: "Won (₩)",
+          plug: "Tipe C/F · 220V — colokan Indonesia umumnya cocok",
+          best: "April–Juni & September–November",
+          visa: "Wisata mandiri: visa C-3-9 — biaya visa Rp 680.000 + layanan KVAC Rp 240.000 (±Rp 920.000 /orang). Rombongan minimal 3 orang via agen resmi: bebas visa 15 hari, wajib K-ETA, bebas biaya visa hingga akhir Des 2026.",
+          tips: "K-ETA diajukan minimal 72 jam sebelum keberangkatan di k-eta.go.kr (biaya ±₩10.000). Bawa T-money card untuk transportasi; banyak kedai tidak menerima kartu asing, siapkan tunai won.",
+          src: "Sumber: k-eta.go.kr, airasia.com/blog & visaforkorea-in.com (single entry Rp 920.000 per Jul 2026); program bebas visa rombongan hingga 31 Des 2026 — diverifikasi Nov 2026.",
+        },
+        other: {
+          name: "Lainnya",
+          currency: "Mata uang setempat",
+          plug: "Cek jenis colokan negara tujuan",
+          best: "Sesuai musim tujuan",
+          visa: "Cek syarat masuk negara tujuan melalui situs Kementerian Luar Negeri atau kedutaan negara tersebut.",
+          tips: "Cek travel advisory (peringatan perjalanan) resmi dan kebutuhan vaksin sebelum memesan tiket.",
+          src: "Informasi umum — lengkapi sesuai negara tujuan Anda.",
+        },
+      };
+
+      /* ---------- Daftar bawaan & dokumen dasar ---------- */
+      var BASE_PACK = [
+        {
+          text: "Baju sesuai jumlah hari (plus 1 set cadangan)",
+          cat: "pakaian",
+        },
+        { text: "Pakaian dalam, kaus kaki, pakaian tidur", cat: "pakaian" },
+        { text: "Jaket / sweter ringan", cat: "pakaian" },
+        { text: "Sepatu jalan nyaman & sandal", cat: "pakaian" },
+        { text: "Ponsel + charger dan kabel cadangan", cat: "elektronik" },
+        { text: "Power bank (bawa di kabin, bukan koper)", cat: "elektronik" },
+        { text: "Headphone / earphone", cat: "elektronik" },
+        { text: "Adaptor colokan sesuai negara tujuan", cat: "elektronik" },
+        {
+          text: "Toiletries pribadi (ukuran kabin bila perlu)",
+          cat: "toiletries",
+        },
+        { text: "Obat-obatan pribadi & vitamin", cat: "toiletries" },
+        { text: "Sunscreen, pelembap, lip balm", cat: "toiletries" },
+        { text: "Masker, hand sanitizer, plester", cat: "toiletries" },
+        { text: "Tas kecil untuk jalan harian", cat: "lainnya" },
+        { text: "Botol air minum isi ulang", cat: "lainnya" },
+        { text: "Kantong plastik / laundry bag", cat: "lainnya" },
+        { text: "Payung lipat atau jas hujan ringan", cat: "lainnya" },
+      ];
+      var DOCS_INTL = [
+        {
+          text: "Paspor (masa berlaku min. 6 bulan)",
+          note: "Periksa tanggal kedaluwarsa jauh hari",
+        },
+        {
+          text: "e-Tiket pesawat pulang-pergi",
+          note: "Simpan versi offline di ponsel",
+        },
+        {
+          text: "Voucher / bukti pemesanan hotel",
+          note: "Termasuk alamat & nomor telepon",
+        },
+        {
+          text: "Kartu ATM / kredit + dana tunai cadangan",
+          note: "Catat nomor blokir kartu",
+        },
+        { text: "Asuransi perjalanan", note: "Cakup medis & bagasi" },
+        {
+          text: "Salinan digital dokumen (email / cloud)",
+          note: "Paspor, visa, tiket",
+        },
+      ];
+
+      /* ---------- Template destinasi (estimasi per Nov 2026) ---------- */
+      var TEMPLATES = [
+        {
+          key: "bali",
+          country: "id",
+          destination: "Bali",
+          name: "Liburan Santai di Bali",
+          region: "Domestik",
+          days: 3,
+          travelers: 2,
+          visaLine: "Tanpa visa (domestik)",
+          flight: "±Rp 1,5–2,9 jt PP",
+          acts: [
+            [
+              {
+                t: "07:00",
+                title: "Menuju bandara Soekarno–Hatta",
+                cat: "transportasi",
+                note: "Tiba 2 jam sebelum jadwal",
+              },
+              {
+                t: "09:30",
+                title: "Terbang CGK menuju Denpasar",
+                cat: "transportasi",
+                cost: 2900000,
+                note: "Perjalanan ±1 jam 30 menit",
+              },
+              {
+                t: "12:00",
+                title: "Check-in hotel di Seminyak",
+                cat: "hotel",
+                note: "Siapkan voucher di ponsel",
+              },
+              {
+                t: "13:30",
+                title: "Makan siang babi guling",
+                cat: "kuliner",
+                cost: 150000,
+              },
+              {
+                t: "15:00",
+                title: "Santai sore di Pantai Batu Belig",
+                cat: "wisata",
+              },
+              {
+                t: "18:30",
+                title: "Menikmati senja di tepi pantai",
+                cat: "wisata",
+                note: "Bawa payung lipat",
+              },
+              {
+                t: "20:00",
+                title: "Makan malam seafood di Jimbaran",
+                cat: "kuliner",
+                cost: 300000,
+              },
+            ],
+            [
+              { t: "07:30", title: "Sarapan di hotel", cat: "kuliner" },
+              {
+                t: "09:00",
+                title: "Rafting Sungai Ayung",
+                cat: "wisata",
+                cost: 700000,
+                note: "±2 jam di air, sediakan pakaian ganti",
+              },
+              {
+                t: "12:30",
+                title: "Makan siang di Ubud",
+                cat: "kuliner",
+                cost: 200000,
+              },
+              {
+                t: "14:00",
+                title: "Tegallalang Rice Terrace",
+                cat: "wisata",
+                cost: 50000,
+              },
+              {
+                t: "16:30",
+                title: "Belanja oleh-oleh di Ubud Art Market",
+                cat: "belanja",
+                cost: 400000,
+                note: "Jangan lupa pajengan",
+              },
+              {
+                t: "19:30",
+                title: "Makan malam sate & lawar",
+                cat: "kuliner",
+                cost: 240000,
+              },
+            ],
+            [
+              {
+                t: "08:00",
+                title: "Sarapan & check-out hotel",
+                cat: "hotel",
+                note: "Koper bisa dititipkan di resepsionis",
+              },
+              {
+                t: "09:30",
+                title: "Pura Tanah Lot",
+                cat: "wisata",
+                cost: 120000,
+                note: "Terbaik sebelum siang agar tidak terlalu panas",
+              },
+              {
+                t: "12:00",
+                title: "Makan siang terakhir di Canggu",
+                cat: "kuliner",
+                cost: 180000,
+              },
+              {
+                t: "14:30",
+                title: "Menuju bandara Ngurah Rai",
+                cat: "transportasi",
+                cost: 150000,
+              },
+              {
+                t: "17:20",
+                title: "Terbang DPS kembali ke CGK",
+                cat: "transportasi",
+                note: "Tiket sudah termasuk pulang-pergi",
+              },
+            ],
+          ],
+          budget: [
+            {
+              cat: "transportasi",
+              label: "Tiket pesawat CGK–DPS pulang-pergi",
+              qty: 2,
+              unit: 1450000,
+            },
+            {
+              cat: "transportasi",
+              label: "Transportasi lokal (Grab / taksi) — 3 hari",
+              qty: 3,
+              unit: 250000,
+            },
+            {
+              cat: "hotel",
+              label: "Hotel area Seminyak (per malam)",
+              qty: 2,
+              unit: 550000,
+            },
+            {
+              cat: "kuliner",
+              label: "Makan & kopi — 2 orang x 3 hari",
+              qty: 6,
+              unit: 300000,
+            },
+            {
+              cat: "tiket",
+              label: "Rafting Sungai Ayung",
+              qty: 2,
+              unit: 350000,
+            },
+            { cat: "tiket", label: "Pura Tanah Lot", qty: 2, unit: 60000 },
+            {
+              cat: "tiket",
+              label: "Tegallalang Rice Terrace",
+              qty: 2,
+              unit: 25000,
+            },
+            {
+              cat: "lainnya",
+              label: "Oleh-oleh & souvenir",
+              qty: 1,
+              unit: 400000,
+            },
+          ],
+          packExtra: [
+            { text: "Pakaian renang & pakaian pantai", cat: "pakaian" },
+            { text: "Sunscreen SPF 50+ tahan air", cat: "toiletries" },
+            { text: "Topi / penutup kepala", cat: "pakaian" },
+            { text: "Losion anti-nyamuk", cat: "toiletries" },
+            { text: "Sandal jepit", cat: "pakaian" },
+          ],
+          docsDomestic: [
+            {
+              text: "KTP / e-KTP (atau paspor)",
+              note: "Wajib untuk check-in penerbangan domestik",
+            },
+            {
+              text: "e-Tiket pesawat pulang-pergi",
+              note: "Simpan versi offline di ponsel",
+            },
+            {
+              text: "Voucher / bukti pemesanan hotel",
+              note: "Termasuk alamat & nomor telepon",
+            },
+            {
+              text: "Bukti booking aktivitas (rafting dll.)",
+              note: "Screenshot kode reservasi",
+            },
+            {
+              text: "Kartu ATM / QRIS + tunai kecil",
+              note: "Banyak warung belum nontunai",
+            },
+            {
+              text: "Salinan digital dokumen (email / cloud)",
+              note: "Tiket, voucher, KTP",
+            },
+          ],
+        },
+        {
+          key: "uk",
+          country: "uk",
+          destination: "London",
+          name: "Liburan Keluarga ke London",
+          region: "Eropa",
+          days: 5,
+          travelers: 2,
+          visaLine: "Standard Visitor visa £135",
+          flight: "±Rp 11–18 jt PP",
+          acts: [
+            [
+              {
+                t: "06:30",
+                title: "Tiba di London Heathrow",
+                cat: "transportasi",
+              },
+              {
+                t: "08:00",
+                title: "Elizabeth line menuju pusat kota",
+                cat: "transportasi",
+                cost: 260000,
+                note: "±£12/orang, ±40 menit",
+              },
+              {
+                t: "09:30",
+                title: "Check-in hotel area Holborn",
+                cat: "hotel",
+                note: "Titipkan koper bila kamar belum siap",
+              },
+              {
+                t: "11:00",
+                title: "Jalan kaki menyusuri Thames: Big Ben & Westminster",
+                cat: "wisata",
+              },
+              {
+                t: "13:00",
+                title: "Makan siang fish & chips",
+                cat: "kuliner",
+                cost: 400000,
+              },
+              {
+                t: "15:00",
+                title: "London Eye",
+                cat: "wisata",
+                cost: 1400000,
+                note: "±£32/orang — pesan online lebih murah",
+              },
+              {
+                t: "18:30",
+                title: "Makan malam di pub tradisional",
+                cat: "kuliner",
+                cost: 500000,
+              },
+            ],
+            [
+              {
+                t: "08:00",
+                title: "Sarapan di kafe sekitar hotel",
+                cat: "kuliner",
+                cost: 240000,
+              },
+              {
+                t: "09:30",
+                title: "Buckingham Palace & upacara ganti penjaga",
+                cat: "wisata",
+                note: "Gratis — cek jadwal di situs resmi",
+              },
+              {
+                t: "11:30",
+                title: "Westminster Abbey",
+                cat: "wisata",
+                cost: 1300000,
+                note: "±£30/orang",
+              },
+              {
+                t: "13:30",
+                title: "Makan siang di Borough Market",
+                cat: "kuliner",
+                cost: 360000,
+              },
+              {
+                t: "15:00",
+                title: "Tower of London & Tower Bridge",
+                cat: "wisata",
+                cost: 1500000,
+                note: "±£35/orang",
+              },
+              {
+                t: "19:00",
+                title: "Makan malam + gelato sore",
+                cat: "kuliner",
+                cost: 500000,
+              },
+            ],
+            [
+              {
+                t: "09:00",
+                title: "British Museum",
+                cat: "wisata",
+                note: "Tiket gratis — pesan slot masuk online",
+              },
+              {
+                t: "12:00",
+                title: "Makan siang di Covent Garden",
+                cat: "kuliner",
+                cost: 360000,
+              },
+              {
+                t: "14:00",
+                title: "National Gallery & Trafalgar Square",
+                cat: "wisata",
+                note: "Gratis",
+              },
+              {
+                t: "16:30",
+                title: "Belanja di Oxford Street",
+                cat: "belanja",
+                cost: 1200000,
+              },
+              {
+                t: "19:30",
+                title: "Teater musikal West End",
+                cat: "wisata",
+                cost: 2400000,
+                note: "±£55/orang — cek lottery tiket murah",
+              },
+            ],
+            [
+              {
+                t: "08:30",
+                title: "Kereta menuju Windsor",
+                cat: "transportasi",
+                cost: 480000,
+                note: "Pulang-pergi ±£12/orang",
+              },
+              {
+                t: "10:00",
+                title: "Windsor Castle",
+                cat: "wisata",
+                cost: 1440000,
+                note: "±£33/orang",
+              },
+              {
+                t: "13:00",
+                title: "Makan siang khas Inggris",
+                cat: "kuliner",
+                cost: 360000,
+              },
+              {
+                t: "15:30",
+                title: "Kembali ke London & istirahat",
+                cat: "transportasi",
+              },
+              {
+                t: "19:00",
+                title: "Makan malam hidangan India",
+                cat: "kuliner",
+                cost: 500000,
+              },
+            ],
+            [
+              { t: "08:30", title: "Check-out & titipkan koper", cat: "hotel" },
+              { t: "09:30", title: "Camden Market", cat: "wisata" },
+              {
+                t: "12:00",
+                title: "Makan siang terakhir",
+                cat: "kuliner",
+                cost: 360000,
+              },
+              {
+                t: "14:00",
+                title: "Belanja oleh-oleh",
+                cat: "belanja",
+                cost: 900000,
+              },
+              {
+                t: "16:30",
+                title: "Elizabeth line ke Heathrow",
+                cat: "transportasi",
+                cost: 260000,
+              },
+              {
+                t: "19:30",
+                title: "Terbang kembali ke Jakarta",
+                cat: "transportasi",
+                note: "Sampai jumpa, London!",
+              },
+            ],
+          ],
+          budget: [
+            {
+              cat: "transportasi",
+              label: "Tiket pesawat CGK–LHR pulang-pergi",
+              qty: 2,
+              unit: 14000000,
+            },
+            {
+              cat: "transportasi",
+              label: "Transportasi dalam kota (Oyster/Elizabeth) — 5 hari",
+              qty: 2,
+              unit: 1000000,
+            },
+            {
+              cat: "hotel",
+              label: "Hotel zona 1–2 London (per malam)",
+              qty: 4,
+              unit: 2200000,
+            },
+            {
+              cat: "kuliner",
+              label: "Makan & kopi — 2 orang x 5 hari",
+              qty: 10,
+              unit: 340000,
+            },
+            { cat: "tiket", label: "London Eye", qty: 2, unit: 700000 },
+            { cat: "tiket", label: "Westminster Abbey", qty: 2, unit: 650000 },
+            { cat: "tiket", label: "Tower of London", qty: 2, unit: 760000 },
+            { cat: "tiket", label: "Windsor Castle", qty: 2, unit: 720000 },
+            {
+              cat: "tiket",
+              label: "Tiket teater West End",
+              qty: 2,
+              unit: 1200000,
+            },
+            {
+              cat: "lainnya",
+              label: "Visa Standard Visitor (£135) — per orang",
+              qty: 2,
+              unit: 2900000,
+            },
+            {
+              cat: "lainnya",
+              label: "Adaptor tipe G & eSIM",
+              qty: 1,
+              unit: 550000,
+            },
+            {
+              cat: "lainnya",
+              label: "Souvenir & cadangan",
+              qty: 1,
+              unit: 1000000,
+            },
+          ],
+          packExtra: [
+            { text: "Adaptor tipe G (Inggris, 3 pin)", cat: "elektronik" },
+            { text: "Jas hujan / parka tahan air", cat: "pakaian" },
+            { text: "Lapisan hangat (fleece / sweter tebal)", cat: "pakaian" },
+            { text: "Sepatu tahan air", cat: "pakaian" },
+            {
+              text: "Sarung tangan & syal (bila musim dingin)",
+              cat: "pakaian",
+            },
+          ],
+          docsExtra: [
+            {
+              text: "Visa Standard Visitor (£135 / ±Rp 2,9 jt)",
+              note: "Ajukan s.d. 3 bulan sebelum berangkat di gov.uk",
+            },
+            {
+              text: "Bukti akomodasi & tiket pulang (imigrasi)",
+              note: "Kadang diperiksa saat masuk",
+            },
+            {
+              text: "Bukti dana perjalanan",
+              note: "Rekening 6 bulan terakhir bila diminta",
+            },
+          ],
+        },
+        {
+          key: "us",
+          country: "us",
+          destination: "New York City",
+          name: "Liburan ke New York",
+          region: "Amerika",
+          days: 5,
+          travelers: 2,
+          visaLine: "Visa B1/B2 ($185 + $250)",
+          flight: "±Rp 15–20 jt PP",
+          acts: [
+            [
+              { t: "10:00", title: "Tiba di JFK", cat: "transportasi" },
+              {
+                t: "11:30",
+                title: "AirTrain + metro menuju Midtown",
+                cat: "transportasi",
+                cost: 320000,
+                note: "±$16/orang sekali jalan",
+              },
+              { t: "13:00", title: "Check-in hotel Midtown", cat: "hotel" },
+              {
+                t: "15:00",
+                title: "Jalan-jalan pertama di Times Square",
+                cat: "wisata",
+                note: "Terbaik saat lampu menyala",
+              },
+              {
+                t: "18:00",
+                title: "Makan malam pizza khas New York",
+                cat: "kuliner",
+                cost: 380000,
+              },
+            ],
+            [
+              {
+                t: "08:00",
+                title: "Sarapan bagel & kopi",
+                cat: "kuliner",
+                cost: 220000,
+              },
+              {
+                t: "09:00",
+                title: "Ferry ke Liberty Island & Patung Liberty",
+                cat: "wisata",
+                cost: 800000,
+                note: "±$25/orang — pesan tiket resmi jauh hari",
+              },
+              {
+                t: "12:30",
+                title: "Makan siang di Financial District",
+                cat: "kuliner",
+                cost: 380000,
+              },
+              { t: "14:00", title: "Wall Street & Oculus", cat: "wisata" },
+              {
+                t: "16:30",
+                title: "Jalan kaki Brooklyn Bridge",
+                cat: "wisata",
+                note: "Paling indah saat matahari terbenam",
+              },
+              {
+                t: "19:00",
+                title: "Makan malam burger klasik",
+                cat: "kuliner",
+                cost: 480000,
+              },
+            ],
+            [
+              {
+                t: "08:30",
+                title: "Sarapan di kedai sekitar hotel",
+                cat: "kuliner",
+                cost: 220000,
+              },
+              {
+                t: "09:30",
+                title: "Central Park — jalan & sewa sepeda",
+                cat: "wisata",
+                cost: 400000,
+              },
+              {
+                t: "12:00",
+                title: "Makan siang hotdog & salad",
+                cat: "kuliner",
+                cost: 320000,
+              },
+              {
+                t: "14:00",
+                title: "MoMA (Museum of Modern Art)",
+                cat: "wisata",
+                cost: 900000,
+                note: "±$28/orang",
+              },
+              {
+                t: "17:00",
+                title: "Top of the Rock saat senja",
+                cat: "wisata",
+                cost: 1280000,
+                note: "±$40/orang — pesan slot senja",
+              },
+              {
+                t: "20:00",
+                title: "Teater Broadway",
+                cat: "wisata",
+                cost: 3200000,
+                note: "±$100/orang — cek TKTS untuk tiket diskon",
+              },
+            ],
+            [
+              {
+                t: "09:00",
+                title: "Sarapan pancake",
+                cat: "kuliner",
+                cost: 260000,
+              },
+              {
+                t: "10:00",
+                title: "Metropolitan Museum of Art",
+                cat: "wisata",
+                cost: 960000,
+                note: "±$30/orang",
+              },
+              {
+                t: "13:00",
+                title: "Makan siang di Greenwich Village",
+                cat: "kuliner",
+                cost: 380000,
+              },
+              {
+                t: "15:00",
+                title: "High Line & Chelsea Market",
+                cat: "wisata",
+              },
+              {
+                t: "17:30",
+                title: "Belanja di Fifth Avenue",
+                cat: "belanja",
+                cost: 2000000,
+              },
+              {
+                t: "19:30",
+                title: "Makan malam steakhouse",
+                cat: "kuliner",
+                cost: 800000,
+                note: "Siapkan budget tip 18–20%",
+              },
+            ],
+            [
+              { t: "08:00", title: "Check-out & titip koper", cat: "hotel" },
+              {
+                t: "09:00",
+                title: "Belanja oleh-oleh terakhir",
+                cat: "belanja",
+                cost: 1200000,
+              },
+              {
+                t: "11:00",
+                title: "Brooklyn Bridge Park",
+                cat: "wisata",
+                note: "Pemandangan skyline terbaik",
+              },
+              {
+                t: "13:00",
+                title: "Makan siang terakhir",
+                cat: "kuliner",
+                cost: 340000,
+              },
+              {
+                t: "15:00",
+                title: "Metro + AirTrain menuju JFK",
+                cat: "transportasi",
+                cost: 320000,
+              },
+              {
+                t: "18:00",
+                title: "Terbang kembali ke Jakarta",
+                cat: "transportasi",
+              },
+            ],
+          ],
+          budget: [
+            {
+              cat: "transportasi",
+              label: "Tiket pesawat CGK–JFK pulang-pergi",
+              qty: 2,
+              unit: 17000000,
+            },
+            {
+              cat: "transportasi",
+              label: "OMNY / metro 7 hari",
+              qty: 2,
+              unit: 550000,
+            },
+            {
+              cat: "hotel",
+              label: "Hotel Midtown Manhattan (per malam)",
+              qty: 4,
+              unit: 3500000,
+            },
+            {
+              cat: "kuliner",
+              label: "Makan & kopi — 2 orang x 5 hari",
+              qty: 10,
+              unit: 360000,
+            },
+            {
+              cat: "tiket",
+              label: "Ferry Liberty Island",
+              qty: 2,
+              unit: 400000,
+            },
+            { cat: "tiket", label: "MoMA", qty: 2, unit: 450000 },
+            { cat: "tiket", label: "Top of the Rock", qty: 2, unit: 640000 },
+            { cat: "tiket", label: "Tiket Broadway", qty: 2, unit: 1600000 },
+            {
+              cat: "tiket",
+              label: "Metropolitan Museum of Art",
+              qty: 2,
+              unit: 480000,
+            },
+            {
+              cat: "lainnya",
+              label: "Visa B1/B2 ($185 + fee integritas $250) — per orang",
+              qty: 2,
+              unit: 6800000,
+            },
+            { cat: "lainnya", label: "Adaptor & eSIM", qty: 1, unit: 700000 },
+            {
+              cat: "lainnya",
+              label: "Souvenir & cadangan",
+              qty: 1,
+              unit: 1500000,
+            },
+          ],
+          packExtra: [
+            { text: "Adaptor tipe A/B (Amerika)", cat: "elektronik" },
+            {
+              text: "Konverter tegangan untuk alat 220V (cth. hair dryer)",
+              cat: "elektronik",
+            },
+            {
+              text: "Pakaian berlapis (lapisan dalam hangat bila musim dingin)",
+              cat: "pakaian",
+            },
+            { text: "Tas belanja lipat", cat: "lainnya" },
+            {
+              text: "Kartu kredit tanpa biaya transaksi luar negeri",
+              cat: "lainnya",
+            },
+          ],
+          docsExtra: [
+            {
+              text: "Visa B1/B2 di paspor ($185 + fee integritas $250)",
+              note: "Wawancara di kedutaan — jadwalkan jauh hari",
+            },
+            {
+              text: "Bukti DS-160 & tanda terima pembayaran visa",
+              note: "Simpan salinan digital",
+            },
+            {
+              text: "Bukti dana & surat keterangan kerja",
+              note: "Kadang diminta saat wawancara/imigrasi",
+            },
+          ],
+        },
+        {
+          key: "cn",
+          country: "cn",
+          destination: "Beijing",
+          name: "Jelajah Beijing Klasik",
+          region: "Asia Timur",
+          days: 4,
+          travelers: 2,
+          visaLine: "Visa L / bebas visa transit 240 jam",
+          flight: "±Rp 5–8 jt PP",
+          acts: [
+            [
+              { t: "09:00", title: "Tiba di Beijing", cat: "transportasi" },
+              {
+                t: "10:30",
+                title: "Kereta bandara menuju pusat kota",
+                cat: "transportasi",
+                cost: 130000,
+                note: "±¥25/orang",
+              },
+              {
+                t: "12:00",
+                title: "Check-in hotel area Wangfujing",
+                cat: "hotel",
+              },
+              {
+                t: "14:00",
+                title: "Jalan-jalan Wangfujing Street",
+                cat: "wisata",
+              },
+              {
+                t: "16:00",
+                title: "Cicipi jajanan khas di food street",
+                cat: "kuliner",
+                cost: 150000,
+              },
+              {
+                t: "19:00",
+                title: "Makan malam Peking Duck",
+                cat: "kuliner",
+                cost: 550000,
+                note: "Pesan meja lebih dulu",
+              },
+            ],
+            [
+              {
+                t: "07:30",
+                title: "Sarapan hangat di kedai lokal",
+                cat: "kuliner",
+                cost: 100000,
+              },
+              {
+                t: "09:00",
+                title: "Upacara bendera Lapangan Tiananmen",
+                cat: "wisata",
+                note: "Datang 30 menit lebih awal",
+              },
+              {
+                t: "10:00",
+                title: "Kota Terlarang (Forbidden City)",
+                cat: "wisata",
+                cost: 270000,
+                note: "±¥60/orang — pesan online H-7",
+              },
+              {
+                t: "12:30",
+                title: "Makan siang dumpling",
+                cat: "kuliner",
+                cost: 150000,
+              },
+              {
+                t: "14:00",
+                title: "Jingshan Park — panorama kota",
+                cat: "wisata",
+                cost: 15000,
+                note: "±¥3/orang",
+              },
+              {
+                t: "15:30",
+                title: "Temple of Heaven",
+                cat: "wisata",
+                cost: 160000,
+                note: "±¥34/orang",
+              },
+              {
+                t: "19:00",
+                title: "Makan malam hotpot Sichuan",
+                cat: "kuliner",
+                cost: 400000,
+              },
+            ],
+            [
+              {
+                t: "07:00",
+                title: "Berangkat ke Great Wall Mutianyu",
+                cat: "transportasi",
+                cost: 600000,
+                note: "Sewa mobil + sopir setengah hari",
+              },
+              {
+                t: "09:00",
+                title: "Trekking Great Wall Mutianyu",
+                cat: "wisata",
+                cost: 840000,
+                note: "Tiket ¥45 + kereta gantung ±¥140/orang",
+              },
+              {
+                t: "13:00",
+                title: "Makan siang dekat tembok",
+                cat: "kuliner",
+                cost: 200000,
+              },
+              {
+                t: "15:00",
+                title: "Summer Palace (Istana Musim Panas)",
+                cat: "wisata",
+                cost: 140000,
+                note: "±¥30/orang",
+              },
+              {
+                t: "19:30",
+                title: "Makan malam mie zhajiang",
+                cat: "kuliner",
+                cost: 150000,
+              },
+            ],
+            [
+              { t: "08:00", title: "Sarapan & check-out", cat: "hotel" },
+              {
+                t: "09:30",
+                title: "Hutong Nanluoguxiang dengan becak",
+                cat: "wisata",
+                cost: 300000,
+                note: "±¥100 untuk 2 orang",
+              },
+              {
+                t: "11:30",
+                title: "Makan siang terakhir",
+                cat: "kuliner",
+                cost: 150000,
+              },
+              {
+                t: "13:00",
+                title: "Belanja oleh-oleh khas Beijing",
+                cat: "belanja",
+                cost: 1000000,
+              },
+              {
+                t: "15:00",
+                title: "Kereta cepat menuju bandara",
+                cat: "transportasi",
+                cost: 130000,
+              },
+              {
+                t: "18:00",
+                title: "Terbang kembali ke Jakarta",
+                cat: "transportasi",
+              },
+            ],
+          ],
+          budget: [
+            {
+              cat: "transportasi",
+              label: "Tiket pesawat CGK–PEK pulang-pergi",
+              qty: 2,
+              unit: 6500000,
+            },
+            {
+              cat: "transportasi",
+              label: "Metro, Didi & kereta bandara — 4 hari",
+              qty: 1,
+              unit: 900000,
+            },
+            {
+              cat: "hotel",
+              label: "Hotel dekat Wangfujing (per malam)",
+              qty: 3,
+              unit: 1100000,
+            },
+            {
+              cat: "kuliner",
+              label: "Makan & kopi — 2 orang x 4 hari",
+              qty: 8,
+              unit: 165000,
+            },
+            { cat: "tiket", label: "Kota Terlarang", qty: 2, unit: 135000 },
+            {
+              cat: "tiket",
+              label: "Great Wall Mutianyu + kereta gantung",
+              qty: 2,
+              unit: 420000,
+            },
+            { cat: "tiket", label: "Temple of Heaven", qty: 2, unit: 80000 },
+            { cat: "tiket", label: "Summer Palace", qty: 2, unit: 70000 },
+            { cat: "tiket", label: "Jingshan Park", qty: 2, unit: 10000 },
+            {
+              cat: "lainnya",
+              label: "Visa L via agen (estimasi)",
+              qty: 2,
+              unit: 850000,
+            },
+            {
+              cat: "lainnya",
+              label: "eSIM & aplikasi pembayaran (WePay/Alipay)",
+              qty: 1,
+              unit: 450000,
+            },
+            {
+              cat: "lainnya",
+              label: "Souvenir & cadangan",
+              qty: 1,
+              unit: 1000000,
+            },
+          ],
+          packExtra: [
+            {
+              text: "Adaptor tipe A/C/I (colokan 2 pin datar cocok)",
+              cat: "elektronik",
+            },
+            {
+              text: "Tisu basah & antiseptik (toilet umum)",
+              cat: "toiletries",
+            },
+            { text: "Masker (udara bisa berdebu)", cat: "toiletries" },
+            { text: "Kantong sampah kecil untuk perjalanan", cat: "lainnya" },
+            { text: "Snack halal / instan cadangan", cat: "lainnya" },
+          ],
+          docsExtra: [
+            {
+              text: "Visa L (±Rp 0,7–1 jt via agen)",
+              note: "Atau bebas visa transit 240 jam bila lanjut ke negara ketiga — siapkan tiket lanjutan",
+            },
+            {
+              text: "WeChat Pay / Alipay aktif + kartu terautaut",
+              note: "Kartu Visa/Mastercard bisa ditautkan",
+            },
+            {
+              text: "Bukti hotel & tiket pulang",
+              note: "Untuk pemeriksaan imigrasi",
+            },
+          ],
+        },
+        {
+          key: "jp",
+          country: "jp",
+          destination: "Tokyo",
+          name: "Liburan Musim Sakura Tokyo",
+          region: "Asia Timur",
+          days: 4,
+          travelers: 2,
+          visaLine: "Bebas visa e-paspor 15 hari",
+          flight: "±Rp 6–9 jt PP",
+          acts: [
+            [
+              { t: "14:00", title: "Tiba di Haneda", cat: "transportasi" },
+              {
+                t: "15:00",
+                title: "Monoreil + kereta menuju Shinjuku",
+                cat: "transportasi",
+                cost: 160000,
+                note: "±¥800/orang",
+              },
+              { t: "16:30", title: "Check-in hotel Shinjuku", cat: "hotel" },
+              {
+                t: "18:30",
+                title: "Menjelajah gang Omoide Yokocho",
+                cat: "wisata",
+              },
+              {
+                t: "19:30",
+                title: "Makan malam ramen",
+                cat: "kuliner",
+                cost: 300000,
+              },
+            ],
+            [
+              {
+                t: "08:00",
+                title: "Sarapan onigiri & kopi kaleng",
+                cat: "kuliner",
+                cost: 140000,
+              },
+              {
+                t: "09:00",
+                title: "Meiji Jingu",
+                cat: "wisata",
+                note: "Gratis — paling tenang pagi hari",
+              },
+              {
+                t: "11:00",
+                title: "Takeshita Street, Harajuku",
+                cat: "wisata",
+              },
+              {
+                t: "13:00",
+                title: "Makan siang gyu-don",
+                cat: "kuliner",
+                cost: 240000,
+              },
+              {
+                t: "15:00",
+                title: "Shibuya Crossing & patung Hachiko",
+                cat: "wisata",
+              },
+              {
+                t: "16:00",
+                title: "Shibuya Sky saat senja",
+                cat: "wisata",
+                cost: 520000,
+                note: "±¥2.500/orang — pesan slot senja",
+              },
+              {
+                t: "19:30",
+                title: "Makan malam yakiniku",
+                cat: "kuliner",
+                cost: 600000,
+              },
+            ],
+            [
+              {
+                t: "08:30",
+                title: "Sarapan di kissaten klasik",
+                cat: "kuliner",
+                cost: 160000,
+              },
+              {
+                t: "09:30",
+                title: "Asakusa & Senso-ji Temple",
+                cat: "wisata",
+                note: "Gratis — cobanya kue mochi di Nakamise",
+              },
+              {
+                t: "12:00",
+                title: "Makan siang tempura Asakusa",
+                cat: "kuliner",
+                cost: 300000,
+              },
+              {
+                t: "14:00",
+                title: "teamLab Planets Tokyo",
+                cat: "wisata",
+                cost: 800000,
+                note: "±¥3.800/orang — tiket cepat habis",
+              },
+              {
+                t: "17:00",
+                title: "Akihabara — anime & elektronik",
+                cat: "wisata",
+              },
+              {
+                t: "19:30",
+                title: "Makan malam izakaya",
+                cat: "kuliner",
+                cost: 550000,
+              },
+            ],
+            [
+              {
+                t: "08:00",
+                title: "Sarapan sushi di Tsukiji Outer Market",
+                cat: "kuliner",
+                cost: 360000,
+              },
+              {
+                t: "10:00",
+                title: "Istana Kekaisaran & Taman Timur",
+                cat: "wisata",
+                note: "Gratis",
+              },
+              {
+                t: "12:00",
+                title: "Makan siang terakhir di Ginza",
+                cat: "kuliner",
+                cost: 300000,
+              },
+              {
+                t: "14:00",
+                title: "Belanja oleh-oleh di Tokyo Station",
+                cat: "belanja",
+                cost: 1200000,
+              },
+              {
+                t: "16:00",
+                title: "Kereta menuju Haneda",
+                cat: "transportasi",
+                cost: 100000,
+              },
+              {
+                t: "19:00",
+                title: "Terbang kembali ke Jakarta",
+                cat: "transportasi",
+              },
+            ],
+          ],
+          budget: [
+            {
+              cat: "transportasi",
+              label: "Tiket pesawat CGK–HND pulang-pergi",
+              qty: 2,
+              unit: 7000000,
+            },
+            {
+              cat: "transportasi",
+              label: "IC card (Suica) & kereta dalam kota",
+              qty: 2,
+              unit: 550000,
+            },
+            {
+              cat: "hotel",
+              label: "Hotel area Shinjuku (per malam)",
+              qty: 3,
+              unit: 1400000,
+            },
+            {
+              cat: "kuliner",
+              label: "Makan & kopi — 2 orang x 4 hari",
+              qty: 8,
+              unit: 300000,
+            },
+            { cat: "tiket", label: "Shibuya Sky", qty: 2, unit: 260000 },
+            { cat: "tiket", label: "teamLab Planets", qty: 2, unit: 400000 },
+            {
+              cat: "lainnya",
+              label: "Registrasi visa waiver e-paspor (gratis)",
+              qty: 2,
+              unit: 0,
+              note: "Tanpa registrasi: visa single entry Rp 1,65 jt/orang",
+            },
+            { cat: "lainnya", label: "eSIM 10 hari", qty: 1, unit: 350000 },
+            {
+              cat: "lainnya",
+              label: "Souvenir & cadangan",
+              qty: 1,
+              unit: 1000000,
+            },
+          ],
+          packExtra: [
+            {
+              text: "Handuk kecil / sapu tangan (toilet umum tanpa pengering)",
+              cat: "toiletries",
+            },
+            {
+              text: "Kantong sampah kecil (tempat sampah jarang)",
+              cat: "lainnya",
+            },
+            {
+              text: "Sepatu yang mudah dilepas (banyak tempat suci)",
+              cat: "pakaian",
+            },
+            { text: "Kaos kaki cadangan berbahan tebal", cat: "pakaian" },
+            {
+              text: "Pelembap & lip balm (udara kering musim dingin)",
+              cat: "toiletries",
+            },
+          ],
+          docsExtra: [
+            {
+              text: "Bukti registrasi visa waiver e-paspor",
+              note: "Gratis, berlaku 3 tahun, tinggal maks. 15 hari",
+            },
+            {
+              text: "Atau visa single entry (¥15.000 / ±Rp 1,65 jt)",
+              note: "Diajukan via agen resmi/VFS",
+            },
+            {
+              text: "Bukti hotel & itinerary harian",
+              note: "Kadang diperiksa imigrasi",
+            },
+          ],
+        },
+        {
+          key: "kr",
+          country: "kr",
+          destination: "Seoul",
+          name: "Liburan K-Style Seoul",
+          region: "Asia Timur",
+          days: 5,
+          travelers: 2,
+          visaLine: "Visa C-3-9 / bebas visa grup",
+          flight: "±Rp 5–8 jt PP",
+          acts: [
+            [
+              { t: "12:00", title: "Tiba di Incheon", cat: "transportasi" },
+              {
+                t: "13:00",
+                title: "AREX menuju Seoul Station",
+                cat: "transportasi",
+                cost: 220000,
+                note: "±₩10.000/orang",
+              },
+              { t: "14:00", title: "Check-in hotel Myeongdong", cat: "hotel" },
+              {
+                t: "16:00",
+                title: "Jalan-jalan Myeongdong & street food",
+                cat: "wisata",
+              },
+              {
+                t: "18:30",
+                title: "Makan malam Korean BBQ",
+                cat: "kuliner",
+                cost: 440000,
+              },
+            ],
+            [
+              {
+                t: "08:00",
+                title: "Sarapan kopi & toast",
+                cat: "kuliner",
+                cost: 150000,
+              },
+              {
+                t: "09:00",
+                title: "Istana Gyeongbokgung + sewa hanbok",
+                cat: "wisata",
+                cost: 530000,
+                note: "Tiket ₩3.000 + hanbok ±₩20.000/orang",
+              },
+              {
+                t: "11:30",
+                title: "Bukchon Hanok Village",
+                cat: "wisata",
+                note: "Patuhi jam tenang warga",
+              },
+              {
+                t: "13:00",
+                title: "Makan siang bibimbap",
+                cat: "kuliner",
+                cost: 220000,
+              },
+              {
+                t: "15:00",
+                title: "Insadong — seni, kerajinan & teh",
+                cat: "wisata",
+              },
+              {
+                t: "17:30",
+                title: "N Seoul Tower saat malam",
+                cat: "wisata",
+                cost: 480000,
+                note: "±₩21.000/orang",
+              },
+              {
+                t: "19:30",
+                title: "Makan malam KFC (korean fried chicken)",
+                cat: "kuliner",
+                cost: 380000,
+              },
+            ],
+            [
+              {
+                t: "07:30",
+                title: "Berangkat tur Nami Island",
+                cat: "transportasi",
+                cost: 700000,
+                note: "Bus tur harian pulang-pergi",
+              },
+              {
+                t: "10:00",
+                title: "Nami Island & Petite France",
+                cat: "wisata",
+                cost: 880000,
+                note: "Paket ±₩44.000/orang",
+              },
+              {
+                t: "13:00",
+                title: "Makan siang dakgalbi di Chuncheon",
+                cat: "kuliner",
+                cost: 240000,
+              },
+              { t: "16:00", title: "Kembali ke Seoul", cat: "transportasi" },
+              {
+                t: "19:00",
+                title: "Makan malam samgyetang",
+                cat: "kuliner",
+                cost: 380000,
+              },
+            ],
+            [
+              {
+                t: "09:00",
+                title: "Sarapan gimbap & tteokbokki",
+                cat: "kuliner",
+                cost: 140000,
+              },
+              {
+                t: "10:00",
+                title: "Changdeokgung & Secret Garden",
+                cat: "wisata",
+                cost: 180000,
+                note: "±₩8.000/orang — Secret Garden via tur",
+              },
+              {
+                t: "12:00",
+                title: "Makan siang kalguksu",
+                cat: "kuliner",
+                cost: 200000,
+              },
+              {
+                t: "14:00",
+                title: "Kafe estetik di Ikseondong",
+                cat: "wisata",
+              },
+              {
+                t: "16:00",
+                title: "Belanja skincare di Myeongdong",
+                cat: "belanja",
+                cost: 1500000,
+              },
+              {
+                t: "19:00",
+                title: "Makan malam odeng & hotteok",
+                cat: "kuliner",
+                cost: 250000,
+              },
+            ],
+            [
+              { t: "08:00", title: "Check-out & titip koper", cat: "hotel" },
+              {
+                t: "09:00",
+                title: "Sarapan di Gwangjang Market",
+                cat: "kuliner",
+                cost: 200000,
+              },
+              {
+                t: "10:30",
+                title: "Dongdaemun Design Plaza (DDP)",
+                cat: "wisata",
+              },
+              {
+                t: "12:00",
+                title: "Makan siang terakhir",
+                cat: "kuliner",
+                cost: 220000,
+              },
+              {
+                t: "14:00",
+                title: "AREX menuju Incheon",
+                cat: "transportasi",
+                cost: 220000,
+              },
+              {
+                t: "17:00",
+                title: "Terbang kembali ke Jakarta",
+                cat: "transportasi",
+              },
+            ],
+          ],
+          budget: [
+            {
+              cat: "transportasi",
+              label: "Tiket pesawat CGK–ICN pulang-pergi",
+              qty: 2,
+              unit: 6000000,
+            },
+            {
+              cat: "transportasi",
+              label: "T-money, AREX & bus tur Nami",
+              qty: 1,
+              unit: 1200000,
+            },
+            {
+              cat: "hotel",
+              label: "Hotel area Myeongdong (per malam)",
+              qty: 4,
+              unit: 1200000,
+            },
+            {
+              cat: "kuliner",
+              label: "Makan & kopi — 2 orang x 5 hari",
+              qty: 10,
+              unit: 240000,
+            },
+            {
+              cat: "tiket",
+              label: "Gyeongbokgung + sewa hanbok",
+              qty: 2,
+              unit: 265000,
+            },
+            { cat: "tiket", label: "N Seoul Tower", qty: 2, unit: 240000 },
+            {
+              cat: "tiket",
+              label: "Tur Nami Island & Petite France",
+              qty: 2,
+              unit: 500000,
+            },
+            {
+              cat: "tiket",
+              label: "Changdeokgung + Secret Garden",
+              qty: 2,
+              unit: 90000,
+            },
+            {
+              cat: "lainnya",
+              label: "Visa C-3-9 via KVAC (gratis utk rombongan ≥3 via agen)",
+              qty: 2,
+              unit: 920000,
+            },
+            {
+              cat: "lainnya",
+              label: "K-ETA (±₩10.000) & eSIM",
+              qty: 1,
+              unit: 500000,
+            },
+            {
+              cat: "lainnya",
+              label: "Souvenir & cadangan",
+              qty: 1,
+              unit: 1500000,
+            },
+          ],
+          packExtra: [
+            {
+              text: "T-money card (beli online sebelum berangkat)",
+              cat: "lainnya",
+            },
+            {
+              text: "Pelembap & lip balm (musim dingin sangat kering)",
+              cat: "toiletries",
+            },
+            {
+              text: "Sarung tangan & syal (bila musim dingin)",
+              cat: "pakaian",
+            },
+            {
+              text: "Kantong belanja lipat (plastik berbayar)",
+              cat: "lainnya",
+            },
+            { text: "Adaptor cadangan tipe C/F", cat: "elektronik" },
+          ],
+          docsExtra: [
+            {
+              text: "Visa C-3-9 (Rp 680.000 + layanan KVAC Rp 240.000)",
+              note: "Atau bebas visa rombongan ≥3 orang via agen resmi (s.d. 15 hari)",
+            },
+            {
+              text: "Persetujuan K-ETA",
+              note: "Daftar ≥72 jam sebelum terbang di k-eta.go.kr",
+            },
+            {
+              text: "Bukti hotel & tiket pulang",
+              note: "Untuk pemeriksaan imigrasi",
+            },
+          ],
+        },
+      ];
+
+      /* ---------- Bangun objek perjalanan ---------- */
+      function buildTrip(tpl) {
+        var start = plusDays(todayStr(), 45);
+        var days = [];
+        for (var i = 0; i < tpl.days; i++) {
+          days.push({
+            date: plusDays(start, i),
+            acts: (tpl.acts[i] || []).map(function (a) {
+              return {
+                id: uid(),
+                t: a.t,
+                title: a.title,
+                cat: a.cat,
+                note: a.note || "",
+                cost: a.cost || 0,
+              };
+            }),
+          });
+        }
+        var budget = tpl.budget.map(function (b) {
+          return {
+            id: uid(),
+            cat: b.cat,
+            label: b.label,
+            qty: b.qty,
+            unit: b.unit,
+            note: b.note || "",
+          };
+        });
+        var packing = BASE_PACK.concat(tpl.packExtra || []).map(function (p) {
+          return { id: uid(), text: p.text, cat: p.cat, done: false };
+        });
+        var docs = (
+          tpl.country === "id"
+            ? tpl.docsDomestic
+            : DOCS_INTL.concat(tpl.docsExtra || [])
+        ).map(function (d) {
+          return { id: uid(), text: d.text, note: d.note || "", done: false };
+        });
+        var me = { id: uid(), name: "Anda", role: "owner" };
+        return {
+          v: 1,
+          id: uid(),
+          name: tpl.name,
+          destination: tpl.destination,
+          country: tpl.country,
+          startDate: start,
+          endDate: plusDays(start, tpl.days - 1),
+          travelers: tpl.travelers,
+          days: days,
+          budget: budget,
+          packing: packing,
+          docs: docs,
+          members: [me],
+          activeMember: me.id,
+          log: [
+            {
+              ts: Date.now(),
+              who: "Anda",
+              text:
+                'Itinerary "' +
+                tpl.name +
+                '" dimuat dari template ' +
+                tpl.destination,
+            },
+          ],
+        };
+      }
+      function buildBlankTrip(
+        name,
+        destination,
+        country,
+        start,
+        end,
+        travelers,
+      ) {
+        var n = Math.max(1, Math.min(30, daysBetween(start, end) + 1));
+        var days = [];
+        for (var i = 0; i < n; i++)
+          days.push({ date: plusDays(start, i), acts: [] });
+        var baseDocs = country === "id" ? TEMPLATES[0].docsDomestic : DOCS_INTL;
+        var me = { id: uid(), name: "Anda", role: "owner" };
+        return {
+          v: 1,
+          id: uid(),
+          name: name,
+          destination: destination,
+          country: country,
+          startDate: start,
+          endDate: plusDays(start, n - 1),
+          travelers: travelers,
+          days: days,
+          budget: [],
+          packing: BASE_PACK.map(function (p) {
+            return { id: uid(), text: p.text, cat: p.cat, done: false };
+          }),
+          docs: baseDocs.map(function (d) {
+            return { id: uid(), text: d.text, note: d.note || "", done: false };
+          }),
+          members: [me],
+          activeMember: me.id,
+          log: [
+            {
+              ts: Date.now(),
+              who: "Anda",
+              text: 'Perjalanan baru "' + name + '" dibuat',
+            },
+          ],
+        };
+      }
+      function tplEstimate(tpl) {
+        return tpl.budget.reduce(function (s, b) {
+          return s + b.qty * b.unit;
+        }, 0);
+      }
+      function tripTotal() {
+        return S.budget.reduce(function (s, b) {
+          return s + (Number(b.qty) || 0) * (Number(b.unit) || 0);
+        }, 0);
+      }
+
+      /* ---------- State: simpan & muat ---------- */
+      var LS_KEY = "jelajah-trip-v1";
+      var S = null;
+      function save() {
+        try {
+          localStorage.setItem(LS_KEY, JSON.stringify(S));
+        } catch (e) {}
+      }
+      function logIt(text) {
+        var m = activeMember();
+        S.log.unshift({ ts: Date.now(), who: m ? m.name : "Anda", text: text });
+        if (S.log.length > 80) S.log.length = 80;
+      }
+      function activeMember() {
+        for (var i = 0; i < S.members.length; i++) {
+          if (S.members[i].id === S.activeMember) return S.members[i];
+        }
+        return S.members[0];
+      }
+      function loadState() {
+        try {
+          var raw = localStorage.getItem(LS_KEY);
+          if (raw) {
+            var data = JSON.parse(raw);
+            if (data && data.days && data.members) return migrate(data);
+          }
+        } catch (e) {}
+        return null;
+      }
+      function migrate(d) {
+        d.days = d.days || [];
+        d.budget = d.budget || [];
+        d.packing = d.packing || [];
+        d.docs = d.docs || [];
+        d.members =
+          d.members && d.members.length
+            ? d.members
+            : [{ id: uid(), name: "Anda", role: "owner" }];
+        d.log = d.log || [];
+        d.travelers = d.travelers || 2;
+        d.country = d.country || "other";
+        return d;
+      }
+    </script>
+    <script>
+      /* ============================================================
+   RENDER & INTERAKSI
+   ============================================================ */
+      var activeDay = 0;
+      var COUNTRY_ORDER = ["id", "uk", "us", "cn", "jp", "kr", "other"];
+
+      /* ---------- Toast & modal ---------- */
+      var toastTimer = null;
+      function toast(msg) {
+        $("#toastText").textContent = msg;
+        var t = $("#toast");
+        t.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () {
+          t.classList.remove("show");
+        }, 2400);
+      }
+      function closeOverlay(id) {
+        $("#" + id).classList.remove("open");
+        if (id === "confirmModal" && cmResolve) {
+          var r = cmResolve;
+          cmResolve = null;
+          r(false);
+        }
+      }
+      var cmResolve = null;
+      function confirmDlg(title, text, yesLabel) {
+        return new Promise(function (resolve) {
+          $("#cmTitle").textContent = title;
+          $("#cmText").textContent = text;
+          $("#cmYes").textContent = yesLabel || "Ya, Lanjutkan";
+          cmResolve = resolve;
+          $("#confirmModal").classList.add("open");
+        });
+      }
+      document.addEventListener("click", function (e) {
+        var c = e.target.closest("[data-close]");
+        if (c) {
+          closeOverlay(c.getAttribute("data-close"));
+        }
+        if (e.target.classList && e.target.classList.contains("overlay")) {
+          closeOverlay(e.target.id);
+        }
+      });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") {
+          $$(".overlay.open").forEach(function (o) {
+            closeOverlay(o.id);
+          });
+        }
+      });
+      $("#cmYes").addEventListener("click", function () {
+        if (cmResolve) {
+          var r = cmResolve;
+          cmResolve = null;
+          closeOverlay("confirmModal");
+          r(true);
+        }
+      });
+
+      /* ---------- Header & tema ---------- */
+      function syncThemeIcons() {
+        var dark =
+          document.documentElement.getAttribute("data-theme") === "dark";
+        $("#iconSun").style.display = dark ? "" : "none";
+        $("#iconMoon").style.display = dark ? "none" : "";
+      }
+      $("#themeToggle").addEventListener("click", function () {
+        var next =
+          document.documentElement.getAttribute("data-theme") === "dark"
+            ? "light"
+            : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        try {
+          localStorage.setItem("jelajah-theme", next);
+        } catch (e) {}
+        syncThemeIcons();
+      });
+      $("#collabChip").addEventListener("click", function () {
+        activateTab("kolaborasi");
+      });
+
+      /* ---------- Navigasi tab ---------- */
+      function activateTab(name) {
+        $$(".tab").forEach(function (t) {
+          t.classList.toggle("active", t.getAttribute("data-tab") === name);
+        });
+        $$(".tab-panel").forEach(function (p) {
+          p.classList.toggle("active", p.id === "tab-" + name);
+        });
+        if (name === "jadwal") {
+          if (activeDay > S.days.length - 1) activeDay = S.days.length - 1;
+          renderSchedule();
+        }
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      $$(".tab").forEach(function (t) {
+        t.addEventListener("click", function () {
+          activateTab(t.getAttribute("data-tab"));
+        });
+      });
+
+      /* ---------- Render: form perjalanan ---------- */
+      function renderTripForm() {
+        $("#fName").value = S.name;
+        $("#fDest").value = S.destination;
+        $("#fCountry").value = S.country;
+        $("#fStart").value = S.startDate;
+        $("#fEnd").value = S.endDate;
+        $("#fTravelers").value = S.travelers;
+      }
+      $("#tripForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        var start = $("#fStart").value || todayStr();
+        var end = $("#fEnd").value || start;
+        if (daysBetween(start, end) < 0) {
+          var tmp = start;
+          start = end;
+          end = tmp;
+        }
+        var travelers = Math.max(
+          1,
+          Math.min(30, parseInt($("#fTravelers").value, 10) || 2),
+        );
+        var oldActs = S.days.map(function (d) {
+          return d.acts;
+        });
+        var n = Math.max(1, Math.min(30, daysBetween(start, end) + 1));
+        var days = [];
+        for (var i = 0; i < n; i++) {
+          days.push({ date: plusDays(start, i), acts: oldActs[i] || [] });
+        }
+        S.name = $("#fName").value.trim() || "Perjalanan Tanpa Nama";
+        S.destination = $("#fDest").value.trim() || "-";
+        S.country = $("#fCountry").value;
+        S.startDate = start;
+        S.endDate = end;
+        S.travelers = travelers;
+        S.days = days;
+        logIt(
+          "memperbarui data perjalanan (" +
+            n +
+            " hari, " +
+            travelers +
+            " wisatawan)",
+        );
+        renderAll();
+        toast("Perjalanan tersimpan — jadwal disesuaikan");
+      });
+      $("#btnNewTrip").addEventListener("click", function () {
+        confirmDlg(
+          "Mulai perjalanan baru?",
+          "Seluruh isi itinerary saat ini (jadwal, anggaran, daftar bawaan, dokumen) akan dikosongkan dan diganti dengan rencana kosong.",
+          "Ya, Mulai Baru",
+        ).then(function (ok) {
+          if (!ok) return;
+          S = buildBlankTrip(
+            "Perjalanan Baru",
+            "",
+            "other",
+            plusDays(todayStr(), 30),
+            plusDays(todayStr(), 32),
+            2,
+          );
+          activeDay = 0;
+          logIt("memulai perjalanan baru");
+          renderAll();
+          toast("Perjalanan baru dibuat — isi data di sebelah kanan");
+        });
+      });
+
+      /* ---------- Render: ringkasan ---------- */
+      function renderSummary() {
+        var info = COUNTRY_INFO[S.country] || COUNTRY_INFO.other;
+        var total = tripTotal();
+        var per = total / Math.max(1, S.travelers);
+        var pDone = S.packing.filter(function (p) {
+          return p.done;
+        }).length;
+        var dDone = S.docs.filter(function (d) {
+          return d.done;
+        }).length;
+        var rows = [
+          ["map-pin", "Destinasi", esc(S.destination) + ", " + esc(info.name)],
+          [
+            "calendar",
+            "Tanggal",
+            fmtRange(S.startDate, S.endDate) + " (" + S.days.length + " hari)",
+          ],
+          ["users", "Wisatawan", S.travelers + " orang"],
+          ["shield", "Visa & aturan masuk", esc(info.visa)],
+        ];
+        var html = rows
+          .map(function (r) {
+            return (
+              '<div class="sum-row">' +
+              icon(r[0]) +
+              '<div><div class="k">' +
+              r[1] +
+              '</div><div class="v">' +
+              r[2] +
+              "</div></div></div>"
+            );
+          })
+          .join("");
+        html +=
+          '<div class="sum-total"><div class="k">Total estimasi anggaran (' +
+          S.travelers +
+          " orang)</div>" +
+          '<div class="v">' +
+          fmtIDR(total) +
+          " <small>· sekitar " +
+          fmtIDR(per) +
+          " / orang</small></div>" +
+          '<div class="k" style="margin-top:6px">Persiapan: barang bawaan ' +
+          pDone +
+          "/" +
+          S.packing.length +
+          " · dokumen " +
+          dDone +
+          "/" +
+          S.docs.length +
+          "</div></div>";
+        $("#sumBox").innerHTML = html;
+      }
+
+      /* ---------- Render: template destinasi ---------- */
+      function renderTemplates() {
+        var html = TEMPLATES.map(function (t) {
+          var est = tplEstimate(t);
+          return (
+            '<div class="tpl-card">' +
+            '<div class="tpl-top"><span class="tpl-badge">' +
+            esc(t.region) +
+            "</span></div>" +
+            "<h3>" +
+            esc(t.destination) +
+            "</h3>" +
+            '<div class="tpl-sub">' +
+            esc(t.name) +
+            " · " +
+            t.days +
+            " hari " +
+            (t.days - 1) +
+            " malam · " +
+            t.travelers +
+            " orang</div>" +
+            '<div class="tpl-line">' +
+            icon("shield", "ic-sm") +
+            "<span>" +
+            esc(t.visaLine) +
+            "</span></div>" +
+            '<div class="tpl-line">' +
+            icon("plane", "ic-sm") +
+            "<span>Tiket PP dari Jakarta: " +
+            esc(t.flight) +
+            "</span></div>" +
+            '<div class="tpl-line">' +
+            icon("wallet", "ic-sm") +
+            "<span>Total estimasi: ±" +
+            fmtIDR(est) +
+            "</span></div>" +
+            '<button class="btn btn-ghost btn-sm" data-tpl="' +
+            t.key +
+            '">' +
+            icon("download", "ic-sm") +
+            "Muat Template</button>" +
+            "</div>"
+          );
+        }).join("");
+        $("#tplGrid").innerHTML = html;
+      }
+      $("#tplGrid").addEventListener("click", function (e) {
+        var b = e.target.closest("[data-tpl]");
+        if (!b) return;
+        var key = b.getAttribute("data-tpl");
+        var tpl = null;
+        for (var i = 0; i < TEMPLATES.length; i++) {
+          if (TEMPLATES[i].key === key) tpl = TEMPLATES[i];
+        }
+        if (!tpl) return;
+        confirmDlg(
+          "Muat template " + tpl.destination + "?",
+          "Seluruh isi itinerary saat ini — jadwal, anggaran, daftar bawaan, dan dokumen — akan diganti dengan isi template siap pakai. Lanjutkan?",
+          "Ya, Muat Template",
+        ).then(function (ok) {
+          if (!ok) return;
+          S = buildTrip(tpl);
+          activeDay = 0;
+          renderAll();
+          toast("Template " + tpl.destination + " dimuat — bebas diedit");
+        });
+      });
+
+      /* ---------- Render: jadwal (timeline) ---------- */
+      function renderSchedule() {
+        if (activeDay > S.days.length - 1)
+          activeDay = Math.max(0, S.days.length - 1);
+        var chips = S.days
+          .map(function (d, i) {
+            return (
+              '<button class="day-chip' +
+              (i === activeDay ? " active" : "") +
+              '" data-day="' +
+              i +
+              '">' +
+              '<span class="d1">Hari ' +
+              (i + 1) +
+              '</span><span class="d2">' +
+              fmtShort(d.date) +
+              "</span></button>"
+            );
+          })
+          .join("");
+        $("#dayChips").innerHTML = chips;
+        var day = S.days[activeDay] || S.days[0];
+        if (!day) {
+          return;
+        }
+        var acts = day.acts.slice().sort(function (a, b) {
+          return a.t < b.t ? -1 : 1;
+        });
+        var dayCost = day.acts.reduce(function (s, a) {
+          return s + (Number(a.cost) || 0);
+        }, 0);
+        $("#daySum").innerHTML =
+          "<b>" +
+          fmtLong(day.date) +
+          "</b> · " +
+          acts.length +
+          " aktivitas" +
+          (dayCost > 0 ? " · est. biaya " + fmtIDR(dayCost) : "");
+        if (!acts.length) {
+          $("#tlList").innerHTML =
+            '<div class="empty">' +
+            icon("calendar", "ic-lg") +
+            '<p>Belum ada aktivitas untuk hari ini.<br>Tekan "Tambah Aktivitas" untuk mulai menyusun timeline per jam.</p></div>';
+          return;
+        }
+        $("#tlList").innerHTML = acts
+          .map(function (a) {
+            var c = ACT_CATS[a.cat] || ACT_CATS.lainnya;
+            return (
+              '<div class="tl-item">' +
+              '<div class="tl-time">' +
+              esc(a.t) +
+              "</div>" +
+              '<div class="tl-node cat-' +
+              a.cat +
+              '">' +
+              icon(c.icon) +
+              "</div>" +
+              '<div class="tl-card">' +
+              '<div class="tl-title"><b>' +
+              esc(a.title) +
+              '</b><span class="cat-chip cat-' +
+              a.cat +
+              '">' +
+              esc(c.label) +
+              "</span></div>" +
+              (a.note ? '<div class="tl-note">' + esc(a.note) + "</div>" : "") +
+              '<div class="tl-meta">' +
+              (a.cost > 0
+                ? '<span class="tl-cost">' +
+                  icon("wallet", "ic-sm") +
+                  fmtIDR(a.cost) +
+                  "</span>"
+                : "") +
+              '<span class="tl-actions">' +
+              '<button class="icon-btn js-edit-act" data-id="' +
+              a.id +
+              '" title="Sunting">' +
+              icon("pencil") +
+              "</button>" +
+              '<button class="icon-btn danger js-del-act" data-id="' +
+              a.id +
+              '" title="Hapus">' +
+              icon("trash") +
+              "</button>" +
+              "</span>" +
+              "</div>" +
+              "</div>" +
+              "</div>"
+            );
+          })
+          .join("");
+      }
+      $("#dayChips").addEventListener("click", function (e) {
+        var c = e.target.closest("[data-day]");
+        if (!c) return;
+        activeDay = parseInt(c.getAttribute("data-day"), 10);
+        renderSchedule();
+      });
+
+      /* --- modal aktivitas --- */
+      function openActModal(dayIdx, act) {
+        $("#amTitle").textContent = act
+          ? "Sunting Aktivitas"
+          : "Tambah Aktivitas — Hari " + (dayIdx + 1);
+        $("#actModal").setAttribute("data-day", String(dayIdx));
+        $("#amId").value = act ? act.id : "";
+        $("#amTime").value = act ? act.t : "09:00";
+        $("#amTitle2").value = act ? act.title : "";
+        $("#amCat").value = act ? act.cat : "wisata";
+        $("#amNote").value = act ? act.note : "";
+        $("#amCost").value = act && act.cost ? act.cost : "";
+        $("#actModal").classList.add("open");
+        setTimeout(function () {
+          $("#amTitle2").focus();
+        }, 60);
+      }
+      $("#btnAddAct").addEventListener("click", function () {
+        openActModal(activeDay, null);
+      });
+      $("#btnSaveAct").addEventListener("click", function () {
+        var t = $("#amTime").value || "09:00";
+        var title = $("#amTitle2").value.trim();
+        if (!title) {
+          toast("Isi nama aktivitasnya dulu");
+          $("#amTitle2").focus();
+          return;
+        }
+        var dayIdx = parseInt($("#actModal").getAttribute("data-day"), 10) || 0;
+        var day = S.days[dayIdx];
+        if (!day) {
+          return;
+        }
+        var id = $("#amId").value;
+        var data = {
+          t: t,
+          title: title,
+          cat: $("#amCat").value,
+          note: $("#amNote").value.trim(),
+          cost: Number($("#amCost").value) || 0,
+        };
+        if (id) {
+          for (var i = 0; i < day.acts.length; i++) {
+            if (day.acts[i].id === id) {
+              day.acts[i] = Object.assign({ id: id }, data);
+              logIt('menyunting aktivitas "' + title + '"');
+              break;
+            }
+          }
+        } else {
+          day.acts.push(Object.assign({ id: uid() }, data));
+          logIt(
+            'menambah aktivitas "' + title + '" (Hari ' + (dayIdx + 1) + ")",
+          );
+        }
+        day.acts.sort(function (a, b) {
+          return a.t < b.t ? -1 : 1;
+        });
+        closeOverlay("actModal");
+        renderAll();
+        toast(
+          id ? "Aktivitas diperbarui" : "Aktivitas ditambahkan ke timeline",
+        );
+      });
+      $("#tlList").addEventListener("click", function (e) {
+        var ed = e.target.closest(".js-edit-act");
+        var dl = e.target.closest(".js-del-act");
+        if (!ed && !dl) return;
+        var id = (ed || dl).getAttribute("data-id");
+        var day = S.days[activeDay] || S.days[0];
+        if (!day) return;
+        var act = null,
+          idx = -1;
+        for (var i = 0; i < day.acts.length; i++) {
+          if (day.acts[i].id === id) {
+            act = day.acts[i];
+            idx = i;
+            break;
+          }
+        }
+        if (!act) return;
+        if (ed) {
+          openActModal(activeDay, act);
+          return;
+        }
+        confirmDlg(
+          "Hapus aktivitas?",
+          '"' + act.title + '" akan dihapus dari Hari ' + (activeDay + 1) + ".",
+          "Ya, Hapus",
+        ).then(function (ok) {
+          if (!ok) return;
+          day.acts.splice(idx, 1);
+          logIt(
+            'menghapus aktivitas "' +
+              act.title +
+              '" (Hari ' +
+              (activeDay + 1) +
+              ")",
+          );
+          renderAll();
+          toast("Aktivitas dihapus");
+        });
+      });
+
+      /* ---------- Render: anggaran ---------- */
+      function renderBudget() {
+        var wrap = $("#budgetWrap");
+        if (!S.budget.length) {
+          wrap.innerHTML =
+            '<div class="empty">' +
+            icon("wallet", "ic-lg") +
+            "<p>Belum ada item anggaran.<br>Tambahkan baris pertama lewat formulir di bawah, atau muat template destinasi.</p></div>";
+          return;
+        }
+        var html =
+          '<table><thead><tr><th>Keterangan</th><th class="num">Jml</th><th class="num">Biaya Satuan</th><th class="num">Subtotal</th><th></th></tr></thead><tbody>';
+        Object.keys(BUD_CATS).forEach(function (key) {
+          var items = S.budget.filter(function (b) {
+            return b.cat === key;
+          });
+          if (!items.length) return;
+          var sub = items.reduce(function (s, b) {
+            return s + (Number(b.qty) || 0) * (Number(b.unit) || 0);
+          }, 0);
+          var c = BUD_CATS[key];
+          html +=
+            '<tr class="cat-head cat-' +
+            key +
+            '"><td colspan="5"><div style="display:flex;align-items:center;gap:8px">' +
+            icon(c.icon) +
+            '<span class="cat-title">' +
+            esc(c.label) +
+            '</span><span class="cat-sub" style="margin-left:auto;font-weight:700;color:var(--cat)">' +
+            fmtIDR(sub) +
+            "</span></div></td></tr>";
+          html += items
+            .map(function (b) {
+              return (
+                "<tr>" +
+                '<td><input class="cell-input lbl-input" data-id="' +
+                b.id +
+                '" data-f="label" value="' +
+                esc(b.label) +
+                '">' +
+                (b.note
+                  ? '<div style="font-size:11.5px;color:var(--faint);margin-top:2px">' +
+                    esc(b.note) +
+                    "</div>"
+                  : "") +
+                "</td>" +
+                '<td class="num"><input type="number" class="cell-input" data-id="' +
+                b.id +
+                '" data-f="qty" min="0" max="99" value="' +
+                b.qty +
+                '"></td>' +
+                '<td class="num"><input type="number" class="cell-input" data-id="' +
+                b.id +
+                '" data-f="unit" min="0" step="1000" value="' +
+                b.unit +
+                '"></td>' +
+                '<td class="num" style="font-weight:600">' +
+                fmtIDR((Number(b.qty) || 0) * (Number(b.unit) || 0)) +
+                "</td>" +
+                '<td class="num"><button class="icon-btn danger js-del-bud" data-id="' +
+                b.id +
+                '" title="Hapus">' +
+                icon("trash") +
+                "</button></td>" +
+                "</tr>"
+              );
+            })
+            .join("");
+        });
+        var total = tripTotal();
+        var per = total / Math.max(1, S.travelers);
+        html += "</tbody></table>";
+        html +=
+          '<div class="total-big"><span class="t">TOTAL ESTIMASI (' +
+          S.travelers +
+          " wisatawan)</span>" +
+          '<span class="n">' +
+          fmtIDR(total) +
+          "</span>" +
+          '<span class="per">± ' +
+          fmtIDR(per) +
+          " / orang — angka bisa berubah, perbarui sebelum berangkat</span></div>";
+        wrap.innerHTML = html;
+      }
+      $("#budgetAddForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        var label = $("#biLabel").value.trim();
+        if (!label) {
+          toast("Tulis keterangan biayanya dulu");
+          $("#biLabel").focus();
+          return;
+        }
+        S.budget.push({
+          id: uid(),
+          cat: $("#biCat").value,
+          label: label,
+          qty: Math.max(1, parseInt($("#biQty").value, 10) || 1),
+          unit: Number($("#biUnit").value) || 0,
+          note: "",
+        });
+        logIt('menambah item anggaran "' + label + '"');
+        $("#biLabel").value = "";
+        $("#biUnit").value = "";
+        renderAll();
+        toast("Item anggaran ditambahkan");
+      });
+      $("#budgetWrap").addEventListener("change", function (e) {
+        var inp = e.target.closest(".cell-input");
+        if (!inp) return;
+        var id = inp.getAttribute("data-id"),
+          f = inp.getAttribute("data-f");
+        var item = null;
+        for (var i = 0; i < S.budget.length; i++) {
+          if (S.budget[i].id === id) {
+            item = S.budget[i];
+            break;
+          }
+        }
+        if (!item) return;
+        if (f === "label") {
+          item.label = inp.value.trim() || "(tanpa nama)";
+        }
+        if (f === "qty") {
+          item.qty = Math.max(0, Math.min(999, parseInt(inp.value, 10) || 0));
+        }
+        if (f === "unit") {
+          item.unit = Math.max(0, Number(inp.value) || 0);
+        }
+        logIt('menyunting item anggaran "' + item.label + '"');
+        renderAll();
+      });
+      $("#budgetWrap").addEventListener("click", function (e) {
+        var d = e.target.closest(".js-del-bud");
+        if (!d) return;
+        var id = d.getAttribute("data-id");
+        var item = null,
+          idx = -1;
+        for (var i = 0; i < S.budget.length; i++) {
+          if (S.budget[i].id === id) {
+            item = S.budget[i];
+            idx = i;
+            break;
+          }
+        }
+        if (!item) return;
+        confirmDlg(
+          "Hapus item anggaran?",
+          '"' + item.label + '" akan dihapus dari estimasi.',
+          "Ya, Hapus",
+        ).then(function (ok) {
+          if (!ok) return;
+          S.budget.splice(idx, 1);
+          logIt('menghapus item anggaran "' + item.label + '"');
+          renderAll();
+          toast("Item anggaran dihapus");
+        });
+      });
+
+      /* ---------- Render: persiapan ---------- */
+      function renderPrep() {
+        var info = COUNTRY_INFO[S.country] || COUNTRY_INFO.other;
+        $("#infoSub").textContent = S.destination
+          ? S.destination + ", " + info.name
+          : info.name;
+        var items = [
+          ["shield", "Visa & aturan masuk", esc(info.visa)],
+          ["banknote", "Mata uang", esc(info.currency)],
+          ["info", "Colokan listrik", esc(info.plug)],
+          ["sun", "Waktu terbaik berkunjung", esc(info.best)],
+          ["compass", "Tips perjalanan", esc(info.tips)],
+        ];
+        $("#infoBox").innerHTML =
+          '<div class="info-card">' +
+          items
+            .map(function (r) {
+              return (
+                '<div class="info-item">' +
+                icon(r[0]) +
+                '<div><div class="k">' +
+                r[1] +
+                '</div><div class="v">' +
+                r[2] +
+                "</div></div></div>"
+              );
+            })
+            .join("") +
+          '<div class="info-src">' +
+          esc(info.src) +
+          "</div></div>";
+
+        var pDone = S.packing.filter(function (p) {
+          return p.done;
+        }).length;
+        $("#packFill").style.width =
+          (S.packing.length
+            ? Math.round((pDone * 100) / S.packing.length)
+            : 0) + "%";
+        $("#packLabel").textContent = pDone + "/" + S.packing.length;
+        $("#packList").innerHTML = renderChecklist(S.packing, "pack", true);
+
+        var dDone = S.docs.filter(function (d) {
+          return d.done;
+        }).length;
+        $("#docFill").style.width =
+          (S.docs.length ? Math.round((dDone * 100) / S.docs.length) : 0) + "%";
+        $("#docLabel").textContent = dDone + "/" + S.docs.length;
+        $("#docList").innerHTML = renderChecklist(S.docs, "doc", false);
+      }
+      function renderChecklist(list, kind, withCat) {
+        if (!list.length) {
+          return (
+            '<div class="empty">' +
+            icon(kind === "pack" ? "suitcase" : "file", "ic-lg") +
+            "<p>Daftar masih kosong — tambahkan lewat formulir di bawah.</p></div>"
+          );
+        }
+        var sorted = list.slice().sort(function (a, b) {
+          return a.done === b.done ? 0 : a.done ? 1 : -1;
+        });
+        return sorted
+          .map(function (it) {
+            return (
+              '<div class="check-item' +
+              (it.done ? " done" : "") +
+              '">' +
+              '<label class="cbox"><input type="checkbox" class="js-check" data-kind="' +
+              kind +
+              '" data-id="' +
+              it.id +
+              '"' +
+              (it.done ? " checked" : "") +
+              '><span class="box">' +
+              icon("check") +
+              "</span></label>" +
+              '<div class="txt">' +
+              esc(it.text) +
+              (it.note
+                ? '<span class="note">' + esc(it.note) + "</span>"
+                : "") +
+              "</div>" +
+              (withCat && it.cat
+                ? '<span class="tag-mini">' +
+                  esc(PACK_CATS[it.cat] || it.cat) +
+                  "</span>"
+                : "") +
+              '<span class="tools"><button class="icon-btn danger js-del-item" data-kind="' +
+              kind +
+              '" data-id="' +
+              it.id +
+              '" title="Hapus">' +
+              icon("trash") +
+              "</button></span>" +
+              "</div>"
+            );
+          })
+          .join("");
+      }
+      $("#packAddForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        var t = $("#pkText").value.trim();
+        if (!t) {
+          toast("Tulis nama barangnya dulu");
+          return;
+        }
+        S.packing.push({
+          id: uid(),
+          text: t,
+          cat: $("#pkCat").value,
+          done: false,
+        });
+        logIt('menambah barang bawaan "' + t + '"');
+        $("#pkText").value = "";
+        renderAll();
+        toast("Barang ditambahkan ke daftar");
+      });
+      $("#docAddForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        var t = $("#dcText").value.trim();
+        if (!t) {
+          toast("Tulis nama dokumennya dulu");
+          return;
+        }
+        S.docs.push({
+          id: uid(),
+          text: t,
+          note: $("#dcNote").value.trim(),
+          done: false,
+        });
+        logIt('menambah dokumen "' + t + '"');
+        $("#dcText").value = "";
+        $("#dcNote").value = "";
+        renderAll();
+        toast("Dokumen ditambahkan");
+      });
+      document
+        .getElementById("packList")
+        .addEventListener("change", onCheckChange);
+      document
+        .getElementById("docList")
+        .addEventListener("change", onCheckChange);
+      function onCheckChange(e) {
+        var c = e.target.closest(".js-check");
+        if (!c) return;
+        var kind = c.getAttribute("data-kind"),
+          id = c.getAttribute("data-id");
+        var list = kind === "pack" ? S.packing : S.docs;
+        for (var i = 0; i < list.length; i++) {
+          if (list[i].id === id) {
+            list[i].done = c.checked;
+            logIt(
+              kind === "pack"
+                ? (c.checked ? "menandai " : "membatalkan ") +
+                    '"' +
+                    list[i].text +
+                    '" sebagai siap dibawa'
+                : (c.checked ? "menyelesaikan " : "membatalkan ") +
+                    'dokumen "' +
+                    list[i].text +
+                    '"',
+            );
+            break;
+          }
+        }
+        renderAll();
+      }
+      document.getElementById("packList").addEventListener("click", onDelCheck);
+      document.getElementById("docList").addEventListener("click", onDelCheck);
+      function onDelCheck(e) {
+        var d = e.target.closest(".js-del-item");
+        if (!d) return;
+        var kind = d.getAttribute("data-kind"),
+          id = d.getAttribute("data-id");
+        var list = kind === "pack" ? S.packing : S.docs;
+        for (var i = 0; i < list.length; i++) {
+          if (list[i].id === id) {
+            var label = list[i].text;
+            list.splice(i, 1);
+            logIt(
+              "menghapus " +
+                (kind === "pack" ? 'barang "' : 'dokumen "') +
+                label +
+                '"',
+            );
+            break;
+          }
+        }
+        renderAll();
+        toast("Item dihapus dari daftar");
+      }
+
+      /* ---------- Render: kolaborasi ---------- */
+      function memberColor(idx) {
+        return AVATAR_COLORS[idx % AVATAR_COLORS.length];
+      }
+      function renderCollab() {
+        var html = S.members
+          .map(function (m, i) {
+            var active = m.id === S.activeMember;
+            return (
+              '<div class="member">' +
+              '<span class="avatar" style="background:' +
+              memberColor(i) +
+              '">' +
+              esc(m.name.charAt(0)) +
+              "</span>" +
+              '<div class="m-info"><div class="m-name">' +
+              esc(m.name) +
+              (m.role === "owner"
+                ? ' <span class="role-badge">Pemilik</span>'
+                : "") +
+              (active ? ' <span class="you-badge">Editor Aktif</span>' : "") +
+              '</div><div class="m-role">' +
+              (m.role === "owner"
+                ? "Pembuat itinerary"
+                : "Bisa mengedit itinerary") +
+              "</div></div>" +
+              (active
+                ? ""
+                : '<button class="btn btn-ghost btn-sm js-activate" data-id="' +
+                  m.id +
+                  '">' +
+                  icon("check", "ic-sm") +
+                  "Jadikan Aktif</button>") +
+              (m.role === "owner"
+                ? ""
+                : '<button class="icon-btn danger js-remove-member" data-id="' +
+                  m.id +
+                  '" title="Keluarkan">' +
+                  icon("x") +
+                  "</button>") +
+              "</div>"
+            );
+          })
+          .join("");
+        $("#memberList").innerHTML = html;
+        $("#logList").innerHTML = S.log.length
+          ? S.log
+              .map(function (l) {
+                return (
+                  '<div class="log-item"><span class="log-dot" style="background:' +
+                  memberColor(nameIndex(l.who)) +
+                  '"></span>' +
+                  "<div><b>" +
+                  esc(l.who) +
+                  "</b> " +
+                  esc(l.text) +
+                  '<span class="log-time">' +
+                  fmtTs(l.ts) +
+                  "</span></div></div>"
+                );
+              })
+              .join("")
+          : '<div class="empty">' +
+            icon("clock", "ic-lg") +
+            "<p>Belum ada aktivitas tercatat.</p></div>";
+      }
+      function nameIndex(name) {
+        for (var i = 0; i < S.members.length; i++) {
+          if (S.members[i].name === name) return i;
+        }
+        return 0;
+      }
+      $("#memberAddForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        var n = $("#mbName").value.trim();
+        if (!n) {
+          toast("Tulis nama anggotanya dulu");
+          return;
+        }
+        if (S.members.length >= 12) {
+          toast("Maksimal 12 anggota");
+          return;
+        }
+        S.members.push({ id: uid(), name: n, role: "editor" });
+        logIt("menambahkan " + n + " sebagai anggota");
+        $("#mbName").value = "";
+        renderAll();
+        toast(n + " bergabung ke perjalanan");
+      });
+      $("#memberList").addEventListener("click", function (e) {
+        var act = e.target.closest(".js-activate");
+        var rem = e.target.closest(".js-remove-member");
+        if (!act && !rem) return;
+        var id = (act || rem).getAttribute("data-id");
+        var m = null;
+        for (var i = 0; i < S.members.length; i++) {
+          if (S.members[i].id === id) {
+            m = S.members[i];
+            break;
+          }
+        }
+        if (!m) return;
+        if (act) {
+          S.activeMember = id;
+          logIt("berganti menjadi editor aktif");
+          renderAll();
+          toast("Sekarang mengedit sebagai " + m.name);
+        } else {
+          confirmDlg(
+            "Keluarkan " + m.name + "?",
+            m.name + " akan dikeluarkan dari daftar anggota perjalanan ini.",
+            "Ya, Keluarkan",
+          ).then(function (ok) {
+            if (!ok) return;
+            S.members = S.members.filter(function (x) {
+              return x.id !== id;
+            });
+            if (S.activeMember === id) {
+              S.activeMember = S.members[0].id;
+            }
+            logIt("mengeluarkan " + m.name + " dari anggota");
+            renderAll();
+            toast(m.name + " dikeluarkan");
+          });
+        }
+      });
+
+      /* ---------- Berbagi & sinkronisasi ---------- */
+      function b64FromBytes(bytes) {
+        var s = "",
+          CH = 32768;
+        for (var i = 0; i < bytes.length; i += CH) {
+          s += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+        }
+        return btoa(s);
+      }
+      function bytesFromB64(b64) {
+        var s = atob(b64),
+          arr = new Uint8Array(s.length);
+        for (var i = 0; i < s.length; i++) {
+          arr[i] = s.charCodeAt(i);
+        }
+        return arr;
+      }
+      async function encodeShare() {
+        var json = JSON.stringify(S);
+        if (window.CompressionStream) {
+          try {
+            var cs = new CompressionStream("gzip");
+            var stream = new Blob([new TextEncoder().encode(json)])
+              .stream()
+              .pipeThrough(cs);
+            var buf = new Uint8Array(await new Response(stream).arrayBuffer());
+            return "z" + b64FromBytes(buf);
+          } catch (e) {}
+        }
+        return "p" + btoa(unescape(encodeURIComponent(json)));
+      }
+      async function decodeShare(code) {
+        if (code.charAt(0) === "z" && window.DecompressionStream) {
+          var ds = new DecompressionStream("gzip");
+          var stream = new Blob([bytesFromB64(code.slice(1))])
+            .stream()
+            .pipeThrough(ds);
+          return JSON.parse(await new Response(stream).text());
+        }
+        return JSON.parse(decodeURIComponent(escape(atob(code.slice(1)))));
+      }
+      async function copyToClipboard(txt) {
+        try {
+          await navigator.clipboard.writeText(txt);
+          return true;
+        } catch (e) {}
+        try {
+          var ta = document.createElement("textarea");
+          ta.value = txt;
+          ta.style.position = "fixed";
+          ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.select();
+          var ok = document.execCommand("copy");
+          document.body.removeChild(ta);
+          return ok;
+        } catch (e) {
+          return false;
+        }
+      }
+      function buildTextItinerary() {
+        var info = COUNTRY_INFO[S.country] || COUNTRY_INFO.other;
+        var L = [];
+        L.push("JELAJAH — ITINERARY LIBURAN");
+        L.push(S.name);
+        L.push("Destinasi: " + S.destination + ", " + info.name);
+        L.push(
+          "Tanggal: " +
+            fmtRange(S.startDate, S.endDate) +
+            " (" +
+            S.days.length +
+            " hari) - " +
+            S.travelers +
+            " wisatawan",
+        );
+        L.push("");
+        S.days.forEach(function (d, i) {
+          L.push("HARI " + (i + 1) + " — " + fmtLong(d.date).toUpperCase());
+          var acts = d.acts.slice().sort(function (a, b) {
+            return a.t < b.t ? -1 : 1;
+          });
+          if (!acts.length) L.push("  (belum ada aktivitas)");
+          acts.forEach(function (a) {
+            L.push(
+              "  " +
+                a.t +
+                "  " +
+                a.title +
+                (a.cost > 0 ? " (" + fmtIDR(a.cost) + ")" : ""),
+            );
+          });
+          L.push("");
+        });
+        L.push("ANGGARAN (estimasi)");
+        Object.keys(BUD_CATS).forEach(function (k) {
+          var items = S.budget.filter(function (b) {
+            return b.cat === k;
+          });
+          if (!items.length) return;
+          var sub = items.reduce(function (s, b) {
+            return s + (Number(b.qty) || 0) * (Number(b.unit) || 0);
+          }, 0);
+          L.push("  - " + BUD_CATS[k].label + ": " + fmtIDR(sub));
+        });
+        L.push(
+          "  TOTAL: " +
+            fmtIDR(tripTotal()) +
+            " (sekitar " +
+            fmtIDR(tripTotal() / Math.max(1, S.travelers)) +
+            " / orang)",
+        );
+        L.push("");
+        L.push(
+          "PERSIAPAN: barang " +
+            S.packing.filter(function (p) {
+              return p.done;
+            }).length +
+            "/" +
+            S.packing.length +
+            " · dokumen " +
+            S.docs.filter(function (d) {
+              return d.done;
+            }).length +
+            "/" +
+            S.docs.length,
+        );
+        L.push(
+          "Anggota: " +
+            S.members
+              .map(function (m) {
+                return m.name;
+              })
+              .join(", "),
+        );
+        L.push("");
+        L.push("Dibuat dengan Jelajah — Perencana Itinerary Liburan");
+        return L.join("\n");
+      }
+      function showLinkModal(title, text) {
+        $("#lmTitle").textContent = title;
+        $("#linkText").value = text;
+        $("#linkModal").classList.add("open");
+        $("#linkText").focus();
+        $("#linkText").select();
+      }
+      $("#btnCopyLink").addEventListener("click", async function () {
+        var url = location.href.split("#")[0] + "#d=" + (await encodeShare());
+        if (await copyToClipboard(url)) {
+          toast("Tautan berbagi disalin — kirim ke keluarga / teman");
+        } else {
+          showLinkModal("Tautan Berbagi", url);
+        }
+      });
+      $("#btnCopyText").addEventListener("click", async function () {
+        var txt = buildTextItinerary();
+        if (await copyToClipboard(txt)) {
+          toast("Itinerary tersalin sebagai teks");
+        } else {
+          showLinkModal("Teks Itinerary", txt);
+        }
+      });
+      $("#btnExport").addEventListener("click", function () {
+        var blob = new Blob([JSON.stringify(S, null, 2)], {
+          type: "application/json",
+        });
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download =
+          "jelajah-" +
+          (S.destination || "itinerary")
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-") +
+          ".json";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () {
+          URL.revokeObjectURL(a.href);
+        }, 3000);
+        toast("File itinerary diunduh");
+      });
+      $("#btnImport").addEventListener("click", function () {
+        $("#importFile").click();
+      });
+      $("#importFile").addEventListener("change", function (e) {
+        var f = e.target.files[0];
+        if (!f) return;
+        var reader = new FileReader();
+        reader.onload = function () {
+          try {
+            var data = JSON.parse(reader.result);
+            if (!data || !data.days || !data.members) throw new Error("format");
+            confirmDlg(
+              "Impor itinerary dari file?",
+              'Isi file "' +
+                f.name +
+                '" akan mengganti itinerary yang sedang terbuka. Lanjutkan?',
+              "Ya, Impor",
+            ).then(function (ok) {
+              if (!ok) return;
+              S = migrate(data);
+              activeDay = 0;
+              logIt("mengimpor itinerary dari file");
+              renderAll();
+              toast("Itinerary berhasil diimpor");
+            });
+          } catch (err) {
+            toast("File tidak dikenali — gunakan hasil ekspor Jelajah (.json)");
+          }
+        };
+        reader.readAsText(f);
+        e.target.value = "";
+      });
+      $("#btnPrint").addEventListener("click", function () {
+        window.print();
+      });
+
+      /* ---------- Render utama ---------- */
+      function renderHead() {
+        var m = activeMember();
+        $("#collabChipAvatar").textContent = m.name.charAt(0);
+        $("#collabChipName").textContent = m.name;
+        var info = COUNTRY_INFO[S.country] || COUNTRY_INFO.other;
+        $("#printHead").innerHTML =
+          "<h1>" +
+          icon("compass") +
+          " " +
+          esc(S.name) +
+          "</h1><p>" +
+          esc(S.destination) +
+          ", " +
+          esc(info.name) +
+          " · " +
+          fmtRange(S.startDate, S.endDate) +
+          " (" +
+          S.days.length +
+          " hari) · " +
+          S.travelers +
+          " wisatawan</p>";
+      }
+      function renderAll() {
+        renderHead();
+        renderTripForm();
+        renderSummary();
+        renderTemplates();
+        renderSchedule();
+        renderBudget();
+        renderPrep();
+        renderCollab();
+        save();
+      }
+
+      /* ---------- Muat data dari tautan (#d=...) ---------- */
+      async function loadFromHash() {
+        if (location.hash.indexOf("#d=") === 0) {
+          try {
+            var data = await decodeShare(location.hash.slice(3));
+            if (!data || !data.days || !data.members) throw new Error("format");
+            var ok = await confirmDlg(
+              "Muat itinerary dari tautan?",
+              "Tautan ini membawa itinerary dari anggota lain. Isinya akan mengganti itinerary yang sedang terbuka di perangkat ini.",
+              "Ya, Muat",
+            );
+            if (ok) {
+              S = migrate(data);
+              activeDay = 0;
+              logIt("memuat itinerary dari tautan berbagi");
+              renderAll();
+              toast("Itinerary dari tautan berhasil dimuat");
+            }
+          } catch (e) {
+            toast("Tautan tidak valid atau datanya rusak");
+          }
+          history.replaceState(null, "", location.pathname + location.search);
+        }
+      }
+
+      /* ---------- Inisialisasi ---------- */
+      (function init() {
+        var cSel = $("#fCountry");
+        COUNTRY_ORDER.forEach(function (k) {
+          var o = document.createElement("option");
+          o.value = k;
+          o.textContent = COUNTRY_INFO[k].name;
+          cSel.appendChild(o);
+        });
+        var aSel = $("#amCat");
+        Object.keys(ACT_CATS).forEach(function (k) {
+          var o = document.createElement("option");
+          o.value = k;
+          o.textContent = ACT_CATS[k].label;
+          aSel.appendChild(o);
+        });
+        var bSel = $("#biCat");
+        Object.keys(BUD_CATS).forEach(function (k) {
+          var o = document.createElement("option");
+          o.value = k;
+          o.textContent = BUD_CATS[k].label;
+          bSel.appendChild(o);
+        });
+        syncThemeIcons();
+        S = loadState();
+        var starter = S;
+        loadFromHash().then(function () {
+          if (!S) {
+            S = starter || buildTrip(TEMPLATES[0]);
+          }
+          renderAll();
+        });
+      })();
+    </script>
+  </body>
+</html>

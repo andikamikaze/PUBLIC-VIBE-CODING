@@ -1,0 +1,2918 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#ffffff" />
+    <title>Simple RecipeBook</title>
+    <style>
+      :root {
+        --bg: #fafafa;
+        --panel: #ffffff;
+        --ink: #171717;
+        --muted: #737373;
+        --line: #e5e5e5;
+        --accent: #171717;
+        --accent-soft: #f5f5f5;
+        --danger: #dc2626;
+        --radius: 8px;
+        --font-sans:
+          "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, sans-serif;
+      }
+
+      :root.dark {
+        --bg: #0a0a0a;
+        --panel: #171717;
+        --ink: #fafafa;
+        --muted: #a3a3a3;
+        --line: #262626;
+        --accent: #fafafa;
+        --accent-soft: #262626;
+        --danger: #ef4444;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--font-sans);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        font-family: inherit;
+      }
+
+      button {
+        cursor: pointer;
+        border: none;
+        background: none;
+      }
+
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      textarea:focus-visible {
+        outline: 2px solid var(--ink);
+        outline-offset: 2px;
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      /* Layout */
+      .app {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 260px minmax(0, 1fr);
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+
+      /* Sidebar */
+      aside {
+        border-right: 1px solid var(--line);
+        background: var(--panel);
+        padding: 2rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 2.5rem;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.125rem;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        color: var(--ink);
+      }
+
+      .brand-mark {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: var(--ink);
+        color: white;
+        display: grid;
+        place-items: center;
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      .side-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        font-weight: 600;
+        padding: 0 0.75rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .nav {
+        display: grid;
+        gap: 4px;
+      }
+
+      .nav button {
+        width: 100%;
+        color: var(--muted);
+        padding: 0.75rem;
+        border-radius: 6px;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        min-height: 44px;
+      }
+
+      .nav button:hover {
+        background: var(--accent-soft);
+        color: var(--ink);
+      }
+
+      .nav button.active {
+        background: var(--accent-soft);
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .nav svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+      }
+
+      .side-bottom {
+        margin-top: auto;
+        padding: 1.5rem;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--bg);
+      }
+
+      .side-bottom strong {
+        font-size: 14px;
+        font-weight: 600;
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      .side-bottom p {
+        font-size: 13px;
+        color: var(--muted);
+        margin: 0 0 1rem;
+        line-height: 1.5;
+      }
+
+      /* Main Content */
+      .main {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .topbar {
+        height: 72px;
+        padding: 0 max(3rem, env(safe-area-inset-right)) 0
+          max(3rem, env(safe-area-inset-left));
+        padding-top: max(0px, env(safe-area-inset-top));
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.5rem;
+        background: rgba(250, 250, 250, 0.85);
+        backdrop-filter: blur(8px);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      :root.dark .topbar {
+        background: rgba(23, 23, 23, 0.85);
+      }
+
+      .crumb {
+        font-size: 13px;
+        color: var(--muted);
+        font-weight: 500;
+      }
+
+      .crumb strong {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .top-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .search {
+        position: relative;
+        width: min(280px, 35vw);
+        display: flex;
+        align-items: center;
+      }
+
+      .search svg {
+        position: absolute;
+        left: 12px;
+        color: var(--muted);
+        pointer-events: none;
+        width: 16px;
+        height: 16px;
+      }
+
+      .search input {
+        width: 100%;
+        height: 44px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--panel);
+        padding: 0 16px 0 36px;
+        font-size: 14px;
+        color: var(--ink);
+        transition: all 0.2s ease;
+      }
+
+      .search input:focus {
+        outline: none;
+        border-color: var(--ink);
+        background: #fff;
+      }
+
+      :root.dark .search input {
+        background: var(--panel);
+      }
+      :root.dark .search input:focus {
+        background: #262626;
+      }
+
+      .search input::placeholder {
+        color: #a3a3a3;
+      }
+
+      /* Buttons */
+      .btn {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        color: var(--ink);
+        border-radius: var(--radius);
+        padding: 10px 16px;
+        font-size: 14px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+        min-height: 44px;
+      }
+
+      .btn:hover {
+        border-color: var(--ink);
+        background: #fff;
+      }
+
+      .btn.primary {
+        background: var(--ink);
+        color: #fff;
+        border-color: var(--ink);
+      }
+
+      .btn.primary:hover {
+        background: #333;
+        border-color: #333;
+      }
+
+      :root.dark .btn.primary:hover {
+        background: #ccc;
+        color: #000;
+      }
+
+      .btn.subtle {
+        background: var(--accent-soft);
+        border-color: var(--accent-soft);
+        color: var(--ink);
+      }
+
+      .btn.subtle:hover {
+        background: #e5e5e5;
+        border-color: #e5e5e5;
+      }
+
+      :root.dark .btn.subtle:hover {
+        background: #333;
+      }
+
+      .btn svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .content {
+        max-width: 1280px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 3rem max(3rem, env(safe-area-inset-right)) 3rem
+          max(3rem, env(safe-area-inset-left));
+        flex: 1;
+      }
+
+      /* Typography & Headers */
+      .page-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+      }
+
+      .eyebrow {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: clamp(1.75rem, 3vw, 2.25rem);
+        line-height: 1.15;
+        letter-spacing: -0.03em;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--ink);
+      }
+
+      h2 {
+        font-size: 1.25rem;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+      }
+
+      h3 {
+        font-size: 1rem;
+        line-height: 1.4;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .page-head p {
+        font-size: 15px;
+        color: var(--muted);
+        margin: 0;
+        max-width: 480px;
+      }
+
+      /* Stats */
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+      }
+
+      .stat {
+        padding: 1.75rem;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--panel);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        transition: border-color 0.2s ease;
+      }
+
+      .stat:hover {
+        border-color: #d4d4d4;
+      }
+
+      .stat .label {
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+      }
+
+      .stat .number {
+        font-size: 2rem;
+        font-weight: 600;
+        letter-spacing: -0.03em;
+        line-height: 1;
+        color: var(--ink);
+      }
+
+      .stat .stat-icon {
+        width: 44px;
+        height: 44px;
+        display: grid;
+        place-items: center;
+        background: var(--accent-soft);
+        border-radius: 10px;
+        color: var(--ink);
+      }
+
+      .stat .stat-icon svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      /* Section & Filters */
+      .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .section-head p {
+        font-size: 14px;
+        color: var(--muted);
+        margin: 0;
+      }
+
+      .filters {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+      }
+
+      .chip {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        color: var(--muted);
+        border-radius: 100px;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .chip:hover {
+        border-color: var(--ink);
+        color: var(--ink);
+      }
+
+      .chip.active {
+        background: var(--ink);
+        border-color: var(--ink);
+        color: #fff;
+      }
+
+      /* Recipe Grid & Cards */
+      .recipe-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .recipe-card {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        border-radius: 12px;
+        overflow: hidden;
+        min-width: 0;
+        transition: all 0.25s ease;
+      }
+
+      .recipe-card:hover {
+        border-color: var(--ink);
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.06);
+      }
+
+      .recipe-image {
+        height: 200px;
+        position: relative;
+        background: var(--accent-soft);
+        overflow: hidden;
+      }
+
+      .recipe-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.4s ease;
+      }
+
+      .recipe-card:hover .recipe-image img {
+        transform: scale(1.03);
+      }
+
+      .recipe-image .fallback,
+      .detail-image .fallback {
+        width: 100%;
+        height: 100%;
+        display: grid;
+        place-items: center;
+        font-size: 48px;
+        background: var(--accent-soft);
+        color: var(--muted);
+      }
+
+      .icon-btn {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 44px;
+        height: 44px;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(4px);
+        border-radius: 50%;
+        color: var(--ink);
+        display: grid;
+        place-items: center;
+        transition: all 0.2s ease;
+      }
+
+      .icon-btn:hover {
+        background: #fff;
+        transform: scale(1.05);
+      }
+
+      .icon-btn.saved {
+        color: var(--danger);
+        background: #fff;
+        border-color: transparent;
+      }
+
+      .icon-btn svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      .recipe-body {
+        padding: 1.5rem;
+      }
+
+      .recipe-topline {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 0.75rem;
+      }
+
+      .tag {
+        font-size: 11px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 600;
+        background: var(--accent-soft);
+        padding: 4px 10px;
+        border-radius: 4px;
+      }
+
+      .recipe-card .desc {
+        font-size: 14px;
+        color: var(--muted);
+        margin: 0 0 1rem;
+        line-height: 1.5;
+        display: -webkit-box;
+        line-clamp: 2;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .meta {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 13px;
+        color: var(--muted);
+        flex-wrap: wrap;
+      }
+
+      .meta .dot {
+        color: #d4d4d4;
+      }
+
+      .card-foot {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid var(--line);
+        padding-top: 1rem;
+        margin-top: 1.25rem;
+      }
+
+      .link-btn {
+        border: 0;
+        background: transparent;
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 600;
+        padding: 8px 4px;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        transition: color 0.2s ease;
+      }
+
+      .link-btn:hover {
+        color: var(--muted);
+      }
+
+      /* Empty State */
+      .empty {
+        border: 1px dashed var(--line);
+        border-radius: 12px;
+        padding: 3rem 1.5rem;
+        text-align: center;
+        color: var(--muted);
+        background: var(--bg);
+      }
+
+      .empty strong {
+        display: block;
+        color: var(--ink);
+        margin-bottom: 0.5rem;
+        font-size: 16px;
+        font-weight: 600;
+      }
+
+      /* Views */
+      .view {
+        display: none;
+        animation: fadeIn 0.3s ease;
+      }
+
+      .view.active {
+        display: block;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Dashboard Lower */
+      .dashboard-lower {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 1.5rem;
+        margin-top: 3rem;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--panel);
+        padding: 1.75rem;
+      }
+
+      .panel-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.25rem;
+      }
+
+      .quick-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .quick-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        border-radius: 8px;
+        background: var(--bg);
+        transition: background 0.2s ease;
+      }
+
+      .quick-item:hover {
+        background: var(--accent-soft);
+      }
+
+      .quick-thumb {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        overflow: hidden;
+        flex-shrink: 0;
+        background: var(--accent-soft);
+      }
+
+      .quick-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .quick-item strong {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 2px;
+      }
+
+      .quick-item small {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .quick-item .link-btn {
+        margin-left: auto;
+        font-size: 12px;
+      }
+
+      /* Week Grid */
+      .week-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .day {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 1rem 0.5rem;
+        text-align: center;
+        min-height: 120px;
+        background: var(--panel);
+        transition: all 0.2s ease;
+      }
+
+      .day:hover {
+        border-color: var(--ink);
+      }
+
+      .day strong {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: block;
+        color: var(--muted);
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+      }
+
+      .day .meal {
+        font-size: 13px;
+        color: var(--ink);
+        line-height: 1.4;
+        font-weight: 500;
+        overflow-wrap: anywhere;
+      }
+
+      .day button {
+        color: var(--muted);
+        font-size: 18px;
+        margin-top: 0.75rem;
+        width: 44px;
+        height: 44px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+      }
+
+      .day button:hover {
+        background: #fee2e2;
+        color: var(--danger);
+      }
+
+      /* Forms */
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+      }
+
+      .field {
+        display: grid;
+        gap: 6px;
+      }
+
+      .field.full {
+        grid-column: 1/-1;
+      }
+
+      .field label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+
+      .field input,
+      .field select,
+      .field textarea {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 12px 14px;
+        background: var(--panel);
+        color: var(--ink);
+        font-size: 14px;
+        transition: all 0.2s ease;
+        min-height: 44px;
+      }
+
+      .field textarea {
+        min-height: 100px;
+        line-height: 1.5;
+        resize: vertical;
+      }
+
+      .field input:focus,
+      .field select:focus,
+      .field textarea:focus {
+        outline: none;
+        border-color: var(--ink);
+        box-shadow: 0 0 0 3px rgba(23, 23, 23, 0.05);
+      }
+
+      .field-error {
+        border-color: var(--danger) !important;
+        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1) !important;
+      }
+
+      .field-error-msg {
+        font-size: 12px;
+        color: var(--danger);
+        margin-top: 4px;
+        display: none;
+      }
+
+      .field small {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--line);
+      }
+
+      /* Detail View */
+      .recipe-detail {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(320px, 0.9fr);
+        gap: 3rem;
+        margin-bottom: 3rem;
+      }
+
+      .detail-image {
+        height: 360px;
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--accent-soft);
+      }
+
+      .detail-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .detail-copy {
+        padding: 0.5rem 0;
+      }
+
+      .detail-copy h1 {
+        margin: 0.75rem 0 1rem;
+      }
+
+      .detail-copy .desc {
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.6;
+        max-width: 540px;
+      }
+
+      .detail-meta {
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        padding: 1.25rem 0;
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        font-size: 14px;
+        margin: 1.5rem 0;
+        color: var(--muted);
+      }
+
+      .detail-meta span {
+        font-weight: 500;
+        color: var(--ink);
+      }
+
+      .detail-columns {
+        display: grid;
+        grid-template-columns: 0.9fr 1.1fr;
+        gap: 3rem;
+      }
+
+      .detail-columns h2 {
+        font-size: 1.125rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .ingredient-list,
+      .steps {
+        padding-left: 1.25rem;
+        font-size: 15px;
+        color: #404040;
+        line-height: 1.7;
+      }
+
+      :root.dark .ingredient-list,
+      :root.dark .steps {
+        color: #d4d4d4;
+      }
+
+      .ingredient-list li,
+      .steps li {
+        padding: 6px 0;
+      }
+
+      .ingredient-list li::marker,
+      .steps li::marker {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .collection-note {
+        padding: 1rem 1.25rem;
+        border-radius: 8px;
+        background: var(--accent-soft);
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 1.5rem;
+        line-height: 1.5;
+      }
+
+      /* Planner & Shopping */
+      .planner-form {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .planner-form select {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 10px 12px;
+        font-size: 14px;
+        background: var(--panel);
+        color: var(--ink);
+        min-width: 140px;
+        min-height: 44px;
+      }
+
+      .shopping-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .shopping-row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        padding: 14px 16px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        font-size: 14px;
+        background: var(--panel);
+        transition: all 0.2s ease;
+        min-height: 44px;
+      }
+
+      .shopping-row:hover {
+        border-color: #d4d4d4;
+      }
+
+      .shopping-row input {
+        accent-color: var(--ink);
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+      }
+
+      .shopping-row.checked span {
+        text-decoration: line-through;
+        color: #a3a3a3;
+      }
+
+      /* Modal */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(4px);
+        z-index: 50;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+      }
+
+      .modal-backdrop.open {
+        display: flex;
+      }
+
+      .modal {
+        width: min(640px, 100%);
+        max-height: 90vh;
+        overflow-y: auto;
+        background: var(--panel);
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 24px 80px -12px rgba(0, 0, 0, 0.15);
+      }
+
+      .modal-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 2rem;
+      }
+
+      .modal-head h2 {
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
+      }
+
+      .modal-head p {
+        font-size: 14px;
+        color: var(--muted);
+        margin: 0;
+      }
+
+      .close {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        border-radius: 8px;
+        width: 44px;
+        height: 44px;
+        display: grid;
+        place-items: center;
+        font-size: 20px;
+        color: var(--muted);
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+      }
+
+      .close:hover {
+        background: var(--accent-soft);
+        color: var(--ink);
+      }
+
+      /* Toast */
+      .toast {
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translate(-50%, 12px);
+        opacity: 0;
+        pointer-events: none;
+        background: var(--ink);
+        color: #fff;
+        border-radius: 8px;
+        padding: 12px 20px;
+        font-size: 14px;
+        font-weight: 500;
+        z-index: 60;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+
+      .mobile-menu {
+        display: none;
+      }
+
+      /* Responsive */
+      @media (max-width: 1050px) {
+        .content {
+          padding: 2rem max(2rem, env(safe-area-inset-right)) 2rem
+            max(2rem, env(safe-area-inset-left));
+        }
+        .topbar {
+          padding: 0 max(2rem, env(safe-area-inset-right)) 0
+            max(2rem, env(safe-area-inset-left));
+          padding-top: max(0px, env(safe-area-inset-top));
+        }
+        .dashboard-lower {
+          grid-template-columns: 1fr;
+        }
+        .week-grid {
+          gap: 8px;
+        }
+        .day {
+          padding: 0.75rem 0.25rem;
+          min-height: 100px;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .app {
+          display: block;
+        }
+        aside {
+          position: fixed;
+          z-index: 40;
+          inset: 0 auto 0 0;
+          width: 280px;
+          transform: translateX(-105%);
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 10px 0 40px rgba(0, 0, 0, 0.05);
+          padding-top: max(2rem, env(safe-area-inset-top));
+        }
+        .app.menu-open aside {
+          transform: translateX(0);
+        }
+        .mobile-menu {
+          display: inline-flex;
+        }
+        .topbar {
+          height: 64px;
+          padding: 0 max(1.25rem, env(safe-area-inset-right)) 0
+            max(1.25rem, env(safe-area-inset-left));
+        }
+        .crumb {
+          display: none;
+        }
+        .search {
+          width: min(45vw, 240px);
+        }
+        .top-actions .add-label {
+          display: none;
+        }
+        .content {
+          padding: 1.5rem max(1.5rem, env(safe-area-inset-right)) 1.5rem
+            max(1.5rem, env(safe-area-inset-left));
+        }
+        .page-head {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 1rem;
+        }
+        .page-head .btn {
+          align-self: stretch;
+        }
+        .stats {
+          gap: 1rem;
+          grid-template-columns: 1fr;
+        }
+        .stat {
+          padding: 1.25rem;
+        }
+        .recipe-grid {
+          grid-template-columns: 1fr;
+        }
+        .week-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .recipe-detail {
+          grid-template-columns: 1fr;
+          gap: 1.5rem;
+        }
+        .detail-image {
+          height: 240px;
+        }
+        .detail-columns {
+          grid-template-columns: 1fr;
+          gap: 2rem;
+        }
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+        .field.full {
+          grid-column: auto;
+        }
+        .planner-form {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .planner-form select,
+        .planner-form .btn {
+          width: 100%;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *:before,
+        *:after {
+          transition: none !important;
+          scroll-behavior: auto !important;
+          animation: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app" id="app">
+      <aside>
+        <div class="brand">
+          <span class="brand-mark">R</span>
+          RecipeBook
+        </div>
+        <div>
+          <div class="side-label">Workspace</div>
+          <nav class="nav" aria-label="Main navigation">
+            <button class="active" data-view="home">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+              </svg>
+              Overview
+            </button>
+            <button data-view="recipes">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path
+                  d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
+                ></path>
+              </svg>
+              All recipes
+            </button>
+            <button data-view="saved">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                ></path>
+              </svg>
+              Saved recipes
+            </button>
+            <button data-view="planner">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              Meal planner
+            </button>
+            <button data-view="shopping">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"
+                ></path>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <path d="M16 10a4 4 0 0 1-8 0"></path>
+              </svg>
+              Shopping list
+            </button>
+          </nav>
+        </div>
+        <div>
+          <div class="side-label">Collections</div>
+          <nav class="nav">
+            <button data-filter-category="Breakfast">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+              Breakfast
+            </button>
+            <button data-filter-category="Lunch">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              Lunch
+            </button>
+            <button data-filter-category="Dinner">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+                ></path>
+              </svg>
+              Dinner
+            </button>
+            <button data-filter-category="Vegetarian">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+              Vegetarian
+            </button>
+          </nav>
+        </div>
+        <div class="side-bottom">
+          <strong>Your kitchen, simplified.</strong>
+          <p>Save recipes you love and plan your next meal with clarity.</p>
+          <button class="btn primary" style="width: 100%" data-action="add">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Add a recipe
+          </button>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div style="display: flex; align-items: center; gap: 12px">
+            <button
+              class="btn mobile-menu"
+              id="menuBtn"
+              aria-label="Open menu"
+              style="
+                padding: 8px;
+                width: 44px;
+                height: 44px;
+                display: grid;
+                place-items: center;
+              "
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
+            <div class="crumb">
+              Workspace <span style="padding: 0 8px; color: var(--line)">/</span
+              ><strong id="crumbTitle">Overview</strong>
+            </div>
+          </div>
+          <div class="top-actions">
+            <label class="search">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input
+                id="globalSearch"
+                type="search"
+                placeholder="Search recipes..."
+                aria-label="Search recipes"
+              />
+            </label>
+            <button
+              class="btn subtle"
+              id="themeToggle"
+              aria-label="Toggle dark mode"
+              style="
+                padding: 10px;
+                width: 44px;
+                height: 44px;
+                display: grid;
+                place-items: center;
+              "
+            >
+              <svg
+                id="themeIcon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                style="width: 18px; height: 18px"
+              >
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+            </button>
+            <button class="btn primary" data-action="add">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span class="add-label">Add recipe</span>
+            </button>
+          </div>
+        </header>
+
+        <div class="content">
+          <!-- HOME VIEW -->
+          <section class="view active" id="view-home">
+            <div class="page-head">
+              <div>
+                <div class="eyebrow">Your personal kitchen</div>
+                <h1>Good food, well kept.</h1>
+                <p>
+                  Keep your favorite recipes close and plan what to cook next
+                  with minimal friction.
+                </p>
+              </div>
+              <button class="btn primary" data-action="add">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Create recipe
+              </button>
+            </div>
+            <div class="stats">
+              <div class="stat">
+                <div>
+                  <div class="label">Total recipes</div>
+                  <div class="number" id="statTotal">6</div>
+                </div>
+                <span class="stat-icon">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path
+                      d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
+                    ></path>
+                  </svg>
+                </span>
+              </div>
+              <div class="stat">
+                <div>
+                  <div class="label">Saved favorites</div>
+                  <div class="number" id="statSaved">2</div>
+                </div>
+                <span class="stat-icon">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                    ></path>
+                  </svg>
+                </span>
+              </div>
+              <div class="stat">
+                <div>
+                  <div class="label">Planned this week</div>
+                  <div class="number" id="statPlanned">3</div>
+                </div>
+                <span class="stat-icon">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect
+                      x="3"
+                      y="4"
+                      width="18"
+                      height="18"
+                      rx="2"
+                      ry="2"
+                    ></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                </span>
+              </div>
+            </div>
+            <div class="section-head">
+              <div>
+                <h2>Recently added</h2>
+                <p>A few ideas for your next meal.</p>
+              </div>
+              <button class="link-btn" data-go="recipes">
+                View all recipes →
+              </button>
+            </div>
+            <div class="recipe-grid" id="homeGrid"></div>
+            <div class="empty" id="homeEmpty">
+              <strong>No recipes yet</strong>
+              Add a recipe to start building your personal collection.
+            </div>
+            <div class="dashboard-lower">
+              <section class="panel">
+                <div class="panel-title">
+                  <div>
+                    <h2>Saved favorites</h2>
+                    <p class="muted" style="font-size: 13px; margin: 0">
+                      Your most-loved recipes, ready to cook.
+                    </p>
+                  </div>
+                  <button class="link-btn" data-go="saved">See all →</button>
+                </div>
+                <div class="quick-list" id="favoriteList"></div>
+              </section>
+              <section class="panel">
+                <div class="panel-title">
+                  <div>
+                    <h2>This week</h2>
+                    <p class="muted" style="font-size: 13px; margin: 0">
+                      A simple look at your meal plan.
+                    </p>
+                  </div>
+                  <button class="link-btn" data-go="planner">Plan →</button>
+                </div>
+                <div class="week-grid" id="miniWeek"></div>
+              </section>
+            </div>
+          </section>
+
+          <!-- RECIPES VIEW -->
+          <section class="view" id="view-recipes">
+            <div class="page-head">
+              <div>
+                <div class="eyebrow">Your collection</div>
+                <h1>All recipes</h1>
+                <p>Every keeper, in one searchable place.</p>
+              </div>
+              <button class="btn primary" data-action="add">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Add recipe
+              </button>
+            </div>
+            <div class="filters" id="recipeFilters">
+              <button class="chip active" data-category="All">
+                All recipes
+              </button>
+              <button class="chip" data-category="Breakfast">Breakfast</button>
+              <button class="chip" data-category="Lunch">Lunch</button>
+              <button class="chip" data-category="Dinner">Dinner</button>
+              <button class="chip" data-category="Vegetarian">
+                Vegetarian
+              </button>
+              <button class="chip" data-category="Quick">30 min or less</button>
+            </div>
+            <div class="recipe-grid" id="allGrid"></div>
+            <div class="empty" id="allEmpty">
+              <strong>No recipes found</strong>
+              Try another search or add a new recipe.
+            </div>
+          </section>
+
+          <!-- SAVED VIEW -->
+          <section class="view" id="view-saved">
+            <div class="page-head">
+              <div>
+                <div class="eyebrow">Your personal shortlist</div>
+                <h1>Saved recipes</h1>
+                <p>Recipes you bookmarked for another day.</p>
+              </div>
+              <button class="btn" data-go="recipes">Browse recipes →</button>
+            </div>
+            <div class="recipe-grid" id="savedGrid"></div>
+            <div class="empty" id="savedEmpty">
+              <strong>Your favorites start here</strong>
+              Use the bookmark on any recipe to save it here.
+            </div>
+          </section>
+
+          <!-- PLANNER VIEW -->
+          <section class="view" id="view-planner">
+            <div class="page-head">
+              <div>
+                <div class="eyebrow">Make a little plan</div>
+                <h1>Meal planner</h1>
+                <p>
+                  Choose a recipe for any day. Your plan stays on this device.
+                </p>
+              </div>
+            </div>
+            <section class="panel" style="margin-bottom: 2rem">
+              <div class="section-head">
+                <div>
+                  <h2>Your week</h2>
+                  <p class="muted" style="font-size: 13px; margin: 0">
+                    Pick a meal slot, then assign a recipe.
+                  </p>
+                </div>
+                <div class="planner-form">
+                  <select id="planDay" aria-label="Day">
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                    <option value="Saturday">Saturday</option>
+                    <option value="Sunday">Sunday</option>
+                  </select>
+                  <select id="planRecipe" aria-label="Recipe"></select>
+                  <button class="btn primary" id="addPlan">Add to plan</button>
+                </div>
+              </div>
+              <div class="week-grid" id="fullWeek"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-title"><h2>Planning tip</h2></div>
+              <p
+                class="muted"
+                style="font-size: 14px; margin: 0; line-height: 1.6"
+              >
+                Try planning two or three meals first. You can reuse ingredients
+                across recipes to keep your shopping list short and minimize
+                waste.
+              </p>
+            </section>
+          </section>
+
+          <!-- SHOPPING VIEW -->
+          <section class="view" id="view-shopping">
+            <div class="page-head">
+              <div>
+                <div class="eyebrow">Ready for the market</div>
+                <h1>Shopping list</h1>
+                <p>Build a checklist from the ingredients you need.</p>
+              </div>
+              <button class="btn" id="clearChecked">Clear checked</button>
+            </div>
+            <section class="panel">
+              <div class="section-head">
+                <div>
+                  <h2>Items to pick up</h2>
+                  <p
+                    id="shoppingCount"
+                    class="muted"
+                    style="font-size: 13px; margin: 0"
+                  >
+                    0 items
+                  </p>
+                </div>
+                <button class="btn primary" id="fromPlan">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    style="width: 16px; height: 16px"
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Add planned ingredients
+                </button>
+              </div>
+              <form
+                id="shoppingForm"
+                class="planner-form"
+                style="margin-bottom: 1.5rem"
+              >
+                <input
+                  id="shoppingInput"
+                  placeholder="Add an ingredient..."
+                  aria-label="New shopping item"
+                  style="
+                    flex: 1;
+                    min-width: 0;
+                    border: 1px solid var(--line);
+                    border-radius: var(--radius);
+                    padding: 10px 14px;
+                    font-size: 14px;
+                    background: var(--panel);
+                  "
+                />
+                <button class="btn" type="submit">Add item</button>
+              </form>
+              <div class="shopping-list" id="shoppingList"></div>
+              <div class="empty" id="shoppingEmpty" style="display: block">
+                <strong>Your list is clear</strong>
+                Add ingredients manually or from your meal plan.
+              </div>
+            </section>
+          </section>
+
+          <!-- DETAIL VIEW -->
+          <section class="view" id="view-detail">
+            <div style="margin-bottom: 2rem">
+              <button
+                class="link-btn"
+                data-go="recipes"
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 6px;
+                  font-size: 14px;
+                "
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="19" y1="12" x2="5" y2="12"></line>
+                  <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                Back to recipes
+              </button>
+            </div>
+            <div id="detailContent"></div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <!-- MODAL -->
+    <div
+      class="modal-backdrop"
+      id="recipeModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modalTitle"
+    >
+      <div class="modal">
+        <div class="modal-head">
+          <div>
+            <h2 id="modalTitle">Add a recipe</h2>
+            <p>Save the details so you can cook it again.</p>
+          </div>
+          <button class="close" id="closeModal" aria-label="Close">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <form id="recipeForm">
+          <div class="form-grid">
+            <div class="field full">
+              <label for="recipeName">Recipe name *</label>
+              <input
+                id="recipeName"
+                required
+                maxlength="90"
+                placeholder="e.g. Lemon garlic pasta"
+              />
+            </div>
+            <div class="field">
+              <label for="recipeCategory">Category</label>
+              <select id="recipeCategory">
+                <option>Breakfast</option>
+                <option>Lunch</option>
+                <option selected>Dinner</option>
+                <option>Dessert</option>
+                <option>Snack</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="recipeTime">Total time (minutes)</label>
+              <input
+                id="recipeTime"
+                type="number"
+                inputmode="numeric"
+                min="1"
+                max="1440"
+                value="30"
+              />
+            </div>
+            <div class="field">
+              <label for="recipeDifficulty">Difficulty</label>
+              <select id="recipeDifficulty">
+                <option>Easy</option>
+                <option>Medium</option>
+                <option>Advanced</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="recipeServings">Servings</label>
+              <input
+                id="recipeServings"
+                type="number"
+                inputmode="numeric"
+                min="1"
+                max="100"
+                value="2"
+              />
+            </div>
+            <div class="field full">
+              <label for="recipeImage">Image URL (optional)</label>
+              <input
+                id="recipeImage"
+                type="url"
+                placeholder="https://example.com/recipe.jpg"
+              />
+              <small>Leave blank to use a simple illustration.</small>
+            </div>
+            <div class="field full">
+              <label for="recipeSource">Source URL (optional)</label>
+              <input
+                id="recipeSource"
+                type="url"
+                placeholder="https://example.com/original-recipe"
+              />
+              <small>Link to the original recipe website.</small>
+            </div>
+            <div class="field full">
+              <label for="recipeDescription">Short description</label>
+              <textarea
+                id="recipeDescription"
+                rows="2"
+                placeholder="What makes this recipe worth keeping?"
+              ></textarea>
+            </div>
+            <div class="field full">
+              <label for="recipeIngredients">Ingredients *</label>
+              <textarea
+                id="recipeIngredients"
+                required
+                placeholder="200 g pasta&#10;2 cloves garlic&#10;2 tbsp olive oil"
+              ></textarea>
+              <small>Put one ingredient on each line.</small>
+            </div>
+            <div class="field full">
+              <label for="recipeSteps">Instructions *</label>
+              <textarea
+                id="recipeSteps"
+                required
+                placeholder="Boil the pasta until al dente.&#10;Warm the oil and sauté garlic.&#10;Combine and serve."
+              ></textarea>
+              <small>Put each step on a new line.</small>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn" type="button" id="cancelModal">Cancel</button>
+            <button class="btn primary" type="submit" id="submitRecipeBtn">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                style="width: 16px; height: 16px"
+              >
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Save recipe
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      (() => {
+        const KEY = "recipebook-v1";
+        const initial = [
+          {
+            id: "pesto",
+            name: "Basil pesto pasta",
+            category: "Dinner",
+            time: 25,
+            difficulty: "Easy",
+            servings: 2,
+            vegetarian: true,
+            description:
+              "Fresh basil pesto, juicy tomatoes, and pasta for a quick weeknight favorite.",
+            image:
+              "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=900&q=85",
+            sourceUrl: "https://example.com/pesto-pasta",
+            ingredients: [
+              "200 g pasta",
+              "3 tbsp basil pesto",
+              "1 cup cherry tomatoes",
+              "2 tbsp grated parmesan",
+              "1 tbsp olive oil",
+              "Salt and black pepper",
+            ],
+            steps: [
+              "Bring salted water to a boil and cook the pasta until al dente.",
+              "Halve the cherry tomatoes and warm them in olive oil for 2–3 minutes.",
+              "Toss the drained pasta with pesto and a splash of pasta water.",
+              "Top with tomatoes, parmesan, and black pepper.",
+            ],
+            saved: true,
+          },
+          {
+            id: "bowl",
+            name: "Roasted vegetable grain bowl",
+            category: "Lunch",
+            time: 40,
+            difficulty: "Easy",
+            servings: 2,
+            vegetarian: true,
+            description:
+              "A colorful bowl of roasted vegetables, grains, and a bright lemon dressing.",
+            image:
+              "https://images.unsplash.com/photo-1511690743698-d9d85f2fbf38?auto=format&fit=crop&w=900&q=85",
+            ingredients: [
+              "1 cup cooked quinoa",
+              "1 zucchini",
+              "1 red bell pepper",
+              "1 cup chickpeas",
+              "2 tbsp olive oil",
+              "1 lemon",
+              "Salt and pepper",
+            ],
+            steps: [
+              "Heat the oven to 220°C. Chop the vegetables into bite-size pieces.",
+              "Toss vegetables and chickpeas with olive oil, salt, and pepper.",
+              "Roast for 20–25 minutes until golden and tender.",
+              "Serve over quinoa with lemon juice and zest.",
+            ],
+            saved: true,
+          },
+          {
+            id: "toast",
+            name: "Avocado toast with a little heat",
+            category: "Breakfast",
+            time: 15,
+            difficulty: "Easy",
+            servings: 1,
+            vegetarian: true,
+            description:
+              "Creamy avocado, crisp toast, chili flakes, and a squeeze of lime.",
+            image:
+              "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=900&q=85",
+            ingredients: [
+              "2 slices sourdough bread",
+              "1 ripe avocado",
+              "½ lime",
+              "Chili flakes",
+              "Salt and pepper",
+              "1 tsp sesame seeds",
+            ],
+            steps: [
+              "Toast the bread until crisp and golden.",
+              "Mash avocado with lime juice, salt, and pepper.",
+              "Spread over toast and finish with chili flakes and sesame seeds.",
+            ],
+            saved: false,
+          },
+          {
+            id: "salmon",
+            name: "Honey soy salmon",
+            category: "Dinner",
+            time: 25,
+            difficulty: "Easy",
+            servings: 2,
+            vegetarian: false,
+            description:
+              "A glossy sweet-and-savory salmon fillet with steamed rice and greens.",
+            image:
+              "https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=900&q=85",
+            ingredients: [
+              "2 salmon fillets",
+              "1 tbsp soy sauce",
+              "1 tbsp honey",
+              "1 tsp grated ginger",
+              "1 garlic clove",
+              "Steamed rice to serve",
+            ],
+            steps: [
+              "Mix soy sauce, honey, ginger, and minced garlic.",
+              "Brush salmon with the glaze and bake at 200°C for 12–15 minutes.",
+              "Serve with rice and your favorite greens.",
+            ],
+            saved: false,
+          },
+          {
+            id: "pancakes",
+            name: "Fluffy morning pancakes",
+            category: "Breakfast",
+            time: 20,
+            difficulty: "Easy",
+            servings: 3,
+            vegetarian: true,
+            description: "Soft, golden pancakes for a slow weekend breakfast.",
+            image:
+              "https://images.unsplash.com/photo-1528207776546-365bb710ee93?auto=format&fit=crop&w=900&q=85",
+            ingredients: [
+              "1 cup all-purpose flour",
+              "1 tbsp sugar",
+              "1 tsp baking powder",
+              "¾ cup milk",
+              "1 egg",
+              "2 tbsp melted butter",
+            ],
+            steps: [
+              "Whisk flour, sugar, and baking powder in a bowl.",
+              "Add milk, egg, and melted butter; mix until just combined.",
+              "Cook small portions in a lightly buttered pan until bubbles form, then flip.",
+              "Serve warm with fruit or maple syrup.",
+            ],
+            saved: false,
+          },
+          {
+            id: "soup",
+            name: "Creamy tomato soup",
+            category: "Lunch",
+            time: 30,
+            difficulty: "Easy",
+            servings: 4,
+            vegetarian: true,
+            description: "A cozy tomato soup with herbs and a little cream.",
+            image:
+              "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=85",
+            ingredients: [
+              "1 onion",
+              "2 garlic cloves",
+              "800 g canned tomatoes",
+              "2 cups vegetable stock",
+              "¼ cup cream",
+              "Basil, salt, and pepper",
+            ],
+            steps: [
+              "Soften chopped onion in olive oil, then add garlic.",
+              "Add tomatoes and stock; simmer for 20 minutes.",
+              "Blend until smooth, stir in cream, and season to taste.",
+              "Serve with fresh basil and toasted bread.",
+            ],
+            saved: false,
+          },
+        ];
+
+        let recipes = loadRecipes(),
+          activeView = "home",
+          currentFilter = "All",
+          query = "",
+          currentDetail = null,
+          plans = load(KEY + "-plans", {}),
+          shopping = load(KEY + "-shopping", []);
+
+        const $ = (s) => document.querySelector(s),
+          $$ = (s) => [...document.querySelectorAll(s)];
+
+        function load(key, fallback) {
+          try {
+            const x = JSON.parse(localStorage.getItem(key));
+            if (x === null) return fallback;
+            if (key === KEY) {
+              if (!Array.isArray(x)) return fallback;
+              if (
+                !x.every(
+                  (r) =>
+                    r && typeof r.id === "string" && typeof r.name === "string",
+                )
+              ) {
+                console.warn(
+                  "Malformed recipe data detected, resetting to initial.",
+                );
+                return fallback;
+              }
+            }
+            return x;
+          } catch {
+            return fallback;
+          }
+        }
+
+        function persist() {
+          try {
+            localStorage.setItem(KEY, JSON.stringify(recipes));
+            localStorage.setItem(KEY + "-plans", JSON.stringify(plans));
+            localStorage.setItem(KEY + "-shopping", JSON.stringify(shopping));
+            return true;
+          } catch {
+            return false;
+          }
+        }
+
+        function loadRecipes() {
+          let x = load(KEY, null);
+          return Array.isArray(x) ? x : initial;
+        }
+
+        function esc(s = "") {
+          return String(s).replace(
+            /[&<>"']/g,
+            (c) =>
+              ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;",
+              })[c],
+          );
+        }
+
+        function toast(msg) {
+          const el = $("#toast");
+          el.textContent = msg;
+          el.classList.add("show");
+          clearTimeout(toast.t);
+          toast.t = setTimeout(() => el.classList.remove("show"), 2500);
+        }
+
+        function findRecipe(id) {
+          return recipes.find((r) => r.id === id);
+        }
+
+        function imageMarkup(r) {
+          return r.image
+            ? `<img src="${esc(r.image)}" alt="${esc(r.name)}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'fallback\\'>🍲</div>'">`
+            : `<div class="fallback">🍲</div>`;
+        }
+
+        function card(r) {
+          const heartIcon = r.saved
+            ? '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>'
+            : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>';
+
+          return `<article class="recipe-card">
+            <div class="recipe-image">
+              ${imageMarkup(r)}
+              <button class="icon-btn ${r.saved ? "saved" : ""}" data-save="${esc(r.id)}" aria-label="${r.saved ? "Remove from" : "Save to"} favorites">
+                ${heartIcon}
+              </button>
+            </div>
+            <div class="recipe-body">
+              <div class="recipe-topline">
+                <span class="tag">${esc(r.category || "Other")}</span>
+              </div>
+              <h3>${esc(r.name)}</h3>
+              <p class="desc">${esc(r.description || "A recipe worth keeping in your collection.")}</p>
+              <div class="meta">
+                <span>${Number(r.time) || 0} min</span>
+                <span class="dot">·</span>
+                <span>${esc(r.difficulty || "Easy")}</span>
+                <span class="dot">·</span>
+                <span>${Number(r.servings) || 2} servings</span>
+              </div>
+              <div class="card-foot">
+                <button class="link-btn" data-detail="${esc(r.id)}">View recipe</button>
+                <button class="link-btn" data-edit="${esc(r.id)}">Edit</button>
+              </div>
+            </div>
+          </article>`;
+        }
+
+        function filtered(list) {
+          return list.filter((r) => {
+            let q = query.toLowerCase().trim();
+            let matches =
+              !q ||
+              [r.name, r.category, r.description, ...(r.ingredients || [])]
+                .join(" ")
+                .toLowerCase()
+                .includes(q);
+            let f =
+              currentFilter === "All" ||
+              (currentFilter === "Vegetarian"
+                ? r.vegetarian
+                : currentFilter === "Quick"
+                  ? Number(r.time) <= 30
+                  : r.category === currentFilter);
+            return matches && f;
+          });
+        }
+
+        function fillGrid(elId, list, emptyId) {
+          let el = $("#" + elId);
+          el.innerHTML = list.map(card).join("");
+          if (emptyId)
+            $("#" + emptyId).style.display = list.length ? "none" : "block";
+        }
+
+        function renderCards() {
+          let list = filtered(recipes);
+          fillGrid("homeGrid", list.slice(0, 3), "homeEmpty");
+          fillGrid("allGrid", list, "allEmpty");
+          fillGrid(
+            "savedGrid",
+            filtered(recipes.filter((r) => r.saved)),
+            "savedEmpty",
+          );
+
+          $("#favoriteList").innerHTML =
+            recipes
+              .filter((r) => r.saved)
+              .slice(0, 3)
+              .map(
+                (r) =>
+                  `<div class="quick-item"><div class="quick-thumb">${imageMarkup(r)}</div><div><strong>${esc(r.name)}</strong><small>${Number(r.time) || 0} min · ${esc(r.category)}</small></div><button class="link-btn" data-detail="${esc(r.id)}">Open</button></div>`,
+              )
+              .join("") ||
+            '<p class="muted" style="font-size:14px; padding: 1rem 0;">No saved recipes yet.</p>';
+
+          $("#statTotal").textContent = recipes.length;
+          $("#statSaved").textContent = recipes.filter((r) => r.saved).length;
+          $("#statPlanned").textContent = Object.keys(plans).length;
+          $("#planRecipe").innerHTML = recipes
+            .map((r) => `<option value="${esc(r.id)}">${esc(r.name)}</option>`)
+            .join("");
+
+          renderWeek();
+          renderShopping();
+        }
+
+        function go(view) {
+          if (!$("#view-" + view)) view = "home";
+          activeView = view;
+          $$(".view").forEach((v) =>
+            v.classList.toggle("active", v.id === "view-" + view),
+          );
+          $$("[data-view]").forEach((b) =>
+            b.classList.toggle("active", b.dataset.view === view),
+          );
+          $("#crumbTitle").textContent =
+            {
+              home: "Overview",
+              recipes: "All recipes",
+              saved: "Saved recipes",
+              planner: "Meal planner",
+              shopping: "Shopping list",
+              detail: "Recipe details",
+            }[view] || "Overview";
+          $("#app").classList.remove("menu-open");
+          if (view !== "detail") currentDetail = null;
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          if (view === "detail" && currentDetail) renderDetail(currentDetail);
+        }
+
+        function openDetail(id) {
+          currentDetail = id;
+          go("detail");
+          renderDetail(id);
+        }
+
+        function renderDetail(id) {
+          let r = findRecipe(id);
+          if (!r) {
+            go("recipes");
+            return;
+          }
+
+          const sourceLink = r.sourceUrl
+            ? `<a href="${esc(r.sourceUrl)}" target="_blank" rel="noopener noreferrer" class="btn subtle">View source ↗</a>`
+            : "";
+
+          $("#detailContent").innerHTML = `
+            <div class="recipe-detail">
+              <div class="detail-image">${imageMarkup(r)}</div>
+              <div class="detail-copy">
+                <div class="eyebrow">${esc(r.category)}${r.vegetarian ? " · Vegetarian" : ""}</div>
+                <h1>${esc(r.name)}</h1>
+                <p class="desc">${esc(r.description || "A recipe worth keeping in your collection.")}</p>
+                <div class="detail-meta">
+                  <span>${Number(r.time) || 0} min</span>
+                  <span>Difficulty: ${esc(r.difficulty || "Easy")}</span>
+                  <span>Serves ${Number(r.servings) || 2}</span>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                  <button class="btn ${r.saved ? "subtle" : ""}" data-save="${esc(r.id)}">${r.saved ? "♥ Saved" : "♡ Save recipe"}</button>
+                  <button class="btn" data-edit="${esc(r.id)}">Edit recipe</button>
+                  <button class="btn" data-addshopping="${esc(r.id)}">＋ Add to shopping</button>
+                  ${sourceLink}
+                </div>
+                <div class="collection-note">Tip: Adjust serving sizes to suit your table. Ingredients and steps are saved locally on this device.</div>
+              </div>
+            </div>
+            <div class="detail-columns">
+              <section>
+                <h2>Ingredients</h2>
+                <ul class="ingredient-list">${(r.ingredients || []).map((i) => `<li>${esc(i)}</li>`).join("")}</ul>
+              </section>
+              <section>
+                <h2>Instructions</h2>
+                <ol class="steps">${(r.steps || []).map((i) => `<li>${esc(i)}</li>`).join("")}</ol>
+              </section>
+            </div>`;
+        }
+
+        function renderWeek() {
+          const days = [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday",
+          ];
+          ["miniWeek", "fullWeek"].forEach((id) => {
+            const el = $("#" + id);
+            if (!el) return;
+            el.innerHTML = days
+              .map((d) => {
+                let r = findRecipe(plans[d]);
+                return `<div class="day"><strong>${d.slice(0, 3).toUpperCase()}</strong>${r ? `<div class="meal">${esc(r.name)}</div><button data-removeplan="${d}" aria-label="Remove ${d} meal">×</button>` : `<div class="meal" style="color:#a3a3a3; font-weight:400;">No meal</div>`}</div>`;
+              })
+              .join("");
+          });
+        }
+
+        function renderShopping() {
+          const el = $("#shoppingList");
+          el.innerHTML = shopping
+            .map(
+              (item, i) =>
+                `<label class="shopping-row ${item.checked ? "checked" : ""}"><input type="checkbox" data-checkitem="${i}" ${item.checked ? "checked" : ""}><span>${esc(item.name)}</span><button type="button" class="link-btn" data-deleteitem="${i}" style="margin-left:auto;color:var(--danger)">Remove</button></label>`,
+            )
+            .join("");
+          $("#shoppingEmpty").style.display = shopping.length
+            ? "none"
+            : "block";
+          $("#shoppingCount").textContent =
+            `${shopping.filter((x) => !x.checked).length} remaining · ${shopping.length} total`;
+        }
+
+        let editingId = null;
+        function openModal(id = null) {
+          editingId = id;
+          const form = $("#recipeForm");
+          form.reset();
+          $("#modalTitle").textContent = id ? "Edit recipe" : "Add a recipe";
+
+          // Clear any previous validation errors
+          $$(".field-error").forEach((el) =>
+            el.classList.remove("field-error"),
+          );
+          $$(".field-error-msg").forEach((el) => (el.style.display = "none"));
+
+          if (id) {
+            const r = findRecipe(id);
+            if (!r) return;
+            $("#recipeName").value = r.name;
+            $("#recipeCategory").value = r.category || "Dinner";
+            $("#recipeTime").value = r.time || 30;
+            $("#recipeDifficulty").value = r.difficulty || "Easy";
+            $("#recipeServings").value = r.servings || 2;
+            $("#recipeImage").value = r.image || "";
+            $("#recipeSource").value = r.sourceUrl || "";
+            $("#recipeDescription").value = r.description || "";
+            $("#recipeIngredients").value = (r.ingredients || []).join("\n");
+            $("#recipeSteps").value = (r.steps || []).join("\n");
+          } else {
+            $("#recipeTime").value = 30;
+            $("#recipeServings").value = 2;
+          }
+          $("#recipeModal").classList.add("open");
+          setTimeout(() => $("#recipeName").focus(), 50);
+        }
+
+        function closeModal() {
+          $("#recipeModal").classList.remove("open");
+          editingId = null;
+        }
+
+        function splitLines(s) {
+          return s
+            .split("\n")
+            .map((x) => x.trim())
+            .filter(Boolean);
+        }
+
+        function showError(inputId, message) {
+          const input = $(`#${inputId}`);
+          input.classList.add("field-error");
+          let errorMsg = input.parentElement.querySelector(".field-error-msg");
+          if (!errorMsg) {
+            errorMsg = document.createElement("small");
+            errorMsg.className = "field-error-msg";
+            input.parentElement.appendChild(errorMsg);
+          }
+          errorMsg.textContent = message;
+          errorMsg.style.display = "block";
+          input.focus();
+        }
+
+        // Clear errors on input
+        $$(".field input, .field textarea, .field select").forEach((el) => {
+          el.addEventListener("input", () => {
+            el.classList.remove("field-error");
+            const errorMsg = el.parentElement.querySelector(".field-error-msg");
+            if (errorMsg) errorMsg.style.display = "none";
+          });
+        });
+
+        function debounce(func, wait) {
+          let timeout;
+          return function (...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+          };
+        }
+
+        // Event Listeners
+        $$("[data-view]").forEach((b) =>
+          b.addEventListener("click", () => go(b.dataset.view)),
+        );
+        $$("[data-go]").forEach((b) =>
+          b.addEventListener("click", () => go(b.dataset.go)),
+        );
+        $$('[data-action="add"]').forEach((b) =>
+          b.addEventListener("click", () => openModal()),
+        );
+
+        $$("[data-filter-category]").forEach((b) =>
+          b.addEventListener("click", () => {
+            currentFilter = b.dataset.filterCategory;
+            go("recipes");
+            $$("#recipeFilters .chip").forEach((c) =>
+              c.classList.toggle(
+                "active",
+                c.dataset.category === currentFilter,
+              ),
+            );
+            renderCards();
+          }),
+        );
+
+        const debouncedSearch = debounce((e) => {
+          query = e.target.value;
+          renderCards();
+        }, 300);
+        $("#globalSearch").addEventListener("input", debouncedSearch);
+
+        $("#recipeFilters").addEventListener("click", (e) => {
+          let b = e.target.closest("[data-category]");
+          if (!b) return;
+          currentFilter = b.dataset.category;
+          $$("#recipeFilters .chip").forEach((c) =>
+            c.classList.toggle("active", c === b),
+          );
+          renderCards();
+        });
+
+        document.addEventListener("click", (e) => {
+          const save = e.target.closest("[data-save]");
+          if (save) {
+            let r = findRecipe(save.dataset.save);
+            if (!r) return;
+            r.saved = !r.saved;
+            persist();
+            renderCards();
+            if (activeView === "detail") renderDetail(r.id);
+            toast(
+              r.saved
+                ? "Recipe saved to favorites."
+                : "Removed from favorites.",
+            );
+            return;
+          }
+          const detail = e.target.closest("[data-detail]");
+          if (detail) {
+            openDetail(detail.dataset.detail);
+            return;
+          }
+          const edit = e.target.closest("[data-edit]");
+          if (edit) {
+            openModal(edit.dataset.edit);
+            return;
+          }
+          const addshop = e.target.closest("[data-addshopping]");
+          if (addshop) {
+            let r = findRecipe(addshop.dataset.addshopping);
+            if (r) {
+              let count = 0;
+              (r.ingredients || []).forEach((name) => {
+                if (
+                  !shopping.some(
+                    (x) => x.name.toLowerCase() === name.toLowerCase(),
+                  )
+                ) {
+                  shopping.push({ name, checked: false });
+                  count++;
+                }
+              });
+              persist();
+              renderShopping();
+              toast(
+                count
+                  ? `${count} ingredients added to shopping list.`
+                  : "Those ingredients are already on your list.",
+              );
+            }
+            return;
+          }
+          const remove = e.target.closest("[data-removeplan]");
+          if (remove) {
+            delete plans[remove.dataset.removeplan];
+            persist();
+            renderWeek();
+            $("#statPlanned").textContent = Object.keys(plans).length;
+            toast("Meal removed from plan.");
+            return;
+          }
+          const del = e.target.closest("[data-deleteitem]");
+          if (del) {
+            shopping.splice(Number(del.dataset.deleteitem), 1);
+            persist();
+            renderShopping();
+            return;
+          }
+        });
+
+        $("#recipeForm").addEventListener("submit", (e) => {
+          e.preventDefault();
+
+          const name = $("#recipeName").value.trim();
+          const ingredientsRaw = $("#recipeIngredients").value;
+          const stepsRaw = $("#recipeSteps").value;
+
+          const ingredients = splitLines(ingredientsRaw);
+          const steps = splitLines(stepsRaw);
+
+          let hasError = false;
+          if (!name) {
+            showError("recipeName", "Recipe name is required.");
+            hasError = true;
+          }
+          if (ingredients.length === 0) {
+            showError(
+              "recipeIngredients",
+              "Please add at least one ingredient.",
+            );
+            hasError = true;
+          }
+          if (steps.length === 0) {
+            showError(
+              "recipeSteps",
+              "Please add at least one instruction step.",
+            );
+            hasError = true;
+          }
+
+          if (hasError) return;
+
+          const submitBtn = $("#submitRecipeBtn");
+          const originalBtnContent = submitBtn.innerHTML;
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"></circle></svg> Saving...`;
+
+          setTimeout(() => {
+            const r = {
+              id: editingId || "recipe-" + Date.now(),
+              name: name,
+              category: $("#recipeCategory").value,
+              time: Math.max(
+                1,
+                Math.min(1440, Number($("#recipeTime").value) || 30),
+              ),
+              difficulty: $("#recipeDifficulty").value,
+              servings: Math.max(
+                1,
+                Math.min(100, Number($("#recipeServings").value) || 2),
+              ),
+              vegetarian: $("#recipeCategory").value === "Vegetarian",
+              description: $("#recipeDescription").value.trim(),
+              image: $("#recipeImage").value.trim(),
+              sourceUrl: $("#recipeSource").value.trim(),
+              ingredients: ingredients,
+              steps: steps,
+              saved: editingId ? !!findRecipe(editingId)?.saved : false,
+            };
+
+            if (editingId) {
+              recipes = recipes.map((old) => (old.id === editingId ? r : old));
+            } else {
+              recipes.unshift(r);
+            }
+
+            if (!persist()) {
+              toast("Failed to save. Storage might be full.");
+              submitBtn.disabled = false;
+              submitBtn.innerHTML = originalBtnContent;
+              return;
+            }
+
+            closeModal();
+            currentFilter = "All";
+            query = "";
+            $("#globalSearch").value = "";
+            $$("#recipeFilters .chip").forEach((c) =>
+              c.classList.toggle("active", c.dataset.category === "All"),
+            );
+            renderCards();
+            go("recipes");
+            toast(
+              editingId
+                ? "Recipe updated successfully."
+                : "Recipe added to your book.",
+            );
+
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnContent;
+          }, 400);
+        });
+
+        $("#closeModal").addEventListener("click", closeModal);
+        $("#cancelModal").addEventListener("click", closeModal);
+        $("#recipeModal").addEventListener("click", (e) => {
+          if (e.target === $("#recipeModal")) closeModal();
+        });
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") closeModal();
+        });
+
+        $("#addPlan").addEventListener("click", () => {
+          let day = $("#planDay").value,
+            id = $("#planRecipe").value;
+          if (!id) {
+            toast("Add a recipe first.");
+            return;
+          }
+          plans[day] = id;
+          persist();
+          renderWeek();
+          $("#statPlanned").textContent = Object.keys(plans).length;
+          toast(`${day} meal planned.`);
+        });
+
+        $("#shoppingForm").addEventListener("submit", (e) => {
+          e.preventDefault();
+          let input = $("#shoppingInput"),
+            name = input.value.trim();
+          if (!name) return;
+          if (
+            !shopping.some((x) => x.name.toLowerCase() === name.toLowerCase())
+          ) {
+            shopping.push({ name, checked: false });
+          }
+          input.value = "";
+          persist();
+          renderShopping();
+        });
+
+        $("#shoppingList").addEventListener("change", (e) => {
+          let i = e.target.dataset.checkitem;
+          if (i === undefined) return;
+          shopping[Number(i)].checked = e.target.checked;
+          persist();
+          renderShopping();
+        });
+
+        $("#clearChecked").addEventListener("click", () => {
+          shopping = shopping.filter((x) => !x.checked);
+          persist();
+          renderShopping();
+          toast("Checked items cleared.");
+        });
+
+        $("#fromPlan").addEventListener("click", () => {
+          let count = 0;
+          Object.values(plans).forEach((id) => {
+            let r = findRecipe(id);
+            if (r) {
+              (r.ingredients || []).forEach((name) => {
+                if (
+                  !shopping.some(
+                    (x) => x.name.toLowerCase() === name.toLowerCase(),
+                  )
+                ) {
+                  shopping.push({ name, checked: false });
+                  count++;
+                }
+              });
+            }
+          });
+          persist();
+          renderShopping();
+          toast(
+            count
+              ? `${count} planned ingredients added.`
+              : "No new ingredients to add.",
+          );
+        });
+
+        $("#menuBtn").addEventListener("click", () =>
+          $("#app").classList.toggle("menu-open"),
+        );
+
+        // Theme Toggle Logic
+        const themeToggle = $("#themeToggle");
+        const themeIcon = $("#themeIcon");
+        let isDark =
+          localStorage.getItem("recipebook-theme") === "dark" ||
+          (!localStorage.getItem("recipebook-theme") &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+        function applyTheme(dark) {
+          if (dark) {
+            document.documentElement.classList.add("dark");
+            themeIcon.innerHTML =
+              '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+          } else {
+            document.documentElement.classList.remove("dark");
+            themeIcon.innerHTML =
+              '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>';
+          }
+          localStorage.setItem("recipebook-theme", dark ? "dark" : "light");
+        }
+
+        applyTheme(isDark);
+        themeToggle.addEventListener("click", () => {
+          isDark = !isDark;
+          applyTheme(isDark);
+        });
+
+        // Init
+        renderCards();
+        go("home");
+      })();
+    </script>
+  </body>
+</html>
